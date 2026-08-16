@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div class="staff-layout">
+
+        <aside class="staff-sidebar">
+
+            <h2>Staff CMS</h2>
+
+            <nav>
+
+                <a href="{% url 'dashboard' %}">
+                    Dashboard
+                </a>
+
+                <a href="#">
+                    Content
+                </a>
+
+                <a href="#">
+                    Submissions
+                </a>
+
+                <a href="#">
+                    Notifications
+                </a>
+
+                <a href="#">
+                    Profile
+                </a>
+
+            </nav>
+
+        </aside>
+
+        <section class="staff-content">
+
+            {% block staff_content %}
+            {% endblock %}
+
+        </section>
+
+    </div>
+
+{% endblock %}

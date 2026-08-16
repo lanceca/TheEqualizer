@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>The Equalizer - Staff Login</title>
+</head>
+
+<body>
+
+    <h1>The Equalizer</h1>
+
+    <h2>Staff Login</h2>
+
+    {% if error %}
+        <p>{{ error }}</p>
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <div>
+            <label for="username">Username:</label>
+            <input
+                type="text"
+                id="username"
+                name="username"
+                required
+            >
+        </div>
+
+        <br>
+
+        <div>
+            <label for="password">Password:</label>
+            <input
+                type="password"
+                id="password"
+                name="password"
+                required
+            >
+        </div>
+
+        <br>
+
+        <button type="submit">Log In</button>
+    </form>
+
+</body>
+</html>

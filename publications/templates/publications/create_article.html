@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Article - The Equalizer</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+
+        form {
+            max-width: 700px;
+        }
+
+        label {
+            display: block;
+            margin-top: 20px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            min-height: 250px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 12px 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Create Article</h1>
+
+    <p>
+        Logged in as:
+        <strong>{{ request.user.username }}</strong>
+    </p>
+
+    <form method="POST" enctype="multipart/form-data">
+
+        {% csrf_token %}
+
+        <label for="title">
+            Article Title
+        </label>
+
+        <input
+            type="text"
+            id="title"
+            name="title"
+            required
+        >
+
+        <label for="category">
+            Category
+        </label>
+
+        <select
+            id="category"
+            name="category"
+            required
+        >
+
+            <option value="">
+                Select a category
+            </option>
+
+            {% for category in categories %}
+
+                <option value="{{ category.id }}">
+                    {{ category.name }}
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+        <label for="featured_image">
+            Featured Image
+        </label>
+
+            <input
+                type="file"
+                id="featured_image"
+                name="featured_image"
+                accept="image/*"
+            >
+
+        <label for="attachments">
+             Article Attachments
+        </label>
+
+            <input
+                type="file"
+                id="attachments"
+                name="attachments"
+                accept="image/*"
+                multiple
+            >
+
+        <label>
+            Tags
+        </label>
+
+        {% for tag in tags %}
+
+            <label style="font-weight: normal;">
+
+                <input
+                    type="checkbox"
+                    name="tags"
+                    value="{{ tag.id }}"
+                    style="width: auto;"
+                >
+
+                {{ tag.name }}
+
+            </label>
+
+        {% endfor %}
+
+        <label for="content">
+            Article Content
+        </label>
+
+        <textarea
+            id="content"
+            name="content"
+            required
+        ></textarea>
+
+        <button type="submit">
+            Create Article
+        </button>
+
+    </form>
+
+</body>
+</html>
