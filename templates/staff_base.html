@@ -2,24 +2,22 @@
 
 {% block content %}
 
-    <div class="staff-layout">
+<div class="staff-layout">
 
-        <aside class="staff-sidebar">
+    <aside class="staff-sidebar">
 
-            <h2>Staff CMS</h2>
+        <h2>Staff CMS</h2>
 
-            <nav>
+        <nav>
 
-                <a href="{% url 'dashboard' %}">
-                    Dashboard
-                </a>
+            <a href="{% url 'dashboard' %}">
+                Dashboard
+            </a>
 
-                <a href="#">
-                    Content
-                </a>
+            {% if request.user.role == "SUPER_ADMIN" %}
 
                 <a href="#">
-                    Submissions
+                    Manage Admin Accounts
                 </a>
 
                 <a href="#">
@@ -30,17 +28,139 @@
                     Profile
                 </a>
 
-            </nav>
+            {% elif request.user.role == "ADMIN" %}
 
-        </aside>
+                <a href="#">
+                    Manage Staff Accounts
+                </a>
 
-        <section class="staff-content">
+                <a href="#">
+                    Notifications
+                </a>
 
-            {% block staff_content %}
-            {% endblock %}
+                <a href="#">
+                    Profile
+                </a>
 
-        </section>
+            {% elif request.user.role == "ADVISER" %}
 
-    </div>
+                <a href="#">
+                    Analytics
+                </a>
+
+                <a href="#">
+                    Notifications
+                </a>
+
+                <a href="#">
+                    Profile
+                </a>
+
+            {% elif request.user.role == "EIC" %}
+
+                <a href="{% url 'create_article' %}">
+                    Create Article
+                </a>
+
+                <a href="{% url 'pending_submissions' %}">
+                    Pending Submissions
+                </a>
+
+                <a href="#">
+                    Published Articles
+                </a>
+
+                <a href="#">
+                    Edit Requests
+                </a>
+
+                <a href="#">
+                    Deletion Requests
+                </a>
+
+                <a href="#">
+                    Staff Reports
+                </a>
+
+                <a href="#">
+                    Archive
+                </a>
+
+                <a href="#">
+                    Notifications
+                </a>
+
+                <a href="#">
+                    Profile
+                </a>
+
+            {% elif request.user.role == "EDITOR" %}
+
+                <a href="{% url 'create_article' %}">
+                    Create Article
+                </a>
+
+                <a href="#">
+                    My Drafts
+                </a>
+
+                <a href="#">
+                    My Submissions
+                </a>
+
+                <a href="#">
+                    Edit Requests
+                </a>
+
+                <a href="#">
+                    Deletion Requests
+                </a>
+
+                <a href="#">
+                    Notifications
+                </a>
+
+                <a href="#">
+                    Profile
+                </a>
+
+            {% elif request.user.role == "STAFF" %}
+
+                <a href="#">
+                    Content Reports
+                </a>
+
+                <a href="#">
+                    My Reports
+                </a>
+
+                <a href="#">
+                    Notifications
+                </a>
+
+                <a href="#">
+                    Profile
+                </a>
+
+            {% endif %}
+
+            <a href="{% url 'logout' %}">
+                Logout
+            </a>
+
+        </nav>
+
+    </aside>
+
+    <section class="staff-content">
+
+        {% block staff_content %}
+        {% endblock %}
+
+    </section>
+
+</div>
 
 {% endblock %}
+
+

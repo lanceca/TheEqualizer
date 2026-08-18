@@ -146,7 +146,7 @@ class ContentReportAdmin(admin.ModelAdmin):
 @admin.register(ArticleAttachment)
 class ArticleAttachmentAdmin(admin.ModelAdmin):
     list_display = (
-        "article",
+        "attachment_name",
         "caption",
         "uploaded_at",
     )
@@ -156,6 +156,7 @@ class ArticleAttachmentAdmin(admin.ModelAdmin):
         "caption",
     )
 
-    list_filter = (
-        "uploaded_at",
-    )
+    def attachment_name(self, obj):
+        return str(obj)
+
+    attachment_name.short_description = "Attachment"
