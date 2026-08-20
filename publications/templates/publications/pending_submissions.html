@@ -135,6 +135,40 @@
         padding: 10px 16px;
         cursor: pointer;
     }
+
+    .submission-toolbar {
+    margin-top: 20px;
+    margin-bottom: 25px;
+    }
+
+    .search-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-width: 650px;
+    }
+
+    .search-input {
+    flex: 1;
+    min-width: 240px;
+    padding: 9px;
+    box-sizing: border-box;
+    }
+
+    .search-button {
+    padding: 9px 15px;
+    cursor: pointer;
+    }
+
+    .clear-search {
+    display: inline-block;
+    padding: 9px 15px;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    text-decoration: none;
+    color: inherit;
+    }
+    
 </style>
 
 <h1>Pending Submissions</h1>
@@ -142,6 +176,44 @@
 <p>
     Articles waiting for Editor in Chief review.
 </p>
+
+<div class="submission-toolbar">
+
+    <form
+        method="GET"
+        action="{% url 'pending_submissions' %}"
+        class="search-form"
+    >
+
+        <input
+            type="text"
+            name="q"
+            value="{{ search_query }}"
+            placeholder="Search title, content, category, tags, or submitter..."
+            class="search-input"
+        >
+
+        <button
+            type="submit"
+            class="search-button"
+        >
+            Search
+        </button>
+
+        {% if search_query %}
+
+            <a
+                href="{% url 'pending_submissions' %}"
+                class="clear-search"
+            >
+                Clear
+            </a>
+
+        {% endif %}
+
+    </form>
+
+</div>
 
 {% if submissions %}
 

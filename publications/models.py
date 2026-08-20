@@ -142,6 +142,14 @@ class Submission(models.Model):
         null=True
     )
 
+    resubmission_of = models.ForeignKey(
+    "self",
+    on_delete=models.SET_NULL,
+    blank=True,
+    null=True,
+    related_name="resubmissions",
+    )
+
     class Meta:
         ordering = ["-submitted_at"]
 

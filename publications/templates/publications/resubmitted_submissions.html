@@ -1,0 +1,268 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<style>
+    .submission-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-top: 25px;
+    }
+
+    .submission-card {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .submission-summary {
+        padding: 18px 20px;
+        cursor: pointer;
+        list-style: none;
+    }
+
+    .submission-summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .submission-summary-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .submission-summary-info {
+        flex: 1;
+    }
+
+    .submission-title {
+        margin: 0 0 8px 0;
+    }
+
+    .submission-meta {
+        margin: 3px 0;
+    }
+
+    .expand-indicator {
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    details[open] .expand-indicator::before {
+        content: "▲";
+    }
+
+    details:not([open]) .expand-indicator::before {
+        content: "▼";
+    }
+
+    .submission-details {
+        border-top: 1px solid #ccc;
+        padding: 20px;
+    }
+
+    .featured-image {
+        width: 320px;
+        height: 200px;
+        object-fit: cover;
+        display: block;
+        border-radius: 6px;
+        margin: 15px 0;
+    }
+
+    .attachment-gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .attachment-item {
+        width: 160px;
+    }
+
+    .attachment-image {
+        width: 160px;
+        height: 110px;
+        object-fit: cover;
+        display: block;
+        border-radius: 6px;
+    }
+
+    .attachment-caption {
+        margin-top: 5px;
+        font-size: 14px;
+    }
+
+    .revision-history {
+        margin-top: 25px;
+        padding-top: 15px;
+        border-top: 1px solid #ccc;
+    }
+</style>
+
+<h1>Resubmitted Submissions</h1>
+
+<p>
+    View articles that were revised and resubmitted for EIC approval.
+</p>
+
+{% if submissions %}
+
+    <div class="submission-list">
+
+        {% for submission in submissions %}
+
+            <details class="submission-card">
+
+                <summary class="submission-summary">
+
+                    <div class="submission-summary-content">
+
+                        <div class="submission-summary-info">
+
+                            <h2 class="submission-title">
+                                {{ submission.article.title }}
+                            </h2>
+
+                            <p class="submission-meta">
+                                <strong>Status:</strong>
+                                {{ submission.get_status_display }}
+                            </p>
+
+                            <p class="submission-meta">
+                                <strong>Resubmitted:</strong>
+                                {{ submission.submitted_at|date:"M. d, Y - g:i A" }}
+                            </p>
+
+                        </div>
+
+                        <span class="expand-indicator"></span>
+
+                    </div>
+
+                </summary>
+
+                <div class="submission-details">
+
+                    <p>
+                        <strong>Category:</strong>
+                        {{ submission.article.category.name }}
+                    </p>
+
+                    {% if submission.article.featured_image %}
+
+                        <h3>Featured Image</h3>
+
+                        <img
+                            src="{{ submission.article.featured_image.url }}"
+                            alt="{{ submission.article.title }}"
+                            class="featured-image"
+                        >
+
+                    {% endif %}
+
+                    <h3>Article Content</h3>
+
+                    <p>
+                        {{ submission.article.content|linebreaksbr }}
+                    </p>
+
+                    {% if submission.article.tags.all %}
+
+                        <h3>Tags</h3>
+
+                        <p>
+                            {% for tag in submission.article.tags.all %}
+                                {{ tag.name }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </p>
+
+                    {% endif %}
+
+                    {% if submission.article.attachments.all %}
+
+                        <h3>Attached Images</h3>
+
+                        <div class="attachment-gallery">
+
+                            {% for attachment in submission.article.attachments.all %}
+
+                                <div class="attachment-item">
+
+                                    <img
+                                        src="{{ attachment.image.url }}"
+                                        alt="{{ attachment.caption|default:'Article attachment' }}"
+                                        class="attachment-image"
+                                    >
+
+                                    {% if attachment.caption %}
+
+                                        <p class="attachment-caption">
+                                            {{ attachment.caption }}
+                                        </p>
+
+                                    {% endif %}
+
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+                    <div class="revision-history">
+
+                        <h3>Previous Revision Request</h3>
+
+                        <p>
+                            <strong>Previous Status:</strong>
+                            {{ submission.resubmission_of.get_status_display }}
+                        </p>
+
+                        <p>
+                            <strong>Originally Submitted:</strong>
+                            {{ submission.resubmission_of.submitted_at|date:"M. d, Y - g:i A" }}
+                        </p>
+
+                        {% if submission.resubmission_of.reviewed_at %}
+
+                            <p>
+                                <strong>Reviewed:</strong>
+                                {{ submission.resubmission_of.reviewed_at|date:"M. d, Y - g:i A" }}
+                            </p>
+
+                        {% endif %}
+
+                        {% if submission.resubmission_of.reviewer_notes %}
+
+                            <strong>EIC Reviewer Notes:</strong>
+
+                            <p>
+                                {{ submission.resubmission_of.reviewer_notes|linebreaksbr }}
+                            </p>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </details>
+
+        {% endfor %}
+
+    </div>
+
+{% else %}
+
+    <p>
+        You do not have any resubmitted submissions yet.
+    </p>
+
+{% endif %}
+
+{% endblock %}

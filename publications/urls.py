@@ -22,4 +22,22 @@ urlpatterns = [
     name="review_submission",
     ),
 
+    path(
+    "submissions/mine/",
+    views.my_submissions,
+    name="my_submissions",
+    ),
+
+    path(
+    "submissions/<int:submission_id>/revise/",
+    views.revise_submission,
+    name="revise_submission",
+    ),
+
+    path(
+    "submissions/resubmitted/",
+    views.resubmitted_submissions,
+    name="resubmitted_submissions",
+    ),
+
 ]

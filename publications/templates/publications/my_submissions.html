@@ -1,0 +1,450 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<style>
+    .submission-toolbar {
+        margin-top: 20px;
+        margin-bottom: 25px;
+    }
+
+    .status-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+
+    .status-filter {
+        display: inline-block;
+        padding: 8px 12px;
+        border: 1px solid #aaa;
+        border-radius: 5px;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .status-filter.active {
+        font-weight: bold;
+        border: 2px solid #555;
+    }
+
+    .search-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        max-width: 600px;
+    }
+
+    .search-input {
+        flex: 1;
+        min-width: 220px;
+        padding: 9px;
+        box-sizing: border-box;
+    }
+
+    .search-button {
+        padding: 9px 15px;
+        cursor: pointer;
+    }
+
+    .clear-search {
+        display: inline-block;
+        padding: 9px 15px;
+        border: 1px solid #aaa;
+        border-radius: 4px;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .submission-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-top: 25px;
+    }
+
+    .submission-card {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .submission-summary {
+        padding: 18px 20px;
+        cursor: pointer;
+        list-style: none;
+    }
+
+    .submission-summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .submission-summary-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .submission-summary-info {
+        flex: 1;
+    }
+
+    .submission-title {
+        margin: 0 0 8px 0;
+    }
+
+    .submission-meta {
+        margin: 3px 0;
+    }
+
+    .expand-indicator {
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    details[open] .expand-indicator::before {
+        content: "▲";
+    }
+
+    details:not([open]) .expand-indicator::before {
+        content: "▼";
+    }
+
+    .submission-details {
+        border-top: 1px solid #ccc;
+        padding: 20px;
+    }
+
+    .featured-image {
+        width: 320px;
+        height: 200px;
+        object-fit: cover;
+        display: block;
+        border-radius: 6px;
+        margin: 15px 0;
+    }
+
+    .attachment-gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .attachment-item {
+        width: 160px;
+    }
+
+    .attachment-image {
+        width: 160px;
+        height: 110px;
+        object-fit: cover;
+        display: block;
+        border-radius: 6px;
+    }
+
+    .attachment-caption {
+        margin-top: 5px;
+        font-size: 14px;
+    }
+
+    .reviewer-notes {
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px solid #ccc;
+    }
+
+    .revision-action {
+        margin-top: 20px;
+    }
+
+    .revision-action a {
+        display: inline-block;
+        padding: 10px 15px;
+        border: 1px solid #999;
+        border-radius: 5px;
+        text-decoration: none;
+        color: inherit;
+    }
+</style>
+
+<h1>My Submissions</h1>
+
+<p>
+    View, search, and filter articles you submitted for review.
+</p>
+
+<div class="submission-toolbar">
+
+    <div class="status-filters">
+
+        <a
+            href="{% url 'my_submissions' %}?status=ALL{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
+            class="status-filter {% if selected_status == 'ALL' %}active{% endif %}"
+        >
+            All
+        </a>
+
+        <a
+            href="{% url 'my_submissions' %}?status=PENDING{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
+            class="status-filter {% if selected_status == 'PENDING' %}active{% endif %}"
+        >
+            Pending
+        </a>
+
+        <a
+            href="{% url 'my_submissions' %}?status=REVISION{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
+            class="status-filter {% if selected_status == 'REVISION' %}active{% endif %}"
+        >
+            For Revision
+        </a>
+
+        <a
+            href="{% url 'my_submissions' %}?status=APPROVED{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
+            class="status-filter {% if selected_status == 'APPROVED' %}active{% endif %}"
+        >
+            Approved
+        </a>
+
+        <a
+            href="{% url 'my_submissions' %}?status=REJECTED{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
+            class="status-filter {% if selected_status == 'REJECTED' %}active{% endif %}"
+        >
+            Rejected
+        </a>
+
+    </div>
+
+    <form
+        method="GET"
+        action="{% url 'my_submissions' %}"
+        class="search-form"
+    >
+
+        <input
+            type="hidden"
+            name="status"
+            value="{{ selected_status }}"
+        >
+
+        <input
+            type="text"
+            name="q"
+            value="{{ search_query }}"
+            placeholder="Search title, content, category, or tags..."
+            class="search-input"
+        >
+
+        <button
+            type="submit"
+            class="search-button"
+        >
+            Search
+        </button>
+
+        {% if search_query %}
+
+            <a
+                href="{% url 'my_submissions' %}?status={{ selected_status }}"
+                class="clear-search"
+            >
+                Clear
+            </a>
+
+        {% endif %}
+
+    </form>
+
+</div>
+
+{% if search_query %}
+
+    <p>
+        Search results for:
+        <strong>{{ search_query }}</strong>
+    </p>
+
+{% endif %}
+
+
+{% if submissions %}
+
+    <div class="submission-list">
+
+        {% for submission in submissions %}
+
+            <details class="submission-card">
+
+                <summary class="submission-summary">
+
+                    <div class="submission-summary-content">
+
+                        <div class="submission-summary-info">
+
+                            <h2 class="submission-title">
+                                {{ submission.article.title }}
+                            </h2>
+
+                            <p class="submission-meta">
+                                <strong>Status:</strong>
+                                {{ submission.get_status_display }}
+                            </p>
+
+                            <p class="submission-meta">
+                                <strong>Submitted:</strong>
+                                {{ submission.submitted_at|date:"M. d, Y - g:i A" }}
+                            </p>
+
+                        </div>
+
+                        <span class="expand-indicator"></span>
+
+                    </div>
+
+                </summary>
+
+                <div class="submission-details">
+
+                    <p>
+                        <strong>Category:</strong>
+                        {{ submission.article.category.name }}
+                    </p>
+
+                    {% if submission.reviewed_at %}
+
+                        <p>
+                            <strong>Reviewed:</strong>
+                            {{ submission.reviewed_at|date:"M. d, Y - g:i A" }}
+                        </p>
+
+                    {% endif %}
+
+
+                    {% if submission.article.featured_image %}
+
+                        <h3>Featured Image</h3>
+
+                        <img
+                            src="{{ submission.article.featured_image.url }}"
+                            alt="{{ submission.article.title }}"
+                            class="featured-image"
+                        >
+
+                    {% endif %}
+
+
+                    <h3>Article Content</h3>
+
+                    <p>
+                        {{ submission.article.content|linebreaksbr }}
+                    </p>
+
+
+                    {% if submission.article.tags.all %}
+
+                        <h3>Tags</h3>
+
+                        <p>
+                            {% for tag in submission.article.tags.all %}
+
+                                {{ tag.name }}
+
+                                {% if not forloop.last %}
+                                    ,
+                                {% endif %}
+
+                            {% endfor %}
+                        </p>
+
+                    {% endif %}
+
+
+                    {% if submission.article.attachments.all %}
+
+                        <h3>Attached Images</h3>
+
+                        <div class="attachment-gallery">
+
+                            {% for attachment in submission.article.attachments.all %}
+
+                                <div class="attachment-item">
+
+                                    <img
+                                        src="{{ attachment.image.url }}"
+                                        alt="{{ attachment.caption|default:'Article attachment' }}"
+                                        class="attachment-image"
+                                    >
+
+                                    {% if attachment.caption %}
+
+                                        <p class="attachment-caption">
+                                            {{ attachment.caption }}
+                                        </p>
+
+                                    {% endif %}
+
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+
+                    {% if submission.reviewer_notes %}
+
+                        <div class="reviewer-notes">
+
+                            <strong>EIC Reviewer Notes:</strong>
+
+                            <p>
+                                {{ submission.reviewer_notes|linebreaksbr }}
+                            </p>
+
+                        </div>
+
+                    {% endif %}
+
+
+                    {% if submission.status == "REVISION" %}
+
+                        <div class="revision-action">
+
+                            <a href="{% url 'revise_submission' submission.id %}">
+                                Revise Article
+                            </a>
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            </details>
+
+        {% endfor %}
+
+    </div>
+
+{% else %}
+
+    {% if search_query %}
+
+        <p>
+            No submissions matched your search.
+        </p>
+
+    {% else %}
+
+        <p>
+            No submissions are available under this filter.
+        </p>
+
+    {% endif %}
+
+{% endif %}
+
+{% endblock %}
