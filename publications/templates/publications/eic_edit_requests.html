@@ -1,0 +1,109 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<h1>Edit Requests</h1>
+
+<form method="GET">
+
+    <input
+        type="text"
+        name="q"
+        value="{{ search_query }}"
+        placeholder="Search article, editor, category, or reason..."
+    >
+
+    <button type="submit">
+        Search
+    </button>
+
+    {% if search_query %}
+
+        <a href="{% url 'eic_edit_requests' %}">
+            Clear
+        </a>
+
+    {% endif %}
+
+</form>
+
+{% if edit_requests %}
+
+    {% for edit_request in edit_requests %}
+
+        <details>
+
+            <summary>
+
+                <strong>
+                    {{ edit_request.article.title }}
+                </strong>
+
+                — Requested by:
+                {{ edit_request.requested_by.username }}
+
+            </summary>
+
+            <p>
+                <strong>Category:</strong>
+                {{ edit_request.article.category.name }}
+            </p>
+
+            <p>
+                <strong>Reason:</strong>
+                {{ edit_request.reason|linebreaksbr }}
+            </p>
+
+            <p>
+                <strong>Requested:</strong>
+                {{ edit_request.created_at|date:"M. d, Y - g:i A" }}
+            </p>
+
+            <form
+                method="POST"
+                action="{% url 'review_edit_request' edit_request.id %}"
+            >
+
+                {% csrf_token %}
+
+                <label for="notes_{{ edit_request.id }}">
+                    Reviewer Notes
+                </label>
+
+                <textarea
+                    id="notes_{{ edit_request.id }}"
+                    name="reviewer_notes"
+                    rows="4"
+                ></textarea>
+
+                <button
+                    type="submit"
+                    name="action"
+                    value="approve"
+                >
+                    Approve
+                </button>
+
+                <button
+                    type="submit"
+                    name="action"
+                    value="reject"
+                >
+                    Reject
+                </button>
+
+            </form>
+
+        </details>
+
+    {% endfor %}
+
+{% else %}
+
+    <p>
+        There are currently no pending edit requests.
+    </p>
+
+{% endif %}
+
+{% endblock %}

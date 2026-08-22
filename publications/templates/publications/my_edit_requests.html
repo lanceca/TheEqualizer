@@ -1,0 +1,74 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<h1>My Edit Requests</h1>
+
+<form method="GET">
+
+    <input
+        type="text"
+        name="q"
+        value="{{ search_query }}"
+        placeholder="Search edit requests..."
+    >
+
+    <button type="submit">
+        Search
+    </button>
+
+    {% if search_query %}
+        <a href="{% url 'my_edit_requests' %}">
+            Clear
+        </a>
+    {% endif %}
+
+</form>
+
+{% if edit_requests %}
+
+    {% for edit_request in edit_requests %}
+
+        <details>
+
+            <summary>
+
+                <strong>
+                    {{ edit_request.article.title }}
+                </strong>
+
+                —
+                {{ edit_request.get_status_display }}
+
+            </summary>
+
+            <p>
+                <strong>Requested:</strong>
+                {{ edit_request.created_at|date:"M. d, Y - g:i A" }}
+            </p>
+
+            <p>
+                <strong>Reason:</strong>
+                {{ edit_request.reason|linebreaksbr }}
+            </p>
+
+            {% if edit_request.reviewer_notes %}
+
+                <p>
+                    <strong>EIC Notes:</strong>
+                    {{ edit_request.reviewer_notes|linebreaksbr }}
+                </p>
+
+            {% endif %}
+
+        </details>
+
+    {% endfor %}
+
+{% else %}
+
+    <p>No edit requests found.</p>
+
+{% endif %}
+
+{% endblock %}

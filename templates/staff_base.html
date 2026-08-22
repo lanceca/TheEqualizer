@@ -66,11 +66,11 @@
                     Pending Submissions
                 </a>
 
-                <a href="#">
+                <a href="{% url 'published_articles' %}">
                     Published Articles
                 </a>
 
-                <a href="#">
+                <a href="{% url 'eic_edit_requests' %}">
                     Edit Requests
                 </a>
 
@@ -96,11 +96,15 @@
 
             {% elif request.user.role == "EDITOR" %}
 
+                <a href="{% url 'published_articles' %}">
+                    Published Articles
+                </a>
+
                 <a href="{% url 'create_article' %}">
                     Create Article
                 </a>
 
-                <a href="#">
+                <a href="{% url 'my_drafts' %}">
                     My Drafts
                 </a>
 
@@ -112,7 +116,7 @@
                  Resubmitted Submissions
                 </a>
 
-                <a href="#">
+                <a href="{% url 'my_edit_requests' %}">
                     Edit Requests
                 </a>
 

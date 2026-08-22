@@ -1,0 +1,359 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<style>
+    .article-toolbar {
+        margin: 20px 0 25px;
+    }
+
+    .search-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        max-width: 650px;
+    }
+
+    .search-input {
+        flex: 1;
+        min-width: 240px;
+        padding: 9px;
+        box-sizing: border-box;
+    }
+
+    .search-button {
+        padding: 9px 15px;
+        cursor: pointer;
+    }
+
+    .clear-search {
+        display: inline-block;
+        padding: 9px 15px;
+        border: 1px solid #aaa;
+        border-radius: 4px;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .article-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-top: 25px;
+    }
+
+    .article-card {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .article-summary {
+        padding: 18px 20px;
+        cursor: pointer;
+        list-style: none;
+    }
+
+    .article-summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .article-summary-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .article-summary-info {
+        flex: 1;
+    }
+
+    .article-title {
+        margin: 0 0 8px 0;
+    }
+
+    .article-meta {
+        margin: 3px 0;
+    }
+
+    .expand-indicator {
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    details[open] .expand-indicator::before {
+        content: "▲";
+    }
+
+    details:not([open]) .expand-indicator::before {
+        content: "▼";
+    }
+
+    .article-details {
+        border-top: 1px solid #ccc;
+        padding: 20px;
+    }
+
+    .featured-image {
+        width: 320px;
+        height: 200px;
+        object-fit: cover;
+        display: block;
+        border-radius: 6px;
+        margin: 15px 0;
+    }
+
+    .attachment-gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .attachment-item {
+        width: 160px;
+    }
+
+    .attachment-image {
+        width: 160px;
+        height: 110px;
+        object-fit: cover;
+        display: block;
+        border-radius: 6px;
+    }
+
+    .attachment-caption {
+        margin-top: 5px;
+        font-size: 14px;
+    }
+
+    .article-actions {
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px solid #ccc;
+    }
+
+    .article-actions a {
+        display: inline-block;
+        padding: 10px 15px;
+        border: 1px solid #999;
+        border-radius: 5px;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
+    }
+</style>
+
+<h1>Published Articles</h1>
+
+{% if request.user.role == "EIC" %}
+
+    <p>
+        View all currently published articles.
+    </p>
+
+{% else %}
+
+    <p>
+        View your currently published articles.
+    </p>
+
+{% endif %}
+
+<div class="article-toolbar">
+
+    <form
+        method="GET"
+        action="{% url 'published_articles' %}"
+        class="search-form"
+    >
+
+        <input
+            type="text"
+            name="q"
+            value="{{ search_query }}"
+            placeholder="Search title, content, category, tags, or author..."
+            class="search-input"
+        >
+
+        <button
+            type="submit"
+            class="search-button"
+        >
+            Search
+        </button>
+
+        {% if search_query %}
+
+            <a
+                href="{% url 'published_articles' %}"
+                class="clear-search"
+            >
+                Clear
+            </a>
+
+        {% endif %}
+
+    </form>
+
+</div>
+
+{% if search_query %}
+
+    <p>
+        Search results for:
+        <strong>{{ search_query }}</strong>
+    </p>
+
+{% endif %}
+
+{% if articles %}
+
+    <div class="article-list">
+
+        {% for article in articles %}
+
+            <details class="article-card">
+
+                <summary class="article-summary">
+
+                    <div class="article-summary-content">
+
+                        <div class="article-summary-info">
+
+                            <h2 class="article-title">
+                                {{ article.title }}
+                            </h2>
+
+                            <p class="article-meta">
+                                <strong>Category:</strong>
+                                {{ article.category.name }}
+                            </p>
+
+                            <p class="article-meta">
+                                <strong>Author:</strong>
+                                {{ article.author.username }}
+                            </p>
+
+                            <p class="article-meta">
+                                <strong>Published:</strong>
+
+                                {% if article.published_at %}
+                                    {{ article.published_at|date:"M. d, Y - g:i A" }}
+                                {% else %}
+                                    Publication date unavailable
+                                {% endif %}
+                            </p>
+
+                        </div>
+
+                        <span class="expand-indicator"></span>
+
+                    </div>
+
+                </summary>
+
+                <div class="article-details">
+
+                    {% if article.featured_image %}
+
+                        <h3>Featured Image</h3>
+
+                        <img
+                            src="{{ article.featured_image.url }}"
+                            alt="{{ article.title }}"
+                            class="featured-image"
+                        >
+
+                    {% endif %}
+
+                    <h3>Article Content</h3>
+
+                    <p>
+                        {{ article.content|linebreaksbr }}
+                    </p>
+
+                    {% if article.tags.all %}
+
+                        <h3>Tags</h3>
+
+                        <p>
+                            {% for tag in article.tags.all %}
+                                {{ tag.name }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </p>
+
+                    {% endif %}
+
+                    {% if article.attachments.all %}
+
+                        <h3>Attached Images</h3>
+
+                        <div class="attachment-gallery">
+
+                            {% for attachment in article.attachments.all %}
+
+                                <div class="attachment-item">
+
+                                    <img
+                                        src="{{ attachment.image.url }}"
+                                        alt="{{ attachment.caption|default:'Article attachment' }}"
+                                        class="attachment-image"
+                                    >
+
+                                    {% if attachment.caption %}
+
+                                        <p class="attachment-caption">
+                                            {{ attachment.caption }}
+                                        </p>
+
+                                    {% endif %}
+
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+                    {% if request.user.role == "EDITOR" %}
+
+                        <div class="article-actions">
+
+                            <a href="{% url 'request_article_edit' article.id %}">
+                                Request Edit
+                            </a>
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            </details>
+
+        {% endfor %}
+
+    </div>
+
+{% else %}
+
+    {% if search_query %}
+
+        <p>
+            No published articles matched your search.
+        </p>
+
+    {% else %}
+
+        <p>
+            There are currently no published articles available.
+        </p>
+
+    {% endif %}
+
+{% endif %}
+
+{% endblock %}

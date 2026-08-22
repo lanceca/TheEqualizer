@@ -1,0 +1,317 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<style>
+    .draft-toolbar {
+        margin: 20px 0 25px;
+    }
+
+    .search-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        max-width: 650px;
+    }
+
+    .search-input {
+        flex: 1;
+        min-width: 240px;
+        padding: 9px;
+        box-sizing: border-box;
+    }
+
+    .search-button,
+    .draft-action {
+        padding: 9px 15px;
+        cursor: pointer;
+    }
+
+    .clear-search,
+    .edit-link {
+        display: inline-block;
+        padding: 9px 15px;
+        border: 1px solid #aaa;
+        border-radius: 4px;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .draft-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .draft-card {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .draft-summary {
+        padding: 18px 20px;
+        cursor: pointer;
+        list-style: none;
+    }
+
+    .draft-summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .draft-summary-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .draft-title {
+        margin: 0 0 8px;
+    }
+
+    .draft-meta {
+        margin: 3px 0;
+    }
+
+    .expand-indicator {
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    details[open] .expand-indicator::before {
+        content: "▲";
+    }
+
+    details:not([open]) .expand-indicator::before {
+        content: "▼";
+    }
+
+    .draft-details {
+        border-top: 1px solid #ccc;
+        padding: 20px;
+    }
+
+    .featured-image {
+        width: 320px;
+        height: 200px;
+        object-fit: cover;
+        display: block;
+        border-radius: 6px;
+        margin: 15px 0;
+    }
+
+    .attachment-gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .attachment-image {
+        width: 160px;
+        height: 110px;
+        object-fit: cover;
+        border-radius: 6px;
+    }
+
+    .draft-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 25px;
+        padding-top: 15px;
+        border-top: 1px solid #ccc;
+    }
+
+    .draft-actions form {
+        margin: 0;
+    }
+</style>
+
+<h1>My Drafts</h1>
+
+<p>
+    Continue working on saved articles or submit them for EIC approval.
+</p>
+
+<div class="draft-toolbar">
+
+    <form
+        method="GET"
+        action="{% url 'my_drafts' %}"
+        class="search-form"
+    >
+
+        <input
+            type="text"
+            name="q"
+            value="{{ search_query }}"
+            placeholder="Search title, content, category, or tags..."
+            class="search-input"
+        >
+
+        <button
+            type="submit"
+            class="search-button"
+        >
+            Search
+        </button>
+
+        {% if search_query %}
+
+            <a
+                href="{% url 'my_drafts' %}"
+                class="clear-search"
+            >
+                Clear
+            </a>
+
+        {% endif %}
+
+    </form>
+
+</div>
+
+{% if drafts %}
+
+    <div class="draft-list">
+
+        {% for article in drafts %}
+
+            <details class="draft-card">
+
+                <summary class="draft-summary">
+
+                    <div class="draft-summary-content">
+
+                        <div>
+
+                            <h2 class="draft-title">
+                                {{ article.title }}
+                            </h2>
+
+                            <p class="draft-meta">
+                                <strong>Category:</strong>
+                                {{ article.category.name }}
+                            </p>
+
+                            <p class="draft-meta">
+                                <strong>Last Updated:</strong>
+                                {{ article.updated_at|date:"M. d, Y - g:i A" }}
+                            </p>
+
+                        </div>
+
+                        <span class="expand-indicator"></span>
+
+                    </div>
+
+                </summary>
+
+                <div class="draft-details">
+
+                    {% if article.featured_image %}
+
+                        <h3>Featured Image</h3>
+
+                        <img
+                            src="{{ article.featured_image.url }}"
+                            alt="{{ article.title }}"
+                            class="featured-image"
+                        >
+
+                    {% endif %}
+
+                    <h3>Article Content</h3>
+
+                    <p>
+                        {{ article.content|linebreaksbr }}
+                    </p>
+
+                    {% if article.tags.all %}
+
+                        <h3>Tags</h3>
+
+                        <p>
+                            {% for tag in article.tags.all %}
+                                {{ tag.name }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </p>
+
+                    {% endif %}
+
+                    {% if article.attachments.all %}
+
+                        <h3>Attached Images</h3>
+
+                        <div class="attachment-gallery">
+
+                            {% for attachment in article.attachments.all %}
+
+                                <img
+                                    src="{{ attachment.image.url }}"
+                                    alt="{{ attachment.caption|default:'Article attachment' }}"
+                                    class="attachment-image"
+                                >
+
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+                    <div class="draft-actions">
+
+                        <a
+                            href="{% url 'edit_draft' article.id %}"
+                            class="edit-link"
+                        >
+                            Edit Draft
+                        </a>
+
+                        <form
+                            method="POST"
+                            action="{% url 'delete_draft' article.id %}"
+                        >
+
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                class="draft-action"
+                            >
+                                Delete Draft
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </details>
+
+        {% endfor %}
+
+    </div>
+
+{% else %}
+
+    {% if search_query %}
+
+        <p>
+            No drafts matched your search.
+        </p>
+
+    {% else %}
+
+        <p>
+            You currently have no saved drafts.
+        </p>
+
+    {% endif %}
+
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,281 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<style>
+    .draft-form {
+        max-width: 750px;
+    }
+
+    .draft-form label {
+        display: block;
+        margin-top: 20px;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .draft-form input,
+    .draft-form select,
+    .draft-form textarea {
+        width: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+    }
+
+    .draft-form textarea {
+        min-height: 250px;
+    }
+
+    .tag-option {
+        font-weight: normal !important;
+    }
+
+    .tag-option input {
+        width: auto;
+    }
+
+    .current-image {
+        width: 240px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 6px;
+        display: block;
+        margin-top: 10px;
+    }
+
+    .attachment-gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-top: 10px;
+    }
+
+    .attachment-item {
+        width: 160px;
+    }
+
+    .attachment-image {
+        width: 160px;
+        height: 110px;
+        object-fit: cover;
+        border-radius: 6px;
+    }
+
+    .remove-attachment {
+        font-weight: normal !important;
+        margin-top: 5px !important;
+    }
+
+    .remove-attachment input {
+        width: auto;
+    }
+
+    .draft-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 25px;
+    }
+
+    .draft-actions button {
+        padding: 12px 20px;
+        cursor: pointer;
+    }
+
+    .cancel-link {
+        display: inline-block;
+        padding: 12px 20px;
+        border: 1px solid #999;
+        border-radius: 4px;
+        text-decoration: none;
+        color: inherit;
+    }
+</style>
+
+<h1>Edit Draft</h1>
+
+<form
+    method="POST"
+    enctype="multipart/form-data"
+    class="draft-form"
+>
+
+    {% csrf_token %}
+
+    <label for="title">
+        Article Title
+    </label>
+
+    <input
+        type="text"
+        id="title"
+        name="title"
+        value="{{ article.title }}"
+        required
+    >
+
+    <label for="category">
+        Category
+    </label>
+
+    <select
+        id="category"
+        name="category"
+        required
+    >
+
+        {% for category in categories %}
+
+            <option
+                value="{{ category.id }}"
+                {% if category.id == article.category.id %}
+                    selected
+                {% endif %}
+            >
+                {{ category.name }}
+            </option>
+
+        {% endfor %}
+
+    </select>
+
+    <label>Tags</label>
+
+    {% for tag in tags %}
+
+        <label class="tag-option">
+
+            <input
+                type="checkbox"
+                name="tags"
+                value="{{ tag.id }}"
+                {% if tag in article.tags.all %}
+                    checked
+                {% endif %}
+            >
+
+            {{ tag.name }}
+
+        </label>
+
+    {% endfor %}
+
+    <label for="content">
+        Article Content
+    </label>
+
+    <textarea
+        id="content"
+        name="content"
+        required
+    >{{ article.content }}</textarea>
+
+    <label>
+        Current Featured Image
+    </label>
+
+    {% if article.featured_image %}
+
+        <img
+            src="{{ article.featured_image.url }}"
+            alt="{{ article.title }}"
+            class="current-image"
+        >
+
+    {% else %}
+
+        <p>No featured image uploaded.</p>
+
+    {% endif %}
+
+    <label for="featured_image">
+        Replace Featured Image
+    </label>
+
+    <input
+        type="file"
+        id="featured_image"
+        name="featured_image"
+        accept="image/*"
+    >
+
+    {% if article.attachments.all %}
+
+        <label>
+            Current Attachments
+        </label>
+
+        <div class="attachment-gallery">
+
+            {% for attachment in article.attachments.all %}
+
+                <div class="attachment-item">
+
+                    <img
+                        src="{{ attachment.image.url }}"
+                        alt="{{ attachment.caption|default:'Article attachment' }}"
+                        class="attachment-image"
+                    >
+
+                    <label class="remove-attachment">
+
+                        <input
+                            type="checkbox"
+                            name="remove_attachments"
+                            value="{{ attachment.id }}"
+                        >
+
+                        Remove
+
+                    </label>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% endif %}
+
+    <label for="attachments">
+        Add More Attachments
+    </label>
+
+    <input
+        type="file"
+        id="attachments"
+        name="attachments"
+        accept="image/*"
+        multiple
+    >
+
+    <div class="draft-actions">
+
+        <button
+            type="submit"
+            name="action"
+            value="save"
+        >
+            Save Changes
+        </button>
+
+        <button
+            type="submit"
+            name="action"
+            value="submit"
+        >
+            Submit for EIC Approval
+        </button>
+
+        <a
+            href="{% url 'my_drafts' %}"
+            class="cancel-link"
+        >
+            Cancel
+        </a>
+
+    </div>
+
+</form>
+
+{% endblock %}

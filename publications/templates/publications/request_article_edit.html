@@ -1,0 +1,80 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<style>
+    .request-form {
+        max-width: 700px;
+    }
+
+    .article-info {
+        margin: 20px 0;
+        padding: 15px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+    }
+
+    .request-form textarea {
+        width: 100%;
+        min-height: 150px;
+        padding: 10px;
+        box-sizing: border-box;
+    }
+
+    .request-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .request-actions button,
+    .request-actions a {
+        padding: 10px 15px;
+    }
+</style>
+
+<h1>Request Article Edit</h1>
+
+<div class="article-info">
+
+    <h2>
+        {{ article.title }}
+    </h2>
+
+    <p>
+        <strong>Category:</strong>
+        {{ article.category.name }}
+    </p>
+
+</div>
+
+<form method="POST" class="request-form">
+
+    {% csrf_token %}
+
+    <label for="reason">
+        Reason for Edit Request
+    </label>
+
+    <textarea
+        id="reason"
+        name="reason"
+        placeholder="Explain what you need to change..."
+        required
+    ></textarea>
+
+    <div class="request-actions">
+
+        <button type="submit">
+            Submit Edit Request
+        </button>
+
+        <a href="{% url 'published_articles' %}">
+            Cancel
+        </a>
+
+    </div>
+
+</form>
+
+{% endblock %}
