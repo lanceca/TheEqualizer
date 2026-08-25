@@ -4,105 +4,174 @@
 
 <h1>Edit Requests</h1>
 
-<form method="GET">
+<p class="section-description">
+    Review edit requests submitted by Editors for published articles.
+</p>
 
-    <input
-        type="text"
-        name="q"
-        value="{{ search_query }}"
-        placeholder="Search article, editor, category, or reason..."
+<div class="request-toolbar">
+
+    <form
+        method="GET"
+        action="{% url 'eic_edit_requests' %}"
+        class="search-form"
     >
 
-    <button type="submit">
-        Search
-    </button>
+        <input
+            type="text"
+            name="q"
+            value="{{ search_query }}"
+            placeholder="Search article, editor, category, or reason..."
+            class="search-input"
+        >
 
-    {% if search_query %}
+        <button
+            type="submit"
+            class="search-button"
+        >
+            Search
+        </button>
 
-        <a href="{% url 'eic_edit_requests' %}">
-            Clear
-        </a>
+        {% if search_query %}
 
-    {% endif %}
+            <a
+                href="{% url 'eic_edit_requests' %}"
+                class="clear-search"
+            >
+                Clear
+            </a>
 
-</form>
+        {% endif %}
+
+    </form>
+
+</div>
+
 
 {% if edit_requests %}
 
-    {% for edit_request in edit_requests %}
+    <div class="request-list">
 
-        <details>
+        {% for edit_request in edit_requests %}
 
-            <summary>
+            <details class="request-card">
 
-                <strong>
-                    {{ edit_request.article.title }}
-                </strong>
+                <summary class="request-summary">
 
-                — Requested by:
-                {{ edit_request.requested_by.username }}
+                    <div class="request-summary-content">
 
-            </summary>
+                        <div class="request-summary-info">
 
-            <p>
-                <strong>Category:</strong>
-                {{ edit_request.article.category.name }}
-            </p>
+                            <h2 class="request-title">
+                                {{ edit_request.article.title }}
+                            </h2>
 
-            <p>
-                <strong>Reason:</strong>
-                {{ edit_request.reason|linebreaksbr }}
-            </p>
+                            <p class="request-meta">
+                                <strong>Requested by:</strong>
+                                {{ edit_request.requested_by.username }}
+                            </p>
 
-            <p>
-                <strong>Requested:</strong>
-                {{ edit_request.created_at|date:"M. d, Y - g:i A" }}
-            </p>
+                            <p class="request-meta">
+                                <strong>Requested:</strong>
+                                {{ edit_request.created_at|date:"M. d, Y - g:i A" }}
+                            </p>
 
-            <form
-                method="POST"
-                action="{% url 'review_edit_request' edit_request.id %}"
-            >
+                            <span class="status-badge status-pending">
+                                Pending
+                            </span>
 
-                {% csrf_token %}
+                        </div>
 
-                <label for="notes_{{ edit_request.id }}">
-                    Reviewer Notes
-                </label>
+                        <span class="expand-indicator"></span>
 
-                <textarea
-                    id="notes_{{ edit_request.id }}"
-                    name="reviewer_notes"
-                    rows="4"
-                ></textarea>
+                    </div>
 
-                <button
-                    type="submit"
-                    name="action"
-                    value="approve"
-                >
-                    Approve
-                </button>
+                </summary>
 
-                <button
-                    type="submit"
-                    name="action"
-                    value="reject"
-                >
-                    Reject
-                </button>
+                <div class="request-details">
 
-            </form>
+                    <p class="request-meta">
+                        <strong>Category:</strong>
+                        {{ edit_request.article.category.name }}
+                    </p>
 
-        </details>
+                    <div class="info-box">
+                        <strong>Reason for Edit</strong>
 
-    {% endfor %}
+                        <p>
+                            {{ edit_request.reason|linebreaksbr }}
+                        </p>
+                    </div>
+
+                    <div class="review-section">
+
+                        <h3>Review Edit Request</h3>
+
+                        <form
+                            method="POST"
+                            action="{% url 'review_edit_request' edit_request.id %}"
+                        >
+
+                            {% csrf_token %}
+
+                            <label for="notes_{{ edit_request.id }}">
+                                Reviewer Notes
+                            </label>
+
+                            <textarea
+                                id="notes_{{ edit_request.id }}"
+                                name="reviewer_notes"
+                                placeholder="Add optional notes for the Editor..."
+                            ></textarea>
+
+                            <div class="review-actions">
+
+                                <button
+                                    type="submit"
+                                    name="action"
+                                    value="approve"
+                                    class="approve-button"
+                                >
+                                    Approve
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    name="action"
+                                    value="reject"
+                                    class="danger-button"
+                                >
+                                    Reject
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </details>
+
+        {% endfor %}
+
+    </div>
 
 {% else %}
 
-    <p>
-        There are currently no pending edit requests.
-    </p>
+    {% if search_query %}
+
+        <p class="empty-message">
+            No edit requests matched your search.
+        </p>
+
+    {% else %}
+
+        <p class="empty-message">
+            There are currently no pending edit requests.
+        </p>
+
+    {% endif %}
 
 {% endif %}
 

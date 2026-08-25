@@ -2,164 +2,22 @@
 
 {% block staff_content %}
 
-<style>
-    .article-toolbar {
-        margin: 20px 0 25px;
-    }
-
-    .search-form {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        max-width: 650px;
-    }
-
-    .search-input {
-        flex: 1;
-        min-width: 240px;
-        padding: 9px;
-        box-sizing: border-box;
-    }
-
-    .search-button {
-        padding: 9px 15px;
-        cursor: pointer;
-    }
-
-    .clear-search {
-        display: inline-block;
-        padding: 9px 15px;
-        border: 1px solid #aaa;
-        border-radius: 4px;
-        text-decoration: none;
-        color: inherit;
-    }
-
-    .article-list {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        margin-top: 25px;
-    }
-
-    .article-card {
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        overflow: hidden;
-    }
-
-    .article-summary {
-        padding: 18px 20px;
-        cursor: pointer;
-        list-style: none;
-    }
-
-    .article-summary::-webkit-details-marker {
-        display: none;
-    }
-
-    .article-summary-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 20px;
-    }
-
-    .article-summary-info {
-        flex: 1;
-    }
-
-    .article-title {
-        margin: 0 0 8px 0;
-    }
-
-    .article-meta {
-        margin: 3px 0;
-    }
-
-    .expand-indicator {
-        font-size: 20px;
-        font-weight: bold;
-    }
-
-    details[open] .expand-indicator::before {
-        content: "▲";
-    }
-
-    details:not([open]) .expand-indicator::before {
-        content: "▼";
-    }
-
-    .article-details {
-        border-top: 1px solid #ccc;
-        padding: 20px;
-    }
-
-    .featured-image {
-        width: 320px;
-        height: 200px;
-        object-fit: cover;
-        display: block;
-        border-radius: 6px;
-        margin: 15px 0;
-    }
-
-    .attachment-gallery {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
-        margin-top: 15px;
-    }
-
-    .attachment-item {
-        width: 160px;
-    }
-
-    .attachment-image {
-        width: 160px;
-        height: 110px;
-        object-fit: cover;
-        display: block;
-        border-radius: 6px;
-    }
-
-    .attachment-caption {
-        margin-top: 5px;
-        font-size: 14px;
-    }
-
-    .article-actions {
-        margin-top: 20px;
-        padding-top: 15px;
-        border-top: 1px solid #ccc;
-    }
-
-    .article-actions a {
-        display: inline-block;
-        padding: 10px 15px;
-        border: 1px solid #999;
-        border-radius: 5px;
-        text-decoration: none;
-        color: inherit;
-        cursor: pointer;
-    }
-</style>
-
 <h1>Published Articles</h1>
 
 {% if request.user.role == "EIC" %}
 
-    <p>
+    <p class="section-description">
         View all currently published articles.
     </p>
 
 {% else %}
 
-    <p>
+    <p class="section-description">
         View your currently published articles.
     </p>
 
 {% endif %}
+
 
 <div class="article-toolbar">
 
@@ -199,14 +57,18 @@
 
 </div>
 
+
 {% if search_query %}
 
-    <p>
+    <div class="info-box">
+
         Search results for:
         <strong>{{ search_query }}</strong>
-    </p>
+
+    </div>
 
 {% endif %}
+
 
 {% if articles %}
 
@@ -246,6 +108,10 @@
                                 {% endif %}
                             </p>
 
+                            <span class="status-badge status-approved">
+                                Published
+                            </span>
+
                         </div>
 
                         <span class="expand-indicator"></span>
@@ -258,71 +124,99 @@
 
                     {% if article.featured_image %}
 
-                        <h3>Featured Image</h3>
+                        <div class="featured-image-container">
 
-                        <img
-                            src="{{ article.featured_image.url }}"
-                            alt="{{ article.title }}"
-                            class="featured-image"
-                        >
+                            <h3>Featured Image</h3>
 
-                    {% endif %}
-
-                    <h3>Article Content</h3>
-
-                    <p>
-                        {{ article.content|linebreaksbr }}
-                    </p>
-
-                    {% if article.tags.all %}
-
-                        <h3>Tags</h3>
-
-                        <p>
-                            {% for tag in article.tags.all %}
-                                {{ tag.name }}{% if not forloop.last %}, {% endif %}
-                            {% endfor %}
-                        </p>
-
-                    {% endif %}
-
-                    {% if article.attachments.all %}
-
-                        <h3>Attached Images</h3>
-
-                        <div class="attachment-gallery">
-
-                            {% for attachment in article.attachments.all %}
-
-                                <div class="attachment-item">
-
-                                    <img
-                                        src="{{ attachment.image.url }}"
-                                        alt="{{ attachment.caption|default:'Article attachment' }}"
-                                        class="attachment-image"
-                                    >
-
-                                    {% if attachment.caption %}
-
-                                        <p class="attachment-caption">
-                                            {{ attachment.caption }}
-                                        </p>
-
-                                    {% endif %}
-
-                                </div>
-
-                            {% endfor %}
+                            <img
+                                src="{{ article.featured_image.url }}"
+                                alt="{{ article.title }}"
+                                class="featured-image"
+                            >
 
                         </div>
 
                     {% endif %}
 
+                    <div class="article-content">
+
+                        <h3>Article Content</h3>
+
+                        <p>
+                            {{ article.content|linebreaksbr }}
+                        </p>
+
+                    </div>
+
+
+                    {% if article.tags.all %}
+
+                        <div class="article-tags">
+
+                            <h3>Tags</h3>
+
+                            <div class="tag-list">
+
+                                {% for tag in article.tags.all %}
+
+                                    <span class="tag-item">
+                                        {{ tag.name }}
+                                    </span>
+
+                                {% endfor %}
+
+                            </div>
+
+                        </div>
+
+                    {% endif %}
+
+
+                    {% if article.attachments.all %}
+
+                        <div class="article-attachments">
+
+                            <h3>Attached Images</h3>
+
+                            <div class="attachment-gallery">
+
+                                {% for attachment in article.attachments.all %}
+
+                                    <div class="attachment-item">
+
+                                        <img
+                                            src="{{ attachment.image.url }}"
+                                            alt="{{ attachment.caption|default:'Article attachment' }}"
+                                            class="attachment-image"
+                                        >
+
+                                        {% if attachment.caption %}
+
+                                            <p class="attachment-caption">
+                                                {{ attachment.caption }}
+                                            </p>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                {% endfor %}
+
+                            </div>
+
+                        </div>
+
+                    {% endif %}
+
+
                     {% if request.user.role == "EDITOR" %}
 
                         <div class="article-actions">
 
-                            <a href="{% url 'request_article_edit' article.id %}">
+                            <a
+                                href="{% url 'request_article_edit' article.id %}"
+                                class="edit-link"
+                            >
                                 Request Edit
                             </a>
 
@@ -342,13 +236,13 @@
 
     {% if search_query %}
 
-        <p>
+        <p class="empty-message">
             No published articles matched your search.
         </p>
 
     {% else %}
 
-        <p>
+        <p class="empty-message">
             There are currently no published articles available.
         </p>
 

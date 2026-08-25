@@ -1,20 +1,68 @@
 {% extends "staff_base.html" %}
 
-{% block title %}
-    Staff Dashboard
-{% endblock %}
-
 {% block staff_content %}
 
-    <h2>Staff Dashboard</h2>
+<div class="dashboard-header">
 
-    <p>
-        Welcome,
-        {{ user.get_full_name|default:user.username }}.
+    <h1>Staff Dashboard</h1>
+
+    <p class="dashboard-subtitle">
+        Report concerns regarding publication content.
     </p>
 
+</div>
+
+
+<div class="dashboard-welcome">
+
+    <h2>
+        Welcome, {{ request.user.username }}
+    </h2>
+
     <p>
-        Role: {{ user.role }}
+        Submit content concerns and monitor reports you have previously submitted.
     </p>
+
+</div>
+
+
+<div class="dashboard-grid">
+
+    <a
+        href="#"
+        class="dashboard-card accent-gold"
+    >
+
+        <h2>Content Reports</h2>
+
+        <p>
+            Report problems or concerns involving published content.
+        </p>
+
+        <div class="dashboard-card-footer">
+            Reporting workflow coming soon
+        </div>
+
+    </a>
+
+
+    <a
+        href="#"
+        class="dashboard-card"
+    >
+
+        <h2>My Reports</h2>
+
+        <p>
+            Review the status of content reports you submitted.
+        </p>
+
+        <div class="dashboard-card-footer">
+            Reporting workflow coming soon
+        </div>
+
+    </a>
+
+</div>
 
 {% endblock %}

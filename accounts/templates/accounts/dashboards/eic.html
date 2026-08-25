@@ -1,20 +1,158 @@
 {% extends "staff_base.html" %}
 
-{% block title %}
-    EIC Dashboard
-{% endblock %}
-
 {% block staff_content %}
 
-    <h2>Editor in Chief Dashboard</h2>
+<div class="dashboard-header">
 
-    <p>
-        Welcome,
-        {{ user.get_full_name|default:user.username }}.
+    <h1>Editor in Chief Dashboard</h1>
+
+    <p class="dashboard-subtitle">
+        Review submissions and manage the publication workflow.
     </p>
 
+</div>
+
+
+<div class="dashboard-welcome">
+
+    <h2>
+        Welcome, {{ request.user.username }}
+    </h2>
+
     <p>
-        Role: {{ user.role }}
+        Review pending content, manage requests, and oversee published articles.
     </p>
+
+</div>
+
+
+<div class="dashboard-grid">
+
+    <a
+        href="{% url 'pending_submissions' %}"
+        class="dashboard-card accent-gold"
+    >
+
+        <h2>Pending Submissions</h2>
+
+        <p>
+            Review articles waiting for approval, revision, or rejection.
+        </p>
+
+        <div class="dashboard-card-footer">
+            Review submissions →
+        </div>
+
+    </a>
+
+
+    <a
+        href="{% url 'create_article' %}"
+        class="dashboard-card"
+    >
+
+        <h2>Create Article</h2>
+
+        <p>
+            Create a new article directly from the editorial dashboard.
+        </p>
+
+        <div class="dashboard-card-footer">
+            Create article →
+        </div>
+
+    </a>
+
+
+    <a
+        href="{% url 'published_articles' %}"
+        class="dashboard-card accent-dark"
+    >
+
+        <h2>Published Articles</h2>
+
+        <p>
+            View all currently published articles.
+        </p>
+
+        <div class="dashboard-card-footer">
+            View published articles →
+        </div>
+
+    </a>
+
+
+    <a
+        href="{% url 'eic_edit_requests' %}"
+        class="dashboard-card"
+    >
+
+        <h2>Edit Requests</h2>
+
+        <p>
+            Approve or reject requests to modify published articles.
+        </p>
+
+        <div class="dashboard-card-footer">
+            Review edit requests →
+        </div>
+
+    </a>
+
+
+    <a
+        href="#"
+        class="dashboard-card accent-danger"
+    >
+
+        <h2>Deletion Requests</h2>
+
+        <p>
+            Review requests to remove published content.
+        </p>
+
+        <div class="dashboard-card-footer">
+            Coming soon
+        </div>
+
+    </a>
+
+
+    <a
+        href="#"
+        class="dashboard-card accent-gold"
+    >
+
+        <h2>Staff Reports</h2>
+
+        <p>
+            Review concerns and reports submitted by publication staff.
+        </p>
+
+        <div class="dashboard-card-footer">
+            Coming soon
+        </div>
+
+    </a>
+
+
+    <a
+        href="#"
+        class="dashboard-card accent-dark"
+    >
+
+        <h2>Archive</h2>
+
+        <p>
+            Manage archived publication content.
+        </p>
+
+        <div class="dashboard-card-footer">
+            Coming soon
+        </div>
+
+    </a>
+
+</div>
 
 {% endblock %}

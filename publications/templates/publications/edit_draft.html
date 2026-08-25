@@ -2,280 +2,313 @@
 
 {% block staff_content %}
 
-<style>
-    .draft-form {
-        max-width: 750px;
-    }
+{% if article.draft_type == "EDIT_REQUEST" %}
 
-    .draft-form label {
-        display: block;
-        margin-top: 20px;
-        margin-bottom: 5px;
-        font-weight: bold;
-    }
+    <h1>Edit Published Article Draft</h1>
 
-    .draft-form input,
-    .draft-form select,
-    .draft-form textarea {
-        width: 100%;
-        padding: 10px;
-        box-sizing: border-box;
-    }
+    <p class="section-description">
+        Update the approved edit-request draft and submit it for EIC review when ready.
+    </p>
 
-    .draft-form textarea {
-        min-height: 250px;
-    }
+    {% if article.source_article %}
 
-    .tag-option {
-        font-weight: normal !important;
-    }
+        <div class="source-article-box">
 
-    .tag-option input {
-        width: auto;
-    }
+            <strong>
+                Original Published Article
+            </strong>
 
-    .current-image {
-        width: 240px;
-        height: 150px;
-        object-fit: cover;
-        border-radius: 6px;
-        display: block;
-        margin-top: 10px;
-    }
+            <p>
+                {{ article.source_article.title }}
+            </p>
 
-    .attachment-gallery {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
-        margin-top: 10px;
-    }
-
-    .attachment-item {
-        width: 160px;
-    }
-
-    .attachment-image {
-        width: 160px;
-        height: 110px;
-        object-fit: cover;
-        border-radius: 6px;
-    }
-
-    .remove-attachment {
-        font-weight: normal !important;
-        margin-top: 5px !important;
-    }
-
-    .remove-attachment input {
-        width: auto;
-    }
-
-    .draft-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 25px;
-    }
-
-    .draft-actions button {
-        padding: 12px 20px;
-        cursor: pointer;
-    }
-
-    .cancel-link {
-        display: inline-block;
-        padding: 12px 20px;
-        border: 1px solid #999;
-        border-radius: 4px;
-        text-decoration: none;
-        color: inherit;
-    }
-</style>
-
-<h1>Edit Draft</h1>
-
-<form
-    method="POST"
-    enctype="multipart/form-data"
-    class="draft-form"
->
-
-    {% csrf_token %}
-
-    <label for="title">
-        Article Title
-    </label>
-
-    <input
-        type="text"
-        id="title"
-        name="title"
-        value="{{ article.title }}"
-        required
-    >
-
-    <label for="category">
-        Category
-    </label>
-
-    <select
-        id="category"
-        name="category"
-        required
-    >
-
-        {% for category in categories %}
-
-            <option
-                value="{{ category.id }}"
-                {% if category.id == article.category.id %}
-                    selected
-                {% endif %}
-            >
-                {{ category.name }}
-            </option>
-
-        {% endfor %}
-
-    </select>
-
-    <label>Tags</label>
-
-    {% for tag in tags %}
-
-        <label class="tag-option">
-
-            <input
-                type="checkbox"
-                name="tags"
-                value="{{ tag.id }}"
-                {% if tag in article.tags.all %}
-                    checked
-                {% endif %}
-            >
-
-            {{ tag.name }}
-
-        </label>
-
-    {% endfor %}
-
-    <label for="content">
-        Article Content
-    </label>
-
-    <textarea
-        id="content"
-        name="content"
-        required
-    >{{ article.content }}</textarea>
-
-    <label>
-        Current Featured Image
-    </label>
-
-    {% if article.featured_image %}
-
-        <img
-            src="{{ article.featured_image.url }}"
-            alt="{{ article.title }}"
-            class="current-image"
-        >
-
-    {% else %}
-
-        <p>No featured image uploaded.</p>
-
-    {% endif %}
-
-    <label for="featured_image">
-        Replace Featured Image
-    </label>
-
-    <input
-        type="file"
-        id="featured_image"
-        name="featured_image"
-        accept="image/*"
-    >
-
-    {% if article.attachments.all %}
-
-        <label>
-            Current Attachments
-        </label>
-
-        <div class="attachment-gallery">
-
-            {% for attachment in article.attachments.all %}
-
-                <div class="attachment-item">
-
-                    <img
-                        src="{{ attachment.image.url }}"
-                        alt="{{ attachment.caption|default:'Article attachment' }}"
-                        class="attachment-image"
-                    >
-
-                    <label class="remove-attachment">
-
-                        <input
-                            type="checkbox"
-                            name="remove_attachments"
-                            value="{{ attachment.id }}"
-                        >
-
-                        Remove
-
-                    </label>
-
-                </div>
-
-            {% endfor %}
+            <p>
+                Once this edit is approved, these changes will replace the current published version.
+            </p>
 
         </div>
 
     {% endif %}
 
-    <label for="attachments">
-        Add More Attachments
-    </label>
+{% else %}
 
-    <input
-        type="file"
-        id="attachments"
-        name="attachments"
-        accept="image/*"
-        multiple
+    <h1>Edit Draft</h1>
+
+    <p class="section-description">
+        Continue working on your saved article before submitting it for EIC approval.
+    </p>
+
+{% endif %}
+
+
+<div class="content-panel article-form-panel">
+
+    <form
+        method="POST"
+        enctype="multipart/form-data"
+        class="article-form"
     >
 
-    <div class="draft-actions">
+        {% csrf_token %}
 
-        <button
-            type="submit"
-            name="action"
-            value="save"
-        >
-            Save Changes
-        </button>
 
-        <button
-            type="submit"
-            name="action"
-            value="submit"
-        >
-            Submit for EIC Approval
-        </button>
+        <div class="form-group">
 
-        <a
-            href="{% url 'my_drafts' %}"
-            class="cancel-link"
-        >
-            Cancel
-        </a>
+            <label for="title">
+                Article Title
+            </label>
 
-    </div>
+            <input
+                type="text"
+                id="title"
+                name="title"
+                value="{{ article.title }}"
+                required
+            >
 
-</form>
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="category">
+                Category
+            </label>
+
+            <select
+                id="category"
+                name="category"
+                required
+            >
+
+                {% for category in categories %}
+
+                    <option
+                        value="{{ category.id }}"
+                        {% if category.id == article.category.id %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ category.name }}
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                Tags
+            </label>
+
+            {% if tags %}
+
+                <div class="tag-checkbox-grid">
+
+                    {% for tag in tags %}
+
+                        <label class="tag-checkbox-option">
+
+                            <input
+                                type="checkbox"
+                                name="tags"
+                                value="{{ tag.id }}"
+                                {% if tag in article.tags.all %}
+                                    checked
+                                {% endif %}
+                            >
+
+                            <span>
+                                {{ tag.name }}
+                            </span>
+
+                        </label>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <p class="form-help">
+                    No tags are currently available.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="content">
+                Article Content
+            </label>
+
+            <textarea
+                id="content"
+                name="content"
+                class="article-content-input"
+                required
+            >{{ article.content }}</textarea>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                Current Featured Image
+            </label>
+
+            {% if article.featured_image %}
+
+                <img
+                    src="{{ article.featured_image.url }}"
+                    alt="{{ article.title }}"
+                    class="current-image"
+                >
+
+            {% else %}
+
+                <p class="form-help">
+                    No featured image uploaded.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="featured_image">
+                Replace Featured Image
+            </label>
+
+            <input
+                type="file"
+                id="featured_image"
+                name="featured_image"
+                accept="image/*"
+            >
+
+            <p class="form-help">
+                Leave this empty to keep the current featured image.
+            </p>
+
+        </div>
+
+
+        {% if article.attachments.all %}
+
+            <div class="form-group">
+
+                <label>
+                    Current Attachments
+                </label>
+
+                <p class="form-help">
+                    Select Remove for any attachment you do not want to keep.
+                </p>
+
+                <div class="editable-attachment-gallery">
+
+                    {% for attachment in article.attachments.all %}
+
+                        <div class="editable-attachment-card">
+
+                            <img
+                                src="{{ attachment.image.url }}"
+                                alt="{{ attachment.caption|default:'Article attachment' }}"
+                                class="attachment-image"
+                            >
+
+                            {% if attachment.caption %}
+
+                                <p class="attachment-caption">
+                                    {{ attachment.caption }}
+                                </p>
+
+                            {% endif %}
+
+                            <label class="remove-attachment">
+
+                                <input
+                                    type="checkbox"
+                                    name="remove_attachments"
+                                    value="{{ attachment.id }}"
+                                >
+
+                                <span>
+                                    Remove
+                                </span>
+
+                            </label>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        {% endif %}
+
+
+        <div class="form-group">
+
+            <label for="attachments">
+                Add More Attachments
+            </label>
+
+            <input
+                type="file"
+                id="attachments"
+                name="attachments"
+                accept="image/*"
+                multiple
+            >
+
+        </div>
+
+
+        <div class="form-actions">
+
+            <button
+                type="submit"
+                name="action"
+                value="save"
+                class="secondary-action-button"
+            >
+                Save Changes
+            </button>
+
+            <button
+                type="submit"
+                name="action"
+                value="submit"
+                class="approve-button"
+            >
+                Submit for EIC Approval
+            </button>
+
+            <a
+                href="{% url 'my_drafts' %}"
+                class="cancel-link"
+            >
+                Cancel
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
 
 {% endblock %}

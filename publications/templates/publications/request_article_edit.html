@@ -2,40 +2,18 @@
 
 {% block staff_content %}
 
-<style>
-    .request-form {
-        max-width: 700px;
-    }
-
-    .article-info {
-        margin: 20px 0;
-        padding: 15px;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-    }
-
-    .request-form textarea {
-        width: 100%;
-        min-height: 150px;
-        padding: 10px;
-        box-sizing: border-box;
-    }
-
-    .request-actions {
-        display: flex;
-        gap: 10px;
-        margin-top: 20px;
-    }
-
-    .request-actions button,
-    .request-actions a {
-        padding: 10px 15px;
-    }
-</style>
-
 <h1>Request Article Edit</h1>
 
-<div class="article-info">
+<p class="section-description">
+    Request permission from the Editor in Chief to modify an existing published article.
+</p>
+
+
+<div class="article-request-info info-box">
+
+    <span class="status-badge status-approved">
+        Published Article
+    </span>
 
     <h2>
         {{ article.title }}
@@ -46,35 +24,72 @@
         {{ article.category.name }}
     </p>
 
+    <p>
+        <strong>Author:</strong>
+        {{ article.author.username }}
+    </p>
+
+    {% if article.published_at %}
+
+        <p>
+            <strong>Published:</strong>
+            {{ article.published_at|date:"M. d, Y - g:i A" }}
+        </p>
+
+    {% endif %}
+
 </div>
 
-<form method="POST" class="request-form">
 
-    {% csrf_token %}
+<div class="content-panel request-form-panel">
 
-    <label for="reason">
-        Reason for Edit Request
-    </label>
+    <form
+        method="POST"
+        class="request-form"
+    >
 
-    <textarea
-        id="reason"
-        name="reason"
-        placeholder="Explain what you need to change..."
-        required
-    ></textarea>
+        {% csrf_token %}
 
-    <div class="request-actions">
+        <div class="form-group">
 
-        <button type="submit">
-            Submit Edit Request
-        </button>
+            <label for="reason">
+                Reason for Edit Request
+            </label>
 
-        <a href="{% url 'published_articles' %}">
-            Cancel
-        </a>
+            <textarea
+                id="reason"
+                name="reason"
+                placeholder="Explain what you need to change and why..."
+                required
+            ></textarea>
 
-    </div>
+            <p class="form-help">
+                The EIC will review this reason before granting access to an editable copy of the published article.
+            </p>
 
-</form>
+        </div>
+
+
+        <div class="form-actions">
+
+            <button
+                type="submit"
+                class="approve-button"
+            >
+                Submit Edit Request
+            </button>
+
+            <a
+                href="{% url 'published_articles' %}"
+                class="cancel-link"
+            >
+                Cancel
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
 
 {% endblock %}

@@ -1,20 +1,140 @@
 {% extends "staff_base.html" %}
 
-{% block title %}
-    Editor Dashboard
-{% endblock %}
-
 {% block staff_content %}
 
-    <h2>Editor Dashboard</h2>
+<div class="dashboard-header">
 
-    <p>
-        Welcome,
-        {{ user.get_full_name|default:user.username }}.
+    <h1>Editor Dashboard</h1>
+
+    <p class="dashboard-subtitle">
+        Manage your articles, submissions, drafts, and editorial requests.
     </p>
 
+</div>
+
+
+<div class="dashboard-welcome">
+
+    <h2>
+        Welcome, {{ request.user.username }}
+    </h2>
+
     <p>
-        Role: {{ user.role }}
+        Continue writing, review your submission status, or manage published work.
     </p>
+
+</div>
+
+
+<div class="dashboard-grid">
+
+    <a
+        href="{% url 'create_article' %}"
+        class="dashboard-card"
+    >
+
+        <h2>Create Article</h2>
+
+        <p>
+            Start writing a new article for publication.
+        </p>
+
+        <div class="dashboard-card-footer">
+            Create new article →
+        </div>
+
+    </a>
+
+
+    <a
+        href="{% url 'my_drafts' %}"
+        class="dashboard-card accent-gold"
+    >
+
+        <h2>My Drafts</h2>
+
+        <p>
+            Continue working on unfinished articles and approved edit drafts.
+        </p>
+
+        <div class="dashboard-card-footer">
+            View drafts →
+        </div>
+
+    </a>
+
+
+    <a
+        href="{% url 'my_submissions' %}"
+        class="dashboard-card"
+    >
+
+        <h2>My Submissions</h2>
+
+        <p>
+            Track articles currently under EIC review.
+        </p>
+
+        <div class="dashboard-card-footer">
+            View submissions →
+        </div>
+
+    </a>
+
+
+    <a
+        href="{% url 'resubmitted_submissions' %}"
+        class="dashboard-card accent-gold"
+    >
+
+        <h2>Resubmitted Articles</h2>
+
+        <p>
+            View articles revised after receiving EIC feedback.
+        </p>
+
+        <div class="dashboard-card-footer">
+            View resubmissions →
+        </div>
+
+    </a>
+
+
+    <a
+        href="{% url 'published_articles' %}"
+        class="dashboard-card accent-dark"
+    >
+
+        <h2>Published Articles</h2>
+
+        <p>
+            View your currently published work.
+        </p>
+
+        <div class="dashboard-card-footer">
+            View published articles →
+        </div>
+
+    </a>
+
+
+    <a
+        href="{% url 'my_edit_requests' %}"
+        class="dashboard-card"
+    >
+
+        <h2>Edit Requests</h2>
+
+        <p>
+            Track requests to modify published articles.
+        </p>
+
+        <div class="dashboard-card-footer">
+            View edit requests →
+        </div>
+
+    </a>
+
+</div>
 
 {% endblock %}

@@ -2,132 +2,14 @@
 
 {% block staff_content %}
 
-<style>
-    .revision-form {
-        max-width: 750px;
-    }
-
-    .revision-form label {
-        display: block;
-        margin-top: 20px;
-        margin-bottom: 5px;
-        font-weight: bold;
-    }
-
-    .revision-form input,
-    .revision-form select,
-    .revision-form textarea {
-        width: 100%;
-        padding: 10px;
-        box-sizing: border-box;
-    }
-
-    .revision-form textarea {
-        min-height: 250px;
-    }
-
-    .tag-option {
-        display: block;
-        margin: 5px 0;
-        font-weight: normal;
-    }
-
-    .tag-option input {
-        width: auto;
-    }
-
-    .reviewer-notes {
-        max-width: 750px;
-        padding: 15px;
-        margin-bottom: 25px;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-    }
-
-    .revision-info {
-        max-width: 750px;
-        padding: 15px;
-        margin-bottom: 25px;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-    }
-
-    .current-image {
-        width: 240px;
-        height: 150px;
-        object-fit: cover;
-        display: block;
-        margin-top: 10px;
-        border-radius: 6px;
-    }
-
-    .attachment-gallery {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
-        margin-top: 10px;
-    }
-
-    .attachment-item {
-        width: 160px;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        box-sizing: border-box;
-    }
-
-    .attachment-image {
-        width: 140px;
-        height: 100px;
-        object-fit: cover;
-        display: block;
-        border-radius: 5px;
-    }
-
-    .attachment-caption {
-        margin-top: 5px;
-        font-size: 14px;
-    }
-
-    .remove-attachment {
-        margin-top: 8px !important;
-        font-weight: normal !important;
-    }
-
-    .remove-attachment input {
-        width: auto;
-        margin-right: 5px;
-    }
-
-    .resubmit-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 25px;
-    }
-
-    .resubmit-button {
-        padding: 12px 20px;
-        cursor: pointer;
-    }
-
-    .cancel-link {
-        display: inline-block;
-        padding: 12px 20px;
-        border: 1px solid #999;
-        border-radius: 4px;
-        text-decoration: none;
-        color: inherit;
-    }
-</style>
-
 <h1>Revise Article</h1>
 
-<p>
+<p class="section-description">
     Make the requested changes and resubmit the article for EIC approval.
 </p>
 
-<div class="revision-info">
+
+<div class="revision-info info-box">
 
     <p>
         <strong>Article:</strong>
@@ -136,7 +18,10 @@
 
     <p>
         <strong>Current Submission Status:</strong>
-        {{ submission.get_status_display }}
+
+        <span class="status-badge status-revision">
+            {{ submission.get_status_display }}
+        </span>
     </p>
 
     <p>
@@ -146,11 +31,14 @@
 
 </div>
 
+
 {% if submission.reviewer_notes %}
 
-    <div class="reviewer-notes">
+    <div class="reviewer-notes warning-box info-box">
 
-        <strong>EIC Reviewer Notes:</strong>
+        <strong>
+            EIC Reviewer Notes
+        </strong>
 
         <p>
             {{ submission.reviewer_notes|linebreaksbr }}
@@ -160,196 +48,264 @@
 
 {% endif %}
 
-<form
-    method="POST"
-    enctype="multipart/form-data"
-    class="revision-form"
->
 
-    {% csrf_token %}
+<div class="content-panel article-form-panel">
 
-    <label for="title">
-        Article Title
-    </label>
-
-    <input
-        type="text"
-        id="title"
-        name="title"
-        value="{{ article.title }}"
-        required
+    <form
+        method="POST"
+        enctype="multipart/form-data"
+        class="article-form revision-form"
     >
 
-    <label for="category">
-        Category
-    </label>
+        {% csrf_token %}
 
-    <select
-        id="category"
-        name="category"
-        required
-    >
 
-        {% for category in categories %}
+        <div class="form-group">
 
-            <option
-                value="{{ category.id }}"
-                {% if category.id == article.category.id %}
-                    selected
-                {% endif %}
-            >
-                {{ category.name }}
-            </option>
-
-        {% endfor %}
-
-    </select>
-
-    <label>
-        Tags
-    </label>
-
-    {% for tag in tags %}
-
-        <label class="tag-option">
+            <label for="title">
+                Article Title
+            </label>
 
             <input
-                type="checkbox"
-                name="tags"
-                value="{{ tag.id }}"
-                {% if tag in article.tags.all %}
-                    checked
-                {% endif %}
+                type="text"
+                id="title"
+                name="title"
+                value="{{ article.title }}"
+                required
             >
-
-            {{ tag.name }}
-
-        </label>
-
-    {% endfor %}
-
-    <label for="content">
-        Article Content
-    </label>
-
-    <textarea
-        id="content"
-        name="content"
-        required
-    >{{ article.content }}</textarea>
-
-    <label>
-        Current Featured Image
-    </label>
-
-    {% if article.featured_image %}
-
-        <img
-            src="{{ article.featured_image.url }}"
-            alt="{{ article.title }}"
-            class="current-image"
-        >
-
-    {% else %}
-
-        <p>
-            No featured image currently uploaded.
-        </p>
-
-    {% endif %}
-
-    <label for="featured_image">
-        Replace Featured Image
-    </label>
-
-    <input
-        type="file"
-        id="featured_image"
-        name="featured_image"
-        accept="image/*"
-    >
-
-    {% if article.attachments.all %}
-
-        <label>
-            Current Attachments
-        </label>
-
-        <p>
-            Check "Remove Attachment" for any image you do not want included
-            in the revised article.
-        </p>
-
-        <div class="attachment-gallery">
-
-            {% for attachment in article.attachments.all %}
-
-                <div class="attachment-item">
-
-                    <img
-                        src="{{ attachment.image.url }}"
-                        alt="{{ attachment.caption|default:'Article attachment' }}"
-                        class="attachment-image"
-                    >
-
-                    {% if attachment.caption %}
-
-                        <p class="attachment-caption">
-                            {{ attachment.caption }}
-                        </p>
-
-                    {% endif %}
-
-                    <label class="remove-attachment">
-
-                        <input
-                            type="checkbox"
-                            name="remove_attachments"
-                            value="{{ attachment.id }}"
-                        >
-
-                        Remove Attachment
-
-                    </label>
-
-                </div>
-
-            {% endfor %}
 
         </div>
 
-    {% endif %}
 
-    <label for="attachments">
-        Add More Attachments
-    </label>
+        <div class="form-group">
 
-    <input
-        type="file"
-        id="attachments"
-        name="attachments"
-        accept="image/*"
-        multiple
-    >
+            <label for="category">
+                Category
+            </label>
 
-    <div class="resubmit-actions">
+            <select
+                id="category"
+                name="category"
+                required
+            >
 
-        <button
-            type="submit"
-            class="resubmit-button"
-        >
-            Resubmit for EIC Approval
-        </button>
+                {% for category in categories %}
 
-        <a
-            href="{% url 'my_submissions' %}"
-            class="cancel-link"
-        >
-            Cancel
-        </a>
+                    <option
+                        value="{{ category.id }}"
+                        {% if category.id == article.category.id %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ category.name }}
+                    </option>
 
-    </div>
+                {% endfor %}
 
-</form>
+            </select>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                Tags
+            </label>
+
+            {% if tags %}
+
+                <div class="tag-checkbox-grid">
+
+                    {% for tag in tags %}
+
+                        <label class="tag-checkbox-option">
+
+                            <input
+                                type="checkbox"
+                                name="tags"
+                                value="{{ tag.id }}"
+                                {% if tag in article.tags.all %}
+                                    checked
+                                {% endif %}
+                            >
+
+                            <span>
+                                {{ tag.name }}
+                            </span>
+
+                        </label>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <p class="form-help">
+                    No tags are currently available.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="content">
+                Article Content
+            </label>
+
+            <textarea
+                id="content"
+                name="content"
+                class="article-content-input"
+                required
+            >{{ article.content }}</textarea>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                Current Featured Image
+            </label>
+
+            {% if article.featured_image %}
+
+                <img
+                    src="{{ article.featured_image.url }}"
+                    alt="{{ article.title }}"
+                    class="current-image"
+                >
+
+            {% else %}
+
+                <p class="form-help">
+                    No featured image currently uploaded.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="featured_image">
+                Replace Featured Image
+            </label>
+
+            <input
+                type="file"
+                id="featured_image"
+                name="featured_image"
+                accept="image/*"
+            >
+
+            <p class="form-help">
+                Leave this empty to keep the current featured image.
+            </p>
+
+        </div>
+
+
+        {% if article.attachments.all %}
+
+            <div class="form-group">
+
+                <label>
+                    Current Attachments
+                </label>
+
+                <p class="form-help">
+                    Check Remove Attachment for images that should not be included in the revised article.
+                </p>
+
+                <div class="editable-attachment-gallery">
+
+                    {% for attachment in article.attachments.all %}
+
+                        <div class="editable-attachment-card">
+
+                            <img
+                                src="{{ attachment.image.url }}"
+                                alt="{{ attachment.caption|default:'Article attachment' }}"
+                                class="attachment-image"
+                            >
+
+                            {% if attachment.caption %}
+
+                                <p class="attachment-caption">
+                                    {{ attachment.caption }}
+                                </p>
+
+                            {% endif %}
+
+                            <label class="remove-attachment">
+
+                                <input
+                                    type="checkbox"
+                                    name="remove_attachments"
+                                    value="{{ attachment.id }}"
+                                >
+
+                                <span>
+                                    Remove Attachment
+                                </span>
+
+                            </label>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        {% endif %}
+
+
+        <div class="form-group">
+
+            <label for="attachments">
+                Add More Attachments
+            </label>
+
+            <input
+                type="file"
+                id="attachments"
+                name="attachments"
+                accept="image/*"
+                multiple
+            >
+
+        </div>
+
+
+        <div class="form-actions">
+
+            <button
+                type="submit"
+                class="approve-button"
+            >
+                Resubmit for EIC Approval
+            </button>
+
+            <a
+                href="{% url 'my_submissions' %}"
+                class="cancel-link"
+            >
+                Cancel
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
 
 {% endblock %}

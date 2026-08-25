@@ -4,70 +4,185 @@
 
 <h1>My Edit Requests</h1>
 
-<form method="GET">
+<p class="section-description">
+    View the status of your requests to edit published articles.
+</p>
 
-    <input
-        type="text"
-        name="q"
-        value="{{ search_query }}"
-        placeholder="Search edit requests..."
+<div class="request-toolbar">
+
+    <form
+        method="GET"
+        action="{% url 'my_edit_requests' %}"
+        class="search-form"
     >
 
-    <button type="submit">
-        Search
-    </button>
+        <input
+            type="text"
+            name="q"
+            value="{{ search_query }}"
+            placeholder="Search edit requests..."
+            class="search-input"
+        >
 
-    {% if search_query %}
-        <a href="{% url 'my_edit_requests' %}">
-            Clear
-        </a>
-    {% endif %}
+        <button
+            type="submit"
+            class="search-button"
+        >
+            Search
+        </button>
 
-</form>
+        {% if search_query %}
+
+            <a
+                href="{% url 'my_edit_requests' %}"
+                class="clear-search"
+            >
+                Clear
+            </a>
+
+        {% endif %}
+
+    </form>
+
+</div>
+
 
 {% if edit_requests %}
 
-    {% for edit_request in edit_requests %}
+    <div class="request-list">
 
-        <details>
+        {% for edit_request in edit_requests %}
 
-            <summary>
+            <details class="request-card">
 
-                <strong>
-                    {{ edit_request.article.title }}
-                </strong>
+                <summary class="request-summary">
 
-                —
-                {{ edit_request.get_status_display }}
+                    <div class="request-summary-content">
 
-            </summary>
+                        <div class="request-summary-info">
 
-            <p>
-                <strong>Requested:</strong>
-                {{ edit_request.created_at|date:"M. d, Y - g:i A" }}
-            </p>
+                            <h2 class="request-title">
+                                {{ edit_request.article.title }}
+                            </h2>
 
-            <p>
-                <strong>Reason:</strong>
-                {{ edit_request.reason|linebreaksbr }}
-            </p>
+                            <p class="request-meta">
+                                <strong>Requested:</strong>
+                                {{ edit_request.created_at|date:"M. d, Y - g:i A" }}
+                            </p>
 
-            {% if edit_request.reviewer_notes %}
+                            {% if edit_request.status == "PENDING" %}
 
-                <p>
-                    <strong>EIC Notes:</strong>
-                    {{ edit_request.reviewer_notes|linebreaksbr }}
-                </p>
+                                <span class="status-badge status-pending">
+                                    {{ edit_request.get_status_display }}
+                                </span>
 
-            {% endif %}
+                            {% elif edit_request.status == "APPROVED" %}
 
-        </details>
+                                <span class="status-badge status-approved">
+                                    {{ edit_request.get_status_display }}
+                                </span>
 
-    {% endfor %}
+                            {% elif edit_request.status == "REJECTED" %}
+
+                                <span class="status-badge status-rejected">
+                                    {{ edit_request.get_status_display }}
+                                </span>
+
+                            {% elif edit_request.status == "COMPLETED" %}
+
+                                <span class="status-badge status-completed">
+                                    {{ edit_request.get_status_display }}
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+                        <span class="expand-indicator"></span>
+
+                    </div>
+
+                </summary>
+
+                <div class="request-details">
+
+                    <p class="request-meta">
+                        <strong>Category:</strong>
+                        {{ edit_request.article.category.name }}
+                    </p>
+
+                    <div class="info-box">
+
+                        <strong>Reason for Edit</strong>
+
+                        <p>
+                            {{ edit_request.reason|linebreaksbr }}
+                        </p>
+
+                    </div>
+
+                    {% if edit_request.reviewer_notes %}
+
+                        <div class="reviewer-notes info-box">
+
+                            <strong>
+                                EIC Notes
+                            </strong>
+
+                            <p>
+                                {{ edit_request.reviewer_notes|linebreaksbr }}
+                            </p>
+
+                        </div>
+
+                    {% endif %}
+
+                    {% if edit_request.status == "APPROVED" and edit_request.draft_article %}
+
+                        <div class="request-actions">
+
+                            <a
+                                href="{% url 'edit_draft' edit_request.draft_article.id %}"
+                                class="edit-link"
+                            >
+                                Open Edit Draft
+                            </a>
+
+                        </div>
+
+                    {% endif %}
+
+                    {% if edit_request.status == "COMPLETED" %}
+
+                        <div class="success-box info-box">
+                            This edit request has been completed and the published article has been updated.
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            </details>
+
+        {% endfor %}
+
+    </div>
 
 {% else %}
 
-    <p>No edit requests found.</p>
+    {% if search_query %}
+
+        <p class="empty-message">
+            No edit requests matched your search.
+        </p>
+
+    {% else %}
+
+        <p class="empty-message">
+            You currently have no edit requests.
+        </p>
+
+    {% endif %}
 
 {% endif %}
 

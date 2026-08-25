@@ -23,26 +23,35 @@ class Tag(models.Model):
     def __str__(self):
         return self.name
 
+
 class Article(models.Model):
+    class DraftType(models.TextChoices):
+        NORMAL = "NORMAL", "Normal Draft"
+        EDIT_REQUEST = "EDIT_REQUEST", "Edit Request Draft"
+
     title = models.CharField(max_length=255)
-    slug = models.SlugField(max_length=255, unique=True)
+
+    slug = models.SlugField(
+        max_length=255,
+        unique=True,
+    )
 
     category = models.ForeignKey(
         Category,
         on_delete=models.PROTECT,
-        related_name="articles"
+        related_name="articles",
     )
 
     tags = models.ManyToManyField(
         Tag,
         blank=True,
-        related_name="articles"
+        related_name="articles",
     )
 
     author = models.ForeignKey(
         "accounts.User",
         on_delete=models.PROTECT,
-        related_name="articles"
+        related_name="articles",
     )
 
     content = models.TextField()
@@ -50,32 +59,55 @@ class Article(models.Model):
     featured_image = models.ImageField(
         upload_to="articles/",
         blank=True,
-        null=True
+        null=True,
     )
 
-    is_published = models.BooleanField(default=False)
+    draft_type = models.CharField(
+        max_length=20,
+        choices=DraftType.choices,
+        default=DraftType.NORMAL,
+    )
 
-    is_archived = models.BooleanField(default=False)
+    source_article = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="edit_drafts",
+    )
+
+    is_published = models.BooleanField(
+        default=False,
+    )
+
+    is_archived = models.BooleanField(
+        default=False,
+    )
 
     archived_at = models.DateTimeField(
         blank=True,
-        null=True
+        null=True,
     )
 
     published_at = models.DateTimeField(
         blank=True,
-        null=True
+        null=True,
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
 
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
 
     class Meta:
         ordering = ["-created_at"]
 
     def __str__(self):
         return self.title
+
 
 class ArticleAttachment(models.Model):
     article = models.ForeignKey(
@@ -85,7 +117,7 @@ class ArticleAttachment(models.Model):
     )
 
     image = models.ImageField(
-        upload_to="articles/attachments/"
+        upload_to="articles/attachments/",
     )
 
     caption = models.CharField(
@@ -94,7 +126,7 @@ class ArticleAttachment(models.Model):
     )
 
     uploaded_at = models.DateTimeField(
-        auto_now_add=True
+        auto_now_add=True,
     )
 
     class Meta:
@@ -103,8 +135,8 @@ class ArticleAttachment(models.Model):
     def __str__(self):
         return f"{self.article.title} - Attachment {self.id}"
 
-class Submission(models.Model):
 
+class Submission(models.Model):
     class Status(models.TextChoices):
         PENDING = "PENDING", "Pending Approval"
         APPROVED = "APPROVED", "Approved"
@@ -130,24 +162,24 @@ class Submission(models.Model):
     )
 
     reviewer_notes = models.TextField(
-        blank=True
+        blank=True,
     )
 
     submitted_at = models.DateTimeField(
-        auto_now_add=True
+        auto_now_add=True,
     )
 
     reviewed_at = models.DateTimeField(
         blank=True,
-        null=True
+        null=True,
     )
 
     resubmission_of = models.ForeignKey(
-    "self",
-    on_delete=models.SET_NULL,
-    blank=True,
-    null=True,
-    related_name="resubmissions",
+        "self",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="resubmissions",
     )
 
     class Meta:
@@ -156,12 +188,13 @@ class Submission(models.Model):
     def __str__(self):
         return f"{self.article.title} - {self.get_status_display()}"
 
-class EditRequest(models.Model):
 
+class EditRequest(models.Model):
     class Status(models.TextChoices):
         PENDING = "PENDING", "Pending"
         APPROVED = "APPROVED", "Approved"
         REJECTED = "REJECTED", "Rejected"
+        COMPLETED = "COMPLETED", "Completed"
 
     article = models.ForeignKey(
         Article,
@@ -175,6 +208,14 @@ class EditRequest(models.Model):
         related_name="edit_requests",
     )
 
+    draft_article = models.OneToOneField(
+        Article,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="originating_edit_request",
+    )
+
     reason = models.TextField()
 
     status = models.CharField(
@@ -184,16 +225,16 @@ class EditRequest(models.Model):
     )
 
     reviewer_notes = models.TextField(
-        blank=True
+        blank=True,
     )
 
     created_at = models.DateTimeField(
-        auto_now_add=True
+        auto_now_add=True,
     )
 
     reviewed_at = models.DateTimeField(
         blank=True,
-        null=True
+        null=True,
     )
 
     class Meta:
@@ -201,9 +242,9 @@ class EditRequest(models.Model):
 
     def __str__(self):
         return f"{self.article.title} - {self.get_status_display()}"
+
 
 class DeletionRequest(models.Model):
-
     class Status(models.TextChoices):
         PENDING = "PENDING", "Pending"
         APPROVED = "APPROVED", "Approved"
@@ -230,16 +271,16 @@ class DeletionRequest(models.Model):
     )
 
     reviewer_notes = models.TextField(
-        blank=True
+        blank=True,
     )
 
     created_at = models.DateTimeField(
-        auto_now_add=True
+        auto_now_add=True,
     )
 
     reviewed_at = models.DateTimeField(
         blank=True,
-        null=True
+        null=True,
     )
 
     class Meta:
@@ -248,8 +289,8 @@ class DeletionRequest(models.Model):
     def __str__(self):
         return f"{self.article.title} - {self.get_status_display()}"
 
-class ContentReport(models.Model):
 
+class ContentReport(models.Model):
     class Status(models.TextChoices):
         OPEN = "OPEN", "Open"
         CANCELLED = "CANCELLED", "Cancelled"
@@ -276,20 +317,20 @@ class ContentReport(models.Model):
     )
 
     staff_notes = models.TextField(
-        blank=True
+        blank=True,
     )
 
     created_at = models.DateTimeField(
-        auto_now_add=True
+        auto_now_add=True,
     )
 
     updated_at = models.DateTimeField(
-        auto_now=True
+        auto_now=True,
     )
 
     resolved_at = models.DateTimeField(
         blank=True,
-        null=True
+        null=True,
     )
 
     class Meta:

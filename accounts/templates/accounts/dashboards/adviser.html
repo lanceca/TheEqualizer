@@ -1,20 +1,68 @@
 {% extends "staff_base.html" %}
 
-{% block title %}
-    Adviser Dashboard
-{% endblock %}
-
 {% block staff_content %}
 
-    <h2>Adviser Dashboard</h2>
+<div class="dashboard-header">
 
-    <p>
-        Welcome,
-        {{ user.get_full_name|default:user.username }}.
+    <h1>Adviser Dashboard</h1>
+
+    <p class="dashboard-subtitle">
+        Monitor publication activity and performance.
     </p>
 
+</div>
+
+
+<div class="dashboard-welcome">
+
+    <h2>
+        Welcome, {{ request.user.username }}
+    </h2>
+
     <p>
-        Role: {{ user.role }}
+        Use this dashboard to monitor publication and staff activity.
     </p>
+
+</div>
+
+
+<div class="dashboard-grid">
+
+    <a
+        href="#"
+        class="dashboard-card accent-gold"
+    >
+
+        <h2>Reader Analytics</h2>
+
+        <p>
+            Monitor visits, reactions, shares, and article engagement.
+        </p>
+
+        <div class="dashboard-card-footer">
+            Analytics coming soon
+        </div>
+
+    </a>
+
+
+    <a
+        href="#"
+        class="dashboard-card"
+    >
+
+        <h2>Staff Analytics</h2>
+
+        <p>
+            Review submission, approval, rejection, and revision activity.
+        </p>
+
+        <div class="dashboard-card-footer">
+            Analytics coming soon
+        </div>
+
+    </a>
+
+</div>
 
 {% endblock %}

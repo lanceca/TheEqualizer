@@ -1,97 +1,78 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Create Article - The Equalizer</title>
+{% extends "staff_base.html" %}
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-        }
+{% block staff_content %}
 
-        form {
-            max-width: 700px;
-        }
+<h1>Create Article</h1>
 
-        label {
-            display: block;
-            margin-top: 20px;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
+<p class="section-description">
+    Create a new publication article and either save it as a draft or submit it for EIC approval.
+</p>
 
-        input,
-        select,
-        textarea {
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-        }
+<div class="content-panel article-form-panel">
 
-        textarea {
-            min-height: 250px;
-        }
-
-        button {
-            margin-top: 20px;
-            padding: 12px 20px;
-            cursor: pointer;
-        }
-    </style>
-</head>
-
-<body>
-
-    <h1>Create Article</h1>
-
-    <p>
+    <div class="info-box">
         Logged in as:
         <strong>{{ request.user.username }}</strong>
-    </p>
+    </div>
 
-    <form method="POST" enctype="multipart/form-data">
+    <form
+        method="POST"
+        enctype="multipart/form-data"
+        class="article-form"
+    >
 
         {% csrf_token %}
 
-        <label for="title">
-            Article Title
-        </label>
+        <div class="form-group">
 
-        <input
-            type="text"
-            id="title"
-            name="title"
-            required
-        >
+            <label for="title">
+                Article Title
+            </label>
 
-        <label for="category">
-            Category
-        </label>
+            <input
+                type="text"
+                id="title"
+                name="title"
+                required
+            >
 
-        <select
-            id="category"
-            name="category"
-            required
-        >
+        </div>
 
-            <option value="">
-                Select a category
-            </option>
 
-            {% for category in categories %}
+        <div class="form-group">
 
-                <option value="{{ category.id }}">
-                    {{ category.name }}
+            <label for="category">
+                Category
+            </label>
+
+            <select
+                id="category"
+                name="category"
+                required
+            >
+
+                <option value="">
+                    Select a category
                 </option>
 
-            {% endfor %}
+                {% for category in categories %}
 
-        </select>
+                    <option value="{{ category.id }}">
+                        {{ category.name }}
+                    </option>
 
-        <label for="featured_image">
-            Featured Image
-        </label>
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="featured_image">
+                Featured Image
+            </label>
 
             <input
                 type="file"
@@ -100,9 +81,18 @@
                 accept="image/*"
             >
 
-        <label for="attachments">
-             Article Attachments
-        </label>
+            <p class="form-help">
+                This image will be used as the main image for the article.
+            </p>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="attachments">
+                Article Attachments
+            </label>
 
             <input
                 type="file"
@@ -112,54 +102,94 @@
                 multiple
             >
 
-        <label>
-            Tags
-        </label>
+            <p class="form-help">
+                You may select multiple additional images.
+            </p>
 
-        {% for tag in tags %}
+        </div>
 
-            <label style="font-weight: normal;">
 
-                <input
-                    type="checkbox"
-                    name="tags"
-                    value="{{ tag.id }}"
-                    style="width: auto;"
-                >
+        <div class="form-group">
 
-                {{ tag.name }}
-
+            <label>
+                Tags
             </label>
 
-        {% endfor %}
+            {% if tags %}
 
-        <label for="content">
-            Article Content
-        </label>
+                <div class="tag-checkbox-grid">
 
-        <textarea
-            id="content"
-            name="content"
-            required
-        ></textarea>
+                    {% for tag in tags %}
 
-        <button
-            type="submit"
-            name="action"
-            value="draft"
-        >
-            Save Draft
-        </button>
+                        <label class="tag-checkbox-option">
 
-        <button
-            type="submit"
-            name="action"
-            value="submit"
-        >
-            Submit for EIC Approval
-        </button>
+                            <input
+                                type="checkbox"
+                                name="tags"
+                                value="{{ tag.id }}"
+                            >
+
+                            <span>
+                                {{ tag.name }}
+                            </span>
+
+                        </label>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <p class="form-help">
+                    No tags are currently available.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="content">
+                Article Content
+            </label>
+
+            <textarea
+                id="content"
+                name="content"
+                class="article-content-input"
+                required
+            ></textarea>
+
+        </div>
+
+
+        <div class="form-actions">
+
+            <button
+                type="submit"
+                name="action"
+                value="draft"
+                class="secondary-action-button"
+            >
+                Save Draft
+            </button>
+
+            <button
+                type="submit"
+                name="action"
+                value="submit"
+                class="approve-button"
+            >
+                Submit for EIC Approval
+            </button>
+
+        </div>
 
     </form>
 
-</body>
-</html>
+</div>
+
+{% endblock %}

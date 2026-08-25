@@ -1,174 +1,340 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
+
+<link
+    rel="stylesheet"
+    href="{% static 'css/equalizer.css' %}"
+>
 
 <div class="staff-layout">
 
     <aside class="staff-sidebar">
 
-        <h2>Staff CMS</h2>
+        <div class="staff-brand">
 
-        <nav>
+            <div class="staff-brand-mark">
+            </div>
 
-            <a href="{% url 'dashboard' %}">
-                Dashboard
-            </a>
+            <div>
+                <h2>The Equalizer</h2>
+                <p>Staff CMS</p>
+            </div>
+
+        </div>
+
+        <div class="staff-user-info">
+
+            <strong>
+                {{ request.user.username }}
+            </strong>
+
+            <span>
+                {{ request.user.get_role_display }}
+            </span>
+
+        </div>
+
+        <nav class="staff-nav">
+
+            <div class="staff-nav-section">
+
+                <p class="staff-nav-label">
+                    Main
+                </p>
+
+                <a href="{% url 'dashboard' %}">
+                    Dashboard
+                </a>
+
+            </div>
 
             {% if request.user.role == "SUPER_ADMIN" %}
 
-                <a href="#">
-                    Manage Admin Accounts
-                </a>
+                <div class="staff-nav-section">
 
-                <a href="#">
-                    Notifications
-                </a>
+                    <p class="staff-nav-label">
+                        Administration
+                    </p>
 
-                <a href="#">
-                    Profile
-                </a>
+                    <a href="#">
+                        Manage Admin Accounts
+                    </a>
+
+                </div>
+
+                <div class="staff-nav-section">
+
+                    <p class="staff-nav-label">
+                        Account
+                    </p>
+
+                    <a href="#">
+                        Notifications
+                    </a>
+
+                    <a href="#">
+                        Profile
+                    </a>
+
+                </div>
 
             {% elif request.user.role == "ADMIN" %}
 
-                <a href="#">
-                    Manage Staff Accounts
-                </a>
+                <div class="staff-nav-section">
 
-                <a href="#">
-                    Notifications
-                </a>
+                    <p class="staff-nav-label">
+                        Administration
+                    </p>
 
-                <a href="#">
-                    Profile
-                </a>
+                    <a href="#">
+                        Manage Staff Accounts
+                    </a>
+
+                </div>
+
+                <div class="staff-nav-section">
+
+                    <p class="staff-nav-label">
+                        Account
+                    </p>
+
+                    <a href="#">
+                        Notifications
+                    </a>
+
+                    <a href="#">
+                        Profile
+                    </a>
+
+                </div>
 
             {% elif request.user.role == "ADVISER" %}
 
-                <a href="#">
-                    Analytics
-                </a>
+                <div class="staff-nav-section">
 
-                <a href="#">
-                    Notifications
-                </a>
+                    <p class="staff-nav-label">
+                        Oversight
+                    </p>
 
-                <a href="#">
-                    Profile
-                </a>
+                    <a href="#">
+                        Analytics
+                    </a>
+
+                </div>
+
+                <div class="staff-nav-section">
+
+                    <p class="staff-nav-label">
+                        Account
+                    </p>
+
+                    <a href="#">
+                        Notifications
+                    </a>
+
+                    <a href="#">
+                        Profile
+                    </a>
+
+                </div>
 
             {% elif request.user.role == "EIC" %}
 
-                <a href="{% url 'create_article' %}">
-                    Create Article
-                </a>
+                <div class="staff-nav-section">
 
-                <a href="{% url 'pending_submissions' %}">
-                    Pending Submissions
-                </a>
+                    <p class="staff-nav-label">
+                        Editorial
+                    </p>
 
-                <a href="{% url 'published_articles' %}">
-                    Published Articles
-                </a>
+                    <a href="{% url 'create_article' %}">
+                        Create Article
+                    </a>
 
-                <a href="{% url 'eic_edit_requests' %}">
-                    Edit Requests
-                </a>
+                    <a href="{% url 'pending_submissions' %}">
+                        Pending Submissions
+                    </a>
 
-                <a href="#">
-                    Deletion Requests
-                </a>
+                    <a href="{% url 'published_articles' %}">
+                        Published Articles
+                    </a>
 
-                <a href="#">
-                    Staff Reports
-                </a>
+                </div>
 
-                <a href="#">
-                    Archive
-                </a>
+                <div class="staff-nav-section">
 
-                <a href="#">
-                    Notifications
-                </a>
+                    <p class="staff-nav-label">
+                        Requests
+                    </p>
 
-                <a href="#">
-                    Profile
-                </a>
+                    <a href="{% url 'eic_edit_requests' %}">
+                        Edit Requests
+                    </a>
+
+                    <a href="#">
+                        Deletion Requests
+                    </a>
+
+                    <a href="#">
+                        Staff Reports
+                    </a>
+
+                </div>
+
+                <div class="staff-nav-section">
+
+                    <p class="staff-nav-label">
+                        Management
+                    </p>
+
+                    <a href="#">
+                        Archive
+                    </a>
+
+                </div>
+
+                <div class="staff-nav-section">
+
+                    <p class="staff-nav-label">
+                        Account
+                    </p>
+
+                    <a href="#">
+                        Notifications
+                    </a>
+
+                    <a href="#">
+                        Profile
+                    </a>
+
+                </div>
 
             {% elif request.user.role == "EDITOR" %}
 
-                <a href="{% url 'published_articles' %}">
-                    Published Articles
-                </a>
+                <div class="staff-nav-section">
 
-                <a href="{% url 'create_article' %}">
-                    Create Article
-                </a>
+                    <p class="staff-nav-label">
+                        Content
+                    </p>
 
-                <a href="{% url 'my_drafts' %}">
-                    My Drafts
-                </a>
+                    <a href="{% url 'create_article' %}">
+                        Create Article
+                    </a>
 
-                <a href="{% url 'my_submissions' %}">
-                    My Submissions
-                </a>
+                    <a href="{% url 'my_drafts' %}">
+                        My Drafts
+                    </a>
 
-                <a href="{% url 'resubmitted_submissions' %}">
-                 Resubmitted Submissions
-                </a>
+                    <a href="{% url 'my_submissions' %}">
+                        My Submissions
+                    </a>
 
-                <a href="{% url 'my_edit_requests' %}">
-                    Edit Requests
-                </a>
+                    <a href="{% url 'resubmitted_submissions' %}">
+                        Resubmitted Submissions
+                    </a>
 
-                <a href="#">
-                    Deletion Requests
-                </a>
+                    <a href="{% url 'published_articles' %}">
+                        Published Articles
+                    </a>
 
-                <a href="#">
-                    Notifications
-                </a>
+                </div>
 
-                <a href="#">
-                    Profile
-                </a>
+                <div class="staff-nav-section">
+
+                    <p class="staff-nav-label">
+                        Requests
+                    </p>
+
+                    <a href="{% url 'my_edit_requests' %}">
+                        Edit Requests
+                    </a>
+
+                    <a href="#">
+                        Deletion Requests
+                    </a>
+
+                </div>
+
+                <div class="staff-nav-section">
+
+                    <p class="staff-nav-label">
+                        Account
+                    </p>
+
+                    <a href="#">
+                        Notifications
+                    </a>
+
+                    <a href="#">
+                        Profile
+                    </a>
+
+                </div>
 
             {% elif request.user.role == "STAFF" %}
 
-                <a href="#">
-                    Content Reports
-                </a>
+                <div class="staff-nav-section">
 
-                <a href="#">
-                    My Reports
-                </a>
+                    <p class="staff-nav-label">
+                        Reports
+                    </p>
 
-                <a href="#">
-                    Notifications
-                </a>
+                    <a href="#">
+                        Content Reports
+                    </a>
 
-                <a href="#">
-                    Profile
-                </a>
+                    <a href="#">
+                        My Reports
+                    </a>
+
+                </div>
+
+                <div class="staff-nav-section">
+
+                    <p class="staff-nav-label">
+                        Account
+                    </p>
+
+                    <a href="#">
+                        Notifications
+                    </a>
+
+                    <a href="#">
+                        Profile
+                    </a>
+
+                </div>
 
             {% endif %}
 
-            <a href="{% url 'logout' %}">
-                Logout
-            </a>
+            <div class="staff-nav-section staff-nav-bottom">
+
+                <a
+                    href="{% url 'logout' %}"
+                    class="logout-link"
+                >
+                    Logout
+                </a>
+
+            </div>
 
         </nav>
 
     </aside>
 
-    <section class="staff-content">
 
-        {% block staff_content %}
-        {% endblock %}
+    <main class="staff-content">
 
-    </section>
+        <div class="page-container">
+
+            {% block staff_content %}
+            {% endblock %}
+
+        </div>
+
+    </main>
 
 </div>
 
 {% endblock %}
-
-

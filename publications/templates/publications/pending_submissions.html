@@ -2,178 +2,9 @@
 
 {% block staff_content %}
 
-<style>
-    .submission-list {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        margin-top: 25px;
-    }
-
-    .submission-card {
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        overflow: hidden;
-    }
-
-    .submission-summary {
-        padding: 18px 20px;
-        cursor: pointer;
-        list-style: none;
-    }
-
-    .submission-summary::-webkit-details-marker {
-        display: none;
-    }
-
-    .submission-summary-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 20px;
-    }
-
-    .submission-summary-info {
-        flex: 1;
-    }
-
-    .submission-title {
-        margin: 0 0 8px 0;
-    }
-
-    .submission-meta {
-        margin: 3px 0;
-    }
-
-    .expand-indicator {
-        font-size: 20px;
-        font-weight: bold;
-    }
-
-    details[open] .expand-indicator::before {
-        content: "▲";
-    }
-
-    details:not([open]) .expand-indicator::before {
-        content: "▼";
-    }
-
-    .submission-details {
-        border-top: 1px solid #ccc;
-        padding: 20px;
-    }
-
-    .featured-image-container {
-        margin: 20px 0;
-    }
-
-    .featured-image {
-        width: 320px;
-        height: 200px;
-        object-fit: cover;
-        display: block;
-        border-radius: 6px;
-    }
-
-    .article-content {
-        margin-top: 20px;
-    }
-
-    .attachment-gallery {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
-        margin-top: 15px;
-    }
-
-    .attachment-item {
-        width: 160px;
-    }
-
-    .attachment-image {
-        width: 160px;
-        height: 110px;
-        object-fit: cover;
-        display: block;
-        border-radius: 6px;
-    }
-
-    .attachment-caption {
-        margin-top: 5px;
-        font-size: 14px;
-    }
-
-    .review-section {
-        margin-top: 30px;
-        padding-top: 20px;
-        border-top: 1px solid #ccc;
-    }
-
-    .review-section label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: bold;
-    }
-
-    .review-section textarea {
-        width: 100%;
-        max-width: 700px;
-        min-height: 100px;
-        padding: 10px;
-        box-sizing: border-box;
-        resize: vertical;
-    }
-
-    .review-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 15px;
-    }
-
-    .review-actions button {
-        padding: 10px 16px;
-        cursor: pointer;
-    }
-
-    .submission-toolbar {
-    margin-top: 20px;
-    margin-bottom: 25px;
-    }
-
-    .search-form {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    max-width: 650px;
-    }
-
-    .search-input {
-    flex: 1;
-    min-width: 240px;
-    padding: 9px;
-    box-sizing: border-box;
-    }
-
-    .search-button {
-    padding: 9px 15px;
-    cursor: pointer;
-    }
-
-    .clear-search {
-    display: inline-block;
-    padding: 9px 15px;
-    border: 1px solid #aaa;
-    border-radius: 4px;
-    text-decoration: none;
-    color: inherit;
-    }
-    
-</style>
-
 <h1>Pending Submissions</h1>
 
-<p>
+<p class="section-description">
     Articles waiting for Editor in Chief review.
 </p>
 
@@ -215,6 +46,7 @@
 
 </div>
 
+
 {% if submissions %}
 
     <div class="submission-list">
@@ -243,6 +75,28 @@
                                 {{ submission.submitted_at|date:"M. d, Y - g:i A" }}
                             </p>
 
+                            <div class="submission-badges">
+
+                                <span class="status-badge status-pending">
+                                    {{ submission.get_status_display }}
+                                </span>
+
+                                {% if submission.article.draft_type == "EDIT_REQUEST" %}
+
+                                    <span class="badge badge-edit">
+                                        Edit Request Submission
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge badge-normal">
+                                        New Article
+                                    </span>
+
+                                {% endif %}
+
+                            </div>
+
                         </div>
 
                         <span class="expand-indicator"></span>
@@ -251,23 +105,55 @@
 
                 </summary>
 
+
                 <div class="submission-details">
 
-                    <p>
-                        <strong>Category:</strong>
-                        {{ submission.article.category.name }}
-                    </p>
+                    {% if submission.article.draft_type == "EDIT_REQUEST" %}
 
-                    <p>
-                        <strong>Status:</strong>
-                        {{ submission.get_status_display }}
-                    </p>
+                        <div class="source-article-box">
+
+                            <strong>
+                                Edit Request Submission
+                            </strong>
+
+                            {% if submission.article.source_article %}
+
+                                <p>
+                                    <strong>Original Published Article:</strong>
+                                    {{ submission.article.source_article.title }}
+                                </p>
+
+                            {% endif %}
+
+                            <p>
+                                Approving this submission will update the existing published article instead of creating another published copy.
+                            </p>
+
+                        </div>
+
+                    {% endif %}
+
+
+                    <div class="submission-information">
+
+                        <p class="submission-meta">
+                            <strong>Category:</strong>
+                            {{ submission.article.category.name }}
+                        </p>
+
+                        <p class="submission-meta">
+                            <strong>Status:</strong>
+                            {{ submission.get_status_display }}
+                        </p>
+
+                    </div>
+
 
                     {% if submission.article.featured_image %}
 
-                        <h3>Featured Image</h3>
-
                         <div class="featured-image-container">
+
+                            <h3>Featured Image</h3>
 
                             <img
                                 src="{{ submission.article.featured_image.url }}"
@@ -279,6 +165,7 @@
 
                     {% endif %}
 
+
                     <div class="article-content">
 
                         <h3>Article Content</h3>
@@ -289,37 +176,66 @@
 
                     </div>
 
-                    {% if submission.article.attachments.all %}
 
-                        <h3>Attached Images</h3>
+                    {% if submission.article.tags.all %}
 
-                        <div class="attachment-gallery">
+                        <div class="article-tags">
 
-                            {% for attachment in submission.article.attachments.all %}
+                            <h3>Tags</h3>
 
-                                <div class="attachment-item">
+                            <div class="tag-list">
 
-                                    <img
-                                        src="{{ attachment.image.url }}"
-                                        alt="{{ attachment.caption|default:'Article attachment' }}"
-                                        class="attachment-image"
-                                    >
+                                {% for tag in submission.article.tags.all %}
 
-                                    {% if attachment.caption %}
+                                    <span class="tag-item">
+                                        {{ tag.name }}
+                                    </span>
 
-                                        <p class="attachment-caption">
-                                            {{ attachment.caption }}
-                                        </p>
+                                {% endfor %}
 
-                                    {% endif %}
-
-                                </div>
-
-                            {% endfor %}
+                            </div>
 
                         </div>
 
                     {% endif %}
+
+
+                    {% if submission.article.attachments.all %}
+
+                        <div class="article-attachments">
+
+                            <h3>Attached Images</h3>
+
+                            <div class="attachment-gallery">
+
+                                {% for attachment in submission.article.attachments.all %}
+
+                                    <div class="attachment-item">
+
+                                        <img
+                                            src="{{ attachment.image.url }}"
+                                            alt="{{ attachment.caption|default:'Article attachment' }}"
+                                            class="attachment-image"
+                                        >
+
+                                        {% if attachment.caption %}
+
+                                            <p class="attachment-caption">
+                                                {{ attachment.caption }}
+                                            </p>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                {% endfor %}
+
+                            </div>
+
+                        </div>
+
+                    {% endif %}
+
 
                     <div class="review-section">
 
@@ -342,12 +258,14 @@
                                 placeholder="Add optional notes for the Editor..."
                             ></textarea>
 
+
                             <div class="review-actions">
 
                                 <button
                                     type="submit"
                                     name="action"
                                     value="approve"
+                                    class="approve-button"
                                 >
                                     Approve
                                 </button>
@@ -356,6 +274,7 @@
                                     type="submit"
                                     name="action"
                                     value="revision"
+                                    class="revision-button"
                                 >
                                     Send Back for Revision
                                 </button>
@@ -364,6 +283,7 @@
                                     type="submit"
                                     name="action"
                                     value="reject"
+                                    class="danger-button"
                                 >
                                     Reject
                                 </button>
@@ -384,9 +304,19 @@
 
 {% else %}
 
-    <p>
-        There are currently no pending submissions.
-    </p>
+    {% if search_query %}
+
+        <p class="empty-message">
+            No pending submissions matched your search.
+        </p>
+
+    {% else %}
+
+        <p class="empty-message">
+            There are currently no pending submissions.
+        </p>
+
+    {% endif %}
 
 {% endif %}
 

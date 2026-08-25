@@ -1,20 +1,50 @@
 {% extends "staff_base.html" %}
 
-{% block title %}
-    Super Admin Dashboard
-{% endblock %}
-
 {% block staff_content %}
 
-    <h2>Super Admin Dashboard</h2>
+<div class="dashboard-header">
 
-    <p>
-        Welcome,
-        {{ user.get_full_name|default:user.username }}.
+    <h1>Super Admin Dashboard</h1>
+
+    <p class="dashboard-subtitle">
+        Manage administrative access to The Equalizer CMS.
     </p>
 
+</div>
+
+
+<div class="dashboard-welcome">
+
+    <h2>
+        Welcome, {{ request.user.username }}
+    </h2>
+
     <p>
-        Role: {{ user.role }}
+        Manage the administrators responsible for publication staff accounts.
     </p>
+
+</div>
+
+
+<div class="dashboard-grid">
+
+    <a
+        href="#"
+        class="dashboard-card accent-dark"
+    >
+
+        <h2>Manage Admin Accounts</h2>
+
+        <p>
+            Create, update, and manage administrator accounts.
+        </p>
+
+        <div class="dashboard-card-footer">
+            Account management coming soon
+        </div>
+
+    </a>
+
+</div>
 
 {% endblock %}

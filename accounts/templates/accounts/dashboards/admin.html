@@ -1,20 +1,50 @@
 {% extends "staff_base.html" %}
 
-{% block title %}
-    Admin Dashboard
-{% endblock %}
-
 {% block staff_content %}
 
-    <h2>Admin Dashboard</h2>
+<div class="dashboard-header">
 
-    <p>
-        Welcome,
-        {{ user.get_full_name|default:user.username }}.
+    <h1>Admin Dashboard</h1>
+
+    <p class="dashboard-subtitle">
+        Manage publication staff accounts and system access.
     </p>
 
+</div>
+
+
+<div class="dashboard-welcome">
+
+    <h2>
+        Welcome, {{ request.user.username }}
+    </h2>
+
     <p>
-        Role: {{ user.role }}
+        Manage staff accounts and publication access.
     </p>
+
+</div>
+
+
+<div class="dashboard-grid">
+
+    <a
+        href="#"
+        class="dashboard-card"
+    >
+
+        <h2>Manage Staff Accounts</h2>
+
+        <p>
+            Create, update, or manage Adviser, EIC, Editor, and Staff accounts.
+        </p>
+
+        <div class="dashboard-card-footer">
+            Account management coming soon
+        </div>
+
+    </a>
+
+</div>
 
 {% endblock %}
