@@ -121,7 +121,13 @@
                         <div class="submission-summary-info">
 
                             <h2 class="submission-title">
-                                {{ submission.article.title }}
+
+                                {% if submission.snapshot_title %}
+                                    {{ submission.snapshot_title }}
+                                {% else %}
+                                    {{ submission.article.title }}
+                                {% endif %}
+
                             </h2>
 
                             <p class="submission-meta">
@@ -178,6 +184,15 @@
 
                                 {% endif %}
 
+
+                                {% if not submission.snapshot_title %}
+
+                                    <span class="badge">
+                                        Legacy Record
+                                    </span>
+
+                                {% endif %}
+
                             </div>
 
                         </div>
@@ -190,6 +205,25 @@
 
 
                 <div class="submission-details">
+
+                    {% if not submission.snapshot_title %}
+
+                        <div class="warning-box info-box">
+
+                            <strong>
+                                Legacy Submission
+                            </strong>
+
+                            <p>
+                                This submission was created before historical
+                                snapshots were enabled. The exact version that
+                                was originally submitted was not stored.
+                            </p>
+
+                        </div>
+
+                    {% endif %}
+
 
                     {% if submission.article.draft_type == "EDIT_REQUEST" %}
 
@@ -209,7 +243,8 @@
                             {% endif %}
 
                             <p>
-                                This submission contains edits to an existing published article.
+                                This submission contains edits to an existing
+                                published article.
                             </p>
 
                         </div>
@@ -220,8 +255,15 @@
                     <div class="submission-information">
 
                         <p class="submission-meta">
+
                             <strong>Category:</strong>
-                            {{ submission.article.category.name }}
+
+                            {% if submission.snapshot_category_name %}
+                                {{ submission.snapshot_category_name }}
+                            {% else %}
+                                {{ submission.article.category.name }}
+                            {% endif %}
+
                         </p>
 
                         {% if submission.reviewed_at %}
@@ -236,7 +278,21 @@
                     </div>
 
 
-                    {% if submission.article.featured_image %}
+                    {% if submission.snapshot_featured_image %}
+
+                        <div class="featured-image-container">
+
+                            <h3>Featured Image</h3>
+
+                            <img
+                                src="{{ submission.snapshot_featured_image_url }}"
+                                alt="{{ submission.snapshot_title|default:submission.article.title }}"
+                                class="featured-image"
+                            >
+
+                        </div>
+
+                    {% elif not submission.snapshot_title and submission.article.featured_image %}
 
                         <div class="featured-image-container">
 
@@ -258,13 +314,39 @@
                         <h3>Article Content</h3>
 
                         <p>
-                            {{ submission.article.content|linebreaksbr }}
+
+                            {% if submission.snapshot_content %}
+                                {{ submission.snapshot_content|linebreaksbr }}
+                            {% else %}
+                                {{ submission.article.content|linebreaksbr }}
+                            {% endif %}
+
                         </p>
 
                     </div>
 
 
-                    {% if submission.article.tags.all %}
+                    {% if submission.snapshot_tags %}
+
+                        <div class="article-tags">
+
+                            <h3>Tags</h3>
+
+                            <div class="tag-list">
+
+                                {% for tag in submission.snapshot_tags %}
+
+                                    <span class="tag-item">
+                                        {{ tag }}
+                                    </span>
+
+                                {% endfor %}
+
+                            </div>
+
+                        </div>
+
+                    {% elif not submission.snapshot_title and submission.article.tags.all %}
 
                         <div class="article-tags">
 
@@ -287,7 +369,41 @@
                     {% endif %}
 
 
-                    {% if submission.article.attachments.all %}
+                    {% if submission.snapshot_attachments.all %}
+
+                        <div class="article-attachments">
+
+                            <h3>Attached Images</h3>
+
+                            <div class="attachment-gallery">
+
+                                {% for attachment in submission.snapshot_attachments.all %}
+
+                                    <div class="attachment-item">
+
+                                        <img
+                                            src="{{ attachment.image_url }}"
+                                            alt="{{ attachment.caption|default:'Article attachment' }}"
+                                            class="attachment-image"
+                                        >
+
+                                        {% if attachment.caption %}
+
+                                            <p class="attachment-caption">
+                                                {{ attachment.caption }}
+                                            </p>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                {% endfor %}
+
+                            </div>
+
+                        </div>
+
+                    {% elif not submission.snapshot_title and submission.article.attachments.all %}
 
                         <div class="article-attachments">
 
