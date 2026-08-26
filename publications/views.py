@@ -69,11 +69,13 @@ def create_article(request):
 
         if action == "submit":
 
-            Submission.objects.create(
+            submission = Submission.objects.create(
                 article=article,
                 submitted_by=request.user,
                 status=Submission.Status.PENDING,
             )
+
+            submission.capture_article_snapshot()
 
         return redirect("dashboard")
 
@@ -111,12 +113,16 @@ def pending_submissions(request):
         .prefetch_related(
             "article__attachments",
             "article__tags",
+            "snapshot_attachments",
         )
     )
 
     if search_query:
         submissions = submissions.filter(
-            Q(article__title__icontains=search_query)
+            Q(snapshot_title__icontains=search_query)
+            | Q(snapshot_content__icontains=search_query)
+            | Q(snapshot_category_name__icontains=search_query)
+            | Q(article__title__icontains=search_query)
             | Q(article__content__icontains=search_query)
             | Q(article__category__name__icontains=search_query)
             | Q(article__tags__name__icontains=search_query)
@@ -191,16 +197,11 @@ def review_submission(request, submission_id):
                     id=article.source_article_id
                 )
 
-                # Locate the EditRequest linked to this draft.
-                #
-                # First try the new direct relationship.
                 edit_request = EditRequest.objects.filter(
                     draft_article=article,
                     status=EditRequest.Status.APPROVED,
                 ).first()
 
-                # Backward compatibility for edit drafts that existed
-                # before draft_article was added to EditRequest.
                 if edit_request is None:
                     edit_request = (
                         EditRequest.objects
@@ -225,19 +226,6 @@ def review_submission(request, submission_id):
                         "No approved edit request is connected to this draft."
                     )
 
-                # ------------------------------------------
-                # Replace the original article's CONTENT.
-                #
-                # We intentionally keep:
-                # - original database ID
-                # - original slug
-                # - original publication date
-                # - original author
-                #
-                # This keeps old public URLs and future
-                # analytics connected to the same article.
-                # ------------------------------------------
-
                 original_article.title = article.title
                 original_article.category = article.category
                 original_article.content = article.content
@@ -248,13 +236,10 @@ def review_submission(request, submission_id):
 
                 original_article.save()
 
-                # Replace tags.
                 original_article.tags.set(
                     article.tags.all()
                 )
 
-                # Replace attachment records with the
-                # current attachment set from the edit draft.
                 original_article.attachments.all().delete()
 
                 for attachment in article.attachments.all():
@@ -264,22 +249,16 @@ def review_submission(request, submission_id):
                         caption=attachment.caption,
                     )
 
-                # Mark the submitted draft as approved.
                 submission.status = Submission.Status.APPROVED
                 submission.reviewer_notes = reviewer_notes
                 submission.reviewed_at = timezone.now()
                 submission.save()
 
-                # Complete the Edit Request.
                 edit_request.status = EditRequest.Status.COMPLETED
                 edit_request.save(
                     update_fields=["status"]
                 )
 
-                # The temporary edit copy has finished its job.
-                #
-                # Archive instead of hard deleting so the
-                # submission/edit history remains available.
                 article.is_archived = True
                 article.archived_at = timezone.now()
                 article.is_published = False
@@ -352,9 +331,6 @@ def my_submissions(request):
             resubmissions__isnull=True,
         )
         .exclude(
-            # Once an original published article has an
-            # approved/completed Edit Request, its ORIGINAL
-            # submission should disappear from My Submissions.
             article__edit_requests__status__in=[
                 EditRequest.Status.APPROVED,
                 EditRequest.Status.COMPLETED,
@@ -368,6 +344,7 @@ def my_submissions(request):
         .prefetch_related(
             "article__attachments",
             "article__tags",
+            "snapshot_attachments",
         )
     )
 
@@ -385,7 +362,10 @@ def my_submissions(request):
 
     if search_query:
         submissions = submissions.filter(
-            Q(article__title__icontains=search_query)
+            Q(snapshot_title__icontains=search_query)
+            | Q(snapshot_content__icontains=search_query)
+            | Q(snapshot_category_name__icontains=search_query)
+            | Q(article__title__icontains=search_query)
             | Q(article__content__icontains=search_query)
             | Q(article__category__name__icontains=search_query)
             | Q(article__tags__name__icontains=search_query)
@@ -425,6 +405,7 @@ def revise_submission(request, submission_id):
         .prefetch_related(
             "article__attachments",
             "article__tags",
+            "snapshot_attachments",
         ),
         id=submission_id,
         submitted_by=request.user,
@@ -501,12 +482,14 @@ def revise_submission(request, submission_id):
                 image=image,
             )
 
-        Submission.objects.create(
+        new_submission = Submission.objects.create(
             article=article,
             submitted_by=request.user,
             status=Submission.Status.PENDING,
             resubmission_of=submission,
         )
+
+        new_submission.capture_article_snapshot()
 
         return redirect("my_submissions")
 
@@ -544,6 +527,8 @@ def resubmitted_submissions(request):
         .prefetch_related(
             "article__attachments",
             "article__tags",
+            "snapshot_attachments",
+            "resubmission_of__snapshot_attachments",
         )
         .order_by("-submitted_at")
     )
@@ -602,10 +587,6 @@ def my_drafts(request):
         .distinct()
     )
 
-    # ----------------------------------------------
-    # Two separate draft categories
-    # ----------------------------------------------
-
     normal_drafts = drafts.filter(
         draft_type=Article.DraftType.NORMAL
     )
@@ -618,14 +599,9 @@ def my_drafts(request):
         request,
         "publications/my_drafts.html",
         {
-            # Keep this temporarily for compatibility
-            # with the current template.
             "drafts": drafts,
-
-            # New separated lists.
             "normal_drafts": normal_drafts,
             "edit_request_drafts": edit_request_drafts,
-
             "search_query": search_query,
         },
     )
@@ -656,9 +632,6 @@ def edit_draft(request, article_id):
         submissions__isnull=True,
     )
 
-    # Extra protection:
-    # an Edit Request Draft must still be connected
-    # to an approved EditRequest.
     if article.draft_type == Article.DraftType.EDIT_REQUEST:
 
         approved_request_exists = EditRequest.objects.filter(
@@ -700,8 +673,6 @@ def edit_draft(request, article_id):
             id=category_id,
         )
 
-        # Edit Request drafts use their own temporary slug.
-        # Changing this DOES NOT change the public article's slug.
         base_slug = slugify(title) or "article"
 
         if article.draft_type == Article.DraftType.EDIT_REQUEST:
@@ -745,11 +716,13 @@ def edit_draft(request, article_id):
 
         if action == "submit":
 
-            Submission.objects.create(
+            submission = Submission.objects.create(
                 article=article,
                 submitted_by=request.user,
                 status=Submission.Status.PENDING,
             )
+
+            submission.capture_article_snapshot()
 
             return redirect("my_submissions")
 
@@ -774,11 +747,6 @@ def delete_draft(request, article_id):
             "You do not have permission to delete this draft."
         )
 
-    # Only NORMAL drafts may use the normal Delete Draft action.
-    #
-    # Edit Request Drafts are controlled by the
-    # Edit Request workflow and should not be
-    # accidentally hard-deleted here.
     article = get_object_or_404(
         Article,
         id=article_id,
@@ -1095,9 +1063,6 @@ def review_edit_request(request, request_id):
             edit_request.status = EditRequest.Status.APPROVED
             edit_request.reviewer_notes = reviewer_notes
             edit_request.reviewed_at = timezone.now()
-
-            # Explicitly connect this request to the
-            # temporary draft that it created.
             edit_request.draft_article = edit_draft
 
             edit_request.save()

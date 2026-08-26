@@ -1,10 +1,21 @@
+from django.core.files.storage import default_storage
 from django.db import models
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    slug = models.SlugField(max_length=100, unique=True)
-    description = models.TextField(blank=True)
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+    )
+
+    slug = models.SlugField(
+        max_length=100,
+        unique=True,
+    )
+
+    description = models.TextField(
+        blank=True,
+    )
 
     class Meta:
         ordering = ["name"]
@@ -14,8 +25,15 @@ class Category(models.Model):
 
 
 class Tag(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    slug = models.SlugField(max_length=100, unique=True)
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+    )
+
+    slug = models.SlugField(
+        max_length=100,
+        unique=True,
+    )
 
     class Meta:
         ordering = ["name"]
@@ -29,7 +47,9 @@ class Article(models.Model):
         NORMAL = "NORMAL", "Normal Draft"
         EDIT_REQUEST = "EDIT_REQUEST", "Edit Request Draft"
 
-    title = models.CharField(max_length=255)
+    title = models.CharField(
+        max_length=255,
+    )
 
     slug = models.SlugField(
         max_length=255,
@@ -182,11 +202,138 @@ class Submission(models.Model):
         related_name="resubmissions",
     )
 
+    # =========================
+    # SUBMISSION SNAPSHOT
+    # =========================
+
+    snapshot_title = models.CharField(
+        max_length=255,
+        blank=True,
+    )
+
+    snapshot_content = models.TextField(
+        blank=True,
+    )
+
+    snapshot_category_name = models.CharField(
+        max_length=100,
+        blank=True,
+    )
+
+    snapshot_tags = models.JSONField(
+        default=list,
+        blank=True,
+    )
+
+    snapshot_featured_image = models.CharField(
+        max_length=500,
+        blank=True,
+    )
+
     class Meta:
         ordering = ["-submitted_at"]
 
     def __str__(self):
-        return f"{self.article.title} - {self.get_status_display()}"
+        return (
+            f"{self.snapshot_title or self.article.title} - "
+            f"{self.get_status_display()}"
+        )
+
+    def capture_article_snapshot(self):
+        """
+        Capture the article exactly as it exists at the moment
+        this Submission is created.
+        """
+
+        article = self.article
+
+        self.snapshot_title = article.title
+        self.snapshot_content = article.content
+
+        self.snapshot_category_name = (
+            article.category.name
+            if article.category
+            else ""
+        )
+
+        self.snapshot_tags = list(
+            article.tags.values_list(
+                "name",
+                flat=True,
+            )
+        )
+
+        self.snapshot_featured_image = (
+            article.featured_image.name
+            if article.featured_image
+            else ""
+        )
+
+        self.save(
+            update_fields=[
+                "snapshot_title",
+                "snapshot_content",
+                "snapshot_category_name",
+                "snapshot_tags",
+                "snapshot_featured_image",
+            ]
+        )
+
+        # Normally a new Submission has no snapshot attachments.
+        # Clearing them here also makes this method safe if it
+        # is accidentally called again.
+        self.snapshot_attachments.all().delete()
+
+        for attachment in article.attachments.all():
+            SubmissionAttachmentSnapshot.objects.create(
+                submission=self,
+                image=attachment.image.name,
+                caption=attachment.caption or "",
+            )
+
+    @property
+    def snapshot_featured_image_url(self):
+        if not self.snapshot_featured_image:
+            return ""
+
+        return default_storage.url(
+            self.snapshot_featured_image
+        )
+
+
+class SubmissionAttachmentSnapshot(models.Model):
+    submission = models.ForeignKey(
+        Submission,
+        on_delete=models.CASCADE,
+        related_name="snapshot_attachments",
+    )
+
+    image = models.CharField(
+        max_length=500,
+    )
+
+    caption = models.CharField(
+        max_length=255,
+        blank=True,
+    )
+
+    class Meta:
+        ordering = ["id"]
+
+    @property
+    def image_url(self):
+        if not self.image:
+            return ""
+
+        return default_storage.url(
+            self.image
+        )
+
+    def __str__(self):
+        return (
+            f"Attachment snapshot for "
+            f"Submission #{self.submission_id}"
+        )
 
 
 class EditRequest(models.Model):
@@ -241,7 +388,10 @@ class EditRequest(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.article.title} - {self.get_status_display()}"
+        return (
+            f"{self.article.title} - "
+            f"{self.get_status_display()}"
+        )
 
 
 class DeletionRequest(models.Model):
@@ -287,7 +437,10 @@ class DeletionRequest(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.article.title} - {self.get_status_display()}"
+        return (
+            f"{self.article.title} - "
+            f"{self.get_status_display()}"
+        )
 
 
 class ContentReport(models.Model):
@@ -337,4 +490,7 @@ class ContentReport(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.article.title} - {self.get_status_display()}"
+        return (
+            f"{self.article.title} - "
+            f"{self.get_status_display()}"
+        )
