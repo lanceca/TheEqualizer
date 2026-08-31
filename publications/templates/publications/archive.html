@@ -1,0 +1,253 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<h1>Article Archive</h1>
+
+<p class="section-description">
+    View and restore archived publication articles.
+</p>
+
+
+<form
+    method="GET"
+    action="{% url 'archived_articles' %}"
+    class="search-form"
+>
+
+    <input
+        type="text"
+        name="q"
+        value="{{ search_query }}"
+        placeholder="Search archived articles..."
+    >
+
+    <button
+        type="submit"
+        class="edit-link"
+    >
+        Search
+    </button>
+
+    {% if search_query %}
+
+        <a
+            href="{% url 'archived_articles' %}"
+            class="edit-link"
+        >
+            Clear
+        </a>
+
+    {% endif %}
+
+</form>
+
+
+{% if articles %}
+
+    <div class="submission-list">
+
+        {% for article in articles %}
+
+            <div class="submission-card">
+
+                <div class="submission-details">
+
+                    <div class="submission-summary-info">
+
+                        <div class="submission-badges">
+
+                            <span class="status-badge status-rejected">
+                                Archived
+                            </span>
+
+                            <span class="badge">
+                                {{ article.category.name }}
+                            </span>
+
+                        </div>
+
+
+                        <h2>
+                            {{ article.title }}
+                        </h2>
+
+
+                        <p class="submission-meta">
+
+                            <strong>
+                                Author:
+                            </strong>
+
+                            {{ article.author.username }}
+
+                        </p>
+
+
+                        <p class="submission-meta">
+
+                            <strong>
+                                Originally Published:
+                            </strong>
+
+                            {% if article.published_at %}
+
+                                {{ article.published_at|date:"M. d, Y - g:i A" }}
+
+                            {% else %}
+
+                                Not recorded
+
+                            {% endif %}
+
+                        </p>
+
+
+                        <p class="submission-meta">
+
+                            <strong>
+                                Archived:
+                            </strong>
+
+                            {% if article.archived_at %}
+
+                                {{ article.archived_at|date:"M. d, Y - g:i A" }}
+
+                            {% else %}
+
+                                Archive date not recorded
+
+                            {% endif %}
+
+                        </p>
+
+                    </div>
+
+
+                    <div class="article-content">
+
+                        {{ article.content|truncatewords:60|linebreaks }}
+
+                    </div>
+
+
+                    {% if article.tags.all %}
+
+                        <div class="submission-meta">
+
+                            <strong>
+                                Tags:
+                            </strong>
+
+                            {% for tag in article.tags.all %}
+
+                                {{ tag.name }}
+
+                                {% if not forloop.last %}
+                                    ,
+                                {% endif %}
+
+                            {% empty %}
+
+                                None
+
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+
+                    {% if article.featured_image %}
+
+                        <div class="article-image">
+
+                            <img
+                                src="{{ article.featured_image.url }}"
+                                alt="{{ article.title }}"
+                            >
+
+                        </div>
+
+                    {% endif %}
+
+
+                    {% if article.attachments.all %}
+
+                        <div class="article-attachments">
+
+                            {% for attachment in article.attachments.all %}
+
+                                <div class="article-attachment">
+
+                                    <img
+                                        src="{{ attachment.image.url }}"
+                                        alt="Attachment for {{ article.title }}"
+                                    >
+
+                                    {% if attachment.caption %}
+
+                                        <p>
+                                            {{ attachment.caption }}
+                                        </p>
+
+                                    {% endif %}
+
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+
+                    <div class="article-actions">
+
+                        <form
+                            method="POST"
+                            action="{% url 'restore_archived_article' article.id %}"
+                        >
+
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                class="approve-button"
+                                data-confirm-title="Restore Article"
+                                data-confirm="Are you sure you want to restore '{{ article.title }}' and publish it again?"
+                            >
+                                Restore Article
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+{% else %}
+
+    {% if search_query %}
+
+        <p class="empty-message">
+            No archived articles matched your search.
+        </p>
+
+    {% else %}
+
+        <p class="empty-message">
+            There are currently no archived articles.
+        </p>
+
+    {% endif %}
+
+{% endif %}
+
+{% endblock %}

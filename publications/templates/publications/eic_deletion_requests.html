@@ -1,0 +1,264 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<h1>Deletion Requests</h1>
+
+<p class="section-description">
+    Review pending article deletion requests submitted by Editors.
+</p>
+
+
+<div class="submission-toolbar">
+
+    <form
+        method="GET"
+        action="{% url 'eic_deletion_requests' %}"
+        class="search-form"
+    >
+
+        <input
+            type="text"
+            name="q"
+            value="{{ search_query }}"
+            placeholder="Search article title, category, requester, or reason..."
+            class="search-input"
+        >
+
+        <button
+            type="submit"
+            class="search-button"
+        >
+            Search
+        </button>
+
+        {% if search_query %}
+
+            <a
+                href="{% url 'eic_deletion_requests' %}"
+                class="clear-search"
+            >
+                Clear
+            </a>
+
+        {% endif %}
+
+    </form>
+
+</div>
+
+
+{% if search_query %}
+
+    <div class="info-box">
+
+        Search results for:
+        <strong>{{ search_query }}</strong>
+
+    </div>
+
+{% endif %}
+
+
+{% if deletion_requests %}
+
+    <div class="submission-list">
+
+        {% for deletion_request in deletion_requests %}
+
+            <details class="submission-card">
+
+                <summary class="submission-summary">
+
+                    <div class="submission-summary-content">
+
+                        <div class="submission-summary-info">
+
+                            <h2 class="submission-title">
+                                {{ deletion_request.article.title }}
+                            </h2>
+
+                            <p class="submission-meta">
+                                <strong>Requested by:</strong>
+                                {{ deletion_request.requested_by.username }}
+                            </p>
+
+                            <p class="submission-meta">
+                                <strong>Requested:</strong>
+                                {{ deletion_request.created_at|date:"M. d, Y - g:i A" }}
+                            </p>
+
+                            <div class="submission-badges">
+
+                                <span class="status-badge status-pending">
+                                    {{ deletion_request.get_status_display }}
+                                </span>
+
+                                <span class="badge badge-edit">
+                                    Deletion Request
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                        <span class="expand-indicator"></span>
+
+                    </div>
+
+                </summary>
+
+
+                <div class="submission-details">
+
+                    <div class="submission-information">
+
+                        <p class="submission-meta">
+                            <strong>Category:</strong>
+                            {{ deletion_request.article.category.name }}
+                        </p>
+
+                        <p class="submission-meta">
+                            <strong>Author:</strong>
+                            {{ deletion_request.article.author.username }}
+                        </p>
+
+                        <p class="submission-meta">
+
+                            <strong>
+                                Current Status:
+                            </strong>
+
+                            {% if deletion_request.article.is_archived %}
+                                Archived
+                            {% elif deletion_request.article.is_published %}
+                                Published
+                            {% else %}
+                                Unpublished
+                            {% endif %}
+
+                        </p>
+
+                        {% if deletion_request.article.published_at %}
+
+                            <p class="submission-meta">
+                                <strong>Published:</strong>
+                                {{ deletion_request.article.published_at|date:"M. d, Y - g:i A" }}
+                            </p>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="article-content">
+
+                        <h3>
+                            Reason for Deletion
+                        </h3>
+
+                        <p>
+                            {{ deletion_request.reason|linebreaksbr }}
+                        </p>
+
+                    </div>
+
+
+                    <div class="warning-box info-box">
+
+                        <strong>
+                            Approval Behavior
+                        </strong>
+
+                        <p>
+                            Approving this request will remove the article from the active published list and archive it.
+                        </p>
+
+                        <p>
+                            The article will remain in the database and will not be permanently deleted.
+                        </p>
+
+                    </div>
+
+
+                    <div class="review-section">
+
+                        <h3>
+                            Review Deletion Request
+                        </h3>
+
+                        <form
+                            method="POST"
+                            action="{% url 'review_deletion_request' deletion_request.id %}"
+                        >
+
+                            {% csrf_token %}
+
+                            <label for="reviewer_notes_{{ deletion_request.id }}">
+                                Reviewer Notes
+                            </label>
+
+                            <textarea
+                                id="reviewer_notes_{{ deletion_request.id }}"
+                                name="reviewer_notes"
+                                placeholder="Add optional notes for the Editor..."
+                            ></textarea>
+
+
+                            <div class="review-actions">
+
+                                <button
+                                    type="submit"
+                                    name="action"
+                                    value="approve"
+                                    class="danger-button"
+                                    data-confirm-title="Approve Deletion"
+                                    data-confirm="Are you sure you want to approve this deletion request? The article will be removed from publication and moved to the archive."
+                                >
+                                    Approve Deletion
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    name="action"
+                                    value="reject"
+                                    class="revision-button"
+                                    data-confirm-title="Reject Deletion Request"
+                                    data-confirm="Are you sure you want to reject this deletion request?"
+                                >
+                                    Reject Request
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </details>
+
+        {% endfor %}
+
+    </div>
+
+{% else %}
+
+    {% if search_query %}
+
+        <p class="empty-message">
+            No pending deletion requests matched your search.
+        </p>
+
+    {% else %}
+
+        <p class="empty-message">
+            There are currently no pending deletion requests.
+        </p>
+
+    {% endif %}
+
+{% endif %}
+
+{% endblock %}

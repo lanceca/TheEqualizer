@@ -4,7 +4,15 @@ from . import views
 
 
 urlpatterns = [
-    path("dashboard/", views.dashboard_redirect, name="dashboard"),
+    # =========================
+    # DASHBOARDS
+    # =========================
+
+    path(
+        "dashboard/",
+        views.dashboard_redirect,
+        name="dashboard",
+    ),
 
     path(
         "dashboard/super-admin/",
@@ -42,11 +50,91 @@ urlpatterns = [
         name="staff_dashboard",
     ),
 
+    # =========================
+    # AUTHENTICATION
+    # =========================
+
     path(
-        "login/", views.login_view, name="login"
+        "login/",
+        views.login_view,
+        name="login",
     ),
 
     path(
-        "logout/", views.logout_view, name="logout"
+        "logout/",
+        views.logout_view,
+        name="logout",
+    ),
+
+    # =========================
+    # PROFILE
+    # =========================
+
+    path(
+        "profile/",
+        views.profile,
+        name="profile",
+    ),
+
+    path(
+        "profile/change-password/",
+        views.change_password,
+        name="change_password",
+    ),
+
+    # =========================
+    # SUPER ADMIN - ADMINS
+    # =========================
+
+    path(
+        "accounts/admins/",
+        views.manage_admin_accounts,
+        name="manage_admin_accounts",
+    ),
+
+    path(
+        "accounts/admins/create/",
+        views.create_admin_account,
+        name="create_admin_account",
+    ),
+
+    path(
+        "accounts/admins/<int:user_id>/edit/",
+        views.edit_admin_account,
+        name="edit_admin_account",
+    ),
+
+    path(
+        "accounts/admins/<int:user_id>/toggle-status/",
+        views.toggle_admin_account_status,
+        name="toggle_admin_account_status",
+    ),
+
+    # =========================
+    # ADMIN - PUBLICATION STAFF
+    # =========================
+
+    path(
+        "accounts/staff/",
+        views.manage_staff_accounts,
+        name="manage_staff_accounts",
+    ),
+
+    path(
+        "accounts/staff/create/",
+        views.create_staff_account,
+        name="create_staff_account",
+    ),
+
+    path(
+        "accounts/staff/<int:user_id>/edit/",
+        views.edit_staff_account,
+        name="edit_staff_account",
+    ),
+
+    path(
+        "accounts/staff/<int:user_id>/toggle-status/",
+        views.toggle_staff_account_status,
+        name="toggle_staff_account_status",
     ),
 ]

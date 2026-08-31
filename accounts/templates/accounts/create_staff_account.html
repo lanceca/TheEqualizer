@@ -1,0 +1,69 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<h1>Create Publication Staff Account</h1>
+
+<p class="section-description">
+    Create an Adviser, Editor in Chief, Editor, or Staff account.
+</p>
+
+
+<form method="POST">
+
+    {% csrf_token %}
+
+    {{ form.non_field_errors }}
+
+    {% for field in form %}
+
+        <div class="form-group">
+
+            <label for="{{ field.id_for_label }}">
+                {{ field.label }}
+            </label>
+
+            {{ field }}
+
+            {% if field.errors %}
+
+                <div class="form-errors">
+
+                    {% for error in field.errors %}
+
+                        <p>
+                            {{ error }}
+                        </p>
+
+                    {% endfor %}
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    {% endfor %}
+
+
+    <div class="article-actions">
+
+        <button
+            type="submit"
+            class="approve-button"
+        >
+            Create Account
+        </button>
+
+        <a
+            href="{% url 'manage_staff_accounts' %}"
+            class="edit-link"
+        >
+            Cancel
+        </a>
+
+    </div>
+
+</form>
+
+{% endblock %}

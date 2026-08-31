@@ -8,6 +8,7 @@
     Review edit requests submitted by Editors for published articles.
 </p>
 
+
 <div class="request-toolbar">
 
     <form
@@ -87,6 +88,7 @@
 
                 </summary>
 
+
                 <div class="request-details">
 
                     <p class="request-meta">
@@ -94,17 +96,25 @@
                         {{ edit_request.article.category.name }}
                     </p>
 
+
                     <div class="info-box">
-                        <strong>Reason for Edit</strong>
+
+                        <strong>
+                            Reason for Edit
+                        </strong>
 
                         <p>
                             {{ edit_request.reason|linebreaksbr }}
                         </p>
+
                     </div>
+
 
                     <div class="review-section">
 
-                        <h3>Review Edit Request</h3>
+                        <h3>
+                            Review Edit Request
+                        </h3>
 
                         <form
                             method="POST"
@@ -123,6 +133,7 @@
                                 placeholder="Add optional notes for the Editor..."
                             ></textarea>
 
+
                             <div class="review-actions">
 
                                 <button
@@ -130,6 +141,8 @@
                                     name="action"
                                     value="approve"
                                     class="approve-button"
+                                    data-confirm-title="Approve Edit Request"
+                                    data-confirm="Approve this request and create an editable revision draft for the Editor?"
                                 >
                                     Approve
                                 </button>
@@ -139,6 +152,8 @@
                                     name="action"
                                     value="reject"
                                     class="danger-button"
+                                    data-confirm-title="Reject Edit Request"
+                                    data-confirm="Are you sure you want to reject this edit request?"
                                 >
                                     Reject
                                 </button>

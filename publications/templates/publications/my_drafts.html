@@ -32,20 +32,20 @@
         </button>
 
         {% if search_query %}
+
             <a
                 href="{% url 'my_drafts' %}"
                 class="clear-search"
             >
                 Clear
             </a>
+
         {% endif %}
 
     </form>
 
 </div>
 
-
-<!-- NORMAL DRAFTS -->
 
 <section class="draft-section">
 
@@ -105,7 +105,9 @@
 
                         {% if article.featured_image %}
 
-                            <h3>Featured Image</h3>
+                            <h3>
+                                Featured Image
+                            </h3>
 
                             <img
                                 src="{{ article.featured_image.url }}"
@@ -115,7 +117,9 @@
 
                         {% endif %}
 
-                        <h3>Article Content</h3>
+                        <h3>
+                            Article Content
+                        </h3>
 
                         <p>
                             {{ article.content|linebreaksbr }}
@@ -123,19 +127,27 @@
 
                         {% if article.tags.all %}
 
-                            <h3>Tags</h3>
+                            <h3>
+                                Tags
+                            </h3>
 
                             <p>
+
                                 {% for tag in article.tags.all %}
+
                                     {{ tag.name }}{% if not forloop.last %}, {% endif %}
+
                                 {% endfor %}
+
                             </p>
 
                         {% endif %}
 
                         {% if article.attachments.all %}
 
-                            <h3>Attached Images</h3>
+                            <h3>
+                                Attached Images
+                            </h3>
 
                             <div class="attachment-gallery">
 
@@ -152,6 +164,7 @@
                             </div>
 
                         {% endif %}
+
 
                         <div class="draft-actions">
 
@@ -172,6 +185,8 @@
                                 <button
                                     type="submit"
                                     class="danger-button"
+                                    data-confirm-title="Delete Draft"
+                                    data-confirm="Are you sure you want to permanently delete the draft '{{ article.title }}'? This action cannot be undone."
                                 >
                                     Delete Draft
                                 </button>
@@ -208,8 +223,6 @@
 
 </section>
 
-
-<!-- EDIT REQUEST DRAFTS -->
 
 <section class="draft-section">
 
@@ -287,9 +300,12 @@
 
                         {% endif %}
 
+
                         {% if article.featured_image %}
 
-                            <h3>Featured Image</h3>
+                            <h3>
+                                Featured Image
+                            </h3>
 
                             <img
                                 src="{{ article.featured_image.url }}"
@@ -299,27 +315,40 @@
 
                         {% endif %}
 
-                        <h3>Article Content</h3>
+
+                        <h3>
+                            Article Content
+                        </h3>
 
                         <p>
                             {{ article.content|linebreaksbr }}
                         </p>
 
+
                         {% if article.tags.all %}
 
-                            <h3>Tags</h3>
+                            <h3>
+                                Tags
+                            </h3>
 
                             <p>
+
                                 {% for tag in article.tags.all %}
+
                                     {{ tag.name }}{% if not forloop.last %}, {% endif %}
+
                                 {% endfor %}
+
                             </p>
 
                         {% endif %}
 
+
                         {% if article.attachments.all %}
 
-                            <h3>Attached Images</h3>
+                            <h3>
+                                Attached Images
+                            </h3>
 
                             <div class="attachment-gallery">
 
@@ -336,6 +365,7 @@
                             </div>
 
                         {% endif %}
+
 
                         <div class="draft-actions">
 

@@ -279,9 +279,6 @@ class Submission(models.Model):
             ]
         )
 
-        # Normally a new Submission has no snapshot attachments.
-        # Clearing them here also makes this method safe if it
-        # is accidentally called again.
         self.snapshot_attachments.all().delete()
 
         for attachment in article.attachments.all():
@@ -446,6 +443,7 @@ class DeletionRequest(models.Model):
 class ContentReport(models.Model):
     class Status(models.TextChoices):
         OPEN = "OPEN", "Open"
+        REVISION_REQUIRED = "REVISION_REQUIRED", "Revision Required"
         CANCELLED = "CANCELLED", "Cancelled"
         RESOLVED = "RESOLVED", "Resolved"
 
@@ -464,13 +462,21 @@ class ContentReport(models.Model):
     description = models.TextField()
 
     status = models.CharField(
-        max_length=20,
+        max_length=30,
         choices=Status.choices,
         default=Status.OPEN,
     )
 
     staff_notes = models.TextField(
         blank=True,
+    )
+
+    forced_edit_request = models.OneToOneField(
+        EditRequest,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="content_report",
     )
 
     created_at = models.DateTimeField(

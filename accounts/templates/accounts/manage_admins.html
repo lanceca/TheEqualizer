@@ -1,0 +1,191 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<h1>Manage Admin Accounts</h1>
+
+<p class="section-description">
+    Create and manage Admin accounts for The Equalizer.
+</p>
+
+
+<div class="article-actions">
+
+    <a
+        href="{% url 'create_admin_account' %}"
+        class="approve-button"
+    >
+        Create Admin Account
+    </a>
+
+</div>
+
+
+<form
+    method="GET"
+    action="{% url 'manage_admin_accounts' %}"
+    class="search-form"
+>
+
+    <input
+        type="text"
+        name="q"
+        value="{{ search_query }}"
+        placeholder="Search admin accounts..."
+    >
+
+    <button
+        type="submit"
+        class="edit-link"
+    >
+        Search
+    </button>
+
+    {% if search_query %}
+
+        <a
+            href="{% url 'manage_admin_accounts' %}"
+            class="edit-link"
+        >
+            Clear
+        </a>
+
+    {% endif %}
+
+</form>
+
+
+{% if admins %}
+
+    <div class="submission-list">
+
+        {% for admin in admins %}
+
+            <div class="submission-card">
+
+                <div class="submission-details">
+
+                    <h2>
+                        {{ admin.username }}
+                    </h2>
+
+                    <p>
+                        <strong>Name:</strong>
+
+                        {% if admin.first_name or admin.last_name %}
+                            {{ admin.first_name }} {{ admin.last_name }}
+                        {% else %}
+                            Not provided
+                        {% endif %}
+                    </p>
+
+                    <p>
+                        <strong>Email:</strong>
+
+                        {% if admin.email %}
+                            {{ admin.email }}
+                        {% else %}
+                            Not provided
+                        {% endif %}
+                    </p>
+
+                    <p>
+                        <strong>Role:</strong>
+                        {{ admin.get_role_display }}
+                    </p>
+
+                    <p>
+                        <strong>Status:</strong>
+
+                        {% if admin.is_active %}
+
+                            <span class="status-badge status-approved">
+                                Active
+                            </span>
+
+                        {% else %}
+
+                            <span class="status-badge status-rejected">
+                                Inactive
+                            </span>
+
+                        {% endif %}
+
+                    </p>
+
+                    <p>
+                        <strong>Date Joined:</strong>
+                        {{ admin.date_joined|date:"M. d, Y" }}
+                    </p>
+
+
+                    <div class="article-actions">
+
+                        <a
+                            href="{% url 'edit_admin_account' admin.id %}"
+                            class="edit-link"
+                        >
+                            Edit Account
+                        </a>
+
+                        {% if admin.is_active %}
+
+                            <form
+                                method="POST"
+                                action="{% url 'toggle_admin_account_status' admin.id %}"
+                                data-confirm-title="Deactivate Admin"
+                                data-confirm="Are you sure you want to deactivate {{ admin.username }}?"
+                            >
+
+                                {% csrf_token %}
+
+                                <button
+                                    type="submit"
+                                    class="danger-link"
+                                >
+                                    Deactivate
+                                </button>
+
+                            </form>
+
+                        {% else %}
+
+                            <form
+                                method="POST"
+                                action="{% url 'toggle_admin_account_status' admin.id %}"
+                                data-confirm-title="Activate Admin"
+                                data-confirm="Are you sure you want to activate {{ admin.username }}?"
+                            >
+
+                                {% csrf_token %}
+
+                                <button
+                                    type="submit"
+                                    class="approve-button"
+                                >
+                                    Activate
+                                </button>
+
+                            </form>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+{% else %}
+
+    <p class="empty-message">
+        No Admin accounts found.
+    </p>
+
+{% endif %}
+
+{% endblock %}

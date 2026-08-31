@@ -1,0 +1,114 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<h1>My Profile</h1>
+
+<p class="section-description">
+    View your account information and update your personal details.
+</p>
+
+
+<div class="submission-card">
+
+    <div class="submission-details">
+
+        <p>
+            <strong>Username:</strong>
+            {{ request.user.username }}
+        </p>
+
+        <p>
+            <strong>Role:</strong>
+            {{ request.user.get_role_display }}
+        </p>
+
+        <p>
+            <strong>Account Status:</strong>
+
+            {% if request.user.is_active %}
+                Active
+            {% else %}
+                Inactive
+            {% endif %}
+        </p>
+
+        <p>
+            <strong>Date Joined:</strong>
+            {{ request.user.date_joined|date:"M. d, Y - g:i A" }}
+        </p>
+
+        {% if request.user.last_login %}
+
+            <p>
+                <strong>Last Login:</strong>
+                {{ request.user.last_login|date:"M. d, Y - g:i A" }}
+            </p>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+<h2>Personal Information</h2>
+
+<form method="POST">
+
+    {% csrf_token %}
+
+    {{ form.non_field_errors }}
+
+    {% for field in form %}
+
+        <div class="form-group">
+
+            <label for="{{ field.id_for_label }}">
+                {{ field.label }}
+            </label>
+
+            {{ field }}
+
+            {% if field.errors %}
+
+                <div class="form-errors">
+
+                    {% for error in field.errors %}
+
+                        <p>
+                            {{ error }}
+                        </p>
+
+                    {% endfor %}
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    {% endfor %}
+
+
+    <div class="article-actions">
+
+        <button
+            type="submit"
+            class="approve-button"
+        >
+            Save Profile
+        </button>
+
+        <a
+            href="{% url 'change_password' %}"
+            class="edit-link"
+        >
+            Change Password
+        </a>
+
+    </div>
+
+</form>
+
+{% endblock %}

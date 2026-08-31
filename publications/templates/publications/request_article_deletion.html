@@ -1,0 +1,114 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<h1>Request Article Deletion</h1>
+
+<p class="section-description">
+    Request permission from the Editor in Chief to remove a published article from the active publication.
+</p>
+
+
+<div class="article-request-info info-box">
+
+    <span class="status-badge status-approved">
+        Published Article
+    </span>
+
+    <h2>
+        {{ article.title }}
+    </h2>
+
+    <p>
+        <strong>Category:</strong>
+        {{ article.category.name }}
+    </p>
+
+    <p>
+        <strong>Author:</strong>
+        {{ article.author.username }}
+    </p>
+
+    {% if article.published_at %}
+
+        <p>
+            <strong>Published:</strong>
+            {{ article.published_at|date:"M. d, Y - g:i A" }}
+        </p>
+
+    {% endif %}
+
+</div>
+
+
+<div class="warning-box info-box">
+
+    <strong>
+        Important
+    </strong>
+
+    <p>
+        If the EIC approves this request, the article will be archived and removed from the active published article list.
+    </p>
+
+    <p>
+        The article will not be permanently deleted from the database.
+    </p>
+
+</div>
+
+
+<div class="content-panel request-form-panel">
+
+    <form
+        method="POST"
+        class="request-form"
+    >
+
+        {% csrf_token %}
+
+        <div class="form-group">
+
+            <label for="reason">
+                Reason for Deletion Request
+            </label>
+
+            <textarea
+                id="reason"
+                name="reason"
+                placeholder="Explain why this published article should be removed..."
+                required
+            ></textarea>
+
+            <p class="form-help">
+                The EIC will review your reason before deciding whether the article should be archived.
+            </p>
+
+        </div>
+
+
+        <div class="form-actions">
+
+            <button
+                type="submit"
+                class="danger-button"
+                data-confirm-title="Submit Deletion Request"
+                data-confirm="Are you sure you want to request deletion of this published article?"
+            >
+                Submit Deletion Request
+            </button>
+
+            <a
+                href="{% url 'published_articles' %}"
+                class="cancel-link"
+            >
+                Cancel
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

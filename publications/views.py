@@ -1,26 +1,99 @@
+from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden
-from django.shortcuts import get_object_or_404, redirect, render
-from django.utils import timezone
-from django.utils.text import slugify
 from django.db import transaction
 from django.db.models import Q
+from django.http import HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.text import slugify
+
+from notifications.models import Notification
 
 from .models import (
     Article,
     ArticleAttachment,
     Category,
+    ContentReport,
+    DeletionRequest,
     EditRequest,
     Submission,
     Tag,
 )
 
 
+User = get_user_model()
+
+
+# ==========================================================
+# NOTIFICATION HELPERS
+# ==========================================================
+
+
+def notify_user(
+    user,
+    notification_type,
+    message,
+    related_url="",
+):
+    if not user:
+        return
+
+    if not user.is_active:
+        return
+
+    Notification.objects.create(
+        recipient=user,
+        notification_type=notification_type,
+        message=message,
+        related_url=related_url,
+    )
+
+
+def notify_eics(
+    notification_type,
+    message,
+    related_url="",
+    exclude_user_id=None,
+):
+    recipients = User.objects.filter(
+        role="EIC",
+        is_active=True,
+    )
+
+    if exclude_user_id:
+        recipients = recipients.exclude(
+            id=exclude_user_id
+        )
+
+    for recipient in recipients:
+        Notification.objects.create(
+            recipient=recipient,
+            notification_type=notification_type,
+            message=message,
+            related_url=related_url,
+        )
+
+
+# ==========================================================
+# ARTICLE CREATION
+# ==========================================================
+
+
 @login_required
 def create_article(request):
 
     if request.user.role not in ["EDITOR", "EIC"]:
-        return redirect("dashboard")
+
+        messages.error(
+            request,
+            "You do not have permission to create articles.",
+        )
+
+        return redirect(
+            "dashboard"
+        )
 
     categories = Category.objects.all()
     tags = Tag.objects.all()
@@ -33,8 +106,13 @@ def create_article(request):
         tag_ids = request.POST.getlist("tags")
         action = request.POST.get("action")
 
-        featured_image = request.FILES.get("featured_image")
-        attachments = request.FILES.getlist("attachments")
+        featured_image = request.FILES.get(
+            "featured_image"
+        )
+
+        attachments = request.FILES.getlist(
+            "attachments"
+        )
 
         category = get_object_or_404(
             Category,
@@ -45,7 +123,10 @@ def create_article(request):
         slug = base_slug
         counter = 1
 
-        while Article.objects.filter(slug=slug).exists():
+        while Article.objects.filter(
+            slug=slug
+        ).exists():
+
             slug = f"{base_slug}-{counter}"
             counter += 1
 
@@ -59,9 +140,12 @@ def create_article(request):
             draft_type=Article.DraftType.NORMAL,
         )
 
-        article.tags.set(tag_ids)
+        article.tags.set(
+            tag_ids
+        )
 
         for image in attachments:
+
             ArticleAttachment.objects.create(
                 article=article,
                 image=image,
@@ -77,7 +161,31 @@ def create_article(request):
 
             submission.capture_article_snapshot()
 
-        return redirect("dashboard")
+            notify_eics(
+                Notification.Type.SUBMISSION,
+                (
+                    f'{request.user.username} submitted '
+                    f'"{article.title}" for review.'
+                ),
+                reverse("pending_submissions"),
+                exclude_user_id=request.user.id,
+            )
+
+            messages.success(
+                request,
+                f'"{article.title}" was submitted for review.',
+            )
+
+        else:
+
+            messages.success(
+                request,
+                f'"{article.title}" was saved as a draft.',
+            )
+
+        return redirect(
+            "dashboard"
+        )
 
     return render(
         request,
@@ -89,6 +197,11 @@ def create_article(request):
     )
 
 
+# ==========================================================
+# SUBMISSION WORKFLOW
+# ==========================================================
+
+
 @login_required
 def pending_submissions(request):
 
@@ -97,7 +210,10 @@ def pending_submissions(request):
             "You do not have permission to view this page."
         )
 
-    search_query = request.GET.get("q", "").strip()
+    search_query = request.GET.get(
+        "q",
+        "",
+    ).strip()
 
     submissions = (
         Submission.objects
@@ -118,6 +234,7 @@ def pending_submissions(request):
     )
 
     if search_query:
+
         submissions = submissions.filter(
             Q(snapshot_title__icontains=search_query)
             | Q(snapshot_content__icontains=search_query)
@@ -157,19 +274,30 @@ def review_submission(request, submission_id):
         Submission.objects.select_related(
             "article",
             "article__source_article",
+            "submitted_by",
         ),
         id=submission_id,
     )
 
     if submission.status != Submission.Status.PENDING:
-        return HttpResponseForbidden(
-            "This submission has already been reviewed."
+
+        messages.warning(
+            request,
+            "This submission has already been reviewed.",
+        )
+
+        return redirect(
+            "pending_submissions"
         )
 
     if request.method != "POST":
-        return redirect("pending_submissions")
+        return redirect(
+            "pending_submissions"
+        )
 
-    action = request.POST.get("action")
+    action = request.POST.get(
+        "action"
+    )
 
     reviewer_notes = request.POST.get(
         "reviewer_notes",
@@ -178,23 +306,33 @@ def review_submission(request, submission_id):
 
     article = submission.article
 
-    if action == "approve":
+    # ======================================================
+    # APPROVE
+    # ======================================================
 
-        # --------------------------------------------------
-        # EDIT REQUEST DRAFT APPROVAL
-        # --------------------------------------------------
+    if action == "approve":
 
         if article.draft_type == Article.DraftType.EDIT_REQUEST:
 
             if not article.source_article:
-                return HttpResponseForbidden(
-                    "This edit draft is not connected to an original article."
+
+                messages.error(
+                    request,
+                    "This edit draft is not connected to an original article.",
+                )
+
+                return redirect(
+                    "pending_submissions"
                 )
 
             with transaction.atomic():
 
-                original_article = Article.objects.select_for_update().get(
-                    id=article.source_article_id
+                original_article = (
+                    Article.objects
+                    .select_for_update()
+                    .get(
+                        id=article.source_article_id
+                    )
                 )
 
                 edit_request = EditRequest.objects.filter(
@@ -203,6 +341,7 @@ def review_submission(request, submission_id):
                 ).first()
 
                 if edit_request is None:
+
                     edit_request = (
                         EditRequest.objects
                         .filter(
@@ -211,28 +350,41 @@ def review_submission(request, submission_id):
                             status=EditRequest.Status.APPROVED,
                             draft_article__isnull=True,
                         )
-                        .order_by("-reviewed_at", "-created_at")
+                        .order_by(
+                            "-reviewed_at",
+                            "-created_at",
+                        )
                         .first()
                     )
 
                     if edit_request:
+
                         edit_request.draft_article = article
+
                         edit_request.save(
-                            update_fields=["draft_article"]
+                            update_fields=[
+                                "draft_article",
+                            ]
                         )
 
                 if edit_request is None:
-                    return HttpResponseForbidden(
-                        "No approved edit request is connected to this draft."
+
+                    messages.error(
+                        request,
+                        "No approved edit request is connected to this draft.",
+                    )
+
+                    return redirect(
+                        "pending_submissions"
                     )
 
                 original_article.title = article.title
                 original_article.category = article.category
                 original_article.content = article.content
                 original_article.featured_image = article.featured_image
-
                 original_article.is_published = True
                 original_article.is_archived = False
+                original_article.archived_at = None
 
                 original_article.save()
 
@@ -243,6 +395,7 @@ def review_submission(request, submission_id):
                 original_article.attachments.all().delete()
 
                 for attachment in article.attachments.all():
+
                     ArticleAttachment.objects.create(
                         article=original_article,
                         image=attachment.image,
@@ -252,12 +405,61 @@ def review_submission(request, submission_id):
                 submission.status = Submission.Status.APPROVED
                 submission.reviewer_notes = reviewer_notes
                 submission.reviewed_at = timezone.now()
+
                 submission.save()
 
                 edit_request.status = EditRequest.Status.COMPLETED
+
                 edit_request.save(
-                    update_fields=["status"]
+                    update_fields=[
+                        "status",
+                    ]
                 )
+
+                notify_user(
+                    submission.submitted_by,
+                    Notification.Type.REVISION,
+                    (
+                        f'Your revised version of '
+                        f'"{original_article.title}" was approved '
+                        f'and is now published.'
+                    ),
+                    reverse("published_articles"),
+                )
+
+                content_report = ContentReport.objects.filter(
+                    forced_edit_request=edit_request,
+                    status=ContentReport.Status.REVISION_REQUIRED,
+                ).select_related(
+                    "reported_by"
+                ).first()
+
+                if content_report:
+
+                    content_report.status = (
+                        ContentReport.Status.RESOLVED
+                    )
+
+                    content_report.resolved_at = timezone.now()
+
+                    content_report.save(
+                        update_fields=[
+                            "status",
+                            "resolved_at",
+                            "updated_at",
+                        ]
+                    )
+
+                    notify_user(
+                        content_report.reported_by,
+                        Notification.Type.CONTENT_REPORT,
+                        (
+                            f'The corrective revision for '
+                            f'"{original_article.title}" was approved. '
+                            f'Your content report has been resolved.'
+                        ),
+                        reverse("my_content_reports"),
+                    )
 
                 article.is_archived = True
                 article.archived_at = timezone.now()
@@ -272,14 +474,19 @@ def review_submission(request, submission_id):
                     ]
                 )
 
-            return redirect("pending_submissions")
+            messages.success(
+                request,
+                (
+                    f'The revision for "{original_article.title}" '
+                    f'was approved and published.'
+                ),
+            )
 
-        # --------------------------------------------------
-        # NORMAL ARTICLE APPROVAL
-        # --------------------------------------------------
+            return redirect(
+                "pending_submissions"
+            )
 
         submission.status = Submission.Status.APPROVED
-
         article.is_published = True
 
         if article.published_at is None:
@@ -287,23 +494,86 @@ def review_submission(request, submission_id):
 
         article.save()
 
+        submission.reviewer_notes = reviewer_notes
+        submission.reviewed_at = timezone.now()
+
+        submission.save()
+
+        notify_user(
+            submission.submitted_by,
+            Notification.Type.SUBMISSION,
+            (
+                f'Your submission "{article.title}" '
+                f'was approved and published.'
+            ),
+            reverse("my_submissions"),
+        )
+
+        messages.success(
+            request,
+            f'"{article.title}" was approved and published.',
+        )
+
+        return redirect(
+            "pending_submissions"
+        )
+
     elif action == "reject":
 
         submission.status = Submission.Status.REJECTED
+        submission.reviewer_notes = reviewer_notes
+        submission.reviewed_at = timezone.now()
+
+        submission.save()
+
+        notify_user(
+            submission.submitted_by,
+            Notification.Type.SUBMISSION,
+            (
+                f'Your submission "{article.title}" '
+                f'was rejected by the EIC.'
+            ),
+            reverse("my_submissions"),
+        )
+
+        messages.warning(
+            request,
+            f'"{article.title}" was rejected.',
+        )
 
     elif action == "revision":
 
         submission.status = Submission.Status.REVISION
+        submission.reviewer_notes = reviewer_notes
+        submission.reviewed_at = timezone.now()
+
+        submission.save()
+
+        notify_user(
+            submission.submitted_by,
+            Notification.Type.REVISION,
+            (
+                f'The EIC requested revisions for '
+                f'"{article.title}".'
+            ),
+            reverse("my_submissions"),
+        )
+
+        messages.info(
+            request,
+            f'Revisions were requested for "{article.title}".',
+        )
 
     else:
 
-        return redirect("pending_submissions")
+        messages.error(
+            request,
+            "Invalid submission review action.",
+        )
 
-    submission.reviewer_notes = reviewer_notes
-    submission.reviewed_at = timezone.now()
-    submission.save()
-
-    return redirect("pending_submissions")
+    return redirect(
+        "pending_submissions"
+    )
 
 
 @login_required
@@ -356,11 +626,13 @@ def my_submissions(request):
     }
 
     if selected_status in valid_statuses:
+
         submissions = submissions.filter(
             status=selected_status
         )
 
     if search_query:
+
         submissions = submissions.filter(
             Q(snapshot_title__icontains=search_query)
             | Q(snapshot_content__icontains=search_query)
@@ -412,8 +684,14 @@ def revise_submission(request, submission_id):
     )
 
     if submission.status != Submission.Status.REVISION:
-        return HttpResponseForbidden(
-            "This submission is not currently available for revision."
+
+        messages.warning(
+            request,
+            "This submission is not currently available for revision.",
+        )
+
+        return redirect(
+            "my_submissions"
         )
 
     article = submission.article
@@ -446,6 +724,7 @@ def revise_submission(request, submission_id):
         )
 
         base_slug = slugify(title) or "article"
+
         slug = base_slug
         counter = 1
 
@@ -455,6 +734,7 @@ def revise_submission(request, submission_id):
             .exclude(id=article.id)
             .exists()
         ):
+
             slug = f"{base_slug}-{counter}"
             counter += 1
 
@@ -468,15 +748,19 @@ def revise_submission(request, submission_id):
 
         article.save()
 
-        article.tags.set(tag_ids)
+        article.tags.set(
+            tag_ids
+        )
 
         if remove_attachment_ids:
+
             ArticleAttachment.objects.filter(
                 id__in=remove_attachment_ids,
                 article=article,
             ).delete()
 
         for image in attachments:
+
             ArticleAttachment.objects.create(
                 article=article,
                 image=image,
@@ -491,7 +775,24 @@ def revise_submission(request, submission_id):
 
         new_submission.capture_article_snapshot()
 
-        return redirect("my_submissions")
+        notify_eics(
+            Notification.Type.REVISION,
+            (
+                f'{request.user.username} resubmitted '
+                f'"{article.title}" after revision.'
+            ),
+            reverse("pending_submissions"),
+            exclude_user_id=request.user.id,
+        )
+
+        messages.success(
+            request,
+            f'"{article.title}" was revised and resubmitted successfully.',
+        )
+
+        return redirect(
+            "my_submissions"
+        )
 
     return render(
         request,
@@ -542,6 +843,11 @@ def resubmitted_submissions(request):
     )
 
 
+# ==========================================================
+# DRAFTS
+# ==========================================================
+
+
 @login_required
 def my_drafts(request):
 
@@ -574,6 +880,7 @@ def my_drafts(request):
     )
 
     if search_query:
+
         drafts = drafts.filter(
             Q(title__icontains=search_query)
             | Q(content__icontains=search_query)
@@ -638,11 +945,18 @@ def edit_draft(request, article_id):
             article=article.source_article,
             requested_by=request.user,
             status=EditRequest.Status.APPROVED,
+            draft_article=article,
         ).exists()
 
         if not approved_request_exists:
-            return HttpResponseForbidden(
-                "This edit-request draft is no longer available."
+
+            messages.warning(
+                request,
+                "This edit-request draft is no longer available.",
+            )
+
+            return redirect(
+                "my_drafts"
             )
 
     categories = Category.objects.all()
@@ -676,7 +990,10 @@ def edit_draft(request, article_id):
         base_slug = slugify(title) or "article"
 
         if article.draft_type == Article.DraftType.EDIT_REQUEST:
-            base_slug = f"{base_slug}-edit-draft-{article.id}"
+
+            base_slug = (
+                f"{base_slug}-edit-draft-{article.id}"
+            )
 
         slug = base_slug
         counter = 1
@@ -687,6 +1004,7 @@ def edit_draft(request, article_id):
             .exclude(id=article.id)
             .exists()
         ):
+
             slug = f"{base_slug}-{counter}"
             counter += 1
 
@@ -700,15 +1018,19 @@ def edit_draft(request, article_id):
 
         article.save()
 
-        article.tags.set(tag_ids)
+        article.tags.set(
+            tag_ids
+        )
 
         if remove_attachment_ids:
+
             ArticleAttachment.objects.filter(
                 id__in=remove_attachment_ids,
                 article=article,
             ).delete()
 
         for image in attachments:
+
             ArticleAttachment.objects.create(
                 article=article,
                 image=image,
@@ -724,9 +1046,49 @@ def edit_draft(request, article_id):
 
             submission.capture_article_snapshot()
 
-            return redirect("my_submissions")
+            if article.draft_type == Article.DraftType.EDIT_REQUEST:
 
-        return redirect("my_drafts")
+                notification_type = Notification.Type.REVISION
+
+                notification_message = (
+                    f'{request.user.username} submitted a revised '
+                    f'version of "{article.source_article.title}" '
+                    f'for review.'
+                )
+
+            else:
+
+                notification_type = Notification.Type.SUBMISSION
+
+                notification_message = (
+                    f'{request.user.username} submitted '
+                    f'"{article.title}" for review.'
+                )
+
+            notify_eics(
+                notification_type,
+                notification_message,
+                reverse("pending_submissions"),
+                exclude_user_id=request.user.id,
+            )
+
+            messages.success(
+                request,
+                f'"{article.title}" was submitted for review.',
+            )
+
+            return redirect(
+                "my_submissions"
+            )
+
+        messages.success(
+            request,
+            f'"{article.title}" was saved successfully.',
+        )
+
+        return redirect(
+            "my_drafts"
+        )
 
     return render(
         request,
@@ -758,15 +1120,35 @@ def delete_draft(request, article_id):
     )
 
     if request.method == "POST":
+
+        title = article.title
+
         article.delete()
 
-    return redirect("my_drafts")
+        messages.warning(
+            request,
+            f'Draft "{title}" was deleted.',
+        )
+
+    return redirect(
+        "my_drafts"
+    )
+
+
+# ==========================================================
+# PUBLISHED ARTICLES
+# ==========================================================
 
 
 @login_required
 def published_articles(request):
 
-    if request.user.role not in ["EDITOR", "EIC"]:
+    if request.user.role not in [
+        "EDITOR",
+        "EIC",
+        "STAFF",
+    ]:
+
         return HttpResponseForbidden(
             "You do not have permission to view published articles."
         )
@@ -794,11 +1176,13 @@ def published_articles(request):
     )
 
     if request.user.role == "EDITOR":
+
         articles = articles.filter(
             author=request.user
         )
 
     if search_query:
+
         articles = articles.filter(
             Q(title__icontains=search_query)
             | Q(content__icontains=search_query)
@@ -823,10 +1207,16 @@ def published_articles(request):
     )
 
 
+# ==========================================================
+# EDIT REQUEST WORKFLOW
+# ==========================================================
+
+
 @login_required
 def request_article_edit(request, article_id):
 
     if request.user.role != "EDITOR":
+
         return HttpResponseForbidden(
             "You do not have permission to request article edits."
         )
@@ -850,8 +1240,34 @@ def request_article_edit(request, article_id):
     ).exists()
 
     if existing_request:
-        return HttpResponseForbidden(
-            "You already have an active edit request for this article."
+
+        messages.warning(
+            request,
+            "You already have an active edit request for this article.",
+        )
+
+        return redirect(
+            "published_articles"
+        )
+
+    pending_deletion_request = DeletionRequest.objects.filter(
+        article=article,
+        requested_by=request.user,
+        status=DeletionRequest.Status.PENDING,
+    ).exists()
+
+    if pending_deletion_request:
+
+        messages.warning(
+            request,
+            (
+                "You cannot request an edit while a deletion "
+                "request is pending for this article."
+            ),
+        )
+
+        return redirect(
+            "published_articles"
         )
 
     if request.method == "POST":
@@ -861,12 +1277,34 @@ def request_article_edit(request, article_id):
             "",
         ).strip()
 
-        if reason:
+        if not reason:
+
+            messages.error(
+                request,
+                "Please provide a reason for the edit request.",
+            )
+
+        else:
 
             EditRequest.objects.create(
                 article=article,
                 requested_by=request.user,
                 reason=reason,
+            )
+
+            notify_eics(
+                Notification.Type.EDIT_REQUEST,
+                (
+                    f'{request.user.username} requested permission '
+                    f'to edit "{article.title}".'
+                ),
+                reverse("eic_edit_requests"),
+                exclude_user_id=request.user.id,
+            )
+
+            messages.success(
+                request,
+                f'Your edit request for "{article.title}" was submitted.',
             )
 
             return redirect(
@@ -886,6 +1324,7 @@ def request_article_edit(request, article_id):
 def my_edit_requests(request):
 
     if request.user.role != "EDITOR":
+
         return HttpResponseForbidden(
             "You do not have permission to view this page."
         )
@@ -909,6 +1348,7 @@ def my_edit_requests(request):
     )
 
     if search_query:
+
         requests = requests.filter(
             Q(article__title__icontains=search_query)
             | Q(article__content__icontains=search_query)
@@ -930,6 +1370,7 @@ def my_edit_requests(request):
 def eic_edit_requests(request):
 
     if request.user.role != "EIC":
+
         return HttpResponseForbidden(
             "You do not have permission to view edit requests."
         )
@@ -954,6 +1395,7 @@ def eic_edit_requests(request):
     )
 
     if search_query:
+
         requests = requests.filter(
             Q(article__title__icontains=search_query)
             | Q(article__content__icontains=search_query)
@@ -976,6 +1418,7 @@ def eic_edit_requests(request):
 def review_edit_request(request, request_id):
 
     if request.user.role != "EIC":
+
         return HttpResponseForbidden(
             "You do not have permission to review edit requests."
         )
@@ -984,15 +1427,21 @@ def review_edit_request(request, request_id):
         EditRequest.objects.select_related(
             "article",
             "draft_article",
+            "requested_by",
         ),
         id=request_id,
         status=EditRequest.Status.PENDING,
     )
 
     if request.method != "POST":
-        return redirect("eic_edit_requests")
 
-    action = request.POST.get("action")
+        return redirect(
+            "eic_edit_requests"
+        )
+
+    action = request.POST.get(
+        "action"
+    )
 
     reviewer_notes = request.POST.get(
         "reviewer_notes",
@@ -1011,9 +1460,17 @@ def review_edit_request(request, request_id):
         ).exists()
 
         if existing_draft:
-            return HttpResponseForbidden(
-                "An active edit-request draft already exists "
-                "for this article."
+
+            messages.warning(
+                request,
+                (
+                    "An active edit-request draft already exists "
+                    "for this article."
+                ),
+            )
+
+            return redirect(
+                "eic_edit_requests"
             )
 
         with transaction.atomic():
@@ -1067,6 +1524,22 @@ def review_edit_request(request, request_id):
 
             edit_request.save()
 
+            notify_user(
+                edit_request.requested_by,
+                Notification.Type.EDIT_REQUEST,
+                (
+                    f'Your edit request for '
+                    f'"{original_article.title}" was approved. '
+                    f'A revision draft is now available.'
+                ),
+                reverse("my_drafts"),
+            )
+
+        messages.success(
+            request,
+            f'The edit request for "{original_article.title}" was approved.',
+        )
+
     elif action == "reject":
 
         edit_request.status = EditRequest.Status.REJECTED
@@ -1075,12 +1548,1161 @@ def review_edit_request(request, request_id):
 
         edit_request.save()
 
+        notify_user(
+            edit_request.requested_by,
+            Notification.Type.EDIT_REQUEST,
+            (
+                f'Your edit request for '
+                f'"{edit_request.article.title}" was rejected.'
+            ),
+            reverse("my_edit_requests"),
+        )
+
+        messages.warning(
+            request,
+            f'The edit request for "{edit_request.article.title}" was rejected.',
+        )
+
     else:
 
-        return redirect(
-            "eic_edit_requests"
+        messages.error(
+            request,
+            "Invalid edit request action.",
         )
 
     return redirect(
         "eic_edit_requests"
+    )
+
+
+# ==========================================================
+# DELETION REQUEST WORKFLOW
+# ==========================================================
+
+
+@login_required
+def request_article_deletion(request, article_id):
+
+    if request.user.role != "EDITOR":
+
+        return HttpResponseForbidden(
+            "You do not have permission to request article deletion."
+        )
+
+    article = get_object_or_404(
+        Article.objects.select_related(
+            "category",
+            "author",
+        ),
+        id=article_id,
+        author=request.user,
+        is_published=True,
+        is_archived=False,
+        draft_type=Article.DraftType.NORMAL,
+    )
+
+    existing_request = DeletionRequest.objects.filter(
+        article=article,
+        requested_by=request.user,
+        status=DeletionRequest.Status.PENDING,
+    ).exists()
+
+    if existing_request:
+
+        messages.warning(
+            request,
+            "You already have a pending deletion request for this article.",
+        )
+
+        return redirect(
+            "published_articles"
+        )
+
+    active_edit_request = EditRequest.objects.filter(
+        article=article,
+        requested_by=request.user,
+        status__in=[
+            EditRequest.Status.PENDING,
+            EditRequest.Status.APPROVED,
+        ],
+    ).exists()
+
+    if active_edit_request:
+
+        messages.warning(
+            request,
+            (
+                "You cannot request deletion while an edit "
+                "request is active for this article."
+            ),
+        )
+
+        return redirect(
+            "published_articles"
+        )
+
+    if request.method == "POST":
+
+        reason = request.POST.get(
+            "reason",
+            "",
+        ).strip()
+
+        if not reason:
+
+            messages.error(
+                request,
+                "Please provide a reason for the deletion request.",
+            )
+
+        else:
+
+            DeletionRequest.objects.create(
+                article=article,
+                requested_by=request.user,
+                reason=reason,
+                status=DeletionRequest.Status.PENDING,
+            )
+
+            notify_eics(
+                Notification.Type.DELETION_REQUEST,
+                (
+                    f'{request.user.username} requested deletion '
+                    f'of "{article.title}".'
+                ),
+                reverse("eic_deletion_requests"),
+                exclude_user_id=request.user.id,
+            )
+
+            messages.success(
+                request,
+                (
+                    f'Your deletion request for '
+                    f'"{article.title}" was submitted.'
+                ),
+            )
+
+            return redirect(
+                "my_deletion_requests"
+            )
+
+    return render(
+        request,
+        "publications/request_article_deletion.html",
+        {
+            "article": article,
+        },
+    )
+
+
+@login_required
+def my_deletion_requests(request):
+
+    if request.user.role != "EDITOR":
+
+        return HttpResponseForbidden(
+            "You do not have permission to view deletion requests."
+        )
+
+    search_query = request.GET.get(
+        "q",
+        "",
+    ).strip()
+
+    requests = (
+        DeletionRequest.objects
+        .filter(
+            requested_by=request.user
+        )
+        .select_related(
+            "article",
+            "article__category",
+        )
+    )
+
+    if search_query:
+
+        requests = requests.filter(
+            Q(article__title__icontains=search_query)
+            | Q(article__content__icontains=search_query)
+            | Q(article__category__name__icontains=search_query)
+            | Q(reason__icontains=search_query)
+            | Q(reviewer_notes__icontains=search_query)
+        )
+
+    requests = requests.order_by(
+        "-created_at"
+    )
+
+    return render(
+        request,
+        "publications/my_deletion_requests.html",
+        {
+            "deletion_requests": requests,
+            "search_query": search_query,
+        },
+    )
+
+
+@login_required
+def eic_deletion_requests(request):
+
+    if request.user.role != "EIC":
+
+        return HttpResponseForbidden(
+            "You do not have permission to view deletion requests."
+        )
+
+    search_query = request.GET.get(
+        "q",
+        "",
+    ).strip()
+
+    requests = (
+        DeletionRequest.objects
+        .filter(
+            status=DeletionRequest.Status.PENDING
+        )
+        .select_related(
+            "article",
+            "article__category",
+            "article__author",
+            "requested_by",
+        )
+    )
+
+    if search_query:
+
+        requests = requests.filter(
+            Q(article__title__icontains=search_query)
+            | Q(article__content__icontains=search_query)
+            | Q(article__category__name__icontains=search_query)
+            | Q(requested_by__username__icontains=search_query)
+            | Q(reason__icontains=search_query)
+        )
+
+    requests = requests.order_by(
+        "-created_at"
+    )
+
+    return render(
+        request,
+        "publications/eic_deletion_requests.html",
+        {
+            "deletion_requests": requests,
+            "search_query": search_query,
+        },
+    )
+
+
+@login_required
+def review_deletion_request(request, request_id):
+
+    if request.user.role != "EIC":
+
+        return HttpResponseForbidden(
+            "You do not have permission to review deletion requests."
+        )
+
+    if request.method != "POST":
+
+        return redirect(
+            "eic_deletion_requests"
+        )
+
+    action = request.POST.get(
+        "action"
+    )
+
+    reviewer_notes = request.POST.get(
+        "reviewer_notes",
+        "",
+    ).strip()
+
+    with transaction.atomic():
+
+        deletion_request = get_object_or_404(
+            DeletionRequest.objects
+            .select_for_update()
+            .select_related(
+                "article",
+                "requested_by",
+            ),
+            id=request_id,
+            status=DeletionRequest.Status.PENDING,
+        )
+
+        article = Article.objects.select_for_update().get(
+            id=deletion_request.article_id
+        )
+
+        if action == "approve":
+
+            if article.is_archived:
+
+                messages.warning(
+                    request,
+                    "This article is already archived.",
+                )
+
+                return redirect(
+                    "eic_deletion_requests"
+                )
+
+            active_edit_request = EditRequest.objects.filter(
+                article=article,
+                status__in=[
+                    EditRequest.Status.PENDING,
+                    EditRequest.Status.APPROVED,
+                ],
+            ).exists()
+
+            if active_edit_request:
+
+                messages.warning(
+                    request,
+                    (
+                        "This deletion request cannot be approved while "
+                        "an edit request is active for the article."
+                    ),
+                )
+
+                return redirect(
+                    "eic_deletion_requests"
+                )
+
+            article.is_published = False
+            article.is_archived = True
+            article.archived_at = timezone.now()
+
+            article.save(
+                update_fields=[
+                    "is_published",
+                    "is_archived",
+                    "archived_at",
+                    "updated_at",
+                ]
+            )
+
+            deletion_request.status = (
+                DeletionRequest.Status.APPROVED
+            )
+
+            deletion_request.reviewer_notes = reviewer_notes
+            deletion_request.reviewed_at = timezone.now()
+
+            deletion_request.save(
+                update_fields=[
+                    "status",
+                    "reviewer_notes",
+                    "reviewed_at",
+                ]
+            )
+
+            notify_user(
+                deletion_request.requested_by,
+                Notification.Type.DELETION_REQUEST,
+                (
+                    f'Your deletion request for '
+                    f'"{article.title}" was approved. '
+                    f'The article has been archived.'
+                ),
+                reverse("my_deletion_requests"),
+            )
+
+            messages.success(
+                request,
+                f'"{article.title}" was archived successfully.',
+            )
+
+        elif action == "reject":
+
+            deletion_request.status = (
+                DeletionRequest.Status.REJECTED
+            )
+
+            deletion_request.reviewer_notes = reviewer_notes
+            deletion_request.reviewed_at = timezone.now()
+
+            deletion_request.save(
+                update_fields=[
+                    "status",
+                    "reviewer_notes",
+                    "reviewed_at",
+                ]
+            )
+
+            notify_user(
+                deletion_request.requested_by,
+                Notification.Type.DELETION_REQUEST,
+                (
+                    f'Your deletion request for '
+                    f'"{article.title}" was rejected.'
+                ),
+                reverse("my_deletion_requests"),
+            )
+
+            messages.warning(
+                request,
+                f'The deletion request for "{article.title}" was rejected.',
+            )
+
+        else:
+
+            messages.error(
+                request,
+                "Invalid deletion request action.",
+            )
+
+    return redirect(
+        "eic_deletion_requests"
+    )
+
+
+# ==========================================================
+# STAFF CONTENT REPORT WORKFLOW
+# ==========================================================
+
+
+@login_required
+def report_article_content(request, article_id):
+
+    if request.user.role != "STAFF":
+
+        return HttpResponseForbidden(
+            "You do not have permission to report article content."
+        )
+
+    article = get_object_or_404(
+        Article.objects.select_related(
+            "category",
+            "author",
+        ),
+        id=article_id,
+        is_published=True,
+        is_archived=False,
+        draft_type=Article.DraftType.NORMAL,
+    )
+
+    existing_report = ContentReport.objects.filter(
+        article=article,
+        reported_by=request.user,
+        status__in=[
+            ContentReport.Status.OPEN,
+            ContentReport.Status.REVISION_REQUIRED,
+        ],
+    ).exists()
+
+    if existing_report:
+
+        messages.warning(
+            request,
+            "You already have an active report for this article.",
+        )
+
+        return redirect(
+            "my_content_reports"
+        )
+
+    if request.method == "POST":
+
+        description = request.POST.get(
+            "description",
+            "",
+        ).strip()
+
+        if not description:
+
+            messages.error(
+                request,
+                "Please describe the content concern before submitting.",
+            )
+
+        else:
+
+            ContentReport.objects.create(
+                article=article,
+                reported_by=request.user,
+                description=description,
+                status=ContentReport.Status.OPEN,
+            )
+
+            notify_eics(
+                Notification.Type.CONTENT_REPORT,
+                (
+                    f'{request.user.username} reported a content '
+                    f'concern for "{article.title}".'
+                ),
+                reverse("eic_content_reports"),
+                exclude_user_id=request.user.id,
+            )
+
+            messages.success(
+                request,
+                f'Your content report for "{article.title}" was submitted.',
+            )
+
+            return redirect(
+                "my_content_reports"
+            )
+
+    return render(
+        request,
+        "publications/report_article_content.html",
+        {
+            "article": article,
+        },
+    )
+
+
+@login_required
+def my_content_reports(request):
+
+    if request.user.role != "STAFF":
+
+        return HttpResponseForbidden(
+            "You do not have permission to view content reports."
+        )
+
+    search_query = request.GET.get(
+        "q",
+        "",
+    ).strip()
+
+    reports = (
+        ContentReport.objects
+        .filter(
+            reported_by=request.user
+        )
+        .select_related(
+            "article",
+            "article__category",
+            "article__author",
+            "forced_edit_request",
+            "forced_edit_request__draft_article",
+        )
+    )
+
+    if search_query:
+
+        reports = reports.filter(
+            Q(article__title__icontains=search_query)
+            | Q(article__content__icontains=search_query)
+            | Q(article__category__name__icontains=search_query)
+            | Q(description__icontains=search_query)
+            | Q(staff_notes__icontains=search_query)
+        )
+
+    reports = reports.order_by(
+        "-created_at"
+    )
+
+    return render(
+        request,
+        "publications/my_content_reports.html",
+        {
+            "content_reports": reports,
+            "search_query": search_query,
+        },
+    )
+
+
+@login_required
+def cancel_content_report(request, report_id):
+
+    if request.user.role != "STAFF":
+
+        return HttpResponseForbidden(
+            "You do not have permission to cancel content reports."
+        )
+
+    report = get_object_or_404(
+        ContentReport,
+        id=report_id,
+        reported_by=request.user,
+        status=ContentReport.Status.OPEN,
+    )
+
+    if request.method != "POST":
+
+        return redirect(
+            "my_content_reports"
+        )
+
+    report.status = ContentReport.Status.CANCELLED
+
+    report.save(
+        update_fields=[
+            "status",
+            "updated_at",
+        ]
+    )
+
+    messages.warning(
+        request,
+        f'Your report for "{report.article.title}" was cancelled.',
+    )
+
+    return redirect(
+        "my_content_reports"
+    )
+
+
+@login_required
+def eic_content_reports(request):
+
+    if request.user.role != "EIC":
+
+        return HttpResponseForbidden(
+            "You do not have permission to view content reports."
+        )
+
+    search_query = request.GET.get(
+        "q",
+        "",
+    ).strip()
+
+    reports = (
+        ContentReport.objects
+        .filter(
+            status__in=[
+                ContentReport.Status.OPEN,
+                ContentReport.Status.REVISION_REQUIRED,
+            ]
+        )
+        .select_related(
+            "article",
+            "article__category",
+            "article__author",
+            "reported_by",
+            "forced_edit_request",
+            "forced_edit_request__draft_article",
+        )
+    )
+
+    if search_query:
+
+        reports = reports.filter(
+            Q(article__title__icontains=search_query)
+            | Q(article__content__icontains=search_query)
+            | Q(article__category__name__icontains=search_query)
+            | Q(article__author__username__icontains=search_query)
+            | Q(reported_by__username__icontains=search_query)
+            | Q(description__icontains=search_query)
+            | Q(staff_notes__icontains=search_query)
+        )
+
+    reports = reports.order_by(
+        "-created_at"
+    )
+
+    return render(
+        request,
+        "publications/eic_content_reports.html",
+        {
+            "content_reports": reports,
+            "search_query": search_query,
+        },
+    )
+
+
+@login_required
+def resolve_content_report(request, report_id):
+
+    if request.user.role != "EIC":
+
+        return HttpResponseForbidden(
+            "You do not have permission to resolve content reports."
+        )
+
+    if request.method != "POST":
+
+        return redirect(
+            "eic_content_reports"
+        )
+
+    staff_notes = request.POST.get(
+        "staff_notes",
+        "",
+    ).strip()
+
+    if not staff_notes:
+
+        messages.error(
+            request,
+            (
+                "Resolution notes are required when resolving "
+                "a report without revision."
+            ),
+        )
+
+        return redirect(
+            "eic_content_reports"
+        )
+
+    with transaction.atomic():
+
+        report = get_object_or_404(
+            ContentReport.objects
+            .select_for_update()
+            .select_related(
+                "article",
+                "reported_by",
+            ),
+            id=report_id,
+            status=ContentReport.Status.OPEN,
+        )
+
+        report.status = ContentReport.Status.RESOLVED
+        report.staff_notes = staff_notes
+        report.resolved_at = timezone.now()
+
+        report.save(
+            update_fields=[
+                "status",
+                "staff_notes",
+                "resolved_at",
+                "updated_at",
+            ]
+        )
+
+        notify_user(
+            report.reported_by,
+            Notification.Type.CONTENT_REPORT,
+            (
+                f'Your content report for '
+                f'"{report.article.title}" was resolved '
+                f'without requiring a revision.'
+            ),
+            reverse("my_content_reports"),
+        )
+
+    messages.success(
+        request,
+        f'The report for "{report.article.title}" was resolved.',
+    )
+
+    return redirect(
+        "eic_content_reports"
+    )
+
+
+@login_required
+def require_revision_from_report(request, report_id):
+
+    if request.user.role != "EIC":
+
+        return HttpResponseForbidden(
+            "You do not have permission to require article revisions."
+        )
+
+    if request.method != "POST":
+
+        return redirect(
+            "eic_content_reports"
+        )
+
+    staff_notes = request.POST.get(
+        "staff_notes",
+        "",
+    ).strip()
+
+    if not staff_notes:
+
+        messages.error(
+            request,
+            "Revision instructions are required.",
+        )
+
+        return redirect(
+            "eic_content_reports"
+        )
+
+    with transaction.atomic():
+
+        report = get_object_or_404(
+            ContentReport.objects
+            .select_for_update()
+            .select_related(
+                "article",
+                "article__author",
+                "reported_by",
+            ),
+            id=report_id,
+            status=ContentReport.Status.OPEN,
+        )
+
+        original_article = (
+            Article.objects
+            .select_for_update()
+            .select_related(
+                "author",
+                "category",
+            )
+            .get(
+                id=report.article_id
+            )
+        )
+
+        if not original_article.is_published:
+
+            messages.warning(
+                request,
+                "This article is no longer published.",
+            )
+
+            return redirect(
+                "eic_content_reports"
+            )
+
+        if original_article.is_archived:
+
+            messages.warning(
+                request,
+                "This article is already archived.",
+            )
+
+            return redirect(
+                "eic_content_reports"
+            )
+
+        if original_article.draft_type != Article.DraftType.NORMAL:
+
+            messages.warning(
+                request,
+                "Only normal published articles can be forced into revision.",
+            )
+
+            return redirect(
+                "eic_content_reports"
+            )
+
+        if original_article.author.role != "EDITOR":
+
+            messages.warning(
+                request,
+                (
+                    "This corrective revision workflow currently requires "
+                    "the published article to belong to an Editor."
+                ),
+            )
+
+            return redirect(
+                "eic_content_reports"
+            )
+
+        existing_edit_request = EditRequest.objects.filter(
+            article=original_article,
+            status__in=[
+                EditRequest.Status.PENDING,
+                EditRequest.Status.APPROVED,
+            ],
+        ).exists()
+
+        if existing_edit_request:
+
+            messages.warning(
+                request,
+                "An active edit request already exists for this article.",
+            )
+
+            return redirect(
+                "eic_content_reports"
+            )
+
+        existing_deletion_request = DeletionRequest.objects.filter(
+            article=original_article,
+            status=DeletionRequest.Status.PENDING,
+        ).exists()
+
+        if existing_deletion_request:
+
+            messages.warning(
+                request,
+                "A deletion request is currently pending for this article.",
+            )
+
+            return redirect(
+                "eic_content_reports"
+            )
+
+        existing_draft = Article.objects.filter(
+            source_article=original_article,
+            draft_type=Article.DraftType.EDIT_REQUEST,
+            is_published=False,
+            is_archived=False,
+        ).exists()
+
+        if existing_draft:
+
+            messages.warning(
+                request,
+                "An active revision draft already exists for this article.",
+            )
+
+            return redirect(
+                "eic_content_reports"
+            )
+
+        forced_edit_request = EditRequest.objects.create(
+            article=original_article,
+            requested_by=original_article.author,
+            reason=(
+                "Revision required by the Editor in Chief "
+                f"because of Staff Content Report #{report.id}."
+            ),
+            status=EditRequest.Status.APPROVED,
+            reviewer_notes=staff_notes,
+            reviewed_at=timezone.now(),
+        )
+
+        base_slug = (
+            f"{original_article.slug}-report-revision-{report.id}"
+        )
+
+        edit_draft_slug = base_slug
+        counter = 1
+
+        while Article.objects.filter(
+            slug=edit_draft_slug
+        ).exists():
+
+            edit_draft_slug = (
+                f"{base_slug}-{counter}"
+            )
+
+            counter += 1
+
+        edit_draft = Article.objects.create(
+            title=original_article.title,
+            slug=edit_draft_slug,
+            category=original_article.category,
+            author=original_article.author,
+            content=original_article.content,
+            featured_image=original_article.featured_image,
+            draft_type=Article.DraftType.EDIT_REQUEST,
+            source_article=original_article,
+            is_published=False,
+            is_archived=False,
+        )
+
+        edit_draft.tags.set(
+            original_article.tags.all()
+        )
+
+        for attachment in original_article.attachments.all():
+
+            ArticleAttachment.objects.create(
+                article=edit_draft,
+                image=attachment.image,
+                caption=attachment.caption,
+            )
+
+        forced_edit_request.draft_article = edit_draft
+
+        forced_edit_request.save(
+            update_fields=[
+                "draft_article",
+            ]
+        )
+
+        report.status = ContentReport.Status.REVISION_REQUIRED
+        report.staff_notes = staff_notes
+        report.forced_edit_request = forced_edit_request
+
+        report.save(
+            update_fields=[
+                "status",
+                "staff_notes",
+                "forced_edit_request",
+                "updated_at",
+            ]
+        )
+
+        notify_user(
+            original_article.author,
+            Notification.Type.REVISION,
+            (
+                f'The EIC required a corrective revision '
+                f'for "{original_article.title}" because '
+                f'of a Staff content report.'
+            ),
+            reverse("my_drafts"),
+        )
+
+        notify_user(
+            report.reported_by,
+            Notification.Type.CONTENT_REPORT,
+            (
+                f'The EIC reviewed your report for '
+                f'"{original_article.title}" and required '
+                f'a corrective revision.'
+            ),
+            reverse("my_content_reports"),
+        )
+
+    messages.success(
+        request,
+        (
+            f'A corrective revision for "{original_article.title}" '
+            f'was assigned to {original_article.author.username}.'
+        ),
+    )
+
+    return redirect(
+        "eic_content_reports"
+    )
+
+
+# ==========================================================
+# ARCHIVE MANAGEMENT
+# ==========================================================
+
+
+@login_required
+def archived_articles(request):
+
+    if request.user.role != "EIC":
+
+        return HttpResponseForbidden(
+            "You do not have permission to manage the archive."
+        )
+
+    search_query = request.GET.get(
+        "q",
+        "",
+    ).strip()
+
+    articles = (
+        Article.objects
+        .filter(
+            is_archived=True,
+            draft_type=Article.DraftType.NORMAL,
+        )
+        .select_related(
+            "category",
+            "author",
+        )
+        .prefetch_related(
+            "attachments",
+            "tags",
+        )
+    )
+
+    if search_query:
+
+        articles = articles.filter(
+            Q(title__icontains=search_query)
+            | Q(content__icontains=search_query)
+            | Q(category__name__icontains=search_query)
+            | Q(author__username__icontains=search_query)
+            | Q(tags__name__icontains=search_query)
+        )
+
+    articles = (
+        articles
+        .order_by(
+            "-archived_at",
+            "-updated_at",
+        )
+        .distinct()
+    )
+
+    return render(
+        request,
+        "publications/archive.html",
+        {
+            "articles": articles,
+            "search_query": search_query,
+        },
+    )
+
+
+@login_required
+def restore_archived_article(request, article_id):
+
+    if request.user.role != "EIC":
+
+        return HttpResponseForbidden(
+            "You do not have permission to restore archived articles."
+        )
+
+    if request.method != "POST":
+
+        return redirect(
+            "archived_articles"
+        )
+
+    with transaction.atomic():
+
+        article = get_object_or_404(
+            Article.objects
+            .select_for_update()
+            .select_related(
+                "author",
+                "category",
+            ),
+            id=article_id,
+            is_archived=True,
+            draft_type=Article.DraftType.NORMAL,
+        )
+
+        active_edit_request = EditRequest.objects.filter(
+            article=article,
+            status__in=[
+                EditRequest.Status.PENDING,
+                EditRequest.Status.APPROVED,
+            ],
+        ).exists()
+
+        if active_edit_request:
+
+            messages.warning(
+                request,
+                (
+                    "This archived article cannot be restored while "
+                    "an edit request is active."
+                ),
+            )
+
+            return redirect(
+                "archived_articles"
+            )
+
+        article.is_archived = False
+        article.is_published = True
+        article.archived_at = None
+
+        if article.published_at is None:
+            article.published_at = timezone.now()
+
+        article.save(
+            update_fields=[
+                "is_archived",
+                "is_published",
+                "archived_at",
+                "published_at",
+                "updated_at",
+            ]
+        )
+
+        if article.author.role == "EDITOR":
+
+            notify_user(
+                article.author,
+                Notification.Type.GENERAL,
+                (
+                    f'The archived article "{article.title}" '
+                    f'was restored by the Editor in Chief.'
+                ),
+                reverse("published_articles"),
+            )
+
+    messages.success(
+        request,
+        f'"{article.title}" was restored and published again.',
+    )
+
+    return redirect(
+        "archived_articles"
     )

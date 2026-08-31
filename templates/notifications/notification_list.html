@@ -1,0 +1,175 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<h1>Notifications</h1>
+
+<p class="section-description">
+    View updates related to submissions, requests, reports, revisions, and other publication activity.
+</p>
+
+
+<div class="notification-toolbar">
+
+    <div class="info-box">
+
+        <strong>
+            Unread Notifications:
+        </strong>
+
+        {{ unread_count }}
+
+    </div>
+
+    {% if unread_count > 0 %}
+
+        <form
+            method="POST"
+            action="{% url 'mark_all_notifications_read' %}"
+        >
+
+            {% csrf_token %}
+
+            <button
+                type="submit"
+                class="approve-button"
+            >
+                Mark All as Read
+            </button>
+
+        </form>
+
+    {% endif %}
+
+</div>
+
+
+{% if notifications %}
+
+    <div class="submission-list">
+
+        {% for notification in notifications %}
+
+            <div class="submission-card">
+
+                <div class="submission-details">
+
+                    <div class="submission-summary-info">
+
+                        <div class="submission-badges">
+
+                            {% if notification.is_read %}
+
+                                <span class="status-badge status-approved">
+                                    Read
+                                </span>
+
+                            {% else %}
+
+                                <span class="status-badge status-pending">
+                                    Unread
+                                </span>
+
+                            {% endif %}
+
+                            <span class="badge badge-edit">
+                                {{ notification.get_notification_type_display }}
+                            </span>
+
+                        </div>
+
+
+                        <p class="submission-meta">
+
+                            <strong>
+                                Received:
+                            </strong>
+
+                            {{ notification.created_at|date:"M. d, Y - g:i A" }}
+
+                        </p>
+
+                    </div>
+
+
+                    <div class="article-content">
+
+                        <p>
+                            {{ notification.message }}
+                        </p>
+
+                    </div>
+
+
+                    <div class="article-actions">
+
+                        {% if notification.related_url %}
+
+                            {% if notification.is_read %}
+
+                                <a
+                                    href="{{ notification.related_url }}"
+                                    class="edit-link"
+                                >
+                                    View
+                                </a>
+
+                            {% else %}
+
+                                <form
+                                    method="POST"
+                                    action="{% url 'mark_notification_read' notification.id %}"
+                                >
+
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="edit-link"
+                                    >
+                                        View
+                                    </button>
+
+                                </form>
+
+                            {% endif %}
+
+                        {% elif not notification.is_read %}
+
+                            <form
+                                method="POST"
+                                action="{% url 'mark_notification_read' notification.id %}"
+                            >
+
+                                {% csrf_token %}
+
+                                <button
+                                    type="submit"
+                                    class="edit-link"
+                                >
+                                    Mark as Read
+                                </button>
+
+                            </form>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+{% else %}
+
+    <p class="empty-message">
+        You currently have no notifications.
+    </p>
+
+{% endif %}
+
+{% endblock %}

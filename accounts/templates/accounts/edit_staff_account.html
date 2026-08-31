@@ -1,0 +1,84 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<h1>Edit Publication Staff Account</h1>
+
+<p class="section-description">
+    Update account information, publication role, and account status.
+</p>
+
+
+<div class="submission-card">
+
+    <p>
+        <strong>Username:</strong>
+        {{ managed_user.username }}
+    </p>
+
+    <p>
+        <strong>Current Role:</strong>
+        {{ managed_user.get_role_display }}
+    </p>
+
+</div>
+
+
+<form method="POST">
+
+    {% csrf_token %}
+
+    {{ form.non_field_errors }}
+
+    {% for field in form %}
+
+        <div class="form-group">
+
+            <label for="{{ field.id_for_label }}">
+                {{ field.label }}
+            </label>
+
+            {{ field }}
+
+            {% if field.errors %}
+
+                <div class="form-errors">
+
+                    {% for error in field.errors %}
+
+                        <p>
+                            {{ error }}
+                        </p>
+
+                    {% endfor %}
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    {% endfor %}
+
+
+    <div class="article-actions">
+
+        <button
+            type="submit"
+            class="approve-button"
+        >
+            Save Changes
+        </button>
+
+        <a
+            href="{% url 'manage_staff_accounts' %}"
+            class="edit-link"
+        >
+            Cancel
+        </a>
+
+    </div>
+
+</form>
+
+{% endblock %}

@@ -8,6 +8,7 @@
     Articles waiting for Editor in Chief review.
 </p>
 
+
 <div class="submission-toolbar">
 
     <form
@@ -101,7 +102,6 @@
 
                                 {% endif %}
 
-
                                 {% if not submission.snapshot_title %}
 
                                     <span class="badge">
@@ -132,10 +132,8 @@
                             </strong>
 
                             <p>
-                                This submission was created before historical
-                                submission snapshots were enabled. The current
-                                live article is shown because the exact submitted
-                                version was not stored.
+                                This submission was created before historical submission snapshots were enabled.
+                                The current live article is shown because the exact submitted version was not stored.
                             </p>
 
                         </div>
@@ -161,9 +159,7 @@
                             {% endif %}
 
                             <p>
-                                Approving this submission will update the existing
-                                published article instead of creating another
-                                published copy.
+                                Approving this submission will update the existing published article instead of creating another published copy.
                             </p>
 
                         </div>
@@ -175,7 +171,9 @@
 
                         <p class="submission-meta">
 
-                            <strong>Category:</strong>
+                            <strong>
+                                Category:
+                            </strong>
 
                             {% if submission.snapshot_category_name %}
                                 {{ submission.snapshot_category_name }}
@@ -400,6 +398,8 @@
                                     name="action"
                                     value="approve"
                                     class="approve-button"
+                                    data-confirm-title="Approve Submission"
+                                    data-confirm="Are you sure you want to approve this submission and publish the article?"
                                 >
                                     Approve
                                 </button>
@@ -409,6 +409,8 @@
                                     name="action"
                                     value="revision"
                                     class="revision-button"
+                                    data-confirm-title="Request Revision"
+                                    data-confirm="Are you sure you want to send this submission back to the Editor for revision?"
                                 >
                                     Send Back for Revision
                                 </button>
@@ -418,6 +420,8 @@
                                     name="action"
                                     value="reject"
                                     class="danger-button"
+                                    data-confirm-title="Reject Submission"
+                                    data-confirm="Are you sure you want to reject this submission?"
                                 >
                                     Reject
                                 </button>

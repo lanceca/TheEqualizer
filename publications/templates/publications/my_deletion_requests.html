@@ -1,0 +1,266 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<h1>My Deletion Requests</h1>
+
+<p class="section-description">
+    View the status and review results of your article deletion requests.
+</p>
+
+
+<div class="submission-toolbar">
+
+    <form
+        method="GET"
+        action="{% url 'my_deletion_requests' %}"
+        class="search-form"
+    >
+
+        <input
+            type="text"
+            name="q"
+            value="{{ search_query }}"
+            placeholder="Search article title, category, reason, or reviewer notes..."
+            class="search-input"
+        >
+
+        <button
+            type="submit"
+            class="search-button"
+        >
+            Search
+        </button>
+
+        {% if search_query %}
+
+            <a
+                href="{% url 'my_deletion_requests' %}"
+                class="clear-search"
+            >
+                Clear
+            </a>
+
+        {% endif %}
+
+    </form>
+
+</div>
+
+
+{% if search_query %}
+
+    <div class="info-box">
+
+        Search results for:
+        <strong>{{ search_query }}</strong>
+
+    </div>
+
+{% endif %}
+
+
+{% if deletion_requests %}
+
+    <div class="submission-list">
+
+        {% for deletion_request in deletion_requests %}
+
+            <details class="submission-card">
+
+                <summary class="submission-summary">
+
+                    <div class="submission-summary-content">
+
+                        <div class="submission-summary-info">
+
+                            <h2 class="submission-title">
+                                {{ deletion_request.article.title }}
+                            </h2>
+
+                            <p class="submission-meta">
+                                <strong>Requested:</strong>
+                                {{ deletion_request.created_at|date:"M. d, Y - g:i A" }}
+                            </p>
+
+                            <div class="submission-badges">
+
+                                {% if deletion_request.status == "PENDING" %}
+
+                                    <span class="status-badge status-pending">
+                                        {{ deletion_request.get_status_display }}
+                                    </span>
+
+                                {% elif deletion_request.status == "APPROVED" %}
+
+                                    <span class="status-badge status-approved">
+                                        {{ deletion_request.get_status_display }}
+                                    </span>
+
+                                {% elif deletion_request.status == "REJECTED" %}
+
+                                    <span class="status-badge status-rejected">
+                                        {{ deletion_request.get_status_display }}
+                                    </span>
+
+                                {% endif %}
+
+                                <span class="badge badge-edit">
+                                    Deletion Request
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                        <span class="expand-indicator"></span>
+
+                    </div>
+
+                </summary>
+
+
+                <div class="submission-details">
+
+                    <div class="submission-information">
+
+                        <p class="submission-meta">
+                            <strong>Category:</strong>
+                            {{ deletion_request.article.category.name }}
+                        </p>
+
+                        <p class="submission-meta">
+                            <strong>Current Article Status:</strong>
+
+                            {% if deletion_request.article.is_archived %}
+
+                                Archived
+
+                            {% elif deletion_request.article.is_published %}
+
+                                Published
+
+                            {% else %}
+
+                                Unpublished
+
+                            {% endif %}
+                        </p>
+
+                        {% if deletion_request.reviewed_at %}
+
+                            <p class="submission-meta">
+                                <strong>Reviewed:</strong>
+                                {{ deletion_request.reviewed_at|date:"M. d, Y - g:i A" }}
+                            </p>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="article-content">
+
+                        <h3>
+                            Reason for Deletion
+                        </h3>
+
+                        <p>
+                            {{ deletion_request.reason|linebreaksbr }}
+                        </p>
+
+                    </div>
+
+
+                    {% if deletion_request.status == "PENDING" %}
+
+                        <div class="info-box">
+
+                            <strong>
+                                Pending EIC Review
+                            </strong>
+
+                            <p>
+                                This article remains published while your deletion request is being reviewed.
+                            </p>
+
+                        </div>
+
+                    {% elif deletion_request.status == "APPROVED" %}
+
+                        <div class="info-box">
+
+                            <strong>
+                                Deletion Request Approved
+                            </strong>
+
+                            <p>
+                                The article has been removed from the active published list and archived.
+                            </p>
+
+                            <p>
+                                The article was not permanently deleted from the database.
+                            </p>
+
+                        </div>
+
+                    {% elif deletion_request.status == "REJECTED" %}
+
+                        <div class="warning-box info-box">
+
+                            <strong>
+                                Deletion Request Rejected
+                            </strong>
+
+                            <p>
+                                The article remains published.
+                            </p>
+
+                        </div>
+
+                    {% endif %}
+
+
+                    {% if deletion_request.reviewer_notes %}
+
+                        <div class="reviewer-notes info-box">
+
+                            <strong>
+                                EIC Reviewer Notes
+                            </strong>
+
+                            <p>
+                                {{ deletion_request.reviewer_notes|linebreaksbr }}
+                            </p>
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            </details>
+
+        {% endfor %}
+
+    </div>
+
+{% else %}
+
+    {% if search_query %}
+
+        <p class="empty-message">
+            No deletion requests matched your search.
+        </p>
+
+    {% else %}
+
+        <p class="empty-message">
+            You have not submitted any deletion requests yet.
+        </p>
+
+    {% endif %}
+
+{% endif %}
+
+{% endblock %}

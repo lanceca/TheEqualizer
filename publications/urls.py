@@ -10,6 +10,10 @@ urlpatterns = [
         name="create_article",
     ),
 
+    # =========================
+    # SUBMISSIONS
+    # =========================
+
     path(
         "submissions/pending/",
         views.pending_submissions,
@@ -40,6 +44,10 @@ urlpatterns = [
         name="resubmitted_submissions",
     ),
 
+    # =========================
+    # DRAFTS
+    # =========================
+
     path(
         "drafts/",
         views.my_drafts,
@@ -58,11 +66,19 @@ urlpatterns = [
         name="delete_draft",
     ),
 
+    # =========================
+    # PUBLISHED ARTICLES
+    # =========================
+
     path(
         "published/",
         views.published_articles,
         name="published_articles",
     ),
+
+    # =========================
+    # EDIT REQUESTS
+    # =========================
 
     path(
         "articles/<int:article_id>/request-edit/",
@@ -86,5 +102,89 @@ urlpatterns = [
         "edit-requests/",
         views.eic_edit_requests,
         name="eic_edit_requests",
+    ),
+
+    # =========================
+    # DELETION REQUESTS
+    # =========================
+
+    path(
+        "articles/<int:article_id>/request-deletion/",
+        views.request_article_deletion,
+        name="request_article_deletion",
+    ),
+
+    path(
+        "deletion-requests/mine/",
+        views.my_deletion_requests,
+        name="my_deletion_requests",
+    ),
+
+    path(
+        "deletion-requests/<int:request_id>/review/",
+        views.review_deletion_request,
+        name="review_deletion_request",
+    ),
+
+    path(
+        "deletion-requests/",
+        views.eic_deletion_requests,
+        name="eic_deletion_requests",
+    ),
+
+    # =========================
+    # STAFF CONTENT REPORTS
+    # =========================
+
+    path(
+        "articles/<int:article_id>/report/",
+        views.report_article_content,
+        name="report_article_content",
+    ),
+
+    path(
+        "content-reports/mine/",
+        views.my_content_reports,
+        name="my_content_reports",
+    ),
+
+    path(
+        "content-reports/<int:report_id>/cancel/",
+        views.cancel_content_report,
+        name="cancel_content_report",
+    ),
+
+    path(
+        "content-reports/<int:report_id>/resolve/",
+        views.resolve_content_report,
+        name="resolve_content_report",
+    ),
+
+    path(
+        "content-reports/<int:report_id>/require-revision/",
+        views.require_revision_from_report,
+        name="require_revision_from_report",
+    ),
+
+    path(
+        "content-reports/",
+        views.eic_content_reports,
+        name="eic_content_reports",
+    ),
+
+    # =========================
+    # ARCHIVE
+    # =========================
+
+    path(
+        "archive/",
+        views.archived_articles,
+        name="archived_articles",
+    ),
+
+    path(
+        "archive/<int:article_id>/restore/",
+        views.restore_archived_article,
+        name="restore_archived_article",
     ),
 ]

@@ -1,0 +1,385 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<h1>Staff Content Reports</h1>
+
+<p class="section-description">
+    Review content concerns submitted by publication staff and determine whether corrective action is required.
+</p>
+
+
+<div class="submission-toolbar">
+
+    <form
+        method="GET"
+        action="{% url 'eic_content_reports' %}"
+        class="search-form"
+    >
+
+        <input
+            type="text"
+            name="q"
+            value="{{ search_query }}"
+            placeholder="Search article, category, author, reporter, concern, or notes..."
+            class="search-input"
+        >
+
+        <button
+            type="submit"
+            class="search-button"
+        >
+            Search
+        </button>
+
+        {% if search_query %}
+
+            <a
+                href="{% url 'eic_content_reports' %}"
+                class="clear-search"
+            >
+                Clear
+            </a>
+
+        {% endif %}
+
+    </form>
+
+</div>
+
+
+{% if search_query %}
+
+    <div class="info-box">
+
+        Search results for:
+        <strong>{{ search_query }}</strong>
+
+    </div>
+
+{% endif %}
+
+
+{% if content_reports %}
+
+    <div class="submission-list">
+
+        {% for report in content_reports %}
+
+            <details class="submission-card">
+
+                <summary class="submission-summary">
+
+                    <div class="submission-summary-content">
+
+                        <div class="submission-summary-info">
+
+                            <h2 class="submission-title">
+                                {{ report.article.title }}
+                            </h2>
+
+                            <p class="submission-meta">
+                                <strong>Reported by:</strong>
+                                {{ report.reported_by.username }}
+                            </p>
+
+                            <p class="submission-meta">
+                                <strong>Reported:</strong>
+                                {{ report.created_at|date:"M. d, Y - g:i A" }}
+                            </p>
+
+                            <div class="submission-badges">
+
+                                {% if report.status == "OPEN" %}
+
+                                    <span class="status-badge status-pending">
+                                        Open
+                                    </span>
+
+                                {% elif report.status == "REVISION_REQUIRED" %}
+
+                                    <span class="status-badge status-pending">
+                                        Revision Required
+                                    </span>
+
+                                {% endif %}
+
+                                <span class="badge badge-edit">
+                                    Content Report
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                        <span class="expand-indicator"></span>
+
+                    </div>
+
+                </summary>
+
+
+                <div class="submission-details">
+
+                    <div class="submission-information">
+
+                        <p class="submission-meta">
+                            <strong>Category:</strong>
+                            {{ report.article.category.name }}
+                        </p>
+
+                        <p class="submission-meta">
+                            <strong>Author:</strong>
+                            {{ report.article.author.username }}
+                        </p>
+
+                        <p class="submission-meta">
+
+                            <strong>Current Article Status:</strong>
+
+                            {% if report.article.is_archived %}
+
+                                Archived
+
+                            {% elif report.article.is_published %}
+
+                                Published
+
+                            {% else %}
+
+                                Unpublished
+
+                            {% endif %}
+
+                        </p>
+
+                        {% if report.article.published_at %}
+
+                            <p class="submission-meta">
+
+                                <strong>Published:</strong>
+
+                                {{ report.article.published_at|date:"M. d, Y - g:i A" }}
+
+                            </p>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="article-content">
+
+                        <h3>
+                            Reported Concern
+                        </h3>
+
+                        <p>
+                            {{ report.description|linebreaksbr }}
+                        </p>
+
+                    </div>
+
+
+                    {% if report.status == "OPEN" %}
+
+                        <div class="info-box">
+
+                            <strong>
+                                EIC Decision Required
+                            </strong>
+
+                            <p>
+                                If the concern requires a correction, choose Require Revision.
+                            </p>
+
+                            <p>
+                                If no article modification is needed, choose Resolve Without Revision and explain the decision.
+                            </p>
+
+                        </div>
+
+
+                        <div class="review-section">
+
+                            <h3>
+                                Review Content Report
+                            </h3>
+
+                            <form method="POST">
+
+                                {% csrf_token %}
+
+                                <label for="staff_notes_{{ report.id }}">
+                                    EIC Notes / Revision Instructions
+                                </label>
+
+                                <textarea
+                                    id="staff_notes_{{ report.id }}"
+                                    name="staff_notes"
+                                    placeholder="Explain what the Editor needs to correct, or explain why no revision is necessary..."
+                                    required
+                                ></textarea>
+
+
+                                <div class="review-actions">
+
+                                    <button
+                                        type="submit"
+                                        formaction="{% url 'require_revision_from_report' report.id %}"
+                                        class="revision-button"
+                                        data-confirm-title="Require Corrective Revision"
+                                        data-confirm="Are you sure you want to require a corrective revision for this article? A revision draft will be assigned to the article's Editor."
+                                    >
+                                        Require Revision
+                                    </button>
+
+                                    <button
+                                        type="submit"
+                                        formaction="{% url 'resolve_content_report' report.id %}"
+                                        class="approve-button"
+                                        data-confirm-title="Resolve Content Report"
+                                        data-confirm="Are you sure you want to resolve this report without requiring a revision?"
+                                    >
+                                        Resolve Without Revision
+                                    </button>
+
+                                </div>
+
+                            </form>
+
+                        </div>
+
+
+                    {% elif report.status == "REVISION_REQUIRED" %}
+
+                        <div class="info-box">
+
+                            <strong>
+                                Corrective Revision Required
+                            </strong>
+
+                            <p>
+                                The EIC has required a correction to this published article.
+                            </p>
+
+                            <p>
+                                A temporary revision draft has been assigned to
+                                <strong>{{ report.article.author.username }}</strong>.
+                            </p>
+
+                            <p>
+                                The currently published article remains unchanged until the corrected draft is approved.
+                            </p>
+
+                            <p>
+                                This Staff report will automatically become Resolved after the corrective submission is approved.
+                            </p>
+
+                        </div>
+
+
+                        {% if report.staff_notes %}
+
+                            <div class="reviewer-notes info-box">
+
+                                <strong>
+                                    Revision Instructions
+                                </strong>
+
+                                <p>
+                                    {{ report.staff_notes|linebreaksbr }}
+                                </p>
+
+                            </div>
+
+                        {% endif %}
+
+
+                        {% if report.forced_edit_request %}
+
+                            <div class="submission-information">
+
+                                <p>
+
+                                    <strong>
+                                        Corrective Edit Request:
+                                    </strong>
+
+                                    {{ report.forced_edit_request.get_status_display }}
+
+                                </p>
+
+                                {% if report.forced_edit_request.draft_article %}
+
+                                    <p>
+
+                                        <strong>
+                                            Revision Draft:
+                                        </strong>
+
+                                        {{ report.forced_edit_request.draft_article.title }}
+
+                                    </p>
+
+                                    {% if report.forced_edit_request.draft_article.submissions.exists %}
+
+                                        <p>
+
+                                            <strong>
+                                                Draft Submission:
+                                            </strong>
+
+                                            Submitted for EIC review
+
+                                        </p>
+
+                                    {% else %}
+
+                                        <p>
+
+                                            <strong>
+                                                Draft Submission:
+                                            </strong>
+
+                                            Awaiting Editor revision
+
+                                        </p>
+
+                                    {% endif %}
+
+                                {% endif %}
+
+                            </div>
+
+                        {% endif %}
+
+                    {% endif %}
+
+                </div>
+
+            </details>
+
+        {% endfor %}
+
+    </div>
+
+{% else %}
+
+    {% if search_query %}
+
+        <p class="empty-message">
+            No active content reports matched your search.
+        </p>
+
+    {% else %}
+
+        <p class="empty-message">
+            There are currently no active content reports.
+        </p>
+
+    {% endif %}
+
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,408 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<h1>My Content Reports</h1>
+
+<p class="section-description">
+    View the status and outcome of content concerns you have submitted.
+</p>
+
+
+<div class="submission-toolbar">
+
+    <form
+        method="GET"
+        action="{% url 'my_content_reports' %}"
+        class="search-form"
+    >
+
+        <input
+            type="text"
+            name="q"
+            value="{{ search_query }}"
+            placeholder="Search article title, category, description, or EIC notes..."
+            class="search-input"
+        >
+
+        <button
+            type="submit"
+            class="search-button"
+        >
+            Search
+        </button>
+
+        {% if search_query %}
+
+            <a
+                href="{% url 'my_content_reports' %}"
+                class="clear-search"
+            >
+                Clear
+            </a>
+
+        {% endif %}
+
+    </form>
+
+</div>
+
+
+{% if search_query %}
+
+    <div class="info-box">
+
+        Search results for:
+        <strong>{{ search_query }}</strong>
+
+    </div>
+
+{% endif %}
+
+
+{% if content_reports %}
+
+    <div class="submission-list">
+
+        {% for report in content_reports %}
+
+            <details class="submission-card">
+
+                <summary class="submission-summary">
+
+                    <div class="submission-summary-content">
+
+                        <div class="submission-summary-info">
+
+                            <h2 class="submission-title">
+                                {{ report.article.title }}
+                            </h2>
+
+                            <p class="submission-meta">
+
+                                <strong>
+                                    Reported:
+                                </strong>
+
+                                {{ report.created_at|date:"M. d, Y - g:i A" }}
+
+                            </p>
+
+                            <div class="submission-badges">
+
+                                {% if report.status == "OPEN" %}
+
+                                    <span class="status-badge status-pending">
+                                        Open
+                                    </span>
+
+                                {% elif report.status == "REVISION_REQUIRED" %}
+
+                                    <span class="status-badge status-pending">
+                                        Revision Required
+                                    </span>
+
+                                {% elif report.status == "RESOLVED" %}
+
+                                    <span class="status-badge status-approved">
+                                        Resolved
+                                    </span>
+
+                                {% elif report.status == "CANCELLED" %}
+
+                                    <span class="status-badge status-rejected">
+                                        Cancelled
+                                    </span>
+
+                                {% endif %}
+
+                                <span class="badge badge-edit">
+                                    Content Report
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                        <span class="expand-indicator"></span>
+
+                    </div>
+
+                </summary>
+
+
+                <div class="submission-details">
+
+                    <div class="submission-information">
+
+                        <p>
+
+                            <strong>
+                                Category:
+                            </strong>
+
+                            {{ report.article.category.name }}
+
+                        </p>
+
+                        <p>
+
+                            <strong>
+                                Author:
+                            </strong>
+
+                            {{ report.article.author.username }}
+
+                        </p>
+
+                        <p>
+
+                            <strong>
+                                Current Article Status:
+                            </strong>
+
+                            {% if report.article.is_archived %}
+
+                                Archived
+
+                            {% elif report.article.is_published %}
+
+                                Published
+
+                            {% else %}
+
+                                Unpublished
+
+                            {% endif %}
+
+                        </p>
+
+                        {% if report.resolved_at %}
+
+                            <p>
+
+                                <strong>
+                                    Resolved:
+                                </strong>
+
+                                {{ report.resolved_at|date:"M. d, Y - g:i A" }}
+
+                            </p>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="article-content">
+
+                        <h3>
+                            Report Description
+                        </h3>
+
+                        <p>
+                            {{ report.description|linebreaksbr }}
+                        </p>
+
+                    </div>
+
+
+                    {% if report.status == "OPEN" %}
+
+                        <div class="info-box">
+
+                            <strong>
+                                Awaiting EIC Review
+                            </strong>
+
+                            <p>
+                                The report is currently waiting for an EIC decision.
+                            </p>
+
+                        </div>
+
+
+                        <div class="article-actions">
+
+                            <form
+                                method="POST"
+                                action="{% url 'cancel_content_report' report.id %}"
+                            >
+
+                                {% csrf_token %}
+
+                                <button
+                                    type="submit"
+                                    class="danger-button"
+                                    data-confirm-title="Cancel Content Report"
+                                    data-confirm="Are you sure you want to cancel this content report? The EIC will no longer review it."
+                                >
+                                    Cancel Report
+                                </button>
+
+                            </form>
+
+                        </div>
+
+
+                    {% elif report.status == "REVISION_REQUIRED" %}
+
+                        <div class="info-box">
+
+                            <strong>
+                                Corrective Revision Required
+                            </strong>
+
+                            <p>
+                                The EIC determined that your report requires a correction to the published article.
+                            </p>
+
+                            <p>
+                                A revision draft has been assigned to the article's Editor.
+                            </p>
+
+                            <p>
+                                The currently published article remains unchanged while the correction is being prepared.
+                            </p>
+
+                            <p>
+                                This report will automatically become Resolved after the corrected version is approved.
+                            </p>
+
+                        </div>
+
+
+                        {% if report.forced_edit_request %}
+
+                            <div class="submission-information">
+
+                                <p>
+
+                                    <strong>
+                                        Revision Workflow:
+                                    </strong>
+
+                                    {{ report.forced_edit_request.get_status_display }}
+
+                                </p>
+
+                                {% if report.forced_edit_request.draft_article %}
+
+                                    {% if report.forced_edit_request.draft_article.submissions.exists %}
+
+                                        <p>
+
+                                            <strong>
+                                                Current Progress:
+                                            </strong>
+
+                                            Corrective draft has been submitted for review.
+
+                                        </p>
+
+                                    {% else %}
+
+                                        <p>
+
+                                            <strong>
+                                                Current Progress:
+                                            </strong>
+
+                                            Editor is preparing the corrective revision.
+
+                                        </p>
+
+                                    {% endif %}
+
+                                {% endif %}
+
+                            </div>
+
+                        {% endif %}
+
+
+                    {% elif report.status == "RESOLVED" %}
+
+                        <div class="info-box">
+
+                            <strong>
+                                Report Resolved
+                            </strong>
+
+                            {% if report.forced_edit_request %}
+
+                                <p>
+                                    The EIC required a corrective revision and the corrected version was approved.
+                                </p>
+
+                            {% else %}
+
+                                <p>
+                                    The EIC reviewed the report and resolved it without requiring an article revision.
+                                </p>
+
+                            {% endif %}
+
+                        </div>
+
+
+                    {% elif report.status == "CANCELLED" %}
+
+                        <div class="warning-box info-box">
+
+                            <strong>
+                                Report Cancelled
+                            </strong>
+
+                            <p>
+                                You cancelled this report before an EIC decision was made.
+                            </p>
+
+                        </div>
+
+                    {% endif %}
+
+
+                    {% if report.staff_notes %}
+
+                        <div class="reviewer-notes info-box">
+
+                            <strong>
+                                EIC Notes
+                            </strong>
+
+                            <p>
+                                {{ report.staff_notes|linebreaksbr }}
+                            </p>
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            </details>
+
+        {% endfor %}
+
+    </div>
+
+{% else %}
+
+    {% if search_query %}
+
+        <p class="empty-message">
+            No content reports matched your search.
+        </p>
+
+    {% else %}
+
+        <p class="empty-message">
+            You have not submitted any content reports yet.
+        </p>
+
+    {% endif %}
+
+{% endif %}
+
+{% endblock %}

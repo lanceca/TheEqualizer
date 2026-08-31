@@ -10,6 +10,12 @@
         View all currently published articles.
     </p>
 
+{% elif request.user.role == "STAFF" %}
+
+    <p class="section-description">
+        View currently published articles and report content concerns to the Editor in Chief.
+    </p>
+
 {% else %}
 
     <p class="section-description">
@@ -218,6 +224,26 @@
                                 class="edit-link"
                             >
                                 Request Edit
+                            </a>
+
+                            <a
+                                href="{% url 'request_article_deletion' article.id %}"
+                                class="danger-link"
+                            >
+                                Request Deletion
+                            </a>
+
+                        </div>
+
+                    {% elif request.user.role == "STAFF" %}
+
+                        <div class="article-actions">
+
+                            <a
+                                href="{% url 'report_article_content' article.id %}"
+                                class="danger-link"
+                            >
+                                Report Content
                             </a>
 
                         </div>
