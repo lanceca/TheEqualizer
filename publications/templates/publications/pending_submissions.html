@@ -50,78 +50,95 @@
 
 {% if submissions %}
 
-    <div class="submission-list">
+    <div class="article-tile-grid">
 
         {% for submission in submissions %}
 
-            <details class="submission-card">
+            <details class="article-tile">
 
-                <summary class="submission-summary">
+                <summary class="article-tile-summary">
 
-                    <div class="submission-summary-content">
+                    {% if submission.snapshot_featured_image %}
 
-                        <div class="submission-summary-info">
+                        <div class="article-tile-image-wrapper">
 
-                            <h2 class="submission-title">
-
-                                {% if submission.snapshot_title %}
-                                    {{ submission.snapshot_title }}
-                                {% else %}
-                                    {{ submission.article.title }}
-                                {% endif %}
-
-                            </h2>
-
-                            <p class="submission-meta">
-                                <strong>Submitted by:</strong>
-                                {{ submission.submitted_by.username }}
-                            </p>
-
-                            <p class="submission-meta">
-                                <strong>Submitted:</strong>
-                                {{ submission.submitted_at|date:"M. d, Y - g:i A" }}
-                            </p>
-
-                            <div class="submission-badges">
-
-                                <span class="status-badge status-pending">
-                                    {{ submission.get_status_display }}
-                                </span>
-
-                                {% if submission.article.draft_type == "EDIT_REQUEST" %}
-
-                                    <span class="badge badge-edit">
-                                        Edit Request Submission
-                                    </span>
-
-                                {% else %}
-
-                                    <span class="badge badge-normal">
-                                        New Article
-                                    </span>
-
-                                {% endif %}
-
-                                {% if not submission.snapshot_title %}
-
-                                    <span class="badge">
-                                        Legacy Record
-                                    </span>
-
-                                {% endif %}
-
-                            </div>
+                            <img
+                                src="{{ submission.snapshot_featured_image_url }}"
+                                alt="{{ submission.snapshot_title|default:submission.article.title }}"
+                                class="article-tile-image"
+                            >
 
                         </div>
 
-                        <span class="expand-indicator"></span>
+                    {% elif submission.article.featured_image %}
+
+                        <div class="article-tile-image-wrapper">
+
+                            <img
+                                src="{{ submission.article.featured_image.url }}"
+                                alt="{{ submission.article.title }}"
+                                class="article-tile-image"
+                            >
+
+                        </div>
+
+                    {% else %}
+
+                        <div class="article-tile-image-wrapper article-tile-placeholder">
+                            No Featured Image
+                        </div>
+
+                    {% endif %}
+
+
+                    <div class="article-tile-overlay">
+
+                        <span class="status-badge status-pending">
+                            Pending
+                        </span>
+
+                        {% if submission.article.draft_type == "EDIT_REQUEST" %}
+
+                            <span class="badge badge-edit">
+                                Edit Request
+                            </span>
+
+                        {% endif %}
+
+                        <h2 class="article-tile-title">
+
+                            {% if submission.snapshot_title %}
+                                {{ submission.snapshot_title }}
+                            {% else %}
+                                {{ submission.article.title }}
+                            {% endif %}
+
+                        </h2>
+
+                        <p class="article-tile-category">
+
+                            {% if submission.snapshot_category_name %}
+                                {{ submission.snapshot_category_name }}
+                            {% else %}
+                                {{ submission.article.category.name }}
+                            {% endif %}
+
+                        </p>
+
+                        <p class="article-tile-author">
+                            Submitted by {{ submission.submitted_by.username }}
+                        </p>
+
+                        <span class="article-tile-expand">
+                            Click to review
+                        </span>
 
                     </div>
 
                 </summary>
 
 
-                <div class="submission-details">
+                <div class="article-tile-details">
 
                     {% if not submission.snapshot_title %}
 
@@ -132,8 +149,9 @@
                             </strong>
 
                             <p>
-                                This submission was created before historical submission snapshots were enabled.
-                                The current live article is shown because the exact submitted version was not stored.
+                                This submission was created before historical submission
+                                snapshots were enabled. The current article is shown because
+                                the exact submitted version was not stored.
                             </p>
 
                         </div>
@@ -159,7 +177,8 @@
                             {% endif %}
 
                             <p>
-                                Approving this submission will update the existing published article instead of creating another published copy.
+                                Approving this submission will update the existing
+                                published article instead of creating another copy.
                             </p>
 
                         </div>
@@ -167,28 +186,27 @@
                     {% endif %}
 
 
-                    <div class="submission-information">
+                    <p class="submission-meta">
 
-                        <p class="submission-meta">
+                        <strong>Category:</strong>
 
-                            <strong>
-                                Category:
-                            </strong>
+                        {% if submission.snapshot_category_name %}
+                            {{ submission.snapshot_category_name }}
+                        {% else %}
+                            {{ submission.article.category.name }}
+                        {% endif %}
 
-                            {% if submission.snapshot_category_name %}
-                                {{ submission.snapshot_category_name }}
-                            {% else %}
-                                {{ submission.article.category.name }}
-                            {% endif %}
+                    </p>
 
-                        </p>
+                    <p class="submission-meta">
+                        <strong>Submitted by:</strong>
+                        {{ submission.submitted_by.username }}
+                    </p>
 
-                        <p class="submission-meta">
-                            <strong>Status:</strong>
-                            {{ submission.get_status_display }}
-                        </p>
-
-                    </div>
+                    <p class="submission-meta">
+                        <strong>Submitted:</strong>
+                        {{ submission.submitted_at|date:"M. d, Y - g:i A" }}
+                    </p>
 
 
                     {% if submission.snapshot_featured_image %}
@@ -203,6 +221,9 @@
                                 src="{{ submission.snapshot_featured_image_url }}"
                                 alt="{{ submission.snapshot_title|default:submission.article.title }}"
                                 class="featured-image"
+                                tabindex="0"
+                                role="button"
+                                data-lightbox-image
                             >
 
                         </div>
@@ -219,6 +240,9 @@
                                 src="{{ submission.article.featured_image.url }}"
                                 alt="{{ submission.article.title }}"
                                 class="featured-image"
+                                tabindex="0"
+                                role="button"
+                                data-lightbox-image
                             >
 
                         </div>
@@ -300,6 +324,10 @@
                                 Attached Images
                             </h3>
 
+                            <p class="form-help">
+                                Click an image to enlarge it.
+                            </p>
+
                             <div class="attachment-gallery">
 
                                 {% for attachment in submission.snapshot_attachments.all %}
@@ -310,6 +338,9 @@
                                             src="{{ attachment.image_url }}"
                                             alt="{{ attachment.caption|default:'Article attachment' }}"
                                             class="attachment-image"
+                                            tabindex="0"
+                                            role="button"
+                                            data-lightbox-image
                                         >
 
                                         {% if attachment.caption %}
@@ -336,6 +367,10 @@
                                 Attached Images
                             </h3>
 
+                            <p class="form-help">
+                                Click an image to enlarge it.
+                            </p>
+
                             <div class="attachment-gallery">
 
                                 {% for attachment in submission.article.attachments.all %}
@@ -346,6 +381,9 @@
                                             src="{{ attachment.image.url }}"
                                             alt="{{ attachment.caption|default:'Article attachment' }}"
                                             class="attachment-image"
+                                            tabindex="0"
+                                            role="button"
+                                            data-lightbox-image
                                         >
 
                                         {% if attachment.caption %}

@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
 
 
 User = get_user_model()
@@ -151,6 +152,42 @@ class AdminAccountCreationForm(forms.ModelForm):
                     "The passwords do not match.",
                 )
 
+                return cleaned_data
+
+            prospective_user = User(
+                username=cleaned_data.get(
+                    "username",
+                    "",
+                ),
+                first_name=cleaned_data.get(
+                    "first_name",
+                    "",
+                ),
+                last_name=cleaned_data.get(
+                    "last_name",
+                    "",
+                ),
+                email=cleaned_data.get(
+                    "email",
+                    "",
+                ),
+                role=User.Role.ADMIN,
+            )
+
+            try:
+
+                validate_password(
+                    password1,
+                    user=prospective_user,
+                )
+
+            except forms.ValidationError as error:
+
+                self.add_error(
+                    "password1",
+                    error,
+                )
+
         return cleaned_data
 
     def save(self, commit=True):
@@ -293,6 +330,45 @@ class StaffAccountCreationForm(forms.ModelForm):
                 self.add_error(
                     "password2",
                     "The passwords do not match.",
+                )
+
+                return cleaned_data
+
+            prospective_user = User(
+                username=cleaned_data.get(
+                    "username",
+                    "",
+                ),
+                first_name=cleaned_data.get(
+                    "first_name",
+                    "",
+                ),
+                last_name=cleaned_data.get(
+                    "last_name",
+                    "",
+                ),
+                email=cleaned_data.get(
+                    "email",
+                    "",
+                ),
+                role=cleaned_data.get(
+                    "role",
+                    "",
+                ),
+            )
+
+            try:
+
+                validate_password(
+                    password1,
+                    user=prospective_user,
+                )
+
+            except forms.ValidationError as error:
+
+                self.add_error(
+                    "password1",
+                    error,
                 )
 
         return cleaned_data

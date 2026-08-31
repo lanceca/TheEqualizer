@@ -4,9 +4,21 @@
 
 <h1>My Drafts</h1>
 
-<p class="section-description">
-    Continue working on saved articles or approved edit-request drafts before submitting them for EIC approval.
-</p>
+{% if request.user.role == "EIC" %}
+
+    <p class="section-description">
+        Continue working on your saved articles before publishing them.
+    </p>
+
+{% else %}
+
+    <p class="section-description">
+        Continue working on saved articles or approved edit-request drafts
+        before submitting them for EIC approval.
+    </p>
+
+{% endif %}
+
 
 <div class="draft-toolbar">
 
@@ -56,52 +68,71 @@
         </h2>
 
         <p class="draft-section-description">
-            Articles you created and saved without submitting yet.
+            Articles you created and saved without publishing or submitting yet.
         </p>
 
     </div>
 
+
     {% if normal_drafts %}
 
-        <div class="draft-list">
+        <div class="article-tile-grid">
 
             {% for article in normal_drafts %}
 
-                <details class="draft-card">
+                <details class="article-tile">
 
-                    <summary class="draft-summary">
+                    <summary class="article-tile-summary">
 
-                        <div class="draft-summary-content">
+                        {% if article.featured_image %}
 
-                            <div>
+                            <div class="article-tile-image-wrapper">
 
-                                <h3 class="draft-title">
-                                    {{ article.title }}
-                                </h3>
-
-                                <p class="draft-meta">
-                                    <strong>Category:</strong>
-                                    {{ article.category.name }}
-                                </p>
-
-                                <p class="draft-meta">
-                                    <strong>Last Updated:</strong>
-                                    {{ article.updated_at|date:"M. d, Y - g:i A" }}
-                                </p>
-
-                                <span class="draft-badge badge-normal">
-                                    Normal Draft
-                                </span>
+                                <img
+                                    src="{{ article.featured_image.url }}"
+                                    alt="{{ article.title }}"
+                                    class="article-tile-image"
+                                >
 
                             </div>
 
-                            <span class="expand-indicator"></span>
+                        {% else %}
+
+                            <div class="article-tile-image-wrapper article-tile-placeholder">
+                                No Featured Image
+                            </div>
+
+                        {% endif %}
+
+
+                        <div class="article-tile-overlay">
+
+                            <span class="draft-badge badge-normal">
+                                Draft
+                            </span>
+
+                            <h3 class="article-tile-title">
+                                {{ article.title }}
+                            </h3>
+
+                            <p class="article-tile-category">
+                                {{ article.category.name }}
+                            </p>
+
+                            <p class="article-tile-author">
+                                Updated {{ article.updated_at|date:"M. d, Y" }}
+                            </p>
+
+                            <span class="article-tile-expand">
+                                Click to expand
+                            </span>
 
                         </div>
 
                     </summary>
 
-                    <div class="draft-details">
+
+                    <div class="article-tile-details">
 
                         {% if article.featured_image %}
 
@@ -113,9 +144,13 @@
                                 src="{{ article.featured_image.url }}"
                                 alt="{{ article.title }}"
                                 class="featured-image"
+                                tabindex="0"
+                                role="button"
+                                data-lightbox-image
                             >
 
                         {% endif %}
+
 
                         <h3>
                             Article Content
@@ -125,23 +160,27 @@
                             {{ article.content|linebreaksbr }}
                         </p>
 
+
                         {% if article.tags.all %}
 
                             <h3>
                                 Tags
                             </h3>
 
-                            <p>
+                            <div class="tag-list">
 
                                 {% for tag in article.tags.all %}
 
-                                    {{ tag.name }}{% if not forloop.last %}, {% endif %}
+                                    <span class="tag-item">
+                                        {{ tag.name }}
+                                    </span>
 
                                 {% endfor %}
 
-                            </p>
+                            </div>
 
                         {% endif %}
+
 
                         {% if article.attachments.all %}
 
@@ -149,15 +188,34 @@
                                 Attached Images
                             </h3>
 
+                            <p class="form-help">
+                                Click an image to enlarge it.
+                            </p>
+
                             <div class="attachment-gallery">
 
                                 {% for attachment in article.attachments.all %}
 
-                                    <img
-                                        src="{{ attachment.image.url }}"
-                                        alt="{{ attachment.caption|default:'Article attachment' }}"
-                                        class="attachment-image"
-                                    >
+                                    <div class="attachment-item">
+
+                                        <img
+                                            src="{{ attachment.image.url }}"
+                                            alt="{{ attachment.caption|default:'Article attachment' }}"
+                                            class="attachment-image"
+                                            tabindex="0"
+                                            role="button"
+                                            data-lightbox-image
+                                        >
+
+                                        {% if attachment.caption %}
+
+                                            <p class="attachment-caption">
+                                                {{ attachment.caption }}
+                                            </p>
+
+                                        {% endif %}
+
+                                    </div>
 
                                 {% endfor %}
 
@@ -208,13 +266,13 @@
         {% if search_query %}
 
             <p class="empty-message">
-                No normal drafts matched your search.
+                No drafts matched your search.
             </p>
 
         {% else %}
 
             <p class="empty-message">
-                You currently have no normal drafts.
+                You currently have no drafts.
             </p>
 
         {% endif %}
@@ -224,186 +282,234 @@
 </section>
 
 
-<section class="draft-section">
+{% if request.user.role == "EDITOR" %}
 
-    <div class="draft-section-header">
+    <section class="draft-section">
 
-        <h2 class="draft-section-title">
-            Edit Request Drafts
-        </h2>
+        <div class="draft-section-header">
 
-        <p class="draft-section-description">
-            Published articles that the EIC approved for editing.
-        </p>
+            <h2 class="draft-section-title">
+                Edit Request Drafts
+            </h2>
 
-    </div>
+            <p class="draft-section-description">
+                Published articles that the EIC approved for editing.
+            </p>
 
-    {% if edit_request_drafts %}
+        </div>
 
-        <div class="draft-list">
 
-            {% for article in edit_request_drafts %}
+        {% if edit_request_drafts %}
 
-                <details class="draft-card">
+            <div class="article-tile-grid">
 
-                    <summary class="draft-summary">
+                {% for article in edit_request_drafts %}
 
-                        <div class="draft-summary-content">
+                    <details class="article-tile">
 
-                            <div>
+                        <summary class="article-tile-summary">
 
-                                <h3 class="draft-title">
-                                    {{ article.title }}
-                                </h3>
+                            {% if article.featured_image %}
 
-                                <p class="draft-meta">
-                                    <strong>Category:</strong>
-                                    {{ article.category.name }}
-                                </p>
+                                <div class="article-tile-image-wrapper">
 
-                                <p class="draft-meta">
-                                    <strong>Last Updated:</strong>
-                                    {{ article.updated_at|date:"M. d, Y - g:i A" }}
-                                </p>
+                                    <img
+                                        src="{{ article.featured_image.url }}"
+                                        alt="{{ article.title }}"
+                                        class="article-tile-image"
+                                    >
+
+                                </div>
+
+                            {% else %}
+
+                                <div class="article-tile-image-wrapper article-tile-placeholder">
+                                    No Featured Image
+                                </div>
+
+                            {% endif %}
+
+
+                            <div class="article-tile-overlay">
 
                                 <span class="draft-badge badge-edit">
                                     Edit Request Draft
                                 </span>
 
-                            </div>
+                                <h3 class="article-tile-title">
+                                    {{ article.title }}
+                                </h3>
 
-                            <span class="expand-indicator"></span>
-
-                        </div>
-
-                    </summary>
-
-                    <div class="draft-details">
-
-                        {% if article.source_article %}
-
-                            <div class="source-article-box">
-
-                                <strong>
-                                    Original Published Article
-                                </strong>
-
-                                <p>
-                                    {{ article.source_article.title }}
+                                <p class="article-tile-category">
+                                    {{ article.category.name }}
                                 </p>
 
-                                <p>
-                                    This draft will replace the content of the original published article after EIC approval.
+                                <p class="article-tile-author">
+                                    Updated {{ article.updated_at|date:"M. d, Y" }}
                                 </p>
+
+                                <span class="article-tile-expand">
+                                    Click to expand
+                                </span>
 
                             </div>
 
-                        {% endif %}
+                        </summary>
 
 
-                        {% if article.featured_image %}
+                        <div class="article-tile-details">
+
+                            {% if article.source_article %}
+
+                                <div class="source-article-box">
+
+                                    <strong>
+                                        Original Published Article
+                                    </strong>
+
+                                    <p>
+                                        {{ article.source_article.title }}
+                                    </p>
+
+                                    <p>
+                                        This draft will replace the content of the
+                                        original published article after EIC approval.
+                                    </p>
+
+                                </div>
+
+                            {% endif %}
+
+
+                            {% if article.featured_image %}
+
+                                <h3>
+                                    Featured Image
+                                </h3>
+
+                                <img
+                                    src="{{ article.featured_image.url }}"
+                                    alt="{{ article.title }}"
+                                    class="featured-image"
+                                    tabindex="0"
+                                    role="button"
+                                    data-lightbox-image
+                                >
+
+                            {% endif %}
+
 
                             <h3>
-                                Featured Image
-                            </h3>
-
-                            <img
-                                src="{{ article.featured_image.url }}"
-                                alt="{{ article.title }}"
-                                class="featured-image"
-                            >
-
-                        {% endif %}
-
-
-                        <h3>
-                            Article Content
-                        </h3>
-
-                        <p>
-                            {{ article.content|linebreaksbr }}
-                        </p>
-
-
-                        {% if article.tags.all %}
-
-                            <h3>
-                                Tags
+                                Article Content
                             </h3>
 
                             <p>
-
-                                {% for tag in article.tags.all %}
-
-                                    {{ tag.name }}{% if not forloop.last %}, {% endif %}
-
-                                {% endfor %}
-
+                                {{ article.content|linebreaksbr }}
                             </p>
 
-                        {% endif %}
+
+                            {% if article.tags.all %}
+
+                                <h3>
+                                    Tags
+                                </h3>
+
+                                <div class="tag-list">
+
+                                    {% for tag in article.tags.all %}
+
+                                        <span class="tag-item">
+                                            {{ tag.name }}
+                                        </span>
+
+                                    {% endfor %}
+
+                                </div>
+
+                            {% endif %}
 
 
-                        {% if article.attachments.all %}
+                            {% if article.attachments.all %}
 
-                            <h3>
-                                Attached Images
-                            </h3>
+                                <h3>
+                                    Attached Images
+                                </h3>
 
-                            <div class="attachment-gallery">
+                                <p class="form-help">
+                                    Click an image to enlarge it.
+                                </p>
 
-                                {% for attachment in article.attachments.all %}
+                                <div class="attachment-gallery">
 
-                                    <img
-                                        src="{{ attachment.image.url }}"
-                                        alt="{{ attachment.caption|default:'Article attachment' }}"
-                                        class="attachment-image"
-                                    >
+                                    {% for attachment in article.attachments.all %}
 
-                                {% endfor %}
+                                        <div class="attachment-item">
+
+                                            <img
+                                                src="{{ attachment.image.url }}"
+                                                alt="{{ attachment.caption|default:'Article attachment' }}"
+                                                class="attachment-image"
+                                                tabindex="0"
+                                                role="button"
+                                                data-lightbox-image
+                                            >
+
+                                            {% if attachment.caption %}
+
+                                                <p class="attachment-caption">
+                                                    {{ attachment.caption }}
+                                                </p>
+
+                                            {% endif %}
+
+                                        </div>
+
+                                    {% endfor %}
+
+                                </div>
+
+                            {% endif %}
+
+
+                            <div class="draft-actions">
+
+                                <a
+                                    href="{% url 'edit_draft' article.id %}"
+                                    class="edit-link"
+                                >
+                                    Edit Article
+                                </a>
 
                             </div>
 
-                        {% endif %}
-
-
-                        <div class="draft-actions">
-
-                            <a
-                                href="{% url 'edit_draft' article.id %}"
-                                class="edit-link"
-                            >
-                                Edit Article
-                            </a>
-
                         </div>
 
-                    </div>
+                    </details>
 
-                </details>
+                {% endfor %}
 
-            {% endfor %}
-
-        </div>
-
-    {% else %}
-
-        {% if search_query %}
-
-            <p class="empty-message">
-                No edit-request drafts matched your search.
-            </p>
+            </div>
 
         {% else %}
 
-            <p class="empty-message">
-                You currently have no approved edit-request drafts.
-            </p>
+            {% if search_query %}
+
+                <p class="empty-message">
+                    No edit-request drafts matched your search.
+                </p>
+
+            {% else %}
+
+                <p class="empty-message">
+                    You currently have no approved edit-request drafts.
+                </p>
+
+            {% endif %}
 
         {% endif %}
 
-    {% endif %}
+    </section>
 
-</section>
+{% endif %}
 
 {% endblock %}

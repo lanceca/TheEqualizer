@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {{ article.title }} | The Equalizer
+{% endblock %}
+
+
+{% block content %}
+
+<article class="public-article">
+
+
+    <!-- ==========================================
+         ARTICLE HEADER
+         ========================================== -->
+
+    <header class="article-header">
+
+        <p>
+            {{ article.category.name }}
+        </p>
+
+        <h1>
+            {{ article.title }}
+        </h1>
+
+        <p>
+            By
+            <strong>
+                {{ article.author.username }}
+            </strong>
+        </p>
+
+        {% if article.published_at %}
+
+            <p>
+                Published
+                {{ article.published_at|date:"M. d, Y - g:i A" }}
+            </p>
+
+        {% endif %}
+
+    </header>
+
+
+    <!-- ==========================================
+         FEATURED IMAGE
+         ========================================== -->
+
+    {% if article.featured_image %}
+
+        <div class="article-featured-image">
+
+            <img
+                src="{{ article.featured_image.url }}"
+                alt="{{ article.title }}"
+            >
+
+        </div>
+
+    {% endif %}
+
+
+    <!-- ==========================================
+         ARTICLE CONTENT
+         ========================================== -->
+
+    <div class="article-content">
+
+        {{ article.content|linebreaks }}
+
+    </div>
+
+
+    <!-- ==========================================
+         TAGS
+         ========================================== -->
+
+    {% if article.tags.all %}
+
+        <div class="article-tags">
+
+            <strong>
+                Tags:
+            </strong>
+
+            {% for tag in article.tags.all %}
+
+                <span>
+                    {{ tag.name }}
+                </span>
+
+            {% endfor %}
+
+        </div>
+
+    {% endif %}
+
+
+    <!-- ==========================================
+         ATTACHMENTS
+         ========================================== -->
+
+    {% if article.attachments.all %}
+
+        <section class="article-attachments">
+
+            <h2>
+                Article Images
+            </h2>
+
+            {% for attachment in article.attachments.all %}
+
+                <div class="article-attachment">
+
+                    <img
+                        src="{{ attachment.image.url }}"
+                        alt="{{ attachment.caption|default:'Article attachment' }}"
+                    >
+
+                    {% if attachment.caption %}
+
+                        <p>
+                            {{ attachment.caption }}
+                        </p>
+
+                    {% endif %}
+
+                </div>
+
+            {% endfor %}
+
+        </section>
+
+    {% endif %}
+
+
+    <!-- ==========================================
+         READER ENGAGEMENT
+         ========================================== -->
+
+    <section class="reader-engagement">
+
+        <h2>
+            Reader Engagement
+        </h2>
+
+
+        <p>
+            {{ article.view_count }}
+            view{{ article.view_count|pluralize }}
+        </p>
+
+
+        <p>
+            {{ article.reaction_count }}
+            reaction{{ article.reaction_count|pluralize }}
+        </p>
+
+
+        <p>
+            {{ article.share_count }}
+            share{{ article.share_count|pluralize }}
+        </p>
+
+
+        <div class="article-actions">
+
+            {% if has_reacted %}
+
+                <button
+                    type="button"
+                    disabled
+                >
+                    Reacted
+                </button>
+
+            {% else %}
+
+                <form
+                    method="POST"
+                    action="{% url 'react_to_article' article.slug %}"
+                >
+
+                    {% csrf_token %}
+
+                    <button
+                        type="submit"
+                        class="approve-button"
+                    >
+                        React
+                    </button>
+
+                </form>
+
+            {% endif %}
+
+
+            <form
+                method="POST"
+                action="{% url 'share_article' article.slug %}"
+                id="share-form"
+            >
+
+                {% csrf_token %}
+
+                <button
+                    type="submit"
+                    id="share-button"
+                >
+
+                    {% if has_shared %}
+                        Share Again
+                    {% else %}
+                        Share
+                    {% endif %}
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </section>
+
+
+    <p>
+
+        <a href="{% url 'home' %}">
+            Back to Home
+        </a>
+
+    </p>
+
+</article>
+
+
+<script>
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            const shareForm = document.getElementById(
+                "share-form"
+            );
+
+            if (!shareForm) {
+                return;
+            }
+
+
+            shareForm.addEventListener(
+                "submit",
+                async function (event) {
+
+                    event.preventDefault();
+
+
+                    const shareData = {
+                        title: "{{ article.title|escapejs }}",
+                        text: "{{ article.title|escapejs }}",
+                        url: window.location.href,
+                    };
+
+
+                    try {
+
+                        if (navigator.share) {
+
+                            await navigator.share(
+                                shareData
+                            );
+
+                        } else if (
+                            navigator.clipboard
+                        ) {
+
+                            await navigator.clipboard.writeText(
+                                window.location.href
+                            );
+
+                            alert(
+                                "Article link copied to clipboard."
+                            );
+
+                        }
+
+
+                        shareForm.submit();
+
+                    } catch (error) {
+
+                        /*
+                        If the user closes/cancels the native
+                        Share dialog, do not count it as a share.
+                        */
+
+                        console.log(
+                            "Share cancelled.",
+                            error
+                        );
+                    }
+
+                }
+            );
+
+        }
+    );
+</script>
+
+{% endblock %}

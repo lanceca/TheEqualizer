@@ -5,8 +5,9 @@
 
 <link
     rel="stylesheet"
-    href="{% static 'css/equalizer.css' %}"
+    href="{% static 'css/equalizer.css' %}?v=20260831-1"
 >
+
 
 <div class="staff-layout">
 
@@ -14,8 +15,7 @@
 
         <div class="staff-brand">
 
-            <div class="staff-brand-mark">
-            </div>
+            <div class="staff-brand-mark"></div>
 
             <div>
                 <h2>The Equalizer</h2>
@@ -132,7 +132,7 @@
                         Oversight
                     </p>
 
-                    <a href="#">
+                    <a href="{% url 'adviser_dashboard' %}">
                         Analytics
                     </a>
 
@@ -170,6 +170,10 @@
 
                     <a href="{% url 'create_article' %}">
                         Create Article
+                    </a>
+
+                    <a href="{% url 'my_drafts' %}">
+                        My Drafts
                     </a>
 
                     <a href="{% url 'pending_submissions' %}">
@@ -351,12 +355,21 @@
 
             <div class="staff-nav-section staff-nav-bottom">
 
-                <a
-                    href="{% url 'logout' %}"
-                    class="logout-link"
+                <form
+                    method="POST"
+                    action="{% url 'logout' %}"
                 >
-                    Logout
-                </a>
+
+                    {% csrf_token %}
+
+                    <button
+                        type="submit"
+                        class="logout-link"
+                    >
+                        Logout
+                    </button>
+
+                </form>
 
             </div>
 
@@ -377,5 +390,175 @@
     </main>
 
 </div>
+
+
+<div
+    class="image-lightbox"
+    id="image-lightbox"
+    aria-hidden="true"
+>
+
+    <button
+        type="button"
+        class="image-lightbox-close"
+        id="image-lightbox-close"
+        aria-label="Close image preview"
+    >
+        &times;
+    </button>
+
+    <img
+        src=""
+        alt=""
+        class="image-lightbox-image"
+        id="image-lightbox-image"
+    >
+
+</div>
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const lightbox =
+        document.getElementById("image-lightbox");
+
+    const lightboxImage =
+        document.getElementById("image-lightbox-image");
+
+    const closeButton =
+        document.getElementById("image-lightbox-close");
+
+
+    if (!lightbox || !lightboxImage || !closeButton) {
+        return;
+    }
+
+
+    function openLightbox(image) {
+
+        lightboxImage.src = image.src;
+
+        lightboxImage.alt =
+            image.alt || "Expanded article image";
+
+        lightbox.classList.add("active");
+
+        lightbox.setAttribute(
+            "aria-hidden",
+            "false"
+        );
+
+        document.body.classList.add(
+            "lightbox-open"
+        );
+
+    }
+
+
+    function closeLightbox() {
+
+        lightbox.classList.remove("active");
+
+        lightbox.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        lightboxImage.src = "";
+        lightboxImage.alt = "";
+
+        document.body.classList.remove(
+            "lightbox-open"
+        );
+
+    }
+
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const image =
+                event.target.closest(
+                    "[data-lightbox-image]"
+                );
+
+
+            if (image) {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                openLightbox(image);
+
+                return;
+
+            }
+
+
+            if (event.target === lightbox) {
+
+                closeLightbox();
+
+            }
+
+        }
+    );
+
+
+    closeButton.addEventListener(
+        "click",
+        function () {
+
+            closeLightbox();
+
+        }
+    );
+
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (
+                event.key === "Escape"
+                && lightbox.classList.contains("active")
+            ) {
+
+                closeLightbox();
+
+                return;
+
+            }
+
+
+            const activeElement =
+                document.activeElement;
+
+
+            if (
+                (event.key === "Enter" || event.key === " ")
+                && activeElement
+                && activeElement.hasAttribute(
+                    "data-lightbox-image"
+                )
+            ) {
+
+                event.preventDefault();
+
+                openLightbox(
+                    activeElement
+                );
+
+            }
+
+        }
+    );
+
+});
+
+</script>
 
 {% endblock %}

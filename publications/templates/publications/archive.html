@@ -9,163 +9,206 @@
 </p>
 
 
-<form
-    method="GET"
-    action="{% url 'archived_articles' %}"
-    class="search-form"
->
+<div class="article-toolbar">
 
-    <input
-        type="text"
-        name="q"
-        value="{{ search_query }}"
-        placeholder="Search archived articles..."
+    <form
+        method="GET"
+        action="{% url 'archived_articles' %}"
+        class="search-form"
     >
 
-    <button
-        type="submit"
-        class="edit-link"
-    >
-        Search
-    </button>
-
-    {% if search_query %}
-
-        <a
-            href="{% url 'archived_articles' %}"
-            class="edit-link"
+        <input
+            type="text"
+            name="q"
+            value="{{ search_query }}"
+            placeholder="Search archived articles..."
+            class="search-input"
         >
-            Clear
-        </a>
 
-    {% endif %}
+        <button
+            type="submit"
+            class="search-button"
+        >
+            Search
+        </button>
 
-</form>
+        {% if search_query %}
+
+            <a
+                href="{% url 'archived_articles' %}"
+                class="clear-search"
+            >
+                Clear
+            </a>
+
+        {% endif %}
+
+    </form>
+
+</div>
 
 
 {% if articles %}
 
-    <div class="submission-list">
+    <div class="article-tile-grid">
 
         {% for article in articles %}
 
-            <div class="submission-card">
+            <details class="article-tile">
 
-                <div class="submission-details">
+                <summary class="article-tile-summary">
 
-                    <div class="submission-summary-info">
+                    {% if article.featured_image %}
 
-                        <div class="submission-badges">
+                        <div class="article-tile-image-wrapper">
 
-                            <span class="status-badge status-rejected">
-                                Archived
-                            </span>
-
-                            <span class="badge">
-                                {{ article.category.name }}
-                            </span>
+                            <img
+                                src="{{ article.featured_image.url }}"
+                                alt="{{ article.title }}"
+                                class="article-tile-image"
+                            >
 
                         </div>
 
+                    {% else %}
 
-                        <h2>
+                        <div class="article-tile-image-wrapper article-tile-placeholder">
+                            No Featured Image
+                        </div>
+
+                    {% endif %}
+
+
+                    <div class="article-tile-overlay">
+
+                        <span class="status-badge status-rejected">
+                            Archived
+                        </span>
+
+                        <h2 class="article-tile-title">
                             {{ article.title }}
                         </h2>
 
-
-                        <p class="submission-meta">
-
-                            <strong>
-                                Author:
-                            </strong>
-
-                            {{ article.author.username }}
-
+                        <p class="article-tile-category">
+                            {{ article.category.name }}
                         </p>
 
-
-                        <p class="submission-meta">
-
-                            <strong>
-                                Originally Published:
-                            </strong>
-
-                            {% if article.published_at %}
-
-                                {{ article.published_at|date:"M. d, Y - g:i A" }}
-
-                            {% else %}
-
-                                Not recorded
-
-                            {% endif %}
-
+                        <p class="article-tile-author">
+                            By {{ article.author.username }}
                         </p>
 
-
-                        <p class="submission-meta">
-
-                            <strong>
-                                Archived:
-                            </strong>
-
-                            {% if article.archived_at %}
-
-                                {{ article.archived_at|date:"M. d, Y - g:i A" }}
-
-                            {% else %}
-
-                                Archive date not recorded
-
-                            {% endif %}
-
-                        </p>
+                        <span class="article-tile-expand">
+                            Click to expand
+                        </span>
 
                     </div>
 
-
-                    <div class="article-content">
-
-                        {{ article.content|truncatewords:60|linebreaks }}
-
-                    </div>
+                </summary>
 
 
-                    {% if article.tags.all %}
+                <div class="article-tile-details">
 
-                        <div class="submission-meta">
+                    <div class="article-detail-header">
 
-                            <strong>
-                                Tags:
-                            </strong>
+                        <div>
 
-                            {% for tag in article.tags.all %}
+                            <h2>
+                                {{ article.title }}
+                            </h2>
 
-                                {{ tag.name }}
+                            <p class="article-meta">
+                                <strong>Author:</strong>
+                                {{ article.author.username }}
+                            </p>
 
-                                {% if not forloop.last %}
-                                    ,
+                            <p class="article-meta">
+                                <strong>Category:</strong>
+                                {{ article.category.name }}
+                            </p>
+
+                            <p class="article-meta">
+
+                                <strong>Originally Published:</strong>
+
+                                {% if article.published_at %}
+                                    {{ article.published_at|date:"M. d, Y - g:i A" }}
+                                {% else %}
+                                    Not recorded
                                 {% endif %}
 
-                            {% empty %}
+                            </p>
 
-                                None
+                            <p class="article-meta">
 
-                            {% endfor %}
+                                <strong>Archived:</strong>
+
+                                {% if article.archived_at %}
+                                    {{ article.archived_at|date:"M. d, Y - g:i A" }}
+                                {% else %}
+                                    Archive date not recorded
+                                {% endif %}
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    {% if article.featured_image %}
+
+                        <div class="featured-image-container">
+
+                            <h3>
+                                Featured Image
+                            </h3>
+
+                            <img
+                                src="{{ article.featured_image.url }}"
+                                alt="{{ article.title }}"
+                                class="featured-image"
+                                tabindex="0"
+                                role="button"
+                                data-lightbox-image
+                            >
 
                         </div>
 
                     {% endif %}
 
 
-                    {% if article.featured_image %}
+                    <div class="article-content">
 
-                        <div class="article-image">
+                        <h3>
+                            Article Content
+                        </h3>
 
-                            <img
-                                src="{{ article.featured_image.url }}"
-                                alt="{{ article.title }}"
-                            >
+                        <p>
+                            {{ article.content|linebreaksbr }}
+                        </p>
+
+                    </div>
+
+
+                    {% if article.tags.all %}
+
+                        <div class="article-tags">
+
+                            <h3>
+                                Tags
+                            </h3>
+
+                            <div class="tag-list">
+
+                                {% for tag in article.tags.all %}
+
+                                    <span class="tag-item">
+                                        {{ tag.name }}
+                                    </span>
+
+                                {% endfor %}
+
+                            </div>
 
                         </div>
 
@@ -176,26 +219,42 @@
 
                         <div class="article-attachments">
 
-                            {% for attachment in article.attachments.all %}
+                            <h3>
+                                Attached Images
+                            </h3>
 
-                                <div class="article-attachment">
+                            <p class="form-help">
+                                Click an image to enlarge it.
+                            </p>
 
-                                    <img
-                                        src="{{ attachment.image.url }}"
-                                        alt="Attachment for {{ article.title }}"
-                                    >
+                            <div class="attachment-gallery">
 
-                                    {% if attachment.caption %}
+                                {% for attachment in article.attachments.all %}
 
-                                        <p>
-                                            {{ attachment.caption }}
-                                        </p>
+                                    <div class="attachment-item">
 
-                                    {% endif %}
+                                        <img
+                                            src="{{ attachment.image.url }}"
+                                            alt="{{ attachment.caption|default:'Article attachment' }}"
+                                            class="attachment-image"
+                                            tabindex="0"
+                                            role="button"
+                                            data-lightbox-image
+                                        >
 
-                                </div>
+                                        {% if attachment.caption %}
 
-                            {% endfor %}
+                                            <p class="attachment-caption">
+                                                {{ attachment.caption }}
+                                            </p>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                {% endfor %}
+
+                            </div>
 
                         </div>
 
@@ -226,7 +285,7 @@
 
                 </div>
 
-            </div>
+            </details>
 
         {% endfor %}
 

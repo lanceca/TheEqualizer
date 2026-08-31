@@ -2,7 +2,9 @@
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -22,6 +24,7 @@
     >
 
     <style>
+
         /* ==========================================
            GLOBAL MESSAGE POPUPS
            ========================================== */
@@ -143,6 +146,7 @@
 
 
         @keyframes messageSlideIn {
+
             from {
                 opacity: 0;
                 transform: translateX(25px);
@@ -152,11 +156,16 @@
                 opacity: 1;
                 transform: translateX(0);
             }
+
         }
+
     </style>
+
 </head>
 
+
 <body>
+
 
     <header>
 
@@ -164,20 +173,18 @@
             The Equalizer
         </h1>
 
+
         <nav>
 
             <a href="{% url 'home' %}">
                 Home
             </a>
 
+
             {% if user.is_authenticated %}
 
                 <a href="{% url 'dashboard' %}">
                     Dashboard
-                </a>
-
-                <a href="{% url 'logout' %}">
-                    Logout
                 </a>
 
             {% else %}
@@ -191,6 +198,7 @@
         </nav>
 
     </header>
+
 
 
     <!-- ==========================================
@@ -233,6 +241,7 @@
     {% endif %}
 
 
+
     <!-- ==========================================
          GLOBAL CONFIRMATION MODAL
          ========================================== -->
@@ -251,6 +260,7 @@
             <p id="confirmation-message">
                 Are you sure you want to continue?
             </p>
+
 
             <div class="confirmation-actions">
 
@@ -277,6 +287,7 @@
     </div>
 
 
+
     <main>
 
         {% block content %}
@@ -285,10 +296,13 @@
     </main>
 
 
+
     <script>
+
         document.addEventListener(
             "DOMContentLoaded",
             function () {
+
 
                 // ==========================================
                 // MESSAGE POPUPS
@@ -298,6 +312,7 @@
                     "[data-message-popup]"
                 );
 
+
                 messagePopups.forEach(
                     function (popup) {
 
@@ -305,32 +320,41 @@
                             "[data-message-close]"
                         );
 
+
                         if (closeButton) {
 
                             closeButton.addEventListener(
                                 "click",
                                 function () {
+
                                     popup.remove();
+
                                 }
                             );
+
                         }
+
 
                         setTimeout(
                             function () {
 
                                 if (popup.isConnected) {
+
                                     popup.remove();
+
                                 }
 
                             },
                             5000
                         );
+
                     }
                 );
 
 
+
                 // ==========================================
-                // CONFIRMATION MODAL
+                // CONFIRMATION MODAL ELEMENTS
                 // ==========================================
 
                 const overlay = document.getElementById(
@@ -359,6 +383,11 @@
                 let pendingLink = null;
 
 
+
+                // ==========================================
+                // OPEN CONFIRMATION
+                // ==========================================
+
                 function openConfirmation(
                     title,
                     message
@@ -367,14 +396,22 @@
                     titleElement.textContent =
                         title || "Confirm Action";
 
+
                     messageElement.textContent =
                         message || "Are you sure you want to continue?";
+
 
                     overlay.classList.add(
                         "active"
                     );
+
                 }
 
+
+
+                // ==========================================
+                // CLOSE CONFIRMATION
+                // ==========================================
 
                 function closeConfirmation() {
 
@@ -382,57 +419,21 @@
                         "active"
                     );
 
+
                     pendingForm = null;
                     pendingSubmitButton = null;
                     pendingLink = null;
+
                 }
 
 
-                // ==========================================
-                // BUTTON-SPECIFIC CONFIRMATIONS
-                // ==========================================
-
-                document.querySelectorAll(
-                    "button[type='submit'][data-confirm]"
-                ).forEach(
-                    function (button) {
-
-                        button.addEventListener(
-                            "click",
-                            function (event) {
-
-                                const form = button.form;
-
-                                if (!form) {
-                                    return;
-                                }
-
-                                if (!form.reportValidity()) {
-                                    return;
-                                }
-
-                                event.preventDefault();
-
-                                pendingForm = form;
-                                pendingSubmitButton = button;
-                                pendingLink = null;
-
-                                openConfirmation(
-                                    button.dataset.confirmTitle,
-                                    button.dataset.confirm
-                                );
-                            }
-                        );
-                    }
-                );
-
 
                 // ==========================================
-                // WHOLE-FORM CONFIRMATIONS
+                // HANDLE ALL FORM SUBMISSIONS
                 // ==========================================
 
                 document.querySelectorAll(
-                    "form[data-confirm]"
+                    "form"
                 ).forEach(
                     function (form) {
 
@@ -440,20 +441,88 @@
                             "submit",
                             function (event) {
 
+
+                                if (
+                                    form.dataset.confirmed === "true"
+                                ) {
+
+                                    delete form.dataset.confirmed;
+
+                                    return;
+
+                                }
+
+
+                                const submitter =
+                                    event.submitter || null;
+
+
+                                let confirmationSource = null;
+
+
+
+                                if (
+                                    submitter
+                                    && submitter.hasAttribute(
+                                        "data-confirm"
+                                    )
+                                ) {
+
+                                    confirmationSource =
+                                        submitter;
+
+                                }
+
+
+                                else if (
+                                    form.hasAttribute(
+                                        "data-confirm"
+                                    )
+                                ) {
+
+                                    confirmationSource =
+                                        form;
+
+                                }
+
+
+
+                                if (!confirmationSource) {
+
+                                    return;
+
+                                }
+
+
+
                                 event.preventDefault();
 
-                                pendingForm = form;
-                                pendingSubmitButton = event.submitter || null;
-                                pendingLink = null;
+
+
+                                pendingForm =
+                                    form;
+
+
+                                pendingSubmitButton =
+                                    submitter;
+
+
+                                pendingLink =
+                                    null;
+
+
 
                                 openConfirmation(
-                                    form.dataset.confirmTitle,
-                                    form.dataset.confirm
+                                    confirmationSource.dataset.confirmTitle,
+                                    confirmationSource.dataset.confirm
                                 );
+
                             }
                         );
+
                     }
                 );
+
 
 
                 // ==========================================
@@ -471,38 +540,72 @@
 
                                 event.preventDefault();
 
-                                pendingLink = link;
-                                pendingForm = null;
-                                pendingSubmitButton = null;
+
+                                pendingLink =
+                                    link;
+
+
+                                pendingForm =
+                                    null;
+
+
+                                pendingSubmitButton =
+                                    null;
+
+
 
                                 openConfirmation(
                                     link.dataset.confirmTitle,
                                     link.dataset.confirm
                                 );
+
                             }
                         );
+
                     }
                 );
 
+
+
+                // ==========================================
+                // CANCEL BUTTON
+                // ==========================================
 
                 cancelButton.addEventListener(
                     "click",
                     function () {
+
                         closeConfirmation();
+
                     }
                 );
 
+
+
+                // ==========================================
+                // CLICK OUTSIDE MODAL
+                // ==========================================
 
                 overlay.addEventListener(
                     "click",
                     function (event) {
 
-                        if (event.target === overlay) {
+                        if (
+                            event.target === overlay
+                        ) {
+
                             closeConfirmation();
+
                         }
+
                     }
                 );
 
+
+
+                // ==========================================
+                // ESCAPE KEY
+                // ==========================================
 
                 document.addEventListener(
                     "keydown",
@@ -510,42 +613,81 @@
 
                         if (
                             event.key === "Escape"
-                            && overlay.classList.contains("active")
+                            && overlay.classList.contains(
+                                "active"
+                            )
                         ) {
+
                             closeConfirmation();
+
                         }
+
                     }
                 );
 
+
+
+                // ==========================================
+                // CONFIRM ACTION
+                // ==========================================
 
                 confirmButton.addEventListener(
                     "click",
                     function () {
 
+
                         if (pendingLink) {
 
-                            const target = pendingLink.href;
+                            const target =
+                                pendingLink.href;
+
 
                             closeConfirmation();
 
-                            window.location.href = target;
+
+                            window.location.href =
+                                target;
+
 
                             return;
+
                         }
+
 
 
                         if (pendingForm) {
 
-                            const form = pendingForm;
-                            const submitButton = pendingSubmitButton;
+                            const form =
+                                pendingForm;
+
+
+                            const submitButton =
+                                pendingSubmitButton;
+
+
+
+                            form.dataset.confirmed =
+                                "true";
+
+
 
                             overlay.classList.remove(
                                 "active"
                             );
 
-                            pendingForm = null;
-                            pendingSubmitButton = null;
-                            pendingLink = null;
+
+
+                            pendingForm =
+                                null;
+
+
+                            pendingSubmitButton =
+                                null;
+
+
+                            pendingLink =
+                                null;
+
 
 
                             if (submitButton) {
@@ -556,15 +698,21 @@
 
                             } else {
 
-                                form.submit();
+                                form.requestSubmit();
+
                             }
+
                         }
+
                     }
                 );
 
             }
         );
+
     </script>
 
+
 </body>
+
 </html>

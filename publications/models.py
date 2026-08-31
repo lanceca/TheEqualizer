@@ -114,6 +114,22 @@ class Article(models.Model):
         null=True,
     )
 
+    # ======================================================
+    # READER ENGAGEMENT
+    # ======================================================
+
+    view_count = models.PositiveBigIntegerField(
+        default=0,
+    )
+
+    reaction_count = models.PositiveBigIntegerField(
+        default=0,
+    )
+
+    share_count = models.PositiveBigIntegerField(
+        default=0,
+    )
+
     created_at = models.DateTimeField(
         auto_now_add=True,
     )

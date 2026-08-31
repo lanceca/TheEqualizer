@@ -1,19 +1,178 @@
 {% extends "public_base.html" %}
 
 {% block title %}
-    The Equalizer
+The Equalizer
 {% endblock %}
 
 {% block public_content %}
 
-    <h2>Welcome to The Equalizer</h2>
+<div class="public-home-header">
+
+    <h1>
+        The Equalizer
+    </h1>
 
     <p>
-        Student Publication Content Management System
+        Student Publication
     </p>
 
-    <p>
-        Public website under development.
-    </p>
+</div>
+
+
+<!-- ==========================================
+     LATEST PUBLISHED ARTICLES
+     ========================================== -->
+
+<section class="public-articles-section">
+
+    <div class="section-header">
+
+        <h2>
+            Latest Articles
+        </h2>
+
+        <p>
+            Read the latest published stories from The Equalizer.
+        </p>
+
+    </div>
+
+
+    {% if published_articles %}
+
+        <div class="public-article-grid">
+
+            {% for article in published_articles %}
+
+                <article class="public-article-card">
+
+                    {% if article.featured_image %}
+
+                        <a
+                            href="{% url 'article_detail' article.slug %}"
+                            class="public-article-image-link"
+                        >
+
+                            <img
+                                src="{{ article.featured_image.url }}"
+                                alt="{{ article.title }}"
+                                class="public-article-image"
+                            >
+
+                        </a>
+
+                    {% endif %}
+
+
+                    <div class="public-article-card-content">
+
+                        <p class="public-article-category">
+                            {{ article.category.name }}
+                        </p>
+
+
+                        <h2 class="public-article-title">
+
+                            <a href="{% url 'article_detail' article.slug %}">
+                                {{ article.title }}
+                            </a>
+
+                        </h2>
+
+
+                        <p class="public-article-meta">
+
+                            By
+                            <strong>
+                                {{ article.author.username }}
+                            </strong>
+
+                            {% if article.published_at %}
+
+                                &middot;
+
+                                {{ article.published_at|date:"M. d, Y" }}
+
+                            {% endif %}
+
+                        </p>
+
+
+                        <p class="public-article-excerpt">
+
+                            {{ article.content|striptags|truncatewords:35 }}
+
+                        </p>
+
+
+                        {% if article.tags.all %}
+
+                            <div class="public-article-tags">
+
+                                {% for tag in article.tags.all %}
+
+                                    <span class="tag-item">
+                                        {{ tag.name }}
+                                    </span>
+
+                                {% endfor %}
+
+                            </div>
+
+                        {% endif %}
+
+
+                        <div class="public-article-engagement">
+
+                            <span>
+                                {{ article.view_count }}
+                                view{{ article.view_count|pluralize }}
+                            </span>
+
+                            <span>
+                                {{ article.reaction_count }}
+                                reaction{{ article.reaction_count|pluralize }}
+                            </span>
+
+                            <span>
+                                {{ article.share_count }}
+                                share{{ article.share_count|pluralize }}
+                            </span>
+
+                        </div>
+
+
+                        <a
+                            href="{% url 'article_detail' article.slug %}"
+                            class="read-more-link"
+                        >
+                            Read Article
+                        </a>
+
+                    </div>
+
+                </article>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <div class="empty-message">
+
+            <h3>
+                No Articles Published Yet
+            </h3>
+
+            <p>
+                Published articles will appear here once they are approved by the Editor in Chief.
+            </p>
+
+        </div>
+
+    {% endif %}
+
+</section>
 
 {% endblock %}

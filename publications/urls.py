@@ -4,6 +4,7 @@ from . import views
 
 
 urlpatterns = [
+
     path(
         "create/",
         views.create_article,
@@ -74,6 +75,20 @@ urlpatterns = [
         "published/",
         views.published_articles,
         name="published_articles",
+    ),
+
+    # EIC direct article management
+
+    path(
+        "articles/<int:article_id>/edit-direct/",
+        views.edit_published_article,
+        name="edit_published_article",
+    ),
+
+    path(
+        "articles/<int:article_id>/archive-direct/",
+        views.archive_own_published_article,
+        name="archive_own_published_article",
     ),
 
     # =========================
@@ -187,4 +202,5 @@ urlpatterns = [
         views.restore_archived_article,
         name="restore_archived_article",
     ),
+
 ]

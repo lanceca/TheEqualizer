@@ -8,87 +8,112 @@
     View articles that were revised and resubmitted for EIC approval.
 </p>
 
+
 {% if submissions %}
 
-    <div class="submission-list">
+    <div class="article-tile-grid">
 
         {% for submission in submissions %}
 
-            <details class="submission-card">
+            <details class="article-tile">
 
-                <summary class="submission-summary">
+                <summary class="article-tile-summary">
 
-                    <div class="submission-summary-content">
+                    {% if submission.snapshot_featured_image %}
 
-                        <div class="submission-summary-info">
+                        <div class="article-tile-image-wrapper">
 
-                            <h2 class="submission-title">
-
-                                {% if submission.snapshot_title %}
-                                    {{ submission.snapshot_title }}
-                                {% else %}
-                                    {{ submission.article.title }}
-                                {% endif %}
-
-                            </h2>
-
-                            <p class="submission-meta">
-                                <strong>Resubmitted:</strong>
-                                {{ submission.submitted_at|date:"M. d, Y - g:i A" }}
-                            </p>
-
-                            <div class="submission-badges">
-
-                                {% if submission.status == "PENDING" %}
-
-                                    <span class="status-badge status-pending">
-                                        {{ submission.get_status_display }}
-                                    </span>
-
-                                {% elif submission.status == "APPROVED" %}
-
-                                    <span class="status-badge status-approved">
-                                        {{ submission.get_status_display }}
-                                    </span>
-
-                                {% elif submission.status == "REJECTED" %}
-
-                                    <span class="status-badge status-rejected">
-                                        {{ submission.get_status_display }}
-                                    </span>
-
-                                {% elif submission.status == "REVISION" %}
-
-                                    <span class="status-badge status-revision">
-                                        {{ submission.get_status_display }}
-                                    </span>
-
-                                {% endif %}
-
-                                <span class="badge badge-edit">
-                                    Resubmission
-                                </span>
-
-                                {% if not submission.snapshot_title %}
-
-                                    <span class="badge">
-                                        Legacy Record
-                                    </span>
-
-                                {% endif %}
-
-                            </div>
+                            <img
+                                src="{{ submission.snapshot_featured_image_url }}"
+                                alt="{{ submission.snapshot_title|default:submission.article.title }}"
+                                class="article-tile-image"
+                            >
 
                         </div>
 
-                        <span class="expand-indicator"></span>
+                    {% elif submission.article.featured_image %}
+
+                        <div class="article-tile-image-wrapper">
+
+                            <img
+                                src="{{ submission.article.featured_image.url }}"
+                                alt="{{ submission.article.title }}"
+                                class="article-tile-image"
+                            >
+
+                        </div>
+
+                    {% else %}
+
+                        <div class="article-tile-image-wrapper article-tile-placeholder">
+                            No Featured Image
+                        </div>
+
+                    {% endif %}
+
+
+                    <div class="article-tile-overlay">
+
+                        {% if submission.status == "PENDING" %}
+
+                            <span class="status-badge status-pending">
+                                {{ submission.get_status_display }}
+                            </span>
+
+                        {% elif submission.status == "APPROVED" %}
+
+                            <span class="status-badge status-approved">
+                                {{ submission.get_status_display }}
+                            </span>
+
+                        {% elif submission.status == "REJECTED" %}
+
+                            <span class="status-badge status-rejected">
+                                {{ submission.get_status_display }}
+                            </span>
+
+                        {% elif submission.status == "REVISION" %}
+
+                            <span class="status-badge status-revision">
+                                {{ submission.get_status_display }}
+                            </span>
+
+                        {% endif %}
+
+                        <h2 class="article-tile-title">
+
+                            {% if submission.snapshot_title %}
+                                {{ submission.snapshot_title }}
+                            {% else %}
+                                {{ submission.article.title }}
+                            {% endif %}
+
+                        </h2>
+
+                        <p class="article-tile-category">
+
+                            {% if submission.snapshot_category_name %}
+                                {{ submission.snapshot_category_name }}
+                            {% else %}
+                                {{ submission.article.category.name }}
+                            {% endif %}
+
+                        </p>
+
+                        <p class="article-tile-author">
+                            Resubmitted {{ submission.submitted_at|date:"M. d, Y" }}
+                        </p>
+
+                        <span class="article-tile-expand">
+                            Click to compare versions
+                        </span>
 
                     </div>
 
                 </summary>
 
 
-                <div class="submission-details">
+                <div class="article-tile-details">
 
                     <div class="submission-version-header">
 
@@ -97,43 +122,11 @@
                         </h3>
 
                         <p>
-                            This is the version of the article that was submitted
-                            on {{ submission.submitted_at|date:"M. d, Y - g:i A" }}.
+                            Submitted on
+                            {{ submission.submitted_at|date:"M. d, Y - g:i A" }}.
                         </p>
 
                     </div>
-
-
-                    {% if not submission.snapshot_title %}
-
-                        <div class="warning-box info-box">
-
-                            <strong>
-                                Legacy Submission
-                            </strong>
-
-                            <p>
-                                This resubmission was created before historical
-                                snapshots were enabled. Its exact submitted version
-                                was not stored.
-                            </p>
-
-                        </div>
-
-                    {% endif %}
-
-
-                    <p class="submission-meta">
-
-                        <strong>Category:</strong>
-
-                        {% if submission.snapshot_category_name %}
-                            {{ submission.snapshot_category_name }}
-                        {% else %}
-                            {{ submission.article.category.name }}
-                        {% endif %}
-
-                    </p>
 
 
                     {% if submission.snapshot_featured_image %}
@@ -148,22 +141,9 @@
                                 src="{{ submission.snapshot_featured_image_url }}"
                                 alt="{{ submission.snapshot_title|default:submission.article.title }}"
                                 class="featured-image"
-                            >
-
-                        </div>
-
-                    {% elif not submission.snapshot_title and submission.article.featured_image %}
-
-                        <div class="featured-image-container">
-
-                            <h3>
-                                Featured Image
-                            </h3>
-
-                            <img
-                                src="{{ submission.article.featured_image.url }}"
-                                alt="{{ submission.article.title }}"
-                                class="featured-image"
+                                tabindex="0"
+                                role="button"
+                                data-lightbox-image
                             >
 
                         </div>
@@ -212,28 +192,6 @@
 
                         </div>
 
-                    {% elif not submission.snapshot_title and submission.article.tags.all %}
-
-                        <div class="article-tags">
-
-                            <h3>
-                                Tags
-                            </h3>
-
-                            <div class="tag-list">
-
-                                {% for tag in submission.article.tags.all %}
-
-                                    <span class="tag-item">
-                                        {{ tag.name }}
-                                    </span>
-
-                                {% endfor %}
-
-                            </div>
-
-                        </div>
-
                     {% endif %}
 
 
@@ -245,6 +203,10 @@
                                 Attached Images
                             </h3>
 
+                            <p class="form-help">
+                                Click an image to enlarge it.
+                            </p>
+
                             <div class="attachment-gallery">
 
                                 {% for attachment in submission.snapshot_attachments.all %}
@@ -255,42 +217,9 @@
                                             src="{{ attachment.image_url }}"
                                             alt="{{ attachment.caption|default:'Article attachment' }}"
                                             class="attachment-image"
-                                        >
-
-                                        {% if attachment.caption %}
-
-                                            <p class="attachment-caption">
-                                                {{ attachment.caption }}
-                                            </p>
-
-                                        {% endif %}
-
-                                    </div>
-
-                                {% endfor %}
-
-                            </div>
-
-                        </div>
-
-                    {% elif not submission.snapshot_title and submission.article.attachments.all %}
-
-                        <div class="article-attachments">
-
-                            <h3>
-                                Attached Images
-                            </h3>
-
-                            <div class="attachment-gallery">
-
-                                {% for attachment in submission.article.attachments.all %}
-
-                                    <div class="attachment-item">
-
-                                        <img
-                                            src="{{ attachment.image.url }}"
-                                            alt="{{ attachment.caption|default:'Article attachment' }}"
-                                            class="attachment-image"
+                                            tabindex="0"
+                                            role="button"
+                                            data-lightbox-image
                                         >
 
                                         {% if attachment.caption %}
@@ -314,20 +243,11 @@
 
                     {% if submission.resubmission_of %}
 
-                        <div class="revision-history">
+                        <div class="source-article-box">
 
-                            <div class="revision-history-header">
-
-                                <h3>
-                                    Previous Submission
-                                </h3>
-
-                                <span class="status-badge status-revision">
-                                    {{ submission.resubmission_of.get_status_display }}
-                                </span>
-
-                            </div>
-
+                            <h3>
+                                Previous Submission
+                            </h3>
 
                             <p class="submission-meta">
                                 <strong>Originally Submitted:</strong>
@@ -343,155 +263,116 @@
 
                             {% endif %}
 
-
-                            {% if submission.resubmission_of.snapshot_title %}
-
-                                <div class="previous-version-panel">
-
-                                    <p>
-                                        <strong>Previous Title:</strong>
-                                        {{ submission.resubmission_of.snapshot_title }}
-                                    </p>
-
-                                    <p>
-                                        <strong>Previous Category:</strong>
-                                        {{ submission.resubmission_of.snapshot_category_name }}
-                                    </p>
+                        </div>
 
 
-                                    {% if submission.resubmission_of.snapshot_featured_image %}
+                        {% if submission.resubmission_of.snapshot_title %}
 
-                                        <div class="featured-image-container">
+                            <div class="previous-version-panel">
 
-                                            <h4>
-                                                Previous Featured Image
-                                            </h4>
+                                <h3>
+                                    {{ submission.resubmission_of.snapshot_title }}
+                                </h3>
 
-                                            <img
-                                                src="{{ submission.resubmission_of.snapshot_featured_image_url }}"
-                                                alt="{{ submission.resubmission_of.snapshot_title }}"
-                                                class="featured-image"
-                                            >
-
-                                        </div>
-
-                                    {% endif %}
+                                <p class="submission-meta">
+                                    <strong>Category:</strong>
+                                    {{ submission.resubmission_of.snapshot_category_name }}
+                                </p>
 
 
-                                    <div class="article-content">
+                                {% if submission.resubmission_of.snapshot_featured_image %}
 
-                                        <h4>
-                                            Previous Article Content
-                                        </h4>
+                                    <img
+                                        src="{{ submission.resubmission_of.snapshot_featured_image_url }}"
+                                        alt="{{ submission.resubmission_of.snapshot_title }}"
+                                        class="featured-image"
+                                        tabindex="0"
+                                        role="button"
+                                        data-lightbox-image
+                                    >
 
-                                        <p>
-                                            {{ submission.resubmission_of.snapshot_content|linebreaksbr }}
-                                        </p>
+                                {% endif %}
+
+
+                                <h4>
+                                    Previous Article Content
+                                </h4>
+
+                                <p>
+                                    {{ submission.resubmission_of.snapshot_content|linebreaksbr }}
+                                </p>
+
+
+                                {% if submission.resubmission_of.snapshot_tags %}
+
+                                    <h4>
+                                        Previous Tags
+                                    </h4>
+
+                                    <div class="tag-list">
+
+                                        {% for tag in submission.resubmission_of.snapshot_tags %}
+
+                                            <span class="tag-item">
+                                                {{ tag }}
+                                            </span>
+
+                                        {% endfor %}
 
                                     </div>
 
-
-                                    {% if submission.resubmission_of.snapshot_tags %}
-
-                                        <div class="article-tags">
-
-                                            <h4>
-                                                Previous Tags
-                                            </h4>
-
-                                            <div class="tag-list">
-
-                                                {% for tag in submission.resubmission_of.snapshot_tags %}
-
-                                                    <span class="tag-item">
-                                                        {{ tag }}
-                                                    </span>
-
-                                                {% endfor %}
-
-                                            </div>
-
-                                        </div>
-
-                                    {% endif %}
+                                {% endif %}
 
 
-                                    {% if submission.resubmission_of.snapshot_attachments.all %}
+                                {% if submission.resubmission_of.snapshot_attachments.all %}
 
-                                        <div class="article-attachments">
+                                    <h4>
+                                        Previous Attached Images
+                                    </h4>
 
-                                            <h4>
-                                                Previous Attached Images
-                                            </h4>
+                                    <div class="attachment-gallery">
 
-                                            <div class="attachment-gallery">
+                                        {% for attachment in submission.resubmission_of.snapshot_attachments.all %}
 
-                                                {% for attachment in submission.resubmission_of.snapshot_attachments.all %}
+                                            <div class="attachment-item">
 
-                                                    <div class="attachment-item">
-
-                                                        <img
-                                                            src="{{ attachment.image_url }}"
-                                                            alt="{{ attachment.caption|default:'Article attachment' }}"
-                                                            class="attachment-image"
-                                                        >
-
-                                                        {% if attachment.caption %}
-
-                                                            <p class="attachment-caption">
-                                                                {{ attachment.caption }}
-                                                            </p>
-
-                                                        {% endif %}
-
-                                                    </div>
-
-                                                {% endfor %}
+                                                <img
+                                                    src="{{ attachment.image_url }}"
+                                                    alt="{{ attachment.caption|default:'Article attachment' }}"
+                                                    class="attachment-image"
+                                                    tabindex="0"
+                                                    role="button"
+                                                    data-lightbox-image
+                                                >
 
                                             </div>
 
-                                        </div>
+                                        {% endfor %}
 
-                                    {% endif %}
+                                    </div>
 
-                                </div>
+                                {% endif %}
 
-                            {% else %}
+                            </div>
 
-                                <div class="warning-box info-box">
-
-                                    <strong>
-                                        Legacy Previous Submission
-                                    </strong>
-
-                                    <p>
-                                        This previous submission was created before
-                                        snapshots were enabled. Its exact historical
-                                        article content cannot be recovered.
-                                    </p>
-
-                                </div>
-
-                            {% endif %}
+                        {% endif %}
 
 
-                            {% if submission.resubmission_of.reviewer_notes %}
+                        {% if submission.resubmission_of.reviewer_notes %}
 
-                                <div class="revision-notes warning-box info-box">
+                            <div class="revision-notes warning-box info-box">
 
-                                    <strong>
-                                        EIC Reviewer Notes
-                                    </strong>
+                                <strong>
+                                    EIC Reviewer Notes
+                                </strong>
 
-                                    <p>
-                                        {{ submission.resubmission_of.reviewer_notes|linebreaksbr }}
-                                    </p>
+                                <p>
+                                    {{ submission.resubmission_of.reviewer_notes|linebreaksbr }}
+                                </p>
 
-                                </div>
+                            </div>
 
-                            {% endif %}
-
-                        </div>
+                        {% endif %}
 
                     {% endif %}
 

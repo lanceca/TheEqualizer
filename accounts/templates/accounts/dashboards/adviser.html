@@ -4,65 +4,653 @@
 
 <div class="dashboard-header">
 
-    <h1>Adviser Dashboard</h1>
+    <h1>
+        Adviser Analytics
+    </h1>
 
     <p class="dashboard-subtitle">
-        Monitor publication activity and performance.
+        Monitor editorial activity, staff performance, and reader engagement.
     </p>
 
 </div>
 
 
-<div class="dashboard-welcome">
+<!-- ==========================================
+     PUBLICATION OVERVIEW
+     ========================================== -->
+
+<section class="analytics-section">
 
     <h2>
-        Welcome, {{ request.user.username }}
+        Publication Overview
     </h2>
 
-    <p>
-        Use this dashboard to monitor publication and staff activity.
+    <div class="dashboard-grid">
+
+        <div class="dashboard-card">
+
+            <h3>
+                Published Articles
+            </h3>
+
+            <strong>
+                {{ published_articles }}
+            </strong>
+
+        </div>
+
+
+        <div class="dashboard-card">
+
+            <h3>
+                Draft Articles
+            </h3>
+
+            <strong>
+                {{ draft_articles }}
+            </strong>
+
+        </div>
+
+
+        <div class="dashboard-card">
+
+            <h3>
+                Archived Articles
+            </h3>
+
+            <strong>
+                {{ archived_articles }}
+            </strong>
+
+        </div>
+
+
+        <div class="dashboard-card">
+
+            <h3>
+                Total Articles
+            </h3>
+
+            <strong>
+                {{ total_articles }}
+            </strong>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ==========================================
+     SUBMISSION ANALYTICS
+     ========================================== -->
+
+<section class="analytics-section">
+
+    <h2>
+        Submission Analytics
+    </h2>
+
+    <div class="dashboard-grid">
+
+        <div class="dashboard-card">
+
+            <h3>
+                Total Submissions
+            </h3>
+
+            <strong>
+                {{ total_submissions }}
+            </strong>
+
+        </div>
+
+
+        <div class="dashboard-card">
+
+            <h3>
+                Pending
+            </h3>
+
+            <strong>
+                {{ pending_submissions }}
+            </strong>
+
+        </div>
+
+
+        <div class="dashboard-card">
+
+            <h3>
+                Approved
+            </h3>
+
+            <strong>
+                {{ approved_submissions }}
+            </strong>
+
+        </div>
+
+
+        <div class="dashboard-card">
+
+            <h3>
+                Rejected
+            </h3>
+
+            <strong>
+                {{ rejected_submissions }}
+            </strong>
+
+        </div>
+
+
+        <div class="dashboard-card">
+
+            <h3>
+                Sent Back for Revision
+            </h3>
+
+            <strong>
+                {{ revision_submissions }}
+            </strong>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ==========================================
+     WORKFLOW ACTIVITY
+     ========================================== -->
+
+<section class="analytics-section">
+
+    <h2>
+        Workflow Activity
+    </h2>
+
+    <div class="dashboard-grid">
+
+        <div class="dashboard-card">
+
+            <h3>
+                Pending Edit Requests
+            </h3>
+
+            <strong>
+                {{ pending_edit_requests }}
+            </strong>
+
+        </div>
+
+
+        <div class="dashboard-card">
+
+            <h3>
+                Approved Edit Requests
+            </h3>
+
+            <strong>
+                {{ approved_edit_requests }}
+            </strong>
+
+        </div>
+
+
+        <div class="dashboard-card">
+
+            <h3>
+                Completed Edit Requests
+            </h3>
+
+            <strong>
+                {{ completed_edit_requests }}
+            </strong>
+
+        </div>
+
+
+        <div class="dashboard-card">
+
+            <h3>
+                Pending Deletion Requests
+            </h3>
+
+            <strong>
+                {{ pending_deletion_requests }}
+            </strong>
+
+        </div>
+
+
+        <div class="dashboard-card">
+
+            <h3>
+                Approved Deletions
+            </h3>
+
+            <strong>
+                {{ approved_deletion_requests }}
+            </strong>
+
+        </div>
+
+
+        <div class="dashboard-card">
+
+            <h3>
+                Active Content Reports
+            </h3>
+
+            <strong>
+                {{ active_content_reports }}
+            </strong>
+
+        </div>
+
+
+        <div class="dashboard-card">
+
+            <h3>
+                Resolved Content Reports
+            </h3>
+
+            <strong>
+                {{ resolved_content_reports }}
+            </strong>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ==========================================
+     READER ENGAGEMENT
+     ========================================== -->
+
+<section class="analytics-section">
+
+    <h2>
+        Reader Engagement
+    </h2>
+
+    <p class="section-description">
+        Reader engagement values will begin increasing once public article tracking is connected.
     </p>
 
-</div>
+    <div class="dashboard-grid">
 
+        <div class="dashboard-card accent-gold">
 
-<div class="dashboard-grid">
+            <h3>
+                Article Views
+            </h3>
 
-    <a
-        href="#"
-        class="dashboard-card accent-gold"
-    >
+            <strong>
+                {{ total_views }}
+            </strong>
 
-        <h2>Reader Analytics</h2>
-
-        <p>
-            Monitor visits, reactions, shares, and article engagement.
-        </p>
-
-        <div class="dashboard-card-footer">
-            Analytics coming soon
         </div>
 
-    </a>
 
+        <div class="dashboard-card accent-gold">
 
-    <a
-        href="#"
-        class="dashboard-card"
-    >
+            <h3>
+                Reactions
+            </h3>
 
-        <h2>Staff Analytics</h2>
+            <strong>
+                {{ total_reactions }}
+            </strong>
 
-        <p>
-            Review submission, approval, rejection, and revision activity.
-        </p>
-
-        <div class="dashboard-card-footer">
-            Analytics coming soon
         </div>
 
-    </a>
 
-</div>
+        <div class="dashboard-card accent-gold">
+
+            <h3>
+                Shares
+            </h3>
+
+            <strong>
+                {{ total_shares }}
+            </strong>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ==========================================
+     EDITOR PERFORMANCE
+     ========================================== -->
+
+<section class="analytics-section">
+
+    <h2>
+        Editor Performance
+    </h2>
+
+    {% if editors %}
+
+        <div class="content-panel">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Editor
+                        </th>
+
+                        <th>
+                            Articles
+                        </th>
+
+                        <th>
+                            Published
+                        </th>
+
+                        <th>
+                            Archived
+                        </th>
+
+                        <th>
+                            Submissions
+                        </th>
+
+                        <th>
+                            Pending
+                        </th>
+
+                        <th>
+                            Approved
+                        </th>
+
+                        <th>
+                            Rejected
+                        </th>
+
+                        <th>
+                            Revision
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for editor in editors %}
+
+                        <tr>
+
+                            <td>
+                                {{ editor.username }}
+                            </td>
+
+                            <td>
+                                {{ editor.article_count }}
+                            </td>
+
+                            <td>
+                                {{ editor.published_count }}
+                            </td>
+
+                            <td>
+                                {{ editor.archived_count }}
+                            </td>
+
+                            <td>
+                                {{ editor.submission_count }}
+                            </td>
+
+                            <td>
+                                {{ editor.pending_count }}
+                            </td>
+
+                            <td>
+                                {{ editor.approved_count }}
+                            </td>
+
+                            <td>
+                                {{ editor.rejected_count }}
+                            </td>
+
+                            <td>
+                                {{ editor.revision_count }}
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    {% else %}
+
+        <p class="empty-message">
+            No Editor accounts are currently available.
+        </p>
+
+    {% endif %}
+
+</section>
+
+
+<!-- ==========================================
+     CATEGORY PERFORMANCE
+     ========================================== -->
+
+<section class="analytics-section">
+
+    <h2>
+        Category Performance
+    </h2>
+
+    {% if category_performance %}
+
+        <div class="content-panel">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Category
+                        </th>
+
+                        <th>
+                            Published Articles
+                        </th>
+
+                        <th>
+                            Views
+                        </th>
+
+                        <th>
+                            Reactions
+                        </th>
+
+                        <th>
+                            Shares
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for category in category_performance %}
+
+                        <tr>
+
+                            <td>
+                                {{ category.category__name }}
+                            </td>
+
+                            <td>
+                                {{ category.article_count }}
+                            </td>
+
+                            <td>
+                                {{ category.total_views|default:0 }}
+                            </td>
+
+                            <td>
+                                {{ category.total_reactions|default:0 }}
+                            </td>
+
+                            <td>
+                                {{ category.total_shares|default:0 }}
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    {% else %}
+
+        <p class="empty-message">
+            No published category data is currently available.
+        </p>
+
+    {% endif %}
+
+</section>
+
+
+<!-- ==========================================
+     TOP ARTICLES
+     ========================================== -->
+
+<section class="analytics-section">
+
+    <h2>
+        Top Articles
+    </h2>
+
+
+    <div class="dashboard-grid">
+
+        <div class="content-panel">
+
+            <h3>
+                Most Viewed
+            </h3>
+
+            {% for article in top_viewed_articles %}
+
+                <p>
+
+                    <strong>
+                        {{ article.title }}
+                    </strong>
+
+                    <br>
+
+                    {{ article.view_count }} views
+
+                </p>
+
+            {% empty %}
+
+                <p>
+                    No published articles available.
+                </p>
+
+            {% endfor %}
+
+        </div>
+
+
+        <div class="content-panel">
+
+            <h3>
+                Most Reacted
+            </h3>
+
+            {% for article in top_reacted_articles %}
+
+                <p>
+
+                    <strong>
+                        {{ article.title }}
+                    </strong>
+
+                    <br>
+
+                    {{ article.reaction_count }} reactions
+
+                </p>
+
+            {% empty %}
+
+                <p>
+                    No published articles available.
+                </p>
+
+            {% endfor %}
+
+        </div>
+
+
+        <div class="content-panel">
+
+            <h3>
+                Most Shared
+            </h3>
+
+            {% for article in top_shared_articles %}
+
+                <p>
+
+                    <strong>
+                        {{ article.title }}
+                    </strong>
+
+                    <br>
+
+                    {{ article.share_count }} shares
+
+                </p>
+
+            {% empty %}
+
+                <p>
+                    No published articles available.
+                </p>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+</section>
 
 {% endblock %}

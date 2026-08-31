@@ -7,13 +7,15 @@
 {% if request.user.role == "EIC" %}
 
     <p class="section-description">
-        View all currently published articles.
+        View all published articles. Articles you authored can be edited
+        or removed from publication directly.
     </p>
 
 {% elif request.user.role == "STAFF" %}
 
     <p class="section-description">
-        View currently published articles and report content concerns to the Editor in Chief.
+        View currently published articles and report content concerns
+        to the Editor in Chief.
     </p>
 
 {% else %}
@@ -67,10 +69,8 @@
 {% if search_query %}
 
     <div class="info-box">
-
         Search results for:
         <strong>{{ search_query }}</strong>
-
     </div>
 
 {% endif %}
@@ -78,19 +78,69 @@
 
 {% if articles %}
 
-    <div class="article-list">
+    <div class="article-tile-grid">
 
         {% for article in articles %}
 
-            <details class="article-card">
+            <details class="article-tile">
 
-                <summary class="article-summary">
+                <summary class="article-tile-summary">
 
-                    <div class="article-summary-content">
+                    {% if article.featured_image %}
 
-                        <div class="article-summary-info">
+                        <div class="article-tile-image-wrapper">
 
-                            <h2 class="article-title">
+                            <img
+                                src="{{ article.featured_image.url }}"
+                                alt="{{ article.title }}"
+                                class="article-tile-image"
+                            >
+
+                        </div>
+
+                    {% else %}
+
+                        <div class="article-tile-image-wrapper article-tile-placeholder">
+                            No Featured Image
+                        </div>
+
+                    {% endif %}
+
+
+                    <div class="article-tile-overlay">
+
+                        <span class="status-badge status-approved">
+                            Published
+                        </span>
+
+                        <h2 class="article-tile-title">
+                            {{ article.title }}
+                        </h2>
+
+                        <p class="article-tile-category">
+                            {{ article.category.name }}
+                        </p>
+
+                        <p class="article-tile-author">
+                            By {{ article.author.username }}
+                        </p>
+
+                        <span class="article-tile-expand">
+                            Click to expand
+                        </span>
+
+                    </div>
+
+                </summary>
+
+
+                <div class="article-tile-details">
+
+                    <div class="article-detail-header">
+
+                        <div>
+
+                            <h2>
                                 {{ article.title }}
                             </h2>
 
@@ -105,6 +155,7 @@
                             </p>
 
                             <p class="article-meta">
+
                                 <strong>Published:</strong>
 
                                 {% if article.published_at %}
@@ -112,41 +163,41 @@
                                 {% else %}
                                     Publication date unavailable
                                 {% endif %}
-                            </p>
 
-                            <span class="status-badge status-approved">
-                                Published
-                            </span>
+                            </p>
 
                         </div>
 
-                        <span class="expand-indicator"></span>
-
                     </div>
 
-                </summary>
-
-                <div class="article-details">
 
                     {% if article.featured_image %}
 
                         <div class="featured-image-container">
 
-                            <h3>Featured Image</h3>
+                            <h3>
+                                Featured Image
+                            </h3>
 
                             <img
                                 src="{{ article.featured_image.url }}"
                                 alt="{{ article.title }}"
                                 class="featured-image"
+                                tabindex="0"
+                                role="button"
+                                data-lightbox-image
                             >
 
                         </div>
 
                     {% endif %}
 
+
                     <div class="article-content">
 
-                        <h3>Article Content</h3>
+                        <h3>
+                            Article Content
+                        </h3>
 
                         <p>
                             {{ article.content|linebreaksbr }}
@@ -159,7 +210,9 @@
 
                         <div class="article-tags">
 
-                            <h3>Tags</h3>
+                            <h3>
+                                Tags
+                            </h3>
 
                             <div class="tag-list">
 
@@ -182,7 +235,13 @@
 
                         <div class="article-attachments">
 
-                            <h3>Attached Images</h3>
+                            <h3>
+                                Attached Images
+                            </h3>
+
+                            <p class="form-help">
+                                Click an image to enlarge it.
+                            </p>
 
                             <div class="attachment-gallery">
 
@@ -194,6 +253,9 @@
                                             src="{{ attachment.image.url }}"
                                             alt="{{ attachment.caption|default:'Article attachment' }}"
                                             class="attachment-image"
+                                            tabindex="0"
+                                            role="button"
+                                            data-lightbox-image
                                         >
 
                                         {% if attachment.caption %}
@@ -215,7 +277,43 @@
                     {% endif %}
 
 
-                    {% if request.user.role == "EDITOR" %}
+                    {% if request.user.role == "EIC" %}
+
+                        {% if article.author_id == request.user.id %}
+
+                            <div class="article-actions">
+
+                                <a
+                                    href="{% url 'edit_published_article' article.id %}"
+                                    class="edit-link"
+                                >
+                                    Edit Directly
+                                </a>
+
+                                <form
+                                    method="POST"
+                                    action="{% url 'archive_own_published_article' article.id %}"
+                                >
+
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="danger-button"
+                                        data-confirm-title="Delete Published Article"
+                                        data-confirm="Are you sure you want to remove '{{ article.title }}' from publication? The article will be moved to the archive."
+                                    >
+                                        Delete Article
+                                    </button>
+
+                                </form>
+
+                            </div>
+
+                        {% endif %}
+
+
+                    {% elif request.user.role == "EDITOR" %}
 
                         <div class="article-actions">
 
@@ -234,6 +332,7 @@
                             </a>
 
                         </div>
+
 
                     {% elif request.user.role == "STAFF" %}
 

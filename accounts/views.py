@@ -10,9 +10,19 @@ from django.contrib.auth import (
 )
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
-from django.db.models import Q
+from django.db.models import Count, Q, Sum
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_POST
+
+from publications.models import (
+    Article,
+    ContentReport,
+    DeletionRequest,
+    EditRequest,
+    Submission,
+)
 
 from .forms import (
     AdminAccountCreationForm,
@@ -33,12 +43,14 @@ User = get_user_model()
 
 def role_required(*allowed_roles):
     """
-    Restrict a view to users with one of the specified roles.
+    Restrict a view to users with one of the specified roles
+    and prevent protected pages from being cached.
     """
 
     def decorator(view_func):
 
         @wraps(view_func)
+        @never_cache
         @login_required
         def wrapped_view(request, *args, **kwargs):
 
@@ -63,12 +75,9 @@ def role_required(*allowed_roles):
 # ==========================================================
 
 
+@never_cache
 @login_required
 def dashboard_redirect(request):
-    """
-    Send the authenticated user to the dashboard
-    corresponding to their role.
-    """
 
     role = request.user.role
 
@@ -130,12 +139,346 @@ def admin_dashboard(request):
     )
 
 
+# ==========================================================
+# ADVISER ANALYTICS DASHBOARD
+# ==========================================================
+
+
 @role_required(User.Role.ADVISER)
 def adviser_dashboard(request):
+
+    # ======================================================
+    # ARTICLE / PUBLICATION TOTALS
+    # ======================================================
+
+    normal_articles = Article.objects.filter(
+        draft_type=Article.DraftType.NORMAL
+    )
+
+    total_articles = normal_articles.count()
+
+    published_articles = normal_articles.filter(
+        is_published=True,
+        is_archived=False,
+    ).count()
+
+    archived_articles = normal_articles.filter(
+        is_archived=True,
+    ).count()
+
+    draft_articles = normal_articles.filter(
+        is_published=False,
+        is_archived=False,
+        submissions__isnull=True,
+    ).distinct().count()
+
+
+    # ======================================================
+    # SUBMISSION TOTALS
+    # ======================================================
+
+    total_submissions = Submission.objects.count()
+
+    pending_submissions = Submission.objects.filter(
+        status=Submission.Status.PENDING
+    ).count()
+
+    approved_submissions = Submission.objects.filter(
+        status=Submission.Status.APPROVED
+    ).count()
+
+    rejected_submissions = Submission.objects.filter(
+        status=Submission.Status.REJECTED
+    ).count()
+
+    revision_submissions = Submission.objects.filter(
+        status=Submission.Status.REVISION
+    ).count()
+
+
+    # ======================================================
+    # REQUEST / REPORT TOTALS
+    # ======================================================
+
+    pending_edit_requests = EditRequest.objects.filter(
+        status=EditRequest.Status.PENDING
+    ).count()
+
+    approved_edit_requests = EditRequest.objects.filter(
+        status=EditRequest.Status.APPROVED
+    ).count()
+
+    completed_edit_requests = EditRequest.objects.filter(
+        status=EditRequest.Status.COMPLETED
+    ).count()
+
+    pending_deletion_requests = DeletionRequest.objects.filter(
+        status=DeletionRequest.Status.PENDING
+    ).count()
+
+    approved_deletion_requests = DeletionRequest.objects.filter(
+        status=DeletionRequest.Status.APPROVED
+    ).count()
+
+    active_content_reports = ContentReport.objects.filter(
+        status__in=[
+            ContentReport.Status.OPEN,
+            ContentReport.Status.REVISION_REQUIRED,
+        ]
+    ).count()
+
+    resolved_content_reports = ContentReport.objects.filter(
+        status=ContentReport.Status.RESOLVED
+    ).count()
+
+
+    # ======================================================
+    # EDITOR PERFORMANCE
+    # ======================================================
+
+    editors = (
+        User.objects
+        .filter(
+            role=User.Role.EDITOR
+        )
+        .annotate(
+            article_count=Count(
+                "articles",
+                filter=Q(
+                    articles__draft_type=Article.DraftType.NORMAL
+                ),
+                distinct=True,
+            ),
+
+            published_count=Count(
+                "articles",
+                filter=Q(
+                    articles__draft_type=Article.DraftType.NORMAL,
+                    articles__is_published=True,
+                    articles__is_archived=False,
+                ),
+                distinct=True,
+            ),
+
+            archived_count=Count(
+                "articles",
+                filter=Q(
+                    articles__draft_type=Article.DraftType.NORMAL,
+                    articles__is_archived=True,
+                ),
+                distinct=True,
+            ),
+
+            submission_count=Count(
+                "submissions",
+                distinct=True,
+            ),
+
+            approved_count=Count(
+                "submissions",
+                filter=Q(
+                    submissions__status=Submission.Status.APPROVED
+                ),
+                distinct=True,
+            ),
+
+            rejected_count=Count(
+                "submissions",
+                filter=Q(
+                    submissions__status=Submission.Status.REJECTED
+                ),
+                distinct=True,
+            ),
+
+            revision_count=Count(
+                "submissions",
+                filter=Q(
+                    submissions__status=Submission.Status.REVISION
+                ),
+                distinct=True,
+            ),
+
+            pending_count=Count(
+                "submissions",
+                filter=Q(
+                    submissions__status=Submission.Status.PENDING
+                ),
+                distinct=True,
+            ),
+        )
+        .order_by(
+            "-published_count",
+            "username",
+        )
+    )
+
+
+    # ======================================================
+    # CATEGORY PERFORMANCE
+    # ======================================================
+
+    category_performance = (
+        normal_articles
+        .filter(
+            is_published=True,
+            is_archived=False,
+        )
+        .values(
+            "category__name"
+        )
+        .annotate(
+            article_count=Count(
+                "id",
+                distinct=True,
+            ),
+
+            total_views=Sum(
+                "view_count"
+            ),
+
+            total_reactions=Sum(
+                "reaction_count"
+            ),
+
+            total_shares=Sum(
+                "share_count"
+            ),
+        )
+        .order_by(
+            "-total_views",
+            "-article_count",
+        )
+    )
+
+
+    # ======================================================
+    # READER ENGAGEMENT TOTALS
+    # ======================================================
+
+    reader_totals = (
+        normal_articles
+        .filter(
+            is_published=True,
+            is_archived=False,
+        )
+        .aggregate(
+            total_views=Sum(
+                "view_count"
+            ),
+
+            total_reactions=Sum(
+                "reaction_count"
+            ),
+
+            total_shares=Sum(
+                "share_count"
+            ),
+        )
+    )
+
+    total_views = (
+        reader_totals["total_views"]
+        or 0
+    )
+
+    total_reactions = (
+        reader_totals["total_reactions"]
+        or 0
+    )
+
+    total_shares = (
+        reader_totals["total_shares"]
+        or 0
+    )
+
+
+    # ======================================================
+    # TOP ARTICLES
+    # ======================================================
+
+    top_viewed_articles = (
+        normal_articles
+        .filter(
+            is_published=True,
+            is_archived=False,
+        )
+        .select_related(
+            "category",
+            "author",
+        )
+        .order_by(
+            "-view_count",
+            "-published_at",
+        )[:5]
+    )
+
+    top_reacted_articles = (
+        normal_articles
+        .filter(
+            is_published=True,
+            is_archived=False,
+        )
+        .select_related(
+            "category",
+            "author",
+        )
+        .order_by(
+            "-reaction_count",
+            "-published_at",
+        )[:5]
+    )
+
+    top_shared_articles = (
+        normal_articles
+        .filter(
+            is_published=True,
+            is_archived=False,
+        )
+        .select_related(
+            "category",
+            "author",
+        )
+        .order_by(
+            "-share_count",
+            "-published_at",
+        )[:5]
+    )
+
 
     return render(
         request,
         "accounts/dashboards/adviser.html",
+        {
+            "total_articles": total_articles,
+            "published_articles": published_articles,
+            "archived_articles": archived_articles,
+            "draft_articles": draft_articles,
+
+            "total_submissions": total_submissions,
+            "pending_submissions": pending_submissions,
+            "approved_submissions": approved_submissions,
+            "rejected_submissions": rejected_submissions,
+            "revision_submissions": revision_submissions,
+
+            "pending_edit_requests": pending_edit_requests,
+            "approved_edit_requests": approved_edit_requests,
+            "completed_edit_requests": completed_edit_requests,
+            "pending_deletion_requests": pending_deletion_requests,
+            "approved_deletion_requests": approved_deletion_requests,
+            "active_content_reports": active_content_reports,
+            "resolved_content_reports": resolved_content_reports,
+
+            "total_views": total_views,
+            "total_reactions": total_reactions,
+            "total_shares": total_shares,
+
+            "editors": editors,
+            "category_performance": category_performance,
+
+            "top_viewed_articles": top_viewed_articles,
+            "top_reacted_articles": top_reacted_articles,
+            "top_shared_articles": top_shared_articles,
+        },
     )
 
 
@@ -171,6 +514,7 @@ def staff_dashboard(request):
 # ==========================================================
 
 
+@never_cache
 def login_view(request):
 
     if request.user.is_authenticated:
@@ -218,11 +562,6 @@ def login_view(request):
         return render(
             request,
             "accounts/login.html",
-            {
-                "error": (
-                    "Invalid username or password."
-                ),
-            },
         )
 
     return render(
@@ -231,6 +570,8 @@ def login_view(request):
     )
 
 
+@require_POST
+@never_cache
 def logout_view(request):
 
     if request.user.is_authenticated:
@@ -247,7 +588,7 @@ def logout_view(request):
         )
 
     return redirect(
-        "home"
+        "login"
     )
 
 
@@ -256,6 +597,7 @@ def logout_view(request):
 # ==========================================================
 
 
+@never_cache
 @login_required
 def profile(request):
 
@@ -299,6 +641,7 @@ def profile(request):
     )
 
 
+@never_cache
 @login_required
 def change_password(request):
 
@@ -404,7 +747,7 @@ def create_admin_account(request):
                 request,
                 (
                     f'Admin account "{admin_user.username}" '
-                    f'was created successfully.'
+                    f"was created successfully."
                 ),
             )
 
@@ -457,7 +800,7 @@ def edit_admin_account(
                 request,
                 (
                     f'Admin account "{admin_user.username}" '
-                    f'was updated successfully.'
+                    f"was updated successfully."
                 ),
             )
 
@@ -520,7 +863,7 @@ def toggle_admin_account_status(
             request,
             (
                 f'Admin account "{admin_user.username}" '
-                f'was activated successfully.'
+                f"was activated successfully."
             ),
         )
 
@@ -530,7 +873,7 @@ def toggle_admin_account_status(
             request,
             (
                 f'Admin account "{admin_user.username}" '
-                f'was deactivated.'
+                f"was deactivated."
             ),
         )
 
@@ -648,8 +991,8 @@ def create_staff_account(request):
                 request,
                 (
                     f'Account "{staff_user.username}" '
-                    f'was created successfully as '
-                    f'{staff_user.get_role_display()}.'
+                    f"was created successfully as "
+                    f"{staff_user.get_role_display()}."
                 ),
             )
 
@@ -709,7 +1052,7 @@ def edit_staff_account(
                 request,
                 (
                     f'Account "{staff_user.username}" '
-                    f'was updated successfully.'
+                    f"was updated successfully."
                 ),
             )
 
@@ -779,7 +1122,7 @@ def toggle_staff_account_status(
             request,
             (
                 f'Account "{staff_user.username}" '
-                f'was activated successfully.'
+                f"was activated successfully."
             ),
         )
 
@@ -789,7 +1132,7 @@ def toggle_staff_account_status(
             request,
             (
                 f'Account "{staff_user.username}" '
-                f'was deactivated.'
+                f"was deactivated."
             ),
         )
 

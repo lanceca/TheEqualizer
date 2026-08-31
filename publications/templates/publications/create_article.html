@@ -1,12 +1,28 @@
 {% extends "staff_base.html" %}
 
+
 {% block staff_content %}
+
 
 <h1>Create Article</h1>
 
-<p class="section-description">
-    Create a new publication article and either save it as a draft or submit it for EIC approval.
-</p>
+
+{% if request.user.role == "EIC" %}
+
+    <p class="section-description">
+        Create a new publication article and either save it as a draft
+        or publish it directly.
+    </p>
+
+{% else %}
+
+    <p class="section-description">
+        Create a new publication article and either save it as a draft
+        or submit it for EIC approval.
+    </p>
+
+{% endif %}
+
 
 <div class="content-panel article-form-panel">
 
@@ -15,6 +31,7 @@
         <strong>{{ request.user.username }}</strong>
     </div>
 
+
     <form
         method="POST"
         enctype="multipart/form-data"
@@ -22,6 +39,7 @@
     >
 
         {% csrf_token %}
+
 
         <div class="form-group">
 
@@ -177,21 +195,40 @@
                 Save Draft
             </button>
 
-            <button
-                type="submit"
-                name="action"
-                value="submit"
-                class="approve-button"
-                data-confirm-title="Submit Article"
-                data-confirm="Are you sure you want to submit this article to the Editor in Chief for approval?"
-            >
-                Submit for EIC Approval
-            </button>
+
+            {% if request.user.role == "EIC" %}
+
+                <button
+                    type="submit"
+                    name="action"
+                    value="publish"
+                    class="approve-button"
+                    data-confirm-title="Publish Article"
+                    data-confirm="Are you sure you want to publish this article immediately?"
+                >
+                    Publish Article
+                </button>
+
+            {% else %}
+
+                <button
+                    type="submit"
+                    name="action"
+                    value="submit"
+                    class="approve-button"
+                    data-confirm-title="Submit Article"
+                    data-confirm="Are you sure you want to submit this article to the Editor in Chief for approval?"
+                >
+                    Submit for EIC Approval
+                </button>
+
+            {% endif %}
 
         </div>
 
     </form>
 
 </div>
+
 
 {% endblock %}
