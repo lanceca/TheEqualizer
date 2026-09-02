@@ -9,14 +9,15 @@
     </h1>
 
     <p class="dashboard-subtitle">
-        Monitor editorial activity, staff performance, and reader engagement.
+        Monitor publication activity, editorial performance,
+        workflow health, and reader engagement.
     </p>
 
 </div>
 
 
 <!-- ==========================================
-     PUBLICATION OVERVIEW
+     1. PUBLICATION OVERVIEW
      ========================================== -->
 
 <section class="analytics-section">
@@ -28,54 +29,18 @@
     <div class="dashboard-grid">
 
         <div class="dashboard-card">
-
-            <h3>
-                Published Articles
-            </h3>
-
-            <strong>
-                {{ published_articles }}
-            </strong>
-
+            <h3>Published Articles</h3>
+            <strong>{{ published_articles }}</strong>
         </div>
 
-
         <div class="dashboard-card">
-
-            <h3>
-                Draft Articles
-            </h3>
-
-            <strong>
-                {{ draft_articles }}
-            </strong>
-
+            <h3>Draft Articles</h3>
+            <strong>{{ draft_articles }}</strong>
         </div>
 
-
         <div class="dashboard-card">
-
-            <h3>
-                Archived Articles
-            </h3>
-
-            <strong>
-                {{ archived_articles }}
-            </strong>
-
-        </div>
-
-
-        <div class="dashboard-card">
-
-            <h3>
-                Total Articles
-            </h3>
-
-            <strong>
-                {{ total_articles }}
-            </strong>
-
+            <h3>Archived Articles</h3>
+            <strong>{{ archived_articles }}</strong>
         </div>
 
     </div>
@@ -84,195 +49,7 @@
 
 
 <!-- ==========================================
-     SUBMISSION ANALYTICS
-     ========================================== -->
-
-<section class="analytics-section">
-
-    <h2>
-        Submission Analytics
-    </h2>
-
-    <div class="dashboard-grid">
-
-        <div class="dashboard-card">
-
-            <h3>
-                Total Submissions
-            </h3>
-
-            <strong>
-                {{ total_submissions }}
-            </strong>
-
-        </div>
-
-
-        <div class="dashboard-card">
-
-            <h3>
-                Pending
-            </h3>
-
-            <strong>
-                {{ pending_submissions }}
-            </strong>
-
-        </div>
-
-
-        <div class="dashboard-card">
-
-            <h3>
-                Approved
-            </h3>
-
-            <strong>
-                {{ approved_submissions }}
-            </strong>
-
-        </div>
-
-
-        <div class="dashboard-card">
-
-            <h3>
-                Rejected
-            </h3>
-
-            <strong>
-                {{ rejected_submissions }}
-            </strong>
-
-        </div>
-
-
-        <div class="dashboard-card">
-
-            <h3>
-                Sent Back for Revision
-            </h3>
-
-            <strong>
-                {{ revision_submissions }}
-            </strong>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ==========================================
-     WORKFLOW ACTIVITY
-     ========================================== -->
-
-<section class="analytics-section">
-
-    <h2>
-        Workflow Activity
-    </h2>
-
-    <div class="dashboard-grid">
-
-        <div class="dashboard-card">
-
-            <h3>
-                Pending Edit Requests
-            </h3>
-
-            <strong>
-                {{ pending_edit_requests }}
-            </strong>
-
-        </div>
-
-
-        <div class="dashboard-card">
-
-            <h3>
-                Approved Edit Requests
-            </h3>
-
-            <strong>
-                {{ approved_edit_requests }}
-            </strong>
-
-        </div>
-
-
-        <div class="dashboard-card">
-
-            <h3>
-                Completed Edit Requests
-            </h3>
-
-            <strong>
-                {{ completed_edit_requests }}
-            </strong>
-
-        </div>
-
-
-        <div class="dashboard-card">
-
-            <h3>
-                Pending Deletion Requests
-            </h3>
-
-            <strong>
-                {{ pending_deletion_requests }}
-            </strong>
-
-        </div>
-
-
-        <div class="dashboard-card">
-
-            <h3>
-                Approved Deletions
-            </h3>
-
-            <strong>
-                {{ approved_deletion_requests }}
-            </strong>
-
-        </div>
-
-
-        <div class="dashboard-card">
-
-            <h3>
-                Active Content Reports
-            </h3>
-
-            <strong>
-                {{ active_content_reports }}
-            </strong>
-
-        </div>
-
-
-        <div class="dashboard-card">
-
-            <h3>
-                Resolved Content Reports
-            </h3>
-
-            <strong>
-                {{ resolved_content_reports }}
-            </strong>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ==========================================
-     READER ENGAGEMENT
+     2. READER ENGAGEMENT
      ========================================== -->
 
 <section class="analytics-section">
@@ -282,46 +59,146 @@
     </h2>
 
     <p class="section-description">
-        Reader engagement values will begin increasing once public article tracking is connected.
+        Lifetime engagement across currently published articles,
+        with daily activity shown for the last 30 days.
     </p>
 
     <div class="dashboard-grid">
 
         <div class="dashboard-card accent-gold">
+            <h3>Lifetime Views</h3>
+            <strong>{{ total_views }}</strong>
+        </div>
 
-            <h3>
-                Article Views
-            </h3>
+        <div class="dashboard-card accent-gold">
+            <h3>Lifetime Reactions</h3>
+            <strong>{{ total_reactions }}</strong>
+        </div>
 
-            <strong>
-                {{ total_views }}
-            </strong>
+        <div class="dashboard-card accent-gold">
+            <h3>Lifetime Shares</h3>
+            <strong>{{ total_shares }}</strong>
+        </div>
+
+    </div>
+
+
+    <div class="analytics-chart-panel analytics-history-panel">
+
+        <div class="analytics-chart-heading">
+
+            <div>
+                <h3>30-Day Engagement Trend</h3>
+
+                <p>
+                    Daily public views, reactions, and shares from
+                    {{ analytics_start_date|date:"M d, Y" }} through
+                    {{ analytics_end_date|date:"M d, Y" }}.
+                </p>
+            </div>
+
+            <span class="analytics-timezone-badge">
+                Asia/Manila
+            </span>
+
+        </div>
+
+        <div class="analytics-chart-canvas-wrapper">
+            <canvas
+                id="historical-engagement-chart"
+                aria-label="Thirty day reader engagement trend"
+                role="img"
+            ></canvas>
+        </div>
+
+        <p class="analytics-history-note">
+            Historical tracking begins from the date daily analytics
+            was enabled. Earlier lifetime engagement is not fabricated
+            or backfilled into individual days.
+        </p>
+
+    </div>
+
+
+    {{ historical_engagement_labels|json_script:"historical-engagement-labels" }}
+    {{ historical_engagement_full_dates|json_script:"historical-engagement-full-dates" }}
+    {{ historical_views|json_script:"historical-engagement-views" }}
+    {{ historical_reactions|json_script:"historical-engagement-reactions" }}
+    {{ historical_shares|json_script:"historical-engagement-shares" }}
+
+</section>
+
+
+<!-- ==========================================
+     3. SUBMISSION ANALYTICS
+     ========================================== -->
+
+<section class="analytics-section">
+
+    <div class="analytics-chart-panel submission-tracker-panel">
+
+        <div class="submission-tracker-heading">
+
+            <div>
+                <h2>
+                    Submission Analytics
+                </h2>
+
+                <p class="section-description">
+                    Current submission workflow distribution.
+                </p>
+            </div>
+
+            <div class="submission-total">
+
+                <span>
+                    Total Submissions
+                </span>
+
+                <strong>
+                    {{ total_submissions }}
+                </strong>
+
+            </div>
 
         </div>
 
 
-        <div class="dashboard-card accent-gold">
+        <div class="analytics-bar-list submission-tracker-list">
 
-            <h3>
-                Reactions
-            </h3>
+            {% for item in submission_chart_data %}
 
-            <strong>
-                {{ total_reactions }}
-            </strong>
+                <div class="analytics-bar-row">
 
-        </div>
+                    <span class="analytics-bar-label">
 
+                        {% if item.label == "Revision" %}
+                            Sent Back for Revision
+                        {% else %}
+                            {{ item.label }}
+                        {% endif %}
 
-        <div class="dashboard-card accent-gold">
+                    </span>
 
-            <h3>
-                Shares
-            </h3>
+                    <div class="analytics-progress-wrapper">
 
-            <strong>
-                {{ total_shares }}
-            </strong>
+                        <progress
+                            class="analytics-progress"
+                            value="{{ item.value }}"
+                            max="{{ total_submissions|default:1 }}"
+                        >
+                            {{ item.value }}
+                        </progress>
+
+                    </div>
+
+                    <span class="analytics-bar-value">
+                        {{ item.value }}
+                    </span>
+
+                </div>
+
+            {% endfor %}
 
         </div>
 
@@ -331,7 +208,198 @@
 
 
 <!-- ==========================================
-     EDITOR PERFORMANCE
+     4. WORKFLOW HEALTH
+     ========================================== -->
+
+<section class="analytics-section">
+
+    <h2>
+        Workflow Health
+    </h2>
+
+    <p class="section-description">
+        Current workflow items that may require editorial attention.
+    </p>
+
+    <div class="dashboard-grid">
+
+        <div class="dashboard-card">
+            <h3>Pending Edit Requests</h3>
+            <strong>{{ pending_edit_requests }}</strong>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Pending Deletion Requests</h3>
+            <strong>{{ pending_deletion_requests }}</strong>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Active Content Reports</h3>
+            <strong>{{ active_content_reports }}</strong>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Revision Required Reports</h3>
+            <strong>{{ revision_required_reports }}</strong>
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ==========================================
+     5. CONTENT PERFORMANCE
+     ========================================== -->
+
+<section class="analytics-section">
+
+    <h2>
+        Content Performance
+    </h2>
+
+    <p class="section-description">
+        Compare reader response across categories and identify the
+        strongest-performing published articles.
+    </p>
+
+
+    <div class="performance-stack">
+
+        <div class="analytics-chart-panel performance-panel">
+
+            <div class="performance-panel-heading">
+
+                <div>
+                    <h3>
+                        Category Performance
+                    </h3>
+
+                    <p>
+                        Engagement totals for currently published
+                        articles grouped by category.
+                    </p>
+                </div>
+
+            </div>
+
+            {% if category_performance %}
+
+                <div class="analytics-table-wrapper performance-table-wrapper">
+
+                    <table class="performance-table">
+
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Published Articles</th>
+                                <th>Views</th>
+                                <th>Reactions</th>
+                                <th>Shares</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for category in category_performance %}
+
+                                <tr>
+                                    <td>{{ category.category__name }}</td>
+                                    <td>{{ category.article_count }}</td>
+                                    <td>{{ category.total_views|default:0 }}</td>
+                                    <td>{{ category.total_reactions|default:0 }}</td>
+                                    <td>{{ category.total_shares|default:0 }}</td>
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <p class="empty-message">
+                    No published category data is currently available.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="analytics-chart-panel performance-panel">
+
+            <div class="performance-panel-heading">
+
+                <div>
+                    <h3>
+                        Top Performing Articles
+                    </h3>
+
+                    <p>
+                        Top currently published articles ranked by
+                        lifetime views.
+                    </p>
+                </div>
+
+            </div>
+
+            {% if top_viewed_articles %}
+
+                <div class="analytics-table-wrapper performance-table-wrapper">
+
+                    <table class="performance-table">
+
+                        <thead>
+                            <tr>
+                                <th>Article</th>
+                                <th>Category</th>
+                                <th>Views</th>
+                                <th>Reactions</th>
+                                <th>Shares</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for article in top_viewed_articles %}
+
+                                <tr>
+                                    <td>{{ article.title }}</td>
+                                    <td>{{ article.category.name }}</td>
+                                    <td>{{ article.view_count }}</td>
+                                    <td>{{ article.reaction_count }}</td>
+                                    <td>{{ article.share_count }}</td>
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <p class="empty-message">
+                    No published articles are currently available.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ==========================================
+     6. EDITOR PERFORMANCE
      ========================================== -->
 
 <section class="analytics-section">
@@ -340,54 +408,25 @@
         Editor Performance
     </h2>
 
+    <p class="section-description">
+        High-level publication and submission activity for each Editor.
+    </p>
+
     {% if editors %}
 
-        <div class="content-panel">
+        <div class="content-panel analytics-table-wrapper">
 
             <table>
 
                 <thead>
-
                     <tr>
-
-                        <th>
-                            Editor
-                        </th>
-
-                        <th>
-                            Articles
-                        </th>
-
-                        <th>
-                            Published
-                        </th>
-
-                        <th>
-                            Archived
-                        </th>
-
-                        <th>
-                            Submissions
-                        </th>
-
-                        <th>
-                            Pending
-                        </th>
-
-                        <th>
-                            Approved
-                        </th>
-
-                        <th>
-                            Rejected
-                        </th>
-
-                        <th>
-                            Revision
-                        </th>
-
+                        <th>Editor</th>
+                        <th>Published</th>
+                        <th>Submissions</th>
+                        <th>Approved</th>
+                        <th>Rejected</th>
+                        <th>Revision</th>
                     </tr>
-
                 </thead>
 
                 <tbody>
@@ -395,43 +434,12 @@
                     {% for editor in editors %}
 
                         <tr>
-
-                            <td>
-                                {{ editor.username }}
-                            </td>
-
-                            <td>
-                                {{ editor.article_count }}
-                            </td>
-
-                            <td>
-                                {{ editor.published_count }}
-                            </td>
-
-                            <td>
-                                {{ editor.archived_count }}
-                            </td>
-
-                            <td>
-                                {{ editor.submission_count }}
-                            </td>
-
-                            <td>
-                                {{ editor.pending_count }}
-                            </td>
-
-                            <td>
-                                {{ editor.approved_count }}
-                            </td>
-
-                            <td>
-                                {{ editor.rejected_count }}
-                            </td>
-
-                            <td>
-                                {{ editor.revision_count }}
-                            </td>
-
+                            <td>{{ editor.username }}</td>
+                            <td>{{ editor.published_count }}</td>
+                            <td>{{ editor.submission_count }}</td>
+                            <td>{{ editor.approved_count }}</td>
+                            <td>{{ editor.rejected_count }}</td>
+                            <td>{{ editor.revision_count }}</td>
                         </tr>
 
                     {% endfor %}
@@ -453,204 +461,519 @@
 </section>
 
 
-<!-- ==========================================
-     CATEGORY PERFORMANCE
-     ========================================== -->
+<style>
 
-<section class="analytics-section">
+.analytics-section {
+    margin-bottom: 42px;
+}
 
-    <h2>
-        Category Performance
-    </h2>
 
-    {% if category_performance %}
+.analytics-note {
+    margin-top: 20px;
+}
 
-        <div class="content-panel">
 
-            <table>
+.analytics-note p {
+    margin-bottom: 0;
+}
 
-                <thead>
 
-                    <tr>
+.analytics-chart-panel {
+    margin-top: 20px;
 
-                        <th>
-                            Category
-                        </th>
+    padding: 20px;
 
-                        <th>
-                            Published Articles
-                        </th>
+    border: 1px solid #d8d8d8;
+    border-radius: 10px;
+}
 
-                        <th>
-                            Views
-                        </th>
 
-                        <th>
-                            Reactions
-                        </th>
+.analytics-chart-panel h3 {
+    margin-top: 0;
+}
 
-                        <th>
-                            Shares
-                        </th>
 
-                    </tr>
+.analytics-bar-row {
+    display: grid;
 
-                </thead>
+    grid-template-columns:
+        minmax(120px, 180px)
+        1fr
+        50px;
 
-                <tbody>
+    gap: 12px;
 
-                    {% for category in category_performance %}
+    align-items: center;
 
-                        <tr>
+    margin-top: 12px;
+}
 
-                            <td>
-                                {{ category.category__name }}
-                            </td>
 
-                            <td>
-                                {{ category.article_count }}
-                            </td>
+.analytics-bar-label {
+    font-weight: 600;
+}
 
-                            <td>
-                                {{ category.total_views|default:0 }}
-                            </td>
 
-                            <td>
-                                {{ category.total_reactions|default:0 }}
-                            </td>
+.analytics-bar-track {
+    width: 100%;
+    height: 14px;
 
-                            <td>
-                                {{ category.total_shares|default:0 }}
-                            </td>
+    overflow: hidden;
 
-                        </tr>
+    background: #e4e4e4;
 
-                    {% endfor %}
+    border-radius: 999px;
+}
 
-                </tbody>
 
-            </table>
+.analytics-progress {
+    display: block;
 
-        </div>
+    width: 100%;
+    height: 14px;
 
-    {% else %}
+    border: none;
+    border-radius: 999px;
 
-        <p class="empty-message">
-            No published category data is currently available.
-        </p>
+    overflow: hidden;
 
-    {% endif %}
+    appearance: none;
+}
 
-</section>
 
+.analytics-progress::-webkit-progress-bar {
+    background: #e4e4e4;
 
-<!-- ==========================================
-     TOP ARTICLES
-     ========================================== -->
+    border-radius: 999px;
+}
 
-<section class="analytics-section">
 
-    <h2>
-        Top Articles
-    </h2>
+.analytics-progress::-webkit-progress-value {
+    background: #555;
 
+    border-radius: 999px;
+}
 
-    <div class="dashboard-grid">
 
-        <div class="content-panel">
+.analytics-progress::-moz-progress-bar {
+    background: #555;
 
-            <h3>
-                Most Viewed
-            </h3>
+    border-radius: 999px;
+}
 
-            {% for article in top_viewed_articles %}
 
-                <p>
-
-                    <strong>
-                        {{ article.title }}
-                    </strong>
-
-                    <br>
-
-                    {{ article.view_count }} views
-
-                </p>
-
-            {% empty %}
-
-                <p>
-                    No published articles available.
-                </p>
-
-            {% endfor %}
-
-        </div>
-
-
-        <div class="content-panel">
-
-            <h3>
-                Most Reacted
-            </h3>
-
-            {% for article in top_reacted_articles %}
-
-                <p>
-
-                    <strong>
-                        {{ article.title }}
-                    </strong>
-
-                    <br>
-
-                    {{ article.reaction_count }} reactions
-
-                </p>
-
-            {% empty %}
-
-                <p>
-                    No published articles available.
-                </p>
-
-            {% endfor %}
-
-        </div>
-
-
-        <div class="content-panel">
-
-            <h3>
-                Most Shared
-            </h3>
-
-            {% for article in top_shared_articles %}
-
-                <p>
-
-                    <strong>
-                        {{ article.title }}
-                    </strong>
-
-                    <br>
-
-                    {{ article.share_count }} shares
-
-                </p>
-
-            {% empty %}
-
-                <p>
-                    No published articles available.
-                </p>
-
-            {% endfor %}
-
-        </div>
-
-    </div>
-
-</section>
+.analytics-table-wrapper {
+    overflow-x: auto;
+}
+
+
+.analytics-ranking-item {
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
+
+    padding: 12px 0;
+
+    border-bottom: 1px solid #dddddd;
+}
+
+
+.analytics-ranking-item:last-child {
+    border-bottom: none;
+}
+
+
+.analytics-ranking-item span {
+    font-weight: 600;
+}
+
+
+.analytics-ranking-item small {
+    opacity: 0.75;
+}
+
+
+.analytics-history-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 20px;
+}
+
+.analytics-mini-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px;
+    border: 1px solid #d8d8d8;
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+.analytics-mini-card span {
+    color: #6f7a74;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.analytics-mini-card strong {
+    color: #184536;
+    font-size: 24px;
+}
+
+.analytics-history-panel {
+    background: #ffffff;
+}
+
+.analytics-chart-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.analytics-chart-heading h3 {
+    margin-bottom: 5px;
+}
+
+.analytics-chart-heading p {
+    margin: 0;
+    color: #6f7a74;
+}
+
+.analytics-timezone-badge {
+    flex-shrink: 0;
+    padding: 5px 10px;
+    border: 1px solid #b9ddc2;
+    border-radius: 999px;
+    background: #e9f5ec;
+    color: #184536;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.analytics-chart-canvas-wrapper {
+    position: relative;
+    width: 100%;
+    height: 360px;
+}
+
+.analytics-history-note {
+    margin: 16px 0 0;
+    color: #6f7a74;
+    font-size: 13px;
+}
+
+.analytics-progress-wrapper {
+    width: 100%;
+    min-width: 0;
+}
+
+.analytics-bar-value {
+    font-weight: 700;
+    text-align: right;
+}
+
+
+
+.submission-tracker-panel {
+    margin-top: 0;
+}
+
+.submission-tracker-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 22px;
+}
+
+.submission-tracker-heading h2 {
+    margin: 0 0 6px;
+}
+
+.submission-tracker-heading .section-description {
+    margin: 0;
+    color: #6f7a74;
+}
+
+.submission-total {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.submission-total span {
+    color: #6f7a74;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.submission-total strong {
+    color: #184536;
+    font-size: 30px;
+    line-height: 1;
+}
+
+.submission-tracker-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.submission-tracker-list .analytics-bar-row {
+    margin-top: 0;
+}
+
+
+.analytics-subsection {
+    margin-top: 24px;
+}
+
+.analytics-subsection > h3 {
+    margin-bottom: 10px;
+}
+
+.analytics-subsection .section-description {
+    margin-top: -2px;
+    margin-bottom: 14px;
+}
+
+
+.performance-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.performance-panel {
+    margin-top: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+.performance-panel-heading {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid #e1e5e3;
+}
+
+.performance-panel-heading h3 {
+    margin: 0 0 5px;
+}
+
+.performance-panel-heading p {
+    margin: 0;
+    color: #6f7a74;
+    font-size: 13px;
+}
+
+.performance-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.performance-table {
+    width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.performance-table th,
+.performance-table td {
+    padding: 14px 16px;
+    vertical-align: middle;
+    text-align: left;
+}
+
+.performance-table th {
+    white-space: nowrap;
+}
+
+.performance-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.performance-table th:first-child,
+.performance-table td:first-child {
+    width: 28%;
+}
+
+.performance-table th:not(:first-child),
+.performance-table td:not(:first-child) {
+    text-align: center;
+}
+
+@media (max-width: 900px) {
+
+    .analytics-history-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+
+@media (max-width: 720px) {
+
+    .submission-tracker-heading {
+        flex-direction: column;
+    }
+
+    .submission-total {
+        align-items: flex-start;
+    }
+
+
+
+    .analytics-bar-row {
+        grid-template-columns:
+            minmax(100px, 140px)
+            1fr
+            40px;
+    }
+
+    .analytics-chart-heading {
+        flex-direction: column;
+    }
+
+    .analytics-chart-canvas-wrapper {
+        height: 300px;
+    }
+
+}
+
+
+@media (max-width: 520px) {
+
+    .analytics-history-summary {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const canvas = document.getElementById("historical-engagement-chart");
+
+    if (!canvas || typeof Chart === "undefined") {
+        return;
+    }
+
+    const labelsElement = document.getElementById("historical-engagement-labels");
+    const fullDatesElement = document.getElementById("historical-engagement-full-dates");
+    const viewsElement = document.getElementById("historical-engagement-views");
+    const reactionsElement = document.getElementById("historical-engagement-reactions");
+    const sharesElement = document.getElementById("historical-engagement-shares");
+
+    if (!labelsElement || !fullDatesElement || !viewsElement || !reactionsElement || !sharesElement) {
+        return;
+    }
+
+    const labels = JSON.parse(labelsElement.textContent);
+    const fullDates = JSON.parse(fullDatesElement.textContent);
+    const views = JSON.parse(viewsElement.textContent);
+    const reactions = JSON.parse(reactionsElement.textContent);
+    const shares = JSON.parse(sharesElement.textContent);
+
+    new Chart(canvas, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: "Views",
+                    data: views,
+                    borderColor: "#184536",
+                    backgroundColor: "rgba(24, 69, 54, 0.10)",
+                    borderWidth: 3,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    tension: 0.25,
+                    fill: false,
+                },
+                {
+                    label: "Reactions",
+                    data: reactions,
+                    borderColor: "#b88a2b",
+                    backgroundColor: "rgba(184, 138, 43, 0.10)",
+                    borderWidth: 3,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    tension: 0.25,
+                    fill: false,
+                },
+                {
+                    label: "Shares",
+                    data: shares,
+                    borderColor: "#546e7a",
+                    backgroundColor: "rgba(84, 110, 122, 0.10)",
+                    borderWidth: 3,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    tension: 0.25,
+                    fill: false,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: "index",
+                intersect: false,
+            },
+            plugins: {
+                legend: {
+                    position: "top",
+                },
+                tooltip: {
+                    callbacks: {
+                        title: function (items) {
+                            if (!items.length) {
+                                return "";
+                            }
+
+                            return fullDates[items[0].dataIndex] || items[0].label;
+                        },
+                    },
+                },
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false,
+                    },
+                    ticks: {
+                        maxRotation: 0,
+                        autoSkip: true,
+                        maxTicksLimit: 10,
+                    },
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0,
+                    },
+                    title: {
+                        display: true,
+                        text: "Interactions",
+                    },
+                },
+            },
+        },
+    });
+});
+</script>
 
 {% endblock %}

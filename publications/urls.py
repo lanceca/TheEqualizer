@@ -77,6 +77,21 @@ urlpatterns = [
         name="published_articles",
     ),
 
+    # Article version history
+    # EIC, Editor, and Staff only for now.
+
+    path(
+        "articles/<int:article_id>/history/",
+        views.article_version_history,
+        name="article_version_history",
+    ),
+
+    path(
+        "articles/<int:article_id>/history/<int:version_number>/",
+        views.article_version_detail,
+        name="article_version_detail",
+    ),
+
     # EIC direct article management
 
     path(

@@ -1,3 +1,4 @@
+from datetime import timedelta
 from functools import wraps
 
 from django.contrib import messages
@@ -13,8 +14,11 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.db.models import Count, Q, Sum
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
+
+from analytics.models import ArticleDailyAnalytics
 
 from publications.models import (
     Article,
@@ -148,228 +152,175 @@ def admin_dashboard(request):
 def adviser_dashboard(request):
 
     # ======================================================
-    # ARTICLE / PUBLICATION TOTALS
+    # BASE QUERYSETS
     # ======================================================
 
     normal_articles = Article.objects.filter(
         draft_type=Article.DraftType.NORMAL
     )
 
-    total_articles = normal_articles.count()
-
-    published_articles = normal_articles.filter(
+    published_queryset = normal_articles.filter(
         is_published=True,
         is_archived=False,
-    ).count()
+    )
 
-    archived_articles = normal_articles.filter(
-        is_archived=True,
-    ).count()
+    # ======================================================
+    # ARTICLE / PUBLICATION TOTALS
+    # ======================================================
 
-    draft_articles = normal_articles.filter(
-        is_published=False,
-        is_archived=False,
-        submissions__isnull=True,
-    ).distinct().count()
+    total_articles = normal_articles.count()
 
+    published_articles = (
+        published_queryset.count()
+    )
+
+    archived_articles = (
+        normal_articles.filter(
+            is_archived=True,
+        ).count()
+    )
+
+    draft_articles = (
+        normal_articles.filter(
+            is_published=False,
+            is_archived=False,
+            submissions__isnull=True,
+        )
+        .distinct()
+        .count()
+    )
 
     # ======================================================
     # SUBMISSION TOTALS
     # ======================================================
 
-    total_submissions = Submission.objects.count()
-
-    pending_submissions = Submission.objects.filter(
-        status=Submission.Status.PENDING
-    ).count()
-
-    approved_submissions = Submission.objects.filter(
-        status=Submission.Status.APPROVED
-    ).count()
-
-    rejected_submissions = Submission.objects.filter(
-        status=Submission.Status.REJECTED
-    ).count()
-
-    revision_submissions = Submission.objects.filter(
-        status=Submission.Status.REVISION
-    ).count()
-
-
-    # ======================================================
-    # REQUEST / REPORT TOTALS
-    # ======================================================
-
-    pending_edit_requests = EditRequest.objects.filter(
-        status=EditRequest.Status.PENDING
-    ).count()
-
-    approved_edit_requests = EditRequest.objects.filter(
-        status=EditRequest.Status.APPROVED
-    ).count()
-
-    completed_edit_requests = EditRequest.objects.filter(
-        status=EditRequest.Status.COMPLETED
-    ).count()
-
-    pending_deletion_requests = DeletionRequest.objects.filter(
-        status=DeletionRequest.Status.PENDING
-    ).count()
-
-    approved_deletion_requests = DeletionRequest.objects.filter(
-        status=DeletionRequest.Status.APPROVED
-    ).count()
-
-    active_content_reports = ContentReport.objects.filter(
-        status__in=[
-            ContentReport.Status.OPEN,
-            ContentReport.Status.REVISION_REQUIRED,
-        ]
-    ).count()
-
-    resolved_content_reports = ContentReport.objects.filter(
-        status=ContentReport.Status.RESOLVED
-    ).count()
-
-
-    # ======================================================
-    # EDITOR PERFORMANCE
-    # ======================================================
-
-    editors = (
-        User.objects
-        .filter(
-            role=User.Role.EDITOR
-        )
-        .annotate(
-            article_count=Count(
-                "articles",
-                filter=Q(
-                    articles__draft_type=Article.DraftType.NORMAL
-                ),
-                distinct=True,
-            ),
-
-            published_count=Count(
-                "articles",
-                filter=Q(
-                    articles__draft_type=Article.DraftType.NORMAL,
-                    articles__is_published=True,
-                    articles__is_archived=False,
-                ),
-                distinct=True,
-            ),
-
-            archived_count=Count(
-                "articles",
-                filter=Q(
-                    articles__draft_type=Article.DraftType.NORMAL,
-                    articles__is_archived=True,
-                ),
-                distinct=True,
-            ),
-
-            submission_count=Count(
-                "submissions",
-                distinct=True,
-            ),
-
-            approved_count=Count(
-                "submissions",
-                filter=Q(
-                    submissions__status=Submission.Status.APPROVED
-                ),
-                distinct=True,
-            ),
-
-            rejected_count=Count(
-                "submissions",
-                filter=Q(
-                    submissions__status=Submission.Status.REJECTED
-                ),
-                distinct=True,
-            ),
-
-            revision_count=Count(
-                "submissions",
-                filter=Q(
-                    submissions__status=Submission.Status.REVISION
-                ),
-                distinct=True,
-            ),
-
-            pending_count=Count(
-                "submissions",
-                filter=Q(
-                    submissions__status=Submission.Status.PENDING
-                ),
-                distinct=True,
-            ),
-        )
-        .order_by(
-            "-published_count",
-            "username",
-        )
+    total_submissions = (
+        Submission.objects.count()
     )
 
-
-    # ======================================================
-    # CATEGORY PERFORMANCE
-    # ======================================================
-
-    category_performance = (
-        normal_articles
-        .filter(
-            is_published=True,
-            is_archived=False,
-        )
-        .values(
-            "category__name"
-        )
-        .annotate(
-            article_count=Count(
-                "id",
-                distinct=True,
-            ),
-
-            total_views=Sum(
-                "view_count"
-            ),
-
-            total_reactions=Sum(
-                "reaction_count"
-            ),
-
-            total_shares=Sum(
-                "share_count"
-            ),
-        )
-        .order_by(
-            "-total_views",
-            "-article_count",
-        )
+    pending_submissions = (
+        Submission.objects.filter(
+            status=Submission.Status.PENDING
+        ).count()
     )
 
+    approved_submissions = (
+        Submission.objects.filter(
+            status=Submission.Status.APPROVED
+        ).count()
+    )
+
+    rejected_submissions = (
+        Submission.objects.filter(
+            status=Submission.Status.REJECTED
+        ).count()
+    )
+
+    revision_submissions = (
+        Submission.objects.filter(
+            status=Submission.Status.REVISION
+        ).count()
+    )
+
+    # ======================================================
+    # EDIT REQUEST ANALYTICS
+    # ======================================================
+
+    pending_edit_requests = (
+        EditRequest.objects.filter(
+            status=EditRequest.Status.PENDING
+        ).count()
+    )
+
+    approved_edit_requests = (
+        EditRequest.objects.filter(
+            status=EditRequest.Status.APPROVED
+        ).count()
+    )
+
+    rejected_edit_requests = (
+        EditRequest.objects.filter(
+            status=EditRequest.Status.REJECTED
+        ).count()
+    )
+
+    completed_edit_requests = (
+        EditRequest.objects.filter(
+            status=EditRequest.Status.COMPLETED
+        ).count()
+    )
+
+    # ======================================================
+    # DELETION REQUEST ANALYTICS
+    # ======================================================
+
+    pending_deletion_requests = (
+        DeletionRequest.objects.filter(
+            status=DeletionRequest.Status.PENDING
+        ).count()
+    )
+
+    approved_deletion_requests = (
+        DeletionRequest.objects.filter(
+            status=DeletionRequest.Status.APPROVED
+        ).count()
+    )
+
+    rejected_deletion_requests = (
+        DeletionRequest.objects.filter(
+            status=DeletionRequest.Status.REJECTED
+        ).count()
+    )
+
+    # ======================================================
+    # CONTENT REPORT ANALYTICS
+    # ======================================================
+
+    open_content_reports = (
+        ContentReport.objects.filter(
+            status=ContentReport.Status.OPEN
+        ).count()
+    )
+
+    revision_required_reports = (
+        ContentReport.objects.filter(
+            status=ContentReport.Status.REVISION_REQUIRED
+        ).count()
+    )
+
+    cancelled_content_reports = (
+        ContentReport.objects.filter(
+            status=ContentReport.Status.CANCELLED
+        ).count()
+    )
+
+    resolved_content_reports = (
+        ContentReport.objects.filter(
+            status=ContentReport.Status.RESOLVED
+        ).count()
+    )
+
+    active_content_reports = (
+        open_content_reports
+        + revision_required_reports
+    )
+
+    total_content_reports = (
+        ContentReport.objects.count()
+    )
 
     # ======================================================
     # READER ENGAGEMENT TOTALS
     # ======================================================
 
     reader_totals = (
-        normal_articles
-        .filter(
-            is_published=True,
-            is_archived=False,
-        )
-        .aggregate(
+        published_queryset.aggregate(
             total_views=Sum(
                 "view_count"
             ),
-
             total_reactions=Sum(
                 "reaction_count"
             ),
-
             total_shares=Sum(
                 "share_count"
             ),
@@ -391,17 +342,243 @@ def adviser_dashboard(request):
         or 0
     )
 
+    total_engagement = (
+        total_views
+        + total_reactions
+        + total_shares
+    )
+
+    # ======================================================
+    # HISTORICAL READER ENGAGEMENT - LAST 30 MANILA DAYS
+    # ======================================================
+
+    analytics_end_date = timezone.localdate()
+    analytics_start_date = (
+        analytics_end_date
+        - timedelta(days=29)
+    )
+
+    daily_engagement_rows = (
+        ArticleDailyAnalytics.objects
+        .filter(
+            article__draft_type=Article.DraftType.NORMAL,
+            date__range=(
+                analytics_start_date,
+                analytics_end_date,
+            ),
+        )
+        .values("date")
+        .annotate(
+            views=Sum("views"),
+            reactions=Sum("reactions"),
+            shares=Sum("shares"),
+        )
+        .order_by("date")
+    )
+
+    daily_engagement_by_date = {
+        row["date"]: {
+            "views": row["views"] or 0,
+            "reactions": row["reactions"] or 0,
+            "shares": row["shares"] or 0,
+        }
+        for row in daily_engagement_rows
+    }
+
+    historical_engagement_labels = []
+    historical_engagement_full_dates = []
+    historical_views = []
+    historical_reactions = []
+    historical_shares = []
+
+    for day_offset in range(30):
+
+        current_date = (
+            analytics_start_date
+            + timedelta(days=day_offset)
+        )
+
+        current_values = (
+            daily_engagement_by_date.get(
+                current_date,
+                {
+                    "views": 0,
+                    "reactions": 0,
+                    "shares": 0,
+                },
+            )
+        )
+
+        historical_engagement_labels.append(
+            current_date.strftime("%b %d")
+        )
+
+        historical_engagement_full_dates.append(
+            current_date.isoformat()
+        )
+
+        historical_views.append(
+            current_values["views"]
+        )
+
+        historical_reactions.append(
+            current_values["reactions"]
+        )
+
+        historical_shares.append(
+            current_values["shares"]
+        )
+
+    thirty_day_views = sum(
+        historical_views
+    )
+
+    thirty_day_reactions = sum(
+        historical_reactions
+    )
+
+    thirty_day_shares = sum(
+        historical_shares
+    )
+
+    thirty_day_engagement = (
+        thirty_day_views
+        + thirty_day_reactions
+        + thirty_day_shares
+    )
+
+    # ======================================================
+    # EDITOR PERFORMANCE
+    # ======================================================
+
+    editors = (
+        User.objects
+        .filter(
+            role=User.Role.EDITOR
+        )
+        .annotate(
+            article_count=Count(
+                "articles",
+                filter=Q(
+                    articles__draft_type=(
+                        Article.DraftType.NORMAL
+                    )
+                ),
+                distinct=True,
+            ),
+
+            published_count=Count(
+                "articles",
+                filter=Q(
+                    articles__draft_type=(
+                        Article.DraftType.NORMAL
+                    ),
+                    articles__is_published=True,
+                    articles__is_archived=False,
+                ),
+                distinct=True,
+            ),
+
+            archived_count=Count(
+                "articles",
+                filter=Q(
+                    articles__draft_type=(
+                        Article.DraftType.NORMAL
+                    ),
+                    articles__is_archived=True,
+                ),
+                distinct=True,
+            ),
+
+            submission_count=Count(
+                "submissions",
+                distinct=True,
+            ),
+
+            pending_count=Count(
+                "submissions",
+                filter=Q(
+                    submissions__status=(
+                        Submission.Status.PENDING
+                    )
+                ),
+                distinct=True,
+            ),
+
+            approved_count=Count(
+                "submissions",
+                filter=Q(
+                    submissions__status=(
+                        Submission.Status.APPROVED
+                    )
+                ),
+                distinct=True,
+            ),
+
+            rejected_count=Count(
+                "submissions",
+                filter=Q(
+                    submissions__status=(
+                        Submission.Status.REJECTED
+                    )
+                ),
+                distinct=True,
+            ),
+
+            revision_count=Count(
+                "submissions",
+                filter=Q(
+                    submissions__status=(
+                        Submission.Status.REVISION
+                    )
+                ),
+                distinct=True,
+            ),
+        )
+        .order_by(
+            "-published_count",
+            "-approved_count",
+            "username",
+        )
+    )
+
+    # ======================================================
+    # CATEGORY PERFORMANCE
+    # ======================================================
+
+    category_performance = (
+        published_queryset
+        .values(
+            "category__name"
+        )
+        .annotate(
+            article_count=Count(
+                "id",
+                distinct=True,
+            ),
+            total_views=Sum(
+                "view_count"
+            ),
+            total_reactions=Sum(
+                "reaction_count"
+            ),
+            total_shares=Sum(
+                "share_count"
+            ),
+        )
+        .order_by(
+            "-total_views",
+            "-article_count",
+            "category__name",
+        )
+    )
 
     # ======================================================
     # TOP ARTICLES
     # ======================================================
 
     top_viewed_articles = (
-        normal_articles
-        .filter(
-            is_published=True,
-            is_archived=False,
-        )
+        published_queryset
         .select_related(
             "category",
             "author",
@@ -413,11 +590,7 @@ def adviser_dashboard(request):
     )
 
     top_reacted_articles = (
-        normal_articles
-        .filter(
-            is_published=True,
-            is_archived=False,
-        )
+        published_queryset
         .select_related(
             "category",
             "author",
@@ -429,11 +602,7 @@ def adviser_dashboard(request):
     )
 
     top_shared_articles = (
-        normal_articles
-        .filter(
-            is_published=True,
-            is_archived=False,
-        )
+        published_queryset
         .select_related(
             "category",
             "author",
@@ -444,43 +613,268 @@ def adviser_dashboard(request):
         )[:5]
     )
 
+    # ======================================================
+    # CHART-READY DATA
+    # ======================================================
+
+    article_status_chart_data = [
+        {
+            "label": "Published",
+            "value": published_articles,
+        },
+        {
+            "label": "Draft",
+            "value": draft_articles,
+        },
+        {
+            "label": "Archived",
+            "value": archived_articles,
+        },
+    ]
+
+    submission_chart_data = [
+        {
+            "label": "Pending",
+            "value": pending_submissions,
+        },
+        {
+            "label": "Approved",
+            "value": approved_submissions,
+        },
+        {
+            "label": "Rejected",
+            "value": rejected_submissions,
+        },
+        {
+            "label": "Revision",
+            "value": revision_submissions,
+        },
+    ]
+
+    edit_request_chart_data = [
+        {
+            "label": "Pending",
+            "value": pending_edit_requests,
+        },
+        {
+            "label": "Approved",
+            "value": approved_edit_requests,
+        },
+        {
+            "label": "Rejected",
+            "value": rejected_edit_requests,
+        },
+        {
+            "label": "Completed",
+            "value": completed_edit_requests,
+        },
+    ]
+
+    deletion_request_chart_data = [
+        {
+            "label": "Pending",
+            "value": pending_deletion_requests,
+        },
+        {
+            "label": "Approved",
+            "value": approved_deletion_requests,
+        },
+        {
+            "label": "Rejected",
+            "value": rejected_deletion_requests,
+        },
+    ]
+
+    content_report_chart_data = [
+        {
+            "label": "Open",
+            "value": open_content_reports,
+        },
+        {
+            "label": "Revision Required",
+            "value": revision_required_reports,
+        },
+        {
+            "label": "Resolved",
+            "value": resolved_content_reports,
+        },
+        {
+            "label": "Cancelled",
+            "value": cancelled_content_reports,
+        },
+    ]
+
+    reader_engagement_chart_data = [
+        {
+            "label": "Views",
+            "value": total_views,
+        },
+        {
+            "label": "Reactions",
+            "value": total_reactions,
+        },
+        {
+            "label": "Shares",
+            "value": total_shares,
+        },
+    ]
+
+    category_chart_data = [
+        {
+            "label": (
+                category["category__name"]
+            ),
+            "articles": (
+                category["article_count"]
+            ),
+            "views": (
+                category["total_views"]
+                or 0
+            ),
+            "reactions": (
+                category["total_reactions"]
+                or 0
+            ),
+            "shares": (
+                category["total_shares"]
+                or 0
+            ),
+        }
+        for category in category_performance
+    ]
+
+    editor_chart_data = [
+        {
+            "username": editor.username,
+            "articles": editor.article_count,
+            "published": editor.published_count,
+            "archived": editor.archived_count,
+            "submissions": editor.submission_count,
+            "pending": editor.pending_count,
+            "approved": editor.approved_count,
+            "rejected": editor.rejected_count,
+            "revision": editor.revision_count,
+        }
+        for editor in editors
+    ]
+
+    # ======================================================
+    # CONTEXT
+    # ======================================================
+
+    context = {
+        "total_articles": total_articles,
+        "published_articles": published_articles,
+        "archived_articles": archived_articles,
+        "draft_articles": draft_articles,
+
+        "total_submissions": total_submissions,
+        "pending_submissions": pending_submissions,
+        "approved_submissions": approved_submissions,
+        "rejected_submissions": rejected_submissions,
+        "revision_submissions": revision_submissions,
+
+        "pending_edit_requests": pending_edit_requests,
+        "approved_edit_requests": approved_edit_requests,
+        "rejected_edit_requests": rejected_edit_requests,
+        "completed_edit_requests": completed_edit_requests,
+
+        "pending_deletion_requests": (
+            pending_deletion_requests
+        ),
+        "approved_deletion_requests": (
+            approved_deletion_requests
+        ),
+        "rejected_deletion_requests": (
+            rejected_deletion_requests
+        ),
+
+        "total_content_reports": (
+            total_content_reports
+        ),
+        "open_content_reports": (
+            open_content_reports
+        ),
+        "revision_required_reports": (
+            revision_required_reports
+        ),
+        "cancelled_content_reports": (
+            cancelled_content_reports
+        ),
+        "active_content_reports": (
+            active_content_reports
+        ),
+        "resolved_content_reports": (
+            resolved_content_reports
+        ),
+
+        "total_views": total_views,
+        "total_reactions": total_reactions,
+        "total_shares": total_shares,
+        "total_engagement": total_engagement,
+
+        "analytics_start_date": analytics_start_date,
+        "analytics_end_date": analytics_end_date,
+        "thirty_day_views": thirty_day_views,
+        "thirty_day_reactions": thirty_day_reactions,
+        "thirty_day_shares": thirty_day_shares,
+        "thirty_day_engagement": thirty_day_engagement,
+        "historical_engagement_labels": (
+            historical_engagement_labels
+        ),
+        "historical_engagement_full_dates": (
+            historical_engagement_full_dates
+        ),
+        "historical_views": historical_views,
+        "historical_reactions": historical_reactions,
+        "historical_shares": historical_shares,
+
+        "editors": editors,
+        "category_performance": (
+            category_performance
+        ),
+
+        "top_viewed_articles": (
+            top_viewed_articles
+        ),
+        "top_reacted_articles": (
+            top_reacted_articles
+        ),
+        "top_shared_articles": (
+            top_shared_articles
+        ),
+
+        "article_status_chart_data": (
+            article_status_chart_data
+        ),
+        "submission_chart_data": (
+            submission_chart_data
+        ),
+        "edit_request_chart_data": (
+            edit_request_chart_data
+        ),
+        "deletion_request_chart_data": (
+            deletion_request_chart_data
+        ),
+        "content_report_chart_data": (
+            content_report_chart_data
+        ),
+        "reader_engagement_chart_data": (
+            reader_engagement_chart_data
+        ),
+        "category_chart_data": (
+            category_chart_data
+        ),
+        "editor_chart_data": (
+            editor_chart_data
+        ),
+    }
 
     return render(
         request,
         "accounts/dashboards/adviser.html",
-        {
-            "total_articles": total_articles,
-            "published_articles": published_articles,
-            "archived_articles": archived_articles,
-            "draft_articles": draft_articles,
-
-            "total_submissions": total_submissions,
-            "pending_submissions": pending_submissions,
-            "approved_submissions": approved_submissions,
-            "rejected_submissions": rejected_submissions,
-            "revision_submissions": revision_submissions,
-
-            "pending_edit_requests": pending_edit_requests,
-            "approved_edit_requests": approved_edit_requests,
-            "completed_edit_requests": completed_edit_requests,
-            "pending_deletion_requests": pending_deletion_requests,
-            "approved_deletion_requests": approved_deletion_requests,
-            "active_content_reports": active_content_reports,
-            "resolved_content_reports": resolved_content_reports,
-
-            "total_views": total_views,
-            "total_reactions": total_reactions,
-            "total_shares": total_shares,
-
-            "editors": editors,
-            "category_performance": category_performance,
-
-            "top_viewed_articles": top_viewed_articles,
-            "top_reacted_articles": top_reacted_articles,
-            "top_shared_articles": top_shared_articles,
-        },
+        context,
     )
-
 
 @role_required(User.Role.EIC)
 def eic_dashboard(request):

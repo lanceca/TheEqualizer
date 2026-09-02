@@ -109,13 +109,29 @@
 
                     <div class="article-tile-overlay">
 
-                        <span class="status-badge status-approved">
-                            Published
-                        </span>
+                        <div class="article-tile-badge-row">
+
+                            <span class="status-badge status-approved">
+                                Published
+                            </span>
+
+                            <span class="status-badge status-approved">
+                                Version {{ article.version_number }}
+                            </span>
+
+                        </div>
 
                         <h2 class="article-tile-title">
                             {{ article.title }}
                         </h2>
+
+                        {% if article.subtitle %}
+
+                            <p class="article-tile-subtitle">
+                                {{ article.subtitle }}
+                            </p>
+
+                        {% endif %}
 
                         <p class="article-tile-category">
                             {{ article.category.name }}
@@ -144,6 +160,19 @@
                                 {{ article.title }}
                             </h2>
 
+                            {% if article.subtitle %}
+
+                                <p class="article-detail-subtitle">
+                                    {{ article.subtitle }}
+                                </p>
+
+                            {% endif %}
+
+                            <p class="article-meta">
+                                <strong>Version:</strong>
+                                {{ article.version_number }}
+                            </p>
+
                             <p class="article-meta">
                                 <strong>Category:</strong>
                                 {{ article.category.name }}
@@ -153,6 +182,27 @@
                                 <strong>Author:</strong>
                                 {{ article.author.username }}
                             </p>
+
+                            {% if article.contributors.all %}
+
+                                <div class="article-contributors">
+
+                                    <p class="article-meta">
+                                        <strong>Contributors:</strong>
+                                    </p>
+
+                                    {% for contributor in article.contributors.all %}
+
+                                        <p class="article-meta">
+                                            <strong>{{ contributor.get_role_display }}:</strong>
+                                            {{ contributor.user.username }}
+                                        </p>
+
+                                    {% endfor %}
+
+                                </div>
+
+                            {% endif %}
 
                             <p class="article-meta">
 
@@ -166,9 +216,31 @@
 
                             </p>
 
+                            <p class="article-meta">
+                                <strong>Last Updated:</strong>
+                                {{ article.updated_at|date:"M. d, Y - g:i A" }}
+                            </p>
+
                         </div>
 
                     </div>
+
+
+                    {% if article.excerpt %}
+
+                        <div class="article-excerpt-box">
+
+                            <strong>
+                                Summary
+                            </strong>
+
+                            <p>
+                                {{ article.excerpt|linebreaksbr }}
+                            </p>
+
+                        </div>
+
+                    {% endif %}
 
 
                     {% if article.featured_image %}
@@ -187,6 +259,22 @@
                                 role="button"
                                 data-lightbox-image
                             >
+
+                            {% if article.featured_image_caption %}
+
+                                <p class="featured-image-caption">
+                                    {{ article.featured_image_caption }}
+                                </p>
+
+                            {% endif %}
+
+                            {% if article.featured_image_credit %}
+
+                                <p class="featured-image-credit">
+                                    {{ article.featured_image_credit }}
+                                </p>
+
+                            {% endif %}
 
                         </div>
 
@@ -251,7 +339,7 @@
 
                                         <img
                                             src="{{ attachment.image.url }}"
-                                            alt="{{ attachment.caption|default:'Article attachment' }}"
+                                            alt="{{ attachment.alt_text|default:attachment.caption|default:'Article attachment' }}"
                                             class="attachment-image"
                                             tabindex="0"
                                             role="button"
@@ -266,6 +354,14 @@
 
                                         {% endif %}
 
+                                        {% if attachment.credit %}
+
+                                            <p class="attachment-credit">
+                                                {{ attachment.credit }}
+                                            </p>
+
+                                        {% endif %}
+
                                     </div>
 
                                 {% endfor %}
@@ -275,6 +371,18 @@
                         </div>
 
                     {% endif %}
+
+
+                    <div class="article-actions">
+
+                        <a
+                            href="{% url 'article_version_history' article.id %}"
+                            class="secondary-button"
+                        >
+                            Version History
+                        </a>
+
+                    </div>
 
 
                     {% if request.user.role == "EIC" %}

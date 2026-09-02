@@ -1,11 +1,13 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% block body_class %}staff-shell-body{% endblock %}
+
 {% block content %}
 
 <link
     rel="stylesheet"
-    href="{% static 'css/equalizer.css' %}?v=20260831-1"
+    href="{% static 'css/equalizer.css' %}?v=20260902-5"
 >
 
 
@@ -13,24 +15,13 @@
 
     <aside class="staff-sidebar">
 
-        <div class="staff-brand">
+        <div class="staff-identity">
 
-            <div class="staff-brand-mark"></div>
-
-            <div>
-                <h2>The Equalizer</h2>
-            </div>
-
-        </div>
-
-
-        <div class="staff-user-info">
-
-            <strong>
+            <strong class="staff-identity-name">
                 {{ request.user.username }}
             </strong>
 
-            <span>
+            <span class="staff-identity-role">
                 {{ request.user.get_role_display }}
             </span>
 

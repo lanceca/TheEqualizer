@@ -1,34 +1,32 @@
 {% extends "staff_base.html" %}
 
-
 {% block staff_content %}
-
 
 <h1>Create Article</h1>
 
-
 {% if request.user.role == "EIC" %}
-
     <p class="section-description">
-        Create a new publication article and either save it as a draft
-        or publish it directly.
+        Create a new publication article and either save it as a draft or publish it directly.
     </p>
-
 {% else %}
-
     <p class="section-description">
-        Create a new publication article and either save it as a draft
-        or submit it for EIC approval.
+        Create a new publication article and either save it as a draft or submit it for EIC approval.
     </p>
-
 {% endif %}
 
 
 <div class="content-panel article-form-panel">
 
     <div class="info-box">
-        Logged in as:
-        <strong>{{ request.user.username }}</strong>
+        <p>
+            <strong>Primary Author:</strong>
+            {{ request.user.username }}
+        </p>
+
+        <p>
+            <strong>Initial Version:</strong>
+            Version 1
+        </p>
     </div>
 
 
@@ -59,6 +57,45 @@
 
         <div class="form-group">
 
+            <label for="subtitle">
+                Subtitle
+            </label>
+
+            <input
+                type="text"
+                id="subtitle"
+                name="subtitle"
+                maxlength="300"
+            >
+
+            <p class="form-help">
+                Optional secondary headline displayed below the main title.
+            </p>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="excerpt">
+                Excerpt / Summary
+            </label>
+
+            <textarea
+                id="excerpt"
+                name="excerpt"
+                rows="4"
+            ></textarea>
+
+            <p class="form-help">
+                Optional short summary for article previews and search results.
+            </p>
+
+        </div>
+
+
+        <div class="form-group">
+
             <label for="category">
                 Category
             </label>
@@ -75,7 +112,10 @@
 
                 {% for category in categories %}
 
-                    <option value="{{ category.id }}">
+                    <option
+                        value="{{ category.id }}"
+                        data-category-slug="{{ category.slug }}"
+                    >
                         {{ category.name }}
                     </option>
 
@@ -86,43 +126,182 @@
         </div>
 
 
-        <div class="form-group">
-
-            <label for="featured_image">
-                Featured Image
-            </label>
-
-            <input
-                type="file"
-                id="featured_image"
-                name="featured_image"
-                accept="image/*"
-            >
-
-            <p class="form-help">
-                This image will be used as the main image for the article.
-            </p>
-
-        </div>
-
+        <!-- ==================================================
+             CONTRIBUTORS
+             ================================================== -->
 
         <div class="form-group">
 
-            <label for="attachments">
-                Article Attachments
+            <label>
+                Contributors
             </label>
 
-            <input
-                type="file"
-                id="attachments"
-                name="attachments"
-                accept="image/*"
-                multiple
-            >
-
             <p class="form-help">
-                You may select multiple additional images.
+                Add publication members who contributed to this article and select their specific credit.
+                The primary author does not need to be added again.
             </p>
+
+
+            {% if available_contributors %}
+
+                <div
+                    id="contributor-list"
+                    class="contributor-list"
+                >
+
+                    <div class="contributor-row">
+
+                        <div class="contributor-field">
+
+                            <label>
+                                Role
+                            </label>
+
+                            <select name="contributor_roles">
+
+                                <option value="">
+                                    Select Role
+                                </option>
+
+                                {% for role_value, role_label in contributor_role_choices %}
+
+                                    <option value="{{ role_value }}">
+                                        {{ role_label }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="contributor-field">
+
+                            <label>
+                                Name
+                            </label>
+
+                            <select name="contributor_users">
+
+                                <option value="">
+                                    Select Publication Member
+                                </option>
+
+                                {% for contributor_user in available_contributors %}
+
+                                    <option value="{{ contributor_user.id }}">
+                                        {{ contributor_user.username }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="contributor-remove-field">
+
+                            <button
+                                type="button"
+                                class="danger-button contributor-remove-button"
+                            >
+                                Remove
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    id="add-contributor-button"
+                    class="secondary-action-button"
+                >
+                    + Add Contributor
+                </button>
+
+
+                <template id="contributor-row-template">
+
+                    <div class="contributor-row">
+
+                        <div class="contributor-field">
+
+                            <label>
+                                Role
+                            </label>
+
+                            <select name="contributor_roles">
+
+                                <option value="">
+                                    Select Role
+                                </option>
+
+                                {% for role_value, role_label in contributor_role_choices %}
+
+                                    <option value="{{ role_value }}">
+                                        {{ role_label }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="contributor-field">
+
+                            <label>
+                                Name
+                            </label>
+
+                            <select name="contributor_users">
+
+                                <option value="">
+                                    Select Publication Member
+                                </option>
+
+                                {% for contributor_user in available_contributors %}
+
+                                    <option value="{{ contributor_user.id }}">
+                                        {{ contributor_user.username }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="contributor-remove-field">
+
+                            <button
+                                type="button"
+                                class="danger-button contributor-remove-button"
+                            >
+                                Remove
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </template>
+
+            {% else %}
+
+                <p class="form-help">
+                    No additional publication users are currently available as contributors.
+                </p>
+
+            {% endif %}
 
         </div>
 
@@ -184,6 +363,161 @@
         </div>
 
 
+        <div class="form-group">
+
+            <label for="featured_image">
+                Featured Image
+            </label>
+
+            <input
+                type="file"
+                id="featured_image"
+                name="featured_image"
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+            >
+
+            <p class="form-help">
+                This image will be used as the main image for the article.
+            </p>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="featured_image_caption">
+                Featured Image Caption
+            </label>
+
+            <input
+                type="text"
+                id="featured_image_caption"
+                name="featured_image_caption"
+                maxlength="255"
+            >
+
+            <p class="form-help">
+                Optional caption describing the featured image.
+            </p>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="featured_image_credit">
+                Featured Image Credit
+            </label>
+
+            <input
+                type="text"
+                id="featured_image_credit"
+                name="featured_image_credit"
+                maxlength="255"
+            >
+
+            <p class="form-help">
+                Example: Photo by Juan Dela Cruz / The Equalizer.
+            </p>
+
+        </div>
+
+
+
+        <div class="form-group" id="attachment-mode-group" hidden>
+
+            <label>
+                Attachment Type
+            </label>
+
+            <input
+                type="hidden"
+                id="attachment_mode"
+                name="attachment_mode"
+                value="IMAGE"
+            >
+
+            <div
+                id="attachment-mode-toggle"
+                class="media-type-toggle"
+                hidden
+            >
+                <button
+                    type="button"
+                    class="media-type-button"
+                    data-attachment-mode="IMAGE"
+                    aria-pressed="false"
+                >
+                    Image Attachments
+                </button>
+
+                <button
+                    type="button"
+                    class="media-type-button"
+                    data-attachment-mode="VIDEO"
+                    aria-pressed="false"
+                >
+                    Video Attachments
+                </button>
+            </div>
+
+            <p class="form-help">
+                The attachment type toggle is available only for the Videos category.
+            </p>
+
+        </div>
+
+
+        <div
+            class="form-group"
+            id="image-attachment-panel"
+        >
+
+            <label for="attachments">
+                Article Image Attachments
+            </label>
+
+            <input
+                type="file"
+                id="attachments"
+                name="attachments"
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                multiple
+            >
+
+            <p class="form-help">
+                You may select multiple additional images, up to 15 per article.
+            </p>
+
+        </div>
+
+
+        <div
+            class="form-group"
+            id="video-attachment-panel"
+            hidden
+        >
+
+            <label for="video_attachments">
+                Article Video Attachments
+            </label>
+
+            <input
+                type="file"
+                id="video_attachments"
+                name="video_attachments"
+                accept=".mp4,.mov,.webm,.m4v,video/mp4,video/quicktime,video/webm,video/x-m4v"
+                multiple
+                disabled
+            >
+
+            <p class="form-help">
+                Videos category only. Up to 5 MP4, MOV, WEBM, or M4V files.
+            </p>
+
+        </div>
+
+
         <div class="form-actions">
 
             <button
@@ -230,5 +564,344 @@
 
 </div>
 
+
+<style>
+
+.media-type-toggle {
+    display: inline-flex;
+    gap: 8px;
+    padding: 5px;
+    margin-top: 10px;
+    border: 1px solid var(--eq-border);
+    border-radius: 10px;
+    background: var(--eq-offwhite);
+}
+
+.media-type-button {
+    border: 1px solid transparent;
+    border-radius: 7px;
+    padding: 9px 14px;
+    background: transparent;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.media-type-button.is-active {
+    border-color: var(--eq-border);
+    background: #ffffff;
+}
+
+.video-attachment-grid {
+    display: grid;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.video-attachment-card {
+    padding: 12px;
+    border: 1px solid var(--eq-border);
+    border-radius: 8px;
+    background: var(--eq-offwhite);
+}
+
+.video-attachment-card video {
+    display: block;
+    width: 100%;
+    max-height: 320px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    background: #000000;
+}
+
+
+.contributor-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    margin-top: 15px;
+    margin-bottom: 12px;
+}
+
+.contributor-row {
+    display: grid;
+
+    grid-template-columns:
+        minmax(180px, 0.8fr)
+        minmax(220px, 1.2fr)
+        auto;
+
+    align-items: end;
+
+    gap: 12px;
+
+    padding: 14px;
+
+    border: 1px solid var(--eq-border);
+    border-radius: 8px;
+
+    background: var(--eq-offwhite);
+}
+
+.contributor-field {
+    min-width: 0;
+}
+
+.contributor-field label {
+    margin-bottom: 5px;
+}
+
+.contributor-field select {
+    width: 100%;
+}
+
+.contributor-remove-field {
+    display: flex;
+    align-items: flex-end;
+}
+
+.contributor-remove-button {
+    white-space: nowrap;
+}
+
+#add-contributor-button {
+    margin-top: 3px;
+}
+
+@media (max-width: 750px) {
+
+    .contributor-row {
+        grid-template-columns: 1fr;
+    }
+
+    .contributor-remove-field {
+        width: 100%;
+    }
+
+    .contributor-remove-button {
+        width: 100%;
+    }
+
+}
+
+</style>
+
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const contributorList =
+            document.getElementById(
+                "contributor-list"
+            );
+
+        const addContributorButton =
+            document.getElementById(
+                "add-contributor-button"
+            );
+
+        const contributorTemplate =
+            document.getElementById(
+                "contributor-row-template"
+            );
+
+
+        if (
+            !contributorList
+            || !addContributorButton
+            || !contributorTemplate
+        ) {
+            return;
+        }
+
+
+        function updateRemoveButtons() {
+
+            const rows =
+                contributorList.querySelectorAll(
+                    ".contributor-row"
+                );
+
+
+            rows.forEach(
+                function (row) {
+
+                    const removeButton =
+                        row.querySelector(
+                            ".contributor-remove-button"
+                        );
+
+
+                    if (!removeButton) {
+                        return;
+                    }
+
+
+                    removeButton.disabled =
+                        rows.length === 1;
+
+                }
+            );
+
+        }
+
+
+        addContributorButton.addEventListener(
+            "click",
+            function () {
+
+                const newRow =
+                    contributorTemplate.content
+                    .firstElementChild
+                    .cloneNode(true);
+
+
+                contributorList.appendChild(
+                    newRow
+                );
+
+
+                updateRemoveButtons();
+
+            }
+        );
+
+
+        contributorList.addEventListener(
+            "click",
+            function (event) {
+
+                const removeButton =
+                    event.target.closest(
+                        ".contributor-remove-button"
+                    );
+
+
+                if (!removeButton) {
+                    return;
+                }
+
+
+                const rows =
+                    contributorList.querySelectorAll(
+                        ".contributor-row"
+                    );
+
+
+                if (rows.length <= 1) {
+
+                    const row =
+                        removeButton.closest(
+                            ".contributor-row"
+                        );
+
+                    const selects =
+                        row.querySelectorAll(
+                            "select"
+                        );
+
+
+                    selects.forEach(
+                        function (select) {
+                            select.value = "";
+                        }
+                    );
+
+
+                    return;
+
+                }
+
+
+                removeButton
+                    .closest(
+                        ".contributor-row"
+                    )
+                    .remove();
+
+
+                updateRemoveButtons();
+
+            }
+        );
+
+
+        updateRemoveButtons();
+
+    }
+);
+
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const categorySelect = document.getElementById("category");
+    const modeGroup = document.getElementById("attachment-mode-group");
+    const toggleWrap = document.getElementById("attachment-mode-toggle");
+    const modeInput = document.getElementById("attachment_mode");
+    const imagePanel = document.getElementById("image-attachment-panel");
+    const videoPanel = document.getElementById("video-attachment-panel");
+    const imageInput = document.getElementById("attachments");
+    const videoInput = document.getElementById("video_attachments");
+    const buttons = document.querySelectorAll("[data-attachment-mode]");
+
+    if (!categorySelect || !modeGroup || !toggleWrap || !modeInput || !imagePanel || !videoPanel) {
+        return;
+    }
+
+    function selectedCategorySlug() {
+        const option = categorySelect.options[categorySelect.selectedIndex];
+        return option ? option.dataset.categorySlug || "" : "";
+    }
+
+    function setMode(mode) {
+        const isVideosCategory = selectedCategorySlug() === "videos";
+
+        if (!isVideosCategory) {
+            mode = "IMAGE";
+        }
+
+        modeInput.value = mode;
+        modeGroup.hidden = !isVideosCategory;
+        toggleWrap.hidden = !isVideosCategory;
+        imagePanel.hidden = mode !== "IMAGE";
+        videoPanel.hidden = mode !== "VIDEO";
+
+        if (imageInput) {
+            imageInput.disabled = mode !== "IMAGE";
+        }
+
+        if (videoInput) {
+            videoInput.disabled = mode !== "VIDEO";
+        }
+
+        buttons.forEach(function (button) {
+            const active = button.dataset.attachmentMode === mode;
+            button.classList.toggle("is-active", active);
+            button.setAttribute("aria-pressed", active ? "true" : "false");
+        });
+    }
+
+    buttons.forEach(function (button) {
+        button.addEventListener("click", function () {
+            setMode(button.dataset.attachmentMode);
+        });
+    });
+
+    categorySelect.addEventListener("change", function () {
+        if (selectedCategorySlug() === "videos") {
+            setMode(modeInput.value === "VIDEO" ? "VIDEO" : "IMAGE");
+        } else {
+            setMode("IMAGE");
+        }
+    });
+
+    setMode(modeInput.value || "IMAGE");
+});
+</script>
 
 {% endblock %}

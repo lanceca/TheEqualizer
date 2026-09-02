@@ -1,8 +1,10 @@
 from functools import wraps
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponseForbidden
@@ -18,12 +20,22 @@ from notifications.models import Notification
 from .models import (
     Article,
     ArticleAttachment,
+    ArticleContributor,
+    ArticleVersion,
+    ArticleVersionImageAttachment,
+    ArticleVersionVideoAttachment,
+    ArticleVideoAttachment,
     Category,
     ContentReport,
     DeletionRequest,
     EditRequest,
     Submission,
     Tag,
+)
+
+from .validators import (
+    validate_article_image,
+    validate_article_video,
 )
 
 
@@ -76,7 +88,6 @@ def notify_user(
     message,
     related_url="",
 ):
-
     if not user:
         return
 
@@ -97,7 +108,6 @@ def notify_eics(
     related_url="",
     exclude_user_id=None,
 ):
-
     recipients = User.objects.filter(
         role=User.Role.EIC,
         is_active=True,
@@ -120,6 +130,1004 @@ def notify_eics(
 
 
 # ==========================================================
+# ARTICLE HELPERS
+# ==========================================================
+
+
+def get_article_attachment_limit():
+    return getattr(
+        settings,
+        "ARTICLE_MAX_ATTACHMENTS",
+        15,
+    )
+
+
+def get_article_video_attachment_limit():
+    return getattr(
+        settings,
+        "ARTICLE_MAX_VIDEO_ATTACHMENTS",
+        5,
+    )
+
+
+def get_normalized_attachment_mode(
+    category,
+    requested_mode,
+):
+    if (
+        category.slug == "videos"
+        and requested_mode
+        == Article.AttachmentMode.VIDEO
+    ):
+        return Article.AttachmentMode.VIDEO
+
+    return Article.AttachmentMode.IMAGE
+
+
+def validate_uploaded_article_videos(
+    attachments=None,
+):
+    attachments = attachments or []
+
+    for index, video in enumerate(
+        attachments,
+        start=1,
+    ):
+        try:
+            validate_article_video(video)
+
+        except ValidationError as error:
+            filename = getattr(
+                video,
+                "name",
+                f"Video Attachment {index}",
+            )
+
+            raise ValidationError(
+                (
+                    f'Video "{filename}": '
+                    f"{get_validation_error_message(error)}"
+                )
+            ) from error
+
+
+def validate_new_video_attachment_count(
+    attachments,
+):
+    maximum = (
+        get_article_video_attachment_limit()
+    )
+
+    if len(attachments) > maximum:
+        raise ValidationError(
+            (
+                "An article can contain a maximum "
+                f"of {maximum} attached videos."
+            )
+        )
+
+
+def validate_existing_article_video_attachment_count(
+    article,
+    new_attachments,
+    remove_attachment_ids=None,
+):
+    maximum = (
+        get_article_video_attachment_limit()
+    )
+
+    remove_attachment_ids = (
+        remove_attachment_ids
+        or []
+    )
+
+    current_count = (
+        article.video_attachments.count()
+    )
+
+    removable_count = (
+        ArticleVideoAttachment.objects
+        .filter(
+            article=article,
+            id__in=remove_attachment_ids,
+        )
+        .values("id")
+        .distinct()
+        .count()
+    )
+
+    final_count = (
+        current_count
+        - removable_count
+        + len(new_attachments)
+    )
+
+    if final_count > maximum:
+        raise ValidationError(
+            (
+                "An article can contain a maximum "
+                f"of {maximum} attached videos. "
+                "This change would result in "
+                f"{final_count} videos."
+            )
+        )
+
+    return final_count
+
+
+def validate_attachment_mode_transition(
+    article,
+    attachment_mode,
+    remove_image_ids=None,
+    remove_video_ids=None,
+):
+    remove_image_ids = remove_image_ids or []
+    remove_video_ids = remove_video_ids or []
+
+    remaining_images = (
+        ArticleAttachment.objects
+        .filter(article=article)
+        .exclude(id__in=remove_image_ids)
+        .exists()
+    )
+
+    remaining_videos = (
+        ArticleVideoAttachment.objects
+        .filter(article=article)
+        .exclude(id__in=remove_video_ids)
+        .exists()
+    )
+
+    if (
+        attachment_mode
+        == Article.AttachmentMode.VIDEO
+        and remaining_images
+    ):
+        raise ValidationError(
+            (
+                "Remove all existing image attachments "
+                "before switching to Video Attachments."
+            )
+        )
+
+    if (
+        attachment_mode
+        == Article.AttachmentMode.IMAGE
+        and remaining_videos
+    ):
+        raise ValidationError(
+            (
+                "Remove all existing video attachments "
+                "before switching to Image Attachments "
+                "or to a non-Videos category."
+            )
+        )
+
+
+def get_validation_error_message(error):
+    """
+    Convert Django ValidationError into a readable message.
+    """
+
+    if hasattr(error, "messages"):
+
+        return " ".join(
+            str(message)
+            for message in error.messages
+        )
+
+    return str(error)
+
+
+def validate_uploaded_article_images(
+    featured_image=None,
+    attachments=None,
+):
+    """
+    Validate every newly-uploaded image before database
+    operations begin.
+    """
+
+    attachments = attachments or []
+
+    if featured_image:
+
+        try:
+
+            validate_article_image(
+                featured_image
+            )
+
+        except ValidationError as error:
+
+            raise ValidationError(
+                (
+                    "Featured image: "
+                    f"{get_validation_error_message(error)}"
+                )
+            ) from error
+
+    for index, image in enumerate(
+        attachments,
+        start=1,
+    ):
+
+        try:
+
+            validate_article_image(
+                image
+            )
+
+        except ValidationError as error:
+
+            filename = getattr(
+                image,
+                "name",
+                f"Attachment {index}",
+            )
+
+            raise ValidationError(
+                (
+                    f'Attachment "{filename}": '
+                    f"{get_validation_error_message(error)}"
+                )
+            ) from error
+
+
+def validate_new_attachment_count(
+    attachments,
+):
+    maximum = get_article_attachment_limit()
+
+    if len(attachments) > maximum:
+
+        raise ValidationError(
+            (
+                f"An article can contain a maximum "
+                f"of {maximum} attached images."
+            )
+        )
+
+
+def validate_existing_article_attachment_count(
+    article,
+    new_attachments,
+    remove_attachment_ids=None,
+):
+    """
+    Calculate the attachment total after removals and
+    newly-added uploads.
+    """
+
+    maximum = get_article_attachment_limit()
+
+    remove_attachment_ids = (
+        remove_attachment_ids
+        or []
+    )
+
+    current_count = (
+        article.attachments.count()
+    )
+
+    removable_count = (
+        ArticleAttachment.objects
+        .filter(
+            article=article,
+            id__in=remove_attachment_ids,
+        )
+        .values("id")
+        .distinct()
+        .count()
+    )
+
+    final_count = (
+        current_count
+        - removable_count
+        + len(new_attachments)
+    )
+
+    if final_count > maximum:
+
+        raise ValidationError(
+            (
+                f"An article can contain a maximum "
+                f"of {maximum} attached images. "
+                f"This change would result in "
+                f"{final_count} attachments."
+            )
+        )
+
+    return final_count
+
+
+# ==========================================================
+# CONTRIBUTOR HELPERS
+# ==========================================================
+
+
+def get_available_contributors(
+    exclude_user=None,
+):
+    """
+    Return active publication users who may be credited
+    as contributors.
+    """
+
+    users = User.objects.filter(
+        is_active=True,
+        role__in=[
+            User.Role.EIC,
+            User.Role.EDITOR,
+            User.Role.STAFF,
+        ],
+    ).order_by(
+        "username"
+    )
+
+    if exclude_user:
+
+        users = users.exclude(
+            id=exclude_user.id
+        )
+
+    return users
+
+
+def get_contributor_role_choices():
+    return ArticleContributor.Role.choices
+
+
+def get_submitted_contributors(request):
+    """
+    Read Role + User contributor rows from the form.
+
+    Empty rows are allowed and ignored; partial rows are rejected.
+    """
+
+    contributor_roles = request.POST.getlist(
+        "contributor_roles"
+    )
+
+    contributor_user_ids = request.POST.getlist(
+        "contributor_users"
+    )
+
+    submitted_contributors = []
+
+    if not (
+        contributor_roles
+        or contributor_user_ids
+    ):
+
+        return submitted_contributors
+
+    if (
+        len(contributor_roles)
+        != len(contributor_user_ids)
+    ):
+
+        raise ValidationError(
+            (
+                "Contributor information is incomplete. "
+                "Each contributor must have both a role "
+                "and a publication member selected."
+            )
+        )
+
+    for role, user_id in zip(
+        contributor_roles,
+        contributor_user_ids,
+    ):
+
+        role = role.strip()
+        user_id = user_id.strip()
+
+        if not role and not user_id:
+            continue
+
+        if not role or not user_id:
+
+            raise ValidationError(
+                (
+                    "Each contributor must have both "
+                    "a role and a publication member."
+                )
+            )
+
+        submitted_contributors.append(
+            {
+                "role": role,
+                "user_id": user_id,
+            }
+        )
+
+    return submitted_contributors
+
+
+def validate_article_contributors(
+    article,
+    submitted_contributors,
+):
+    """
+    Validate contributor roles and publication users.
+    """
+
+    valid_roles = {
+        value
+        for value, label
+        in ArticleContributor.Role.choices
+    }
+
+    normalized = []
+    seen_pairs = set()
+
+    for contributor in submitted_contributors:
+
+        role = contributor["role"]
+        user_id = contributor["user_id"]
+
+        if role not in valid_roles:
+
+            raise ValidationError(
+                "An invalid contributor role was selected."
+            )
+
+        try:
+
+            user_id = int(user_id)
+
+        except (
+            TypeError,
+            ValueError,
+        ) as error:
+
+            raise ValidationError(
+                "An invalid contributor was selected."
+            ) from error
+
+        if user_id == article.author_id:
+
+            raise ValidationError(
+                (
+                    "The primary author cannot also be "
+                    "added as a contributor."
+                )
+            )
+
+        pair = (
+            user_id,
+            role,
+        )
+
+        if pair in seen_pairs:
+
+            raise ValidationError(
+                (
+                    "The same person cannot be assigned "
+                    "the same contributor role more than once."
+                )
+            )
+
+        seen_pairs.add(
+            pair
+        )
+
+        normalized.append(
+            {
+                "role": role,
+                "user_id": user_id,
+            }
+        )
+
+    valid_user_ids = {
+        user.id
+        for user in User.objects.filter(
+            id__in=[
+                contributor["user_id"]
+                for contributor in normalized
+            ],
+            is_active=True,
+            role__in=[
+                User.Role.EIC,
+                User.Role.EDITOR,
+                User.Role.STAFF,
+            ],
+        )
+    }
+
+    for contributor in normalized:
+
+        if (
+            contributor["user_id"]
+            not in valid_user_ids
+        ):
+
+            raise ValidationError(
+                (
+                    "One or more selected contributors "
+                    "are not active publication members."
+                )
+            )
+
+    return normalized
+
+
+def set_article_contributors(
+    article,
+    submitted_contributors,
+):
+    """
+    Replace contributor assignments.
+    """
+
+    submitted_contributors = (
+        validate_article_contributors(
+            article,
+            submitted_contributors,
+        )
+    )
+
+    article.contributors.all().delete()
+
+    for display_order, contributor in enumerate(
+        submitted_contributors
+    ):
+        ArticleContributor.objects.create(
+            article=article,
+            user_id=contributor["user_id"],
+            role=contributor["role"],
+            display_order=display_order,
+        )
+
+
+def copy_article_contributors(
+    source_article,
+    destination_article,
+):
+    """
+    Copy contributor credits between article versions.
+    """
+
+    destination_article.contributors.all().delete()
+
+    for contributor in (
+        source_article.contributors
+        .select_related("user")
+        .all()
+    ):
+
+        ArticleContributor.objects.create(
+            article=destination_article,
+            user=contributor.user,
+            role=contributor.role,
+            display_order=contributor.display_order,
+        )
+
+
+# ==========================================================
+# GENERAL ARTICLE HELPERS
+# ==========================================================
+
+
+def generate_unique_article_slug(
+    title,
+    exclude_article_id=None,
+    suffix="",
+):
+    base_slug = slugify(
+        title
+    ) or "article"
+
+    if suffix:
+
+        base_slug = (
+            f"{base_slug}-{suffix}"
+        )
+
+    slug = base_slug
+    counter = 1
+
+    queryset = Article.objects.all()
+
+    if exclude_article_id:
+
+        queryset = queryset.exclude(
+            id=exclude_article_id
+        )
+
+    while queryset.filter(
+        slug=slug
+    ).exists():
+
+        slug = (
+            f"{base_slug}-{counter}"
+        )
+
+        counter += 1
+
+    return slug
+
+
+def copy_article_attachments(
+    source_article,
+    destination_article,
+):
+    """
+    Copy attachment database references to another Article.
+
+    The physical image file is intentionally reused.
+    """
+
+    for attachment in source_article.attachments.all():
+
+        ArticleAttachment.objects.create(
+            article=destination_article,
+            image=attachment.image,
+            caption=attachment.caption,
+            alt_text=attachment.alt_text,
+            credit=attachment.credit,
+        )
+
+
+def replace_article_attachments(
+    source_article,
+    destination_article,
+):
+    destination_article.attachments.all().delete()
+
+    copy_article_attachments(
+        source_article,
+        destination_article,
+    )
+
+
+def copy_article_video_attachments(
+    source_article,
+    destination_article,
+):
+    """
+    Copy video attachment database references to another Article.
+    The physical video file is intentionally reused.
+    """
+
+    for attachment in (
+        source_article.video_attachments.all()
+    ):
+        ArticleVideoAttachment.objects.create(
+            article=destination_article,
+            video=attachment.video,
+            caption=attachment.caption,
+            credit=attachment.credit,
+        )
+
+
+def replace_article_video_attachments(
+    source_article,
+    destination_article,
+):
+    destination_article.video_attachments.all().delete()
+
+    copy_article_video_attachments(
+        source_article,
+        destination_article,
+    )
+
+
+def build_article_form_context(
+    request,
+    article=None,
+):
+    return {
+        "article": article,
+        "categories": Category.objects.all(),
+        "tags": Tag.objects.all(),
+        "available_contributors": (
+            get_available_contributors(
+                exclude_user=(
+                    article.author
+                    if article
+                    else request.user
+                )
+            )
+        ),
+        "contributor_role_choices": (
+            get_contributor_role_choices()
+        ),
+    }
+
+
+def capture_article_version(
+    article,
+    change_type,
+    created_by=None,
+):
+    """
+    Persist an immutable snapshot of one official published
+    article version.
+
+    If the same article/version was already captured, the
+    existing immutable snapshot is returned unchanged.
+    """
+
+    existing_version = (
+        ArticleVersion.objects
+        .filter(
+            article=article,
+            version_number=article.version_number,
+        )
+        .first()
+    )
+
+    if existing_version:
+        return existing_version
+
+    contributors = [
+        {
+            "user_id": contributor.user_id,
+            "username": contributor.user.username,
+            "role": contributor.role,
+            "role_display": (
+                contributor.get_role_display()
+            ),
+            "display_order": (
+                contributor.display_order
+            ),
+        }
+        for contributor in (
+            article.contributors
+            .select_related("user")
+            .all()
+        )
+    ]
+
+    tags = list(
+        article.tags.values_list(
+            "name",
+            flat=True,
+        )
+    )
+
+    article_version = (
+        ArticleVersion.objects.create(
+            article=article,
+            version_number=(
+                article.version_number
+            ),
+            change_type=change_type,
+            title=article.title,
+            subtitle=article.subtitle,
+            excerpt=article.excerpt,
+            content=article.content,
+            category_name=(
+                article.category.name
+                if article.category
+                else ""
+            ),
+            category_slug=(
+                article.category.slug
+                if article.category
+                else ""
+            ),
+            attachment_mode=(
+                article.attachment_mode
+            ),
+            author_name=(
+                article.author.username
+                if article.author
+                else ""
+            ),
+            contributors=contributors,
+            tags=tags,
+            featured_image=(
+                article.featured_image.name
+                if article.featured_image
+                else ""
+            ),
+            featured_image_caption=(
+                article.featured_image_caption
+            ),
+            featured_image_credit=(
+                article.featured_image_credit
+            ),
+            created_by=created_by,
+            created_by_name=(
+                created_by.username
+                if created_by
+                else ""
+            ),
+        )
+    )
+
+    for display_order, attachment in enumerate(
+        article.attachments.all()
+    ):
+        ArticleVersionImageAttachment.objects.create(
+            article_version=article_version,
+            image=attachment.image.name,
+            caption=attachment.caption or "",
+            alt_text=attachment.alt_text or "",
+            credit=attachment.credit or "",
+            display_order=display_order,
+        )
+
+    for display_order, attachment in enumerate(
+        article.video_attachments.all()
+    ):
+        ArticleVersionVideoAttachment.objects.create(
+            article_version=article_version,
+            video=attachment.video.name,
+            caption=attachment.caption or "",
+            credit=attachment.credit or "",
+            display_order=display_order,
+        )
+
+    return article_version
+
+
+def ensure_current_article_version_baseline(
+    article,
+):
+    """
+    Preserve the current published state before it is replaced.
+
+    This is mainly for articles that already existed before
+    ArticleVersion history was introduced. It captures only the
+    current real version and never fabricates older versions.
+    """
+
+    if not article.is_published:
+        return None
+
+    if ArticleVersion.objects.filter(
+        article=article,
+        version_number=article.version_number,
+    ).exists():
+        return None
+
+    return capture_article_version(
+        article,
+        ArticleVersion.ChangeType.BASELINE,
+        created_by=None,
+    )
+
+
+def resolve_eic_direct_revision_reports(
+    article,
+):
+    """
+    Resolve revision-required Staff content reports for an
+    EIC-authored article after the EIC directly edits it.
+
+    These reports intentionally have no forced EditRequest because
+    the EIC may directly manage their own published article.
+    """
+
+    reports = (
+        ContentReport.objects
+        .select_for_update()
+        .filter(
+            article=article,
+            status=ContentReport.Status.REVISION_REQUIRED,
+            forced_edit_request__isnull=True,
+        )
+        .select_related(
+            "reported_by"
+        )
+    )
+
+    resolved_count = 0
+
+    for report in reports:
+
+        report.status = (
+            ContentReport.Status.RESOLVED
+        )
+
+        report.resolved_at = timezone.now()
+
+        report.save(
+            update_fields=[
+                "status",
+                "resolved_at",
+                "updated_at",
+            ]
+        )
+
+        notify_user(
+            report.reported_by,
+            Notification.Type.CONTENT_REPORT,
+            (
+                f'The corrective revision for '
+                f'"{article.title}" was completed by '
+                f'the Editor in Chief. Your content '
+                f'report has been resolved.'
+            ),
+            reverse(
+                "my_content_reports"
+            ),
+        )
+
+        resolved_count += 1
+
+    return resolved_count
+
+
+def resolve_reports_after_eic_archive(
+    article,
+):
+    """
+    Resolve active Staff reports when an EIC archives their own
+    published article. The concern is closed because the reported
+    content is no longer publicly published.
+    """
+
+    reports = (
+        ContentReport.objects
+        .select_for_update()
+        .filter(
+            article=article,
+            status__in=[
+                ContentReport.Status.OPEN,
+                ContentReport.Status.REVISION_REQUIRED,
+            ],
+        )
+        .select_related(
+            "reported_by"
+        )
+    )
+
+    resolved_count = 0
+
+    for report in reports:
+
+        closure_note = (
+            "The article was archived by the Editor in Chief. "
+            "This report was resolved because the reported "
+            "content is no longer publicly published."
+        )
+
+        if report.staff_notes:
+            report.staff_notes = (
+                f"{report.staff_notes}\n\n{closure_note}"
+            )
+        else:
+            report.staff_notes = closure_note
+
+        report.status = (
+            ContentReport.Status.RESOLVED
+        )
+
+        report.resolved_at = timezone.now()
+
+        report.save(
+            update_fields=[
+                "status",
+                "staff_notes",
+                "resolved_at",
+                "updated_at",
+            ]
+        )
+
+        notify_user(
+            report.reported_by,
+            Notification.Type.CONTENT_REPORT,
+            (
+                f'"{article.title}" was archived by the '
+                f'Editor in Chief. Your content report '
+                f'has been resolved.'
+            ),
+            reverse(
+                "my_content_reports"
+            ),
+        )
+
+        resolved_count += 1
+
+    return resolved_count
+
+
+# ==========================================================
 # ARTICLE CREATION
 # ==========================================================
 
@@ -129,14 +1137,40 @@ def notify_eics(
     User.Role.EIC,
 )
 def create_article(request):
-
     categories = Category.objects.all()
     tags = Tag.objects.all()
+
+    available_contributors = (
+        get_available_contributors(
+            exclude_user=request.user
+        )
+    )
+
+    context = {
+        "categories": categories,
+        "tags": tags,
+        "available_contributors": (
+            available_contributors
+        ),
+        "contributor_role_choices": (
+            get_contributor_role_choices()
+        ),
+    }
 
     if request.method == "POST":
 
         title = request.POST.get(
             "title",
+            "",
+        ).strip()
+
+        subtitle = request.POST.get(
+            "subtitle",
+            "",
+        ).strip()
+
+        excerpt = request.POST.get(
+            "excerpt",
             "",
         ).strip()
 
@@ -153,6 +1187,16 @@ def create_article(request):
             "tags"
         )
 
+        featured_image_caption = request.POST.get(
+            "featured_image_caption",
+            "",
+        ).strip()
+
+        featured_image_credit = request.POST.get(
+            "featured_image_credit",
+            "",
+        ).strip()
+
         action = request.POST.get(
             "action"
         )
@@ -165,10 +1209,37 @@ def create_article(request):
             "attachments"
         )
 
+        video_attachments = request.FILES.getlist(
+            "video_attachments"
+        )
 
-        # ==================================================
-        # ROLE-SPECIFIC ACTION VALIDATION
-        # ==================================================
+        requested_attachment_mode = request.POST.get(
+            "attachment_mode",
+            Article.AttachmentMode.IMAGE,
+        )
+
+        try:
+
+            submitted_contributors = (
+                get_submitted_contributors(
+                    request
+                )
+            )
+
+        except ValidationError as error:
+
+            messages.error(
+                request,
+                get_validation_error_message(
+                    error
+                ),
+            )
+
+            return render(
+                request,
+                "publications/create_article.html",
+                context,
+            )
 
         if request.user.role == User.Role.EDITOR:
 
@@ -184,7 +1255,6 @@ def create_article(request):
                 "publish",
             }
 
-
         if action not in allowed_actions:
 
             messages.error(
@@ -195,12 +1265,8 @@ def create_article(request):
             return render(
                 request,
                 "publications/create_article.html",
-                {
-                    "categories": categories,
-                    "tags": tags,
-                },
+                context,
             )
-
 
         if not title:
 
@@ -212,12 +1278,8 @@ def create_article(request):
             return render(
                 request,
                 "publications/create_article.html",
-                {
-                    "categories": categories,
-                    "tags": tags,
-                },
+                context,
             )
-
 
         if not category_id:
 
@@ -229,120 +1291,208 @@ def create_article(request):
             return render(
                 request,
                 "publications/create_article.html",
-                {
-                    "categories": categories,
-                    "tags": tags,
-                },
+                context,
             )
-
 
         category = get_object_or_404(
             Category,
             id=category_id,
         )
 
+        attachment_mode = (
+            get_normalized_attachment_mode(
+                category,
+                requested_attachment_mode,
+            )
+        )
 
-        with transaction.atomic():
+        try:
 
-            base_slug = slugify(
-                title
-            ) or "article"
-
-            slug = base_slug
-            counter = 1
-
-            while Article.objects.filter(
-                slug=slug
-            ).exists():
-
-                slug = (
-                    f"{base_slug}-{counter}"
-                )
-
-                counter += 1
-
-
-            article = Article.objects.create(
-                title=title,
-                slug=slug,
-                category=category,
-                author=request.user,
-                content=content,
+            validate_uploaded_article_images(
                 featured_image=featured_image,
-                draft_type=Article.DraftType.NORMAL,
+                attachments=(
+                    attachments
+                    if attachment_mode
+                    == Article.AttachmentMode.IMAGE
+                    else []
+                ),
             )
-
-
-            article.tags.set(
-                tag_ids
-            )
-
-
-            for image in attachments:
-
-                ArticleAttachment.objects.create(
-                    article=article,
-                    image=image,
-                )
-
-
-            # ==================================================
-            # EDITOR SUBMISSION
-            # ==================================================
 
             if (
-                request.user.role == User.Role.EDITOR
-                and action == "submit"
+                attachment_mode
+                == Article.AttachmentMode.VIDEO
             ):
+                if attachments:
+                    raise ValidationError(
+                        (
+                            "Image attachments cannot be uploaded "
+                            "while Video Attachments is selected."
+                        )
+                    )
 
-                submission = Submission.objects.create(
-                    article=article,
-                    submitted_by=request.user,
-                    status=Submission.Status.PENDING,
+                validate_new_video_attachment_count(
+                    video_attachments
                 )
 
-                submission.capture_article_snapshot()
+                validate_uploaded_article_videos(
+                    video_attachments
+                )
 
-                notify_eics(
-                    Notification.Type.SUBMISSION,
-                    (
-                        f'{request.user.username} submitted '
-                        f'"{article.title}" for review.'
+            else:
+                if video_attachments:
+                    raise ValidationError(
+                        (
+                            "Video attachments are only available "
+                            "for the Videos category with Video "
+                            "Attachments selected."
+                        )
+                    )
+
+                validate_new_attachment_count(
+                    attachments
+                )
+
+        except ValidationError as error:
+
+            messages.error(
+                request,
+                get_validation_error_message(
+                    error
+                ),
+            )
+
+            return render(
+                request,
+                "publications/create_article.html",
+                context,
+            )
+
+        try:
+
+            with transaction.atomic():
+
+                slug = generate_unique_article_slug(
+                    title
+                )
+
+                article = Article.objects.create(
+                    title=title,
+                    subtitle=subtitle,
+                    excerpt=excerpt,
+                    slug=slug,
+                    category=category,
+                    attachment_mode=attachment_mode,
+                    author=request.user,
+                    content=content,
+                    featured_image=featured_image,
+                    featured_image_caption=(
+                        featured_image_caption
                     ),
-                    reverse(
-                        "pending_submissions"
+                    featured_image_credit=(
+                        featured_image_credit
                     ),
-                    exclude_user_id=request.user.id,
+                    version_number=1,
+                    draft_type=Article.DraftType.NORMAL,
                 )
 
-
-            # ==================================================
-            # EIC DIRECT PUBLICATION
-            # ==================================================
-
-            elif (
-                request.user.role == User.Role.EIC
-                and action == "publish"
-            ):
-
-                article.is_published = True
-                article.is_archived = False
-                article.archived_at = None
-                article.published_at = timezone.now()
-
-                article.save(
-                    update_fields=[
-                        "is_published",
-                        "is_archived",
-                        "archived_at",
-                        "published_at",
-                        "updated_at",
-                    ]
+                article.tags.set(
+                    tag_ids
                 )
 
+                set_article_contributors(
+                    article,
+                    submitted_contributors,
+                )
+
+                for image in attachments:
+
+                    ArticleAttachment.objects.create(
+                        article=article,
+                        image=image,
+                    )
+
+                for video in video_attachments:
+
+                    ArticleVideoAttachment.objects.create(
+                        article=article,
+                        video=video,
+                    )
+
+                if (
+                    request.user.role
+                    == User.Role.EDITOR
+                    and action == "submit"
+                ):
+
+                    submission = Submission.objects.create(
+                        article=article,
+                        submitted_by=request.user,
+                        status=Submission.Status.PENDING,
+                    )
+
+                    submission.capture_article_snapshot()
+
+                    notify_eics(
+                        Notification.Type.SUBMISSION,
+                        (
+                            f'{request.user.username} submitted '
+                            f'"{article.title}" for review.'
+                        ),
+                        reverse(
+                            "pending_submissions"
+                        ),
+                        exclude_user_id=request.user.id,
+                    )
+
+                elif (
+                    request.user.role
+                    == User.Role.EIC
+                    and action == "publish"
+                ):
+
+                    article.is_published = True
+                    article.is_archived = False
+                    article.archived_at = None
+                    article.published_at = timezone.now()
+
+                    article.save(
+                        update_fields=[
+                            "is_published",
+                            "is_archived",
+                            "archived_at",
+                            "published_at",
+                            "updated_at",
+                        ]
+                    )
+
+                    capture_article_version(
+                        article,
+                        (
+                            ArticleVersion
+                            .ChangeType
+                            .INITIAL_PUBLICATION
+                        ),
+                        created_by=request.user,
+                    )
+
+        except ValidationError as error:
+
+            messages.error(
+                request,
+                get_validation_error_message(
+                    error
+                ),
+            )
+
+            return render(
+                request,
+                "publications/create_article.html",
+                context,
+            )
 
         if (
-            request.user.role == User.Role.EDITOR
+            request.user.role
+            == User.Role.EDITOR
             and action == "submit"
         ):
 
@@ -355,9 +1505,9 @@ def create_article(request):
                 "my_submissions"
             )
 
-
         if (
-            request.user.role == User.Role.EIC
+            request.user.role
+            == User.Role.EIC
             and action == "publish"
         ):
 
@@ -370,7 +1520,6 @@ def create_article(request):
                 "published_articles"
             )
 
-
         messages.success(
             request,
             f'"{article.title}" was saved as a draft.',
@@ -380,14 +1529,10 @@ def create_article(request):
             "my_drafts"
         )
 
-
     return render(
         request,
         "publications/create_article.html",
-        {
-            "categories": categories,
-            "tags": tags,
-        },
+        context,
     )
 
 
@@ -400,7 +1545,6 @@ def create_article(request):
     User.Role.EIC
 )
 def pending_submissions(request):
-
     search_query = request.GET.get(
         "q",
         "",
@@ -416,11 +1560,16 @@ def pending_submissions(request):
             "submitted_by",
             "article__category",
             "article__source_article",
+            "article__author",
         )
         .prefetch_related(
             "article__attachments",
+            "article__video_attachments",
             "article__tags",
+            "article__contributors",
+            "article__contributors__user",
             "snapshot_attachments",
+            "snapshot_video_attachments",
         )
     )
 
@@ -431,13 +1580,28 @@ def pending_submissions(request):
                 snapshot_title__icontains=search_query
             )
             | Q(
+                snapshot_subtitle__icontains=search_query
+            )
+            | Q(
+                snapshot_excerpt__icontains=search_query
+            )
+            | Q(
                 snapshot_content__icontains=search_query
             )
             | Q(
                 snapshot_category_name__icontains=search_query
             )
             | Q(
+                snapshot_author_name__icontains=search_query
+            )
+            | Q(
                 article__title__icontains=search_query
+            )
+            | Q(
+                article__subtitle__icontains=search_query
+            )
+            | Q(
+                article__excerpt__icontains=search_query
             )
             | Q(
                 article__content__icontains=search_query
@@ -447,6 +1611,12 @@ def pending_submissions(request):
             )
             | Q(
                 article__tags__name__icontains=search_query
+            )
+            | Q(
+                article__contributors__user__username__icontains=search_query
+            )
+            | Q(
+                article__contributors__role__icontains=search_query
             )
             | Q(
                 submitted_by__username__icontains=search_query
@@ -479,7 +1649,6 @@ def review_submission(
     request,
     submission_id,
 ):
-
     action = request.POST.get(
         "action"
     )
@@ -504,7 +1673,6 @@ def review_submission(
             "pending_submissions"
         )
 
-
     with transaction.atomic():
 
         submission = get_object_or_404(
@@ -518,8 +1686,10 @@ def review_submission(
             id=submission_id,
         )
 
-
-        if submission.status != Submission.Status.PENDING:
+        if (
+            submission.status
+            != Submission.Status.PENDING
+        ):
 
             messages.warning(
                 request,
@@ -530,15 +1700,20 @@ def review_submission(
                 "pending_submissions"
             )
 
-
-        article = Article.objects.select_for_update().get(
-            id=submission.article_id
+        article = (
+            Article.objects
+            .select_for_update()
+            .prefetch_related(
+                "tags",
+                "contributors",
+                "contributors__user",
+                "attachments",
+                "video_attachments",
+            )
+            .get(
+                id=submission.article_id
+            )
         )
-
-
-        # ==================================================
-        # APPROVE
-        # ==================================================
 
         if action == "approve":
 
@@ -561,15 +1736,19 @@ def review_submission(
                         "pending_submissions"
                     )
 
-
                 original_article = (
                     Article.objects
                     .select_for_update()
+                    .prefetch_related(
+                        "tags",
+                        "contributors",
+                        "contributors__user",
+                        "attachments",
+                    )
                     .get(
                         id=article.source_article_id
                     )
                 )
-
 
                 if (
                     original_article.is_archived
@@ -588,7 +1767,6 @@ def review_submission(
                         "pending_submissions"
                     )
 
-
                 edit_request = (
                     EditRequest.objects
                     .select_for_update()
@@ -598,7 +1776,6 @@ def review_submission(
                     )
                     .first()
                 )
-
 
                 if edit_request is None:
 
@@ -618,7 +1795,6 @@ def review_submission(
                         .first()
                     )
 
-
                     if edit_request:
 
                         edit_request.draft_article = article
@@ -628,7 +1804,6 @@ def review_submission(
                                 "draft_article",
                             ]
                         )
-
 
                 if edit_request is None:
 
@@ -644,36 +1819,107 @@ def review_submission(
                         "pending_submissions"
                     )
 
+                ensure_current_article_version_baseline(
+                    original_article
+                )
+
+                corrective_report_exists = (
+                    ContentReport.objects
+                    .filter(
+                        forced_edit_request=edit_request,
+                        status=(
+                            ContentReport.Status
+                            .REVISION_REQUIRED
+                        ),
+                    )
+                    .exists()
+                )
 
                 original_article.title = article.title
+                original_article.subtitle = article.subtitle
+                original_article.excerpt = article.excerpt
+
+                original_article.slug = (
+                    generate_unique_article_slug(
+                        article.title,
+                        exclude_article_id=original_article.id,
+                    )
+                )
+
                 original_article.category = article.category
                 original_article.content = article.content
+
                 original_article.featured_image = (
                     article.featured_image
                 )
+
+                original_article.featured_image_caption = (
+                    article.featured_image_caption
+                )
+
+                original_article.featured_image_credit = (
+                    article.featured_image_credit
+                )
+
+                original_article.version_number = max(
+                    original_article.version_number + 1,
+                    article.version_number,
+                )
+
                 original_article.is_published = True
                 original_article.is_archived = False
                 original_article.archived_at = None
 
                 original_article.save()
 
-
                 original_article.tags.set(
                     article.tags.all()
                 )
 
+                copy_article_contributors(
+                    article,
+                    original_article,
+                )
 
-                original_article.attachments.all().delete()
+                replace_article_attachments(
+                    article,
+                    original_article,
+                )
 
+                replace_article_video_attachments(
+                    article,
+                    original_article,
+                )
 
-                for attachment in article.attachments.all():
+                original_article.attachment_mode = (
+                    article.attachment_mode
+                )
 
-                    ArticleAttachment.objects.create(
-                        article=original_article,
-                        image=attachment.image,
-                        caption=attachment.caption,
+                original_article.save(
+                    update_fields=[
+                        "attachment_mode",
+                        "updated_at",
+                    ]
+                )
+
+                if corrective_report_exists:
+                    version_change_type = (
+                        ArticleVersion
+                        .ChangeType
+                        .CORRECTIVE_REVISION
+                    )
+                else:
+                    version_change_type = (
+                        ArticleVersion
+                        .ChangeType
+                        .APPROVED_REVISION
                     )
 
+                capture_article_version(
+                    original_article,
+                    version_change_type,
+                    created_by=request.user,
+                )
 
                 submission.status = (
                     Submission.Status.APPROVED
@@ -690,7 +1936,6 @@ def review_submission(
                     ]
                 )
 
-
                 edit_request.status = (
                     EditRequest.Status.COMPLETED
                 )
@@ -701,20 +1946,20 @@ def review_submission(
                     ]
                 )
 
-
                 notify_user(
                     submission.submitted_by,
                     Notification.Type.REVISION,
                     (
                         f'Your revised version of '
-                        f'"{original_article.title}" was approved '
-                        f'and is now published.'
+                        f'"{original_article.title}" was '
+                        f'approved and is now published '
+                        f'as version '
+                        f'{original_article.version_number}.'
                     ),
                     reverse(
                         "published_articles"
                     ),
                 )
-
 
                 content_report = (
                     ContentReport.objects
@@ -731,16 +1976,13 @@ def review_submission(
                     .first()
                 )
 
-
                 if content_report:
 
                     content_report.status = (
                         ContentReport.Status.RESOLVED
                     )
 
-                    content_report.resolved_at = (
-                        timezone.now()
-                    )
+                    content_report.resolved_at = timezone.now()
 
                     content_report.save(
                         update_fields=[
@@ -750,20 +1992,19 @@ def review_submission(
                         ]
                     )
 
-
                     notify_user(
                         content_report.reported_by,
                         Notification.Type.CONTENT_REPORT,
                         (
                             f'The corrective revision for '
-                            f'"{original_article.title}" was approved. '
-                            f'Your content report has been resolved.'
+                            f'"{original_article.title}" was '
+                            f'approved. Your content report '
+                            f'has been resolved.'
                         ),
                         reverse(
                             "my_content_reports"
                         ),
                     )
-
 
                 article.is_archived = True
                 article.archived_at = timezone.now()
@@ -778,20 +2019,20 @@ def review_submission(
                     ]
                 )
 
-
                 messages.success(
                     request,
                     (
                         f'The revision for '
                         f'"{original_article.title}" '
-                        f'was approved and published.'
+                        f'was approved and published as '
+                        f'version '
+                        f'{original_article.version_number}.'
                     ),
                 )
 
                 return redirect(
                     "pending_submissions"
                 )
-
 
             if article.is_archived:
 
@@ -807,7 +2048,6 @@ def review_submission(
                     "pending_submissions"
                 )
 
-
             if article.is_published:
 
                 messages.warning(
@@ -819,25 +2059,37 @@ def review_submission(
                     "pending_submissions"
                 )
 
-
             submission.status = (
                 Submission.Status.APPROVED
             )
 
             article.is_published = True
+            article.is_archived = False
+            article.archived_at = None
 
             if article.published_at is None:
-                article.published_at = timezone.now()
 
+                article.published_at = timezone.now()
 
             article.save(
                 update_fields=[
                     "is_published",
+                    "is_archived",
+                    "archived_at",
                     "published_at",
                     "updated_at",
                 ]
             )
 
+            capture_article_version(
+                article,
+                (
+                    ArticleVersion
+                    .ChangeType
+                    .INITIAL_PUBLICATION
+                ),
+                created_by=request.user,
+            )
 
             submission.reviewer_notes = reviewer_notes
             submission.reviewed_at = timezone.now()
@@ -849,7 +2101,6 @@ def review_submission(
                     "reviewed_at",
                 ]
             )
-
 
             notify_user(
                 submission.submitted_by,
@@ -863,7 +2114,6 @@ def review_submission(
                 ),
             )
 
-
             messages.success(
                 request,
                 (
@@ -875,11 +2125,6 @@ def review_submission(
             return redirect(
                 "pending_submissions"
             )
-
-
-        # ==================================================
-        # REJECT
-        # ==================================================
 
         if action == "reject":
 
@@ -898,7 +2143,6 @@ def review_submission(
                 ]
             )
 
-
             notify_user(
                 submission.submitted_by,
                 Notification.Type.SUBMISSION,
@@ -911,16 +2155,10 @@ def review_submission(
                 ),
             )
 
-
             messages.warning(
                 request,
                 f'"{article.title}" was rejected.',
             )
-
-
-        # ==================================================
-        # REVISION
-        # ==================================================
 
         elif action == "revision":
 
@@ -939,7 +2177,6 @@ def review_submission(
                 ]
             )
 
-
             notify_user(
                 submission.submitted_by,
                 Notification.Type.REVISION,
@@ -952,7 +2189,6 @@ def review_submission(
                 ),
             )
 
-
             messages.info(
                 request,
                 (
@@ -960,7 +2196,6 @@ def review_submission(
                     f'"{article.title}".'
                 ),
             )
-
 
     return redirect(
         "pending_submissions"
@@ -971,7 +2206,6 @@ def review_submission(
     User.Role.EDITOR
 )
 def my_submissions(request):
-
     selected_status = request.GET.get(
         "status",
         "ALL",
@@ -981,7 +2215,6 @@ def my_submissions(request):
         "q",
         "",
     ).strip()
-
 
     submissions = (
         Submission.objects
@@ -999,14 +2232,18 @@ def my_submissions(request):
             "article",
             "article__category",
             "article__source_article",
+            "article__author",
         )
         .prefetch_related(
             "article__attachments",
+            "article__video_attachments",
             "article__tags",
+            "article__contributors",
+            "article__contributors__user",
             "snapshot_attachments",
+            "snapshot_video_attachments",
         )
     )
-
 
     valid_statuses = {
         Submission.Status.PENDING,
@@ -1015,19 +2252,23 @@ def my_submissions(request):
         Submission.Status.REVISION,
     }
 
-
     if selected_status in valid_statuses:
 
         submissions = submissions.filter(
             status=selected_status
         )
 
-
     if search_query:
 
         submissions = submissions.filter(
             Q(
                 snapshot_title__icontains=search_query
+            )
+            | Q(
+                snapshot_subtitle__icontains=search_query
+            )
+            | Q(
+                snapshot_excerpt__icontains=search_query
             )
             | Q(
                 snapshot_content__icontains=search_query
@@ -1039,6 +2280,12 @@ def my_submissions(request):
                 article__title__icontains=search_query
             )
             | Q(
+                article__subtitle__icontains=search_query
+            )
+            | Q(
+                article__excerpt__icontains=search_query
+            )
+            | Q(
                 article__content__icontains=search_query
             )
             | Q(
@@ -1047,8 +2294,13 @@ def my_submissions(request):
             | Q(
                 article__tags__name__icontains=search_query
             )
+            | Q(
+                article__contributors__user__username__icontains=search_query
+            )
+            | Q(
+                article__contributors__role__icontains=search_query
+            )
         )
-
 
     submissions = (
         submissions
@@ -1057,7 +2309,6 @@ def my_submissions(request):
         )
         .distinct()
     )
-
 
     return render(
         request,
@@ -1077,24 +2328,30 @@ def revise_submission(
     request,
     submission_id,
 ):
-
     submission = get_object_or_404(
         Submission.objects
         .select_related(
             "article",
             "article__category",
+            "article__author",
         )
         .prefetch_related(
             "article__attachments",
+            "article__video_attachments",
             "article__tags",
+            "article__contributors",
+            "article__contributors__user",
             "snapshot_attachments",
+            "snapshot_video_attachments",
         ),
         id=submission_id,
         submitted_by=request.user,
     )
 
-
-    if submission.status != Submission.Status.REVISION:
+    if (
+        submission.status
+        != Submission.Status.REVISION
+    ):
 
         messages.warning(
             request,
@@ -1107,7 +2364,6 @@ def revise_submission(
         return redirect(
             "my_submissions"
         )
-
 
     if submission.resubmissions.exists():
 
@@ -1123,17 +2379,44 @@ def revise_submission(
             "my_submissions"
         )
 
-
     article = submission.article
 
     categories = Category.objects.all()
     tags = Tag.objects.all()
 
+    available_contributors = (
+        get_available_contributors(
+            exclude_user=article.author
+        )
+    )
+
+    context = {
+        "submission": submission,
+        "article": article,
+        "categories": categories,
+        "tags": tags,
+        "available_contributors": (
+            available_contributors
+        ),
+        "contributor_role_choices": (
+            get_contributor_role_choices()
+        ),
+    }
 
     if request.method == "POST":
 
         title = request.POST.get(
             "title",
+            "",
+        ).strip()
+
+        subtitle = request.POST.get(
+            "subtitle",
+            "",
+        ).strip()
+
+        excerpt = request.POST.get(
+            "excerpt",
             "",
         ).strip()
 
@@ -1150,6 +2433,16 @@ def revise_submission(
             "tags"
         )
 
+        featured_image_caption = request.POST.get(
+            "featured_image_caption",
+            "",
+        ).strip()
+
+        featured_image_credit = request.POST.get(
+            "featured_image_credit",
+            "",
+        ).strip()
+
         featured_image = request.FILES.get(
             "featured_image"
         )
@@ -1158,10 +2451,49 @@ def revise_submission(
             "attachments"
         )
 
-        remove_attachment_ids = request.POST.getlist(
-            "remove_attachments"
+        video_attachments = request.FILES.getlist(
+            "video_attachments"
         )
 
+        remove_attachment_ids = (
+            request.POST.getlist(
+                "remove_attachments"
+            )
+        )
+
+        remove_video_attachment_ids = (
+            request.POST.getlist(
+                "remove_video_attachments"
+            )
+        )
+
+        requested_attachment_mode = request.POST.get(
+            "attachment_mode",
+            article.attachment_mode,
+        )
+
+        try:
+
+            submitted_contributors = (
+                get_submitted_contributors(
+                    request
+                )
+            )
+
+        except ValidationError as error:
+
+            messages.error(
+                request,
+                get_validation_error_message(
+                    error
+                ),
+            )
+
+            return render(
+                request,
+                "publications/revise_submission.html",
+                context,
+            )
 
         if not title:
 
@@ -1173,14 +2505,8 @@ def revise_submission(
             return render(
                 request,
                 "publications/revise_submission.html",
-                {
-                    "submission": submission,
-                    "article": article,
-                    "categories": categories,
-                    "tags": tags,
-                },
+                context,
             )
-
 
         if not category_id:
 
@@ -1192,157 +2518,273 @@ def revise_submission(
             return render(
                 request,
                 "publications/revise_submission.html",
-                {
-                    "submission": submission,
-                    "article": article,
-                    "categories": categories,
-                    "tags": tags,
-                },
+                context,
             )
-
 
         category = get_object_or_404(
             Category,
             id=category_id,
         )
 
-
-        with transaction.atomic():
-
-            locked_submission = get_object_or_404(
-                Submission.objects
-                .select_for_update(),
-                id=submission.id,
-                submitted_by=request.user,
+        attachment_mode = (
+            get_normalized_attachment_mode(
+                category,
+                requested_attachment_mode,
             )
+        )
 
+        try:
+
+            validate_uploaded_article_images(
+                featured_image=featured_image,
+                attachments=(
+                    attachments
+                    if attachment_mode
+                    == Article.AttachmentMode.IMAGE
+                    else []
+                ),
+            )
 
             if (
-                locked_submission.status
-                != Submission.Status.REVISION
+                attachment_mode
+                == Article.AttachmentMode.VIDEO
             ):
+                if attachments:
+                    raise ValidationError(
+                        (
+                            "Image attachments cannot be uploaded "
+                            "while Video Attachments is selected."
+                        )
+                    )
 
-                messages.warning(
-                    request,
-                    (
-                        "This submission is no longer "
-                        "available for revision."
-                    ),
+                validate_uploaded_article_videos(
+                    video_attachments
                 )
 
-                return redirect(
-                    "my_submissions"
+                validate_existing_article_video_attachment_count(
+                    article,
+                    video_attachments,
+                    remove_video_attachment_ids,
                 )
 
+            else:
+                if video_attachments:
+                    raise ValidationError(
+                        (
+                            "Video attachments are only available "
+                            "for the Videos category with Video "
+                            "Attachments selected."
+                        )
+                    )
 
-            if locked_submission.resubmissions.exists():
-
-                messages.warning(
-                    request,
-                    (
-                        "This submission has already been "
-                        "revised and resubmitted."
-                    ),
+                validate_attachment_mode_transition(
+                    article,
+                    attachment_mode,
+                    remove_attachment_ids,
+                    remove_video_attachment_ids,
                 )
 
-                return redirect(
-                    "my_submissions"
-                )
+                if (
+                    attachment_mode
+                    == Article.AttachmentMode.VIDEO
+                ):
+                    validate_existing_article_video_attachment_count(
+                        article,
+                        video_attachments,
+                        remove_video_attachment_ids,
+                    )
+                else:
+                    validate_existing_article_attachment_count(
+                        article,
+                        attachments,
+                        remove_attachment_ids,
+                    )
 
-
-            article = Article.objects.select_for_update().get(
-                id=locked_submission.article_id
+            validate_attachment_mode_transition(
+                article,
+                attachment_mode,
+                remove_attachment_ids,
+                remove_video_attachment_ids,
             )
 
+        except ValidationError as error:
 
-            base_slug = slugify(
-                title
-            ) or "article"
-
-            slug = base_slug
-            counter = 1
-
-
-            while (
-                Article.objects
-                .filter(
-                    slug=slug
-                )
-                .exclude(
-                    id=article.id
-                )
-                .exists()
-            ):
-
-                slug = (
-                    f"{base_slug}-{counter}"
-                )
-
-                counter += 1
-
-
-            article.title = title
-            article.slug = slug
-            article.category = category
-            article.content = content
-
-
-            if featured_image:
-
-                article.featured_image = (
-                    featured_image
-                )
-
-
-            article.save()
-
-
-            article.tags.set(
-                tag_ids
+            messages.error(
+                request,
+                get_validation_error_message(
+                    error
+                ),
             )
 
+            return render(
+                request,
+                "publications/revise_submission.html",
+                context,
+            )
 
-            if remove_attachment_ids:
+        try:
 
-                ArticleAttachment.objects.filter(
-                    id__in=remove_attachment_ids,
-                    article=article,
-                ).delete()
+            with transaction.atomic():
 
-
-            for image in attachments:
-
-                ArticleAttachment.objects.create(
-                    article=article,
-                    image=image,
-                )
-
-
-            new_submission = (
-                Submission.objects.create(
-                    article=article,
+                locked_submission = get_object_or_404(
+                    Submission.objects
+                    .select_for_update(),
+                    id=submission.id,
                     submitted_by=request.user,
-                    status=Submission.Status.PENDING,
-                    resubmission_of=locked_submission,
                 )
+
+                if (
+                    locked_submission.status
+                    != Submission.Status.REVISION
+                ):
+
+                    messages.warning(
+                        request,
+                        (
+                            "This submission is no longer "
+                            "available for revision."
+                        ),
+                    )
+
+                    return redirect(
+                        "my_submissions"
+                    )
+
+                if (
+                    locked_submission
+                    .resubmissions
+                    .exists()
+                ):
+
+                    messages.warning(
+                        request,
+                        (
+                            "This submission has already "
+                            "been revised and resubmitted."
+                        ),
+                    )
+
+                    return redirect(
+                        "my_submissions"
+                    )
+
+                article = (
+                    Article.objects
+                    .select_for_update()
+                    .get(
+                        id=locked_submission.article_id
+                    )
+                )
+
+                validate_existing_article_attachment_count(
+                    article,
+                    attachments,
+                    remove_attachment_ids,
+                )
+
+                slug = generate_unique_article_slug(
+                    title,
+                    exclude_article_id=article.id,
+                )
+
+                article.title = title
+                article.subtitle = subtitle
+                article.excerpt = excerpt
+                article.slug = slug
+                article.category = category
+                article.attachment_mode = attachment_mode
+                article.content = content
+
+                article.featured_image_caption = (
+                    featured_image_caption
+                )
+
+                article.featured_image_credit = (
+                    featured_image_credit
+                )
+
+                if featured_image:
+
+                    article.featured_image = (
+                        featured_image
+                    )
+
+                article.save()
+
+                article.tags.set(
+                    tag_ids
+                )
+
+                set_article_contributors(
+                    article,
+                    submitted_contributors,
+                )
+
+                if remove_attachment_ids:
+
+                    ArticleAttachment.objects.filter(
+                        article=article,
+                        id__in=remove_attachment_ids,
+                    ).delete()
+
+                if remove_video_attachment_ids:
+
+                    ArticleVideoAttachment.objects.filter(
+                        article=article,
+                        id__in=remove_video_attachment_ids,
+                    ).delete()
+
+                for image in attachments:
+
+                    ArticleAttachment.objects.create(
+                        article=article,
+                        image=image,
+                    )
+
+                for video in video_attachments:
+
+                    ArticleVideoAttachment.objects.create(
+                        article=article,
+                        video=video,
+                    )
+
+                new_submission = (
+                    Submission.objects.create(
+                        article=article,
+                        submitted_by=request.user,
+                        status=Submission.Status.PENDING,
+                        resubmission_of=locked_submission,
+                    )
+                )
+
+                new_submission.capture_article_snapshot()
+
+                notify_eics(
+                    Notification.Type.REVISION,
+                    (
+                        f'{request.user.username} resubmitted '
+                        f'"{article.title}" after revision.'
+                    ),
+                    reverse(
+                        "pending_submissions"
+                    ),
+                    exclude_user_id=request.user.id,
+                )
+
+        except ValidationError as error:
+
+            messages.error(
+                request,
+                get_validation_error_message(
+                    error
+                ),
             )
 
-
-            new_submission.capture_article_snapshot()
-
-
-            notify_eics(
-                Notification.Type.REVISION,
-                (
-                    f'{request.user.username} resubmitted '
-                    f'"{article.title}" after revision.'
-                ),
-                reverse(
-                    "pending_submissions"
-                ),
-                exclude_user_id=request.user.id,
+            return render(
+                request,
+                "publications/revise_submission.html",
+                context,
             )
-
 
         messages.success(
             request,
@@ -1352,21 +2794,14 @@ def revise_submission(
             ),
         )
 
-
         return redirect(
             "my_submissions"
         )
 
-
     return render(
         request,
         "publications/revise_submission.html",
-        {
-            "submission": submission,
-            "article": article,
-            "categories": categories,
-            "tags": tags,
-        },
+        context,
     )
 
 
@@ -1374,7 +2809,6 @@ def revise_submission(
     User.Role.EDITOR
 )
 def resubmitted_submissions(request):
-
     submissions = (
         Submission.objects
         .filter(
@@ -1384,19 +2818,23 @@ def resubmitted_submissions(request):
         .select_related(
             "article",
             "article__category",
+            "article__author",
             "resubmission_of",
         )
         .prefetch_related(
             "article__attachments",
+            "article__video_attachments",
             "article__tags",
+            "article__contributors",
+            "article__contributors__user",
             "snapshot_attachments",
+            "snapshot_video_attachments",
             "resubmission_of__snapshot_attachments",
         )
         .order_by(
             "-submitted_at"
         )
     )
-
 
     return render(
         request,
@@ -1417,12 +2855,10 @@ def resubmitted_submissions(request):
     User.Role.EIC,
 )
 def my_drafts(request):
-
     search_query = request.GET.get(
         "q",
         "",
     ).strip()
-
 
     drafts = (
         Article.objects
@@ -1435,13 +2871,16 @@ def my_drafts(request):
         .select_related(
             "category",
             "source_article",
+            "author",
         )
         .prefetch_related(
             "attachments",
+            "video_attachments",
             "tags",
+            "contributors",
+            "contributors__user",
         )
     )
-
 
     if request.user.role == User.Role.EIC:
 
@@ -1449,12 +2888,17 @@ def my_drafts(request):
             draft_type=Article.DraftType.NORMAL
         )
 
-
     if search_query:
 
         drafts = drafts.filter(
             Q(
                 title__icontains=search_query
+            )
+            | Q(
+                subtitle__icontains=search_query
+            )
+            | Q(
+                excerpt__icontains=search_query
             )
             | Q(
                 content__icontains=search_query
@@ -1465,8 +2909,13 @@ def my_drafts(request):
             | Q(
                 tags__name__icontains=search_query
             )
+            | Q(
+                contributors__user__username__icontains=search_query
+            )
+            | Q(
+                contributors__role__icontains=search_query
+            )
         )
-
 
     drafts = (
         drafts
@@ -1476,11 +2925,9 @@ def my_drafts(request):
         .distinct()
     )
 
-
     normal_drafts = drafts.filter(
         draft_type=Article.DraftType.NORMAL
     )
-
 
     if request.user.role == User.Role.EDITOR:
 
@@ -1490,8 +2937,9 @@ def my_drafts(request):
 
     else:
 
-        edit_request_drafts = Article.objects.none()
-
+        edit_request_drafts = (
+            Article.objects.none()
+        )
 
     return render(
         request,
@@ -1499,7 +2947,9 @@ def my_drafts(request):
         {
             "drafts": drafts,
             "normal_drafts": normal_drafts,
-            "edit_request_drafts": edit_request_drafts,
+            "edit_request_drafts": (
+                edit_request_drafts
+            ),
             "search_query": search_query,
         },
     )
@@ -1513,16 +2963,19 @@ def edit_draft(
     request,
     article_id,
 ):
-
     article = get_object_or_404(
         Article.objects
         .select_related(
             "category",
             "source_article",
+            "author",
         )
         .prefetch_related(
             "attachments",
+            "video_attachments",
             "tags",
+            "contributors",
+            "contributors__user",
         ),
         id=article_id,
         author=request.user,
@@ -1531,7 +2984,6 @@ def edit_draft(
         submissions__isnull=True,
     )
 
-
     if (
         request.user.role == User.Role.EIC
         and article.draft_type
@@ -1539,9 +2991,11 @@ def edit_draft(
     ):
 
         return HttpResponseForbidden(
-            "The EIC cannot directly manage Editor edit-request drafts."
+            (
+                "The EIC cannot directly manage "
+                "Editor edit-request drafts."
+            )
         )
-
 
     if (
         article.draft_type
@@ -1557,7 +3011,6 @@ def edit_draft(
             ).exists()
         )
 
-
         if not approved_request_exists:
 
             messages.warning(
@@ -1572,15 +3025,41 @@ def edit_draft(
                 "my_drafts"
             )
 
-
     categories = Category.objects.all()
     tags = Tag.objects.all()
 
+    available_contributors = (
+        get_available_contributors(
+            exclude_user=article.author
+        )
+    )
+
+    context = {
+        "article": article,
+        "categories": categories,
+        "tags": tags,
+        "available_contributors": (
+            available_contributors
+        ),
+        "contributor_role_choices": (
+            get_contributor_role_choices()
+        ),
+    }
 
     if request.method == "POST":
 
         title = request.POST.get(
             "title",
+            "",
+        ).strip()
+
+        subtitle = request.POST.get(
+            "subtitle",
+            "",
+        ).strip()
+
+        excerpt = request.POST.get(
+            "excerpt",
             "",
         ).strip()
 
@@ -1597,6 +3076,16 @@ def edit_draft(
             "tags"
         )
 
+        featured_image_caption = request.POST.get(
+            "featured_image_caption",
+            "",
+        ).strip()
+
+        featured_image_credit = request.POST.get(
+            "featured_image_credit",
+            "",
+        ).strip()
+
         action = request.POST.get(
             "action"
         )
@@ -1609,10 +3098,49 @@ def edit_draft(
             "attachments"
         )
 
-        remove_attachment_ids = request.POST.getlist(
-            "remove_attachments"
+        video_attachments = request.FILES.getlist(
+            "video_attachments"
         )
 
+        remove_attachment_ids = (
+            request.POST.getlist(
+                "remove_attachments"
+            )
+        )
+
+        remove_video_attachment_ids = (
+            request.POST.getlist(
+                "remove_video_attachments"
+            )
+        )
+
+        requested_attachment_mode = request.POST.get(
+            "attachment_mode",
+            article.attachment_mode,
+        )
+
+        try:
+
+            submitted_contributors = (
+                get_submitted_contributors(
+                    request
+                )
+            )
+
+        except ValidationError as error:
+
+            messages.error(
+                request,
+                get_validation_error_message(
+                    error
+                ),
+            )
+
+            return render(
+                request,
+                "publications/edit_draft.html",
+                context,
+            )
 
         if request.user.role == User.Role.EDITOR:
 
@@ -1630,7 +3158,6 @@ def edit_draft(
                 "publish",
             }
 
-
         if action not in allowed_actions:
 
             messages.error(
@@ -1642,7 +3169,6 @@ def edit_draft(
                 "my_drafts"
             )
 
-
         if not title:
 
             messages.error(
@@ -1650,10 +3176,11 @@ def edit_draft(
                 "Article title is required.",
             )
 
-            return redirect(
-                "my_drafts"
+            return render(
+                request,
+                "publications/edit_draft.html",
+                context,
             )
-
 
         if not category_id:
 
@@ -1662,84 +3189,122 @@ def edit_draft(
                 "Please select a category.",
             )
 
-            return redirect(
-                "my_drafts"
+            return render(
+                request,
+                "publications/edit_draft.html",
+                context,
             )
-
 
         category = get_object_or_404(
             Category,
             id=category_id,
         )
 
+        attachment_mode = (
+            get_normalized_attachment_mode(
+                category,
+                requested_attachment_mode,
+            )
+        )
 
-        with transaction.atomic():
+        try:
 
-            locked_article = get_object_or_404(
-                Article.objects
-                .select_for_update()
-                .select_related(
-                    "source_article"
+            validate_uploaded_article_images(
+                featured_image=featured_image,
+                attachments=(
+                    attachments
+                    if attachment_mode
+                    == Article.AttachmentMode.IMAGE
+                    else []
                 ),
-                id=article.id,
-                author=request.user,
             )
 
-
             if (
-                locked_article.is_published
-                or locked_article.is_archived
-                or locked_article.submissions.exists()
+                attachment_mode
+                == Article.AttachmentMode.VIDEO
             ):
+                if attachments:
+                    raise ValidationError(
+                        (
+                            "Image attachments cannot be uploaded "
+                            "while Video Attachments is selected."
+                        )
+                    )
 
-                messages.warning(
-                    request,
-                    (
-                        "This draft is no longer "
-                        "available for editing."
+                validate_uploaded_article_videos(
+                    video_attachments
+                )
+
+                validate_existing_article_video_attachment_count(
+                    article,
+                    video_attachments,
+                    remove_video_attachment_ids,
+                )
+
+            else:
+                if video_attachments:
+                    raise ValidationError(
+                        (
+                            "Video attachments are only available "
+                            "for the Videos category with Video "
+                            "Attachments selected."
+                        )
+                    )
+
+                validate_existing_article_attachment_count(
+                    article,
+                    attachments,
+                    remove_attachment_ids,
+                )
+
+            validate_attachment_mode_transition(
+                article,
+                attachment_mode,
+                remove_attachment_ids,
+                remove_video_attachment_ids,
+            )
+
+        except ValidationError as error:
+
+            messages.error(
+                request,
+                get_validation_error_message(
+                    error
+                ),
+            )
+
+            return render(
+                request,
+                "publications/edit_draft.html",
+                context,
+            )
+
+        try:
+
+            with transaction.atomic():
+
+                locked_article = get_object_or_404(
+                    Article.objects
+                    .select_for_update()
+                    .select_related(
+                        "source_article",
+                        "author",
                     ),
+                    id=article.id,
+                    author=request.user,
                 )
 
-                return redirect(
-                    "my_drafts"
-                )
-
-
-            if (
-                request.user.role == User.Role.EIC
-                and locked_article.draft_type
-                != Article.DraftType.NORMAL
-            ):
-
-                return HttpResponseForbidden(
-                    "The EIC cannot directly manage Editor edit-request drafts."
-                )
-
-
-            if (
-                locked_article.draft_type
-                == Article.DraftType.EDIT_REQUEST
-            ):
-
-                approved_request_exists = (
-                    EditRequest.objects.filter(
-                        article=(
-                            locked_article.source_article
-                        ),
-                        requested_by=request.user,
-                        status=EditRequest.Status.APPROVED,
-                        draft_article=locked_article,
-                    ).exists()
-                )
-
-
-                if not approved_request_exists:
+                if (
+                    locked_article.is_published
+                    or locked_article.is_archived
+                    or locked_article.submissions.exists()
+                ):
 
                     messages.warning(
                         request,
                         (
-                            "The approved edit request "
-                            "for this draft is no longer active."
+                            "This draft is no longer "
+                            "available for editing."
                         ),
                     )
 
@@ -1747,174 +3312,261 @@ def edit_draft(
                         "my_drafts"
                     )
 
+                if (
+                    request.user.role
+                    == User.Role.EIC
+                    and locked_article.draft_type
+                    != Article.DraftType.NORMAL
+                ):
 
-            base_slug = slugify(
-                title
-            ) or "article"
-
-
-            if (
-                locked_article.draft_type
-                == Article.DraftType.EDIT_REQUEST
-            ):
-
-                base_slug = (
-                    f"{base_slug}-edit-draft-"
-                    f"{locked_article.id}"
-                )
-
-
-            slug = base_slug
-            counter = 1
-
-
-            while (
-                Article.objects
-                .filter(
-                    slug=slug
-                )
-                .exclude(
-                    id=locked_article.id
-                )
-                .exists()
-            ):
-
-                slug = (
-                    f"{base_slug}-{counter}"
-                )
-
-                counter += 1
-
-
-            locked_article.title = title
-            locked_article.slug = slug
-            locked_article.category = category
-            locked_article.content = content
-
-
-            if featured_image:
-
-                locked_article.featured_image = (
-                    featured_image
-                )
-
-
-            locked_article.save()
-
-
-            locked_article.tags.set(
-                tag_ids
-            )
-
-
-            if remove_attachment_ids:
-
-                ArticleAttachment.objects.filter(
-                    id__in=remove_attachment_ids,
-                    article=locked_article,
-                ).delete()
-
-
-            for image in attachments:
-
-                ArticleAttachment.objects.create(
-                    article=locked_article,
-                    image=image,
-                )
-
-
-            # ==================================================
-            # EDITOR SUBMISSION
-            # ==================================================
-
-            if (
-                request.user.role == User.Role.EDITOR
-                and action == "submit"
-            ):
-
-                submission = (
-                    Submission.objects.create(
-                        article=locked_article,
-                        submitted_by=request.user,
-                        status=Submission.Status.PENDING,
+                    return HttpResponseForbidden(
+                        (
+                            "The EIC cannot directly manage "
+                            "Editor edit-request drafts."
+                        )
                     )
-                )
-
-
-                submission.capture_article_snapshot()
-
 
                 if (
                     locked_article.draft_type
                     == Article.DraftType.EDIT_REQUEST
                 ):
 
-                    notification_type = (
-                        Notification.Type.REVISION
+                    approved_request_exists = (
+                        EditRequest.objects.filter(
+                            article=(
+                                locked_article.source_article
+                            ),
+                            requested_by=request.user,
+                            status=(
+                                EditRequest.Status.APPROVED
+                            ),
+                            draft_article=locked_article,
+                        ).exists()
                     )
 
-                    notification_message = (
-                        f'{request.user.username} submitted '
-                        f'a revised version of '
-                        f'"{locked_article.source_article.title}" '
-                        f'for review.'
-                    )
+                    if not approved_request_exists:
 
+                        messages.warning(
+                            request,
+                            (
+                                "The approved edit request "
+                                "for this draft is no longer active."
+                            ),
+                        )
+
+                        return redirect(
+                            "my_drafts"
+                        )
+
+                validate_attachment_mode_transition(
+                    locked_article,
+                    attachment_mode,
+                    remove_attachment_ids,
+                    remove_video_attachment_ids,
+                )
+
+                if (
+                    attachment_mode
+                    == Article.AttachmentMode.VIDEO
+                ):
+                    validate_existing_article_video_attachment_count(
+                        locked_article,
+                        video_attachments,
+                        remove_video_attachment_ids,
+                    )
                 else:
-
-                    notification_type = (
-                        Notification.Type.SUBMISSION
+                    validate_existing_article_attachment_count(
+                        locked_article,
+                        attachments,
+                        remove_attachment_ids,
                     )
 
-                    notification_message = (
-                        f'{request.user.username} submitted '
-                        f'"{locked_article.title}" for review.'
+                suffix = ""
+
+                if (
+                    locked_article.draft_type
+                    == Article.DraftType.EDIT_REQUEST
+                ):
+
+                    suffix = (
+                        f"edit-draft-{locked_article.id}"
                     )
 
-
-                notify_eics(
-                    notification_type,
-                    notification_message,
-                    reverse(
-                        "pending_submissions"
+                slug = generate_unique_article_slug(
+                    title,
+                    exclude_article_id=(
+                        locked_article.id
                     ),
-                    exclude_user_id=request.user.id,
+                    suffix=suffix,
                 )
 
+                locked_article.title = title
+                locked_article.subtitle = subtitle
+                locked_article.excerpt = excerpt
+                locked_article.slug = slug
+                locked_article.category = category
+                locked_article.attachment_mode = attachment_mode
+                locked_article.content = content
 
-            # ==================================================
-            # EIC DIRECT PUBLICATION
-            # ==================================================
+                locked_article.featured_image_caption = (
+                    featured_image_caption
+                )
 
-            elif (
-                request.user.role == User.Role.EIC
-                and action == "publish"
-            ):
+                locked_article.featured_image_credit = (
+                    featured_image_credit
+                )
 
-                locked_article.is_published = True
-                locked_article.is_archived = False
-                locked_article.archived_at = None
+                if featured_image:
 
-                if locked_article.published_at is None:
-
-                    locked_article.published_at = (
-                        timezone.now()
+                    locked_article.featured_image = (
+                        featured_image
                     )
 
+                locked_article.save()
 
-                locked_article.save(
-                    update_fields=[
-                        "is_published",
-                        "is_archived",
-                        "archived_at",
-                        "published_at",
-                        "updated_at",
-                    ]
+                locked_article.tags.set(
+                    tag_ids
                 )
 
+                set_article_contributors(
+                    locked_article,
+                    submitted_contributors,
+                )
+
+                if remove_attachment_ids:
+
+                    ArticleAttachment.objects.filter(
+                        article=locked_article,
+                        id__in=remove_attachment_ids,
+                    ).delete()
+
+                if remove_video_attachment_ids:
+
+                    ArticleVideoAttachment.objects.filter(
+                        article=locked_article,
+                        id__in=remove_video_attachment_ids,
+                    ).delete()
+
+                for image in attachments:
+
+                    ArticleAttachment.objects.create(
+                        article=locked_article,
+                        image=image,
+                    )
+
+                for video in video_attachments:
+
+                    ArticleVideoAttachment.objects.create(
+                        article=locked_article,
+                        video=video,
+                    )
+
+                if (
+                    request.user.role
+                    == User.Role.EDITOR
+                    and action == "submit"
+                ):
+
+                    submission = (
+                        Submission.objects.create(
+                            article=locked_article,
+                            submitted_by=request.user,
+                            status=Submission.Status.PENDING,
+                        )
+                    )
+
+                    submission.capture_article_snapshot()
+
+                    if (
+                        locked_article.draft_type
+                        == Article.DraftType.EDIT_REQUEST
+                    ):
+
+                        notification_type = (
+                            Notification.Type.REVISION
+                        )
+
+                        notification_message = (
+                            f'{request.user.username} submitted '
+                            f'a revised version of '
+                            f'"{locked_article.source_article.title}" '
+                            f'for review.'
+                        )
+
+                    else:
+
+                        notification_type = (
+                            Notification.Type.SUBMISSION
+                        )
+
+                        notification_message = (
+                            f'{request.user.username} submitted '
+                            f'"{locked_article.title}" for review.'
+                        )
+
+                    notify_eics(
+                        notification_type,
+                        notification_message,
+                        reverse(
+                            "pending_submissions"
+                        ),
+                        exclude_user_id=request.user.id,
+                    )
+
+                elif (
+                    request.user.role
+                    == User.Role.EIC
+                    and action == "publish"
+                ):
+
+                    locked_article.is_published = True
+                    locked_article.is_archived = False
+                    locked_article.archived_at = None
+
+                    if locked_article.published_at is None:
+
+                        locked_article.published_at = (
+                            timezone.now()
+                        )
+
+                    locked_article.save(
+                        update_fields=[
+                            "is_published",
+                            "is_archived",
+                            "archived_at",
+                            "published_at",
+                            "updated_at",
+                        ]
+                    )
+
+                    capture_article_version(
+                        locked_article,
+                        (
+                            ArticleVersion
+                            .ChangeType
+                            .INITIAL_PUBLICATION
+                        ),
+                        created_by=request.user,
+                    )
+
+        except ValidationError as error:
+
+            messages.error(
+                request,
+                get_validation_error_message(
+                    error
+                ),
+            )
+
+            return render(
+                request,
+                "publications/edit_draft.html",
+                context,
+            )
 
         if (
-            request.user.role == User.Role.EDITOR
+            request.user.role
+            == User.Role.EDITOR
             and action == "submit"
         ):
 
@@ -1930,9 +3582,9 @@ def edit_draft(
                 "my_submissions"
             )
 
-
         if (
-            request.user.role == User.Role.EIC
+            request.user.role
+            == User.Role.EIC
             and action == "publish"
         ):
 
@@ -1948,7 +3600,6 @@ def edit_draft(
                 "published_articles"
             )
 
-
         messages.success(
             request,
             (
@@ -1957,20 +3608,14 @@ def edit_draft(
             ),
         )
 
-
         return redirect(
             "my_drafts"
         )
 
-
     return render(
         request,
         "publications/edit_draft.html",
-        {
-            "article": article,
-            "categories": categories,
-            "tags": tags,
-        },
+        context,
     )
 
 
@@ -1983,7 +3628,6 @@ def delete_draft(
     request,
     article_id,
 ):
-
     with transaction.atomic():
 
         article = get_object_or_404(
@@ -1993,7 +3637,6 @@ def delete_draft(
             author=request.user,
             draft_type=Article.DraftType.NORMAL,
         )
-
 
         if (
             article.is_published
@@ -2013,17 +3656,14 @@ def delete_draft(
                 "my_drafts"
             )
 
-
         title = article.title
 
         article.delete()
-
 
     messages.warning(
         request,
         f'Draft "{title}" was deleted.',
     )
-
 
     return redirect(
         "my_drafts"
@@ -2041,12 +3681,10 @@ def delete_draft(
     User.Role.STAFF,
 )
 def published_articles(request):
-
     search_query = request.GET.get(
         "q",
         "",
     ).strip()
-
 
     articles = (
         Article.objects
@@ -2061,10 +3699,12 @@ def published_articles(request):
         )
         .prefetch_related(
             "attachments",
+            "video_attachments",
             "tags",
+            "contributors",
+            "contributors__user",
         )
     )
-
 
     if request.user.role == User.Role.EDITOR:
 
@@ -2072,12 +3712,17 @@ def published_articles(request):
             author=request.user
         )
 
-
     if search_query:
 
         articles = articles.filter(
             Q(
                 title__icontains=search_query
+            )
+            | Q(
+                subtitle__icontains=search_query
+            )
+            | Q(
+                excerpt__icontains=search_query
             )
             | Q(
                 content__icontains=search_query
@@ -2091,8 +3736,13 @@ def published_articles(request):
             | Q(
                 author__username__icontains=search_query
             )
+            | Q(
+                contributors__user__username__icontains=search_query
+            )
+            | Q(
+                contributors__role__icontains=search_query
+            )
         )
-
 
     articles = (
         articles
@@ -2102,13 +3752,136 @@ def published_articles(request):
         .distinct()
     )
 
-
     return render(
         request,
         "publications/published_articles.html",
         {
             "articles": articles,
             "search_query": search_query,
+        },
+    )
+
+
+# ==========================================================
+# ARTICLE VERSION HISTORY
+# ==========================================================
+
+
+def get_version_history_article_for_user(
+    request,
+    article_id,
+):
+    """
+    Return a published normal article that the current role may
+    inspect in version history.
+
+    EIC and Staff may inspect all currently published articles.
+    Editors may inspect only their own currently published articles.
+    Adviser access is intentionally excluded for now.
+    """
+
+    queryset = (
+        Article.objects
+        .filter(
+            id=article_id,
+            is_published=True,
+            is_archived=False,
+            draft_type=Article.DraftType.NORMAL,
+        )
+        .select_related(
+            "category",
+            "author",
+        )
+    )
+
+    if request.user.role == User.Role.EDITOR:
+        queryset = queryset.filter(
+            author=request.user
+        )
+
+    return get_object_or_404(
+        queryset
+    )
+
+
+@publication_role_required(
+    User.Role.EIC,
+    User.Role.EDITOR,
+    User.Role.STAFF,
+)
+def article_version_history(
+    request,
+    article_id,
+):
+    article = (
+        get_version_history_article_for_user(
+            request,
+            article_id,
+        )
+    )
+
+    versions = (
+        ArticleVersion.objects
+        .filter(
+            article=article
+        )
+        .select_related(
+            "created_by"
+        )
+        .order_by(
+            "-version_number",
+            "-created_at",
+        )
+    )
+
+    return render(
+        request,
+        "publications/article_version_history.html",
+        {
+            "article": article,
+            "versions": versions,
+        },
+    )
+
+
+@publication_role_required(
+    User.Role.EIC,
+    User.Role.EDITOR,
+    User.Role.STAFF,
+)
+def article_version_detail(
+    request,
+    article_id,
+    version_number,
+):
+    article = (
+        get_version_history_article_for_user(
+            request,
+            article_id,
+        )
+    )
+
+    article_version = get_object_or_404(
+        ArticleVersion.objects
+        .filter(
+            article=article,
+            version_number=version_number,
+        )
+        .select_related(
+            "created_by"
+        )
+        .prefetch_related(
+            "image_attachments",
+            "video_attachments",
+        )
+    )
+
+    return render(
+        request,
+        "publications/article_version_detail.html",
+        {
+            "article": article,
+            "article_version": article_version,
         },
     )
 
@@ -2125,7 +3898,6 @@ def edit_published_article(
     request,
     article_id,
 ):
-
     article = get_object_or_404(
         Article.objects
         .select_related(
@@ -2134,7 +3906,10 @@ def edit_published_article(
         )
         .prefetch_related(
             "attachments",
+            "video_attachments",
             "tags",
+            "contributors",
+            "contributors__user",
         ),
         id=article_id,
         author=request.user,
@@ -2143,15 +3918,43 @@ def edit_published_article(
         draft_type=Article.DraftType.NORMAL,
     )
 
-
     categories = Category.objects.all()
     tags = Tag.objects.all()
 
+    available_contributors = (
+        get_available_contributors(
+            exclude_user=article.author
+        )
+    )
+
+    context = {
+        "article": article,
+        "categories": categories,
+        "tags": tags,
+        "available_contributors": (
+            available_contributors
+        ),
+        "contributor_role_choices": (
+            get_contributor_role_choices()
+        ),
+    }
+
+    resolved_report_count = 0
 
     if request.method == "POST":
 
         title = request.POST.get(
             "title",
+            "",
+        ).strip()
+
+        subtitle = request.POST.get(
+            "subtitle",
+            "",
+        ).strip()
+
+        excerpt = request.POST.get(
+            "excerpt",
             "",
         ).strip()
 
@@ -2168,6 +3971,16 @@ def edit_published_article(
             "tags"
         )
 
+        featured_image_caption = request.POST.get(
+            "featured_image_caption",
+            "",
+        ).strip()
+
+        featured_image_credit = request.POST.get(
+            "featured_image_credit",
+            "",
+        ).strip()
+
         featured_image = request.FILES.get(
             "featured_image"
         )
@@ -2176,10 +3989,49 @@ def edit_published_article(
             "attachments"
         )
 
-        remove_attachment_ids = request.POST.getlist(
-            "remove_attachments"
+        video_attachments = request.FILES.getlist(
+            "video_attachments"
         )
 
+        remove_attachment_ids = (
+            request.POST.getlist(
+                "remove_attachments"
+            )
+        )
+
+        remove_video_attachment_ids = (
+            request.POST.getlist(
+                "remove_video_attachments"
+            )
+        )
+
+        requested_attachment_mode = request.POST.get(
+            "attachment_mode",
+            article.attachment_mode,
+        )
+
+        try:
+
+            submitted_contributors = (
+                get_submitted_contributors(
+                    request
+                )
+            )
+
+        except ValidationError as error:
+
+            messages.error(
+                request,
+                get_validation_error_message(
+                    error
+                ),
+            )
+
+            return render(
+                request,
+                "publications/edit_published_article.html",
+                context,
+            )
 
         if not title:
 
@@ -2191,13 +4043,8 @@ def edit_published_article(
             return render(
                 request,
                 "publications/edit_published_article.html",
-                {
-                    "article": article,
-                    "categories": categories,
-                    "tags": tags,
-                },
+                context,
             )
-
 
         if not category_id:
 
@@ -2209,135 +4056,312 @@ def edit_published_article(
             return render(
                 request,
                 "publications/edit_published_article.html",
-                {
-                    "article": article,
-                    "categories": categories,
-                    "tags": tags,
-                },
+                context,
             )
-
 
         category = get_object_or_404(
             Category,
             id=category_id,
         )
 
-
-        with transaction.atomic():
-
-            article = get_object_or_404(
-                Article.objects
-                .select_for_update(),
-                id=article_id,
-                author=request.user,
+        attachment_mode = (
+            get_normalized_attachment_mode(
+                category,
+                requested_attachment_mode,
             )
-
-
-            if (
-                not article.is_published
-                or article.is_archived
-                or article.draft_type
-                != Article.DraftType.NORMAL
-            ):
-
-                messages.warning(
-                    request,
-                    (
-                        "This article is no longer "
-                        "available for direct editing."
-                    ),
-                )
-
-                return redirect(
-                    "published_articles"
-                )
-
-
-            base_slug = slugify(
-                title
-            ) or "article"
-
-            slug = base_slug
-            counter = 1
-
-
-            while (
-                Article.objects
-                .filter(
-                    slug=slug
-                )
-                .exclude(
-                    id=article.id
-                )
-                .exists()
-            ):
-
-                slug = (
-                    f"{base_slug}-{counter}"
-                )
-
-                counter += 1
-
-
-            article.title = title
-            article.slug = slug
-            article.category = category
-            article.content = content
-
-
-            if featured_image:
-
-                article.featured_image = (
-                    featured_image
-                )
-
-
-            article.save()
-
-
-            article.tags.set(
-                tag_ids
-            )
-
-
-            if remove_attachment_ids:
-
-                ArticleAttachment.objects.filter(
-                    article=article,
-                    id__in=remove_attachment_ids,
-                ).delete()
-
-
-            for image in attachments:
-
-                ArticleAttachment.objects.create(
-                    article=article,
-                    image=image,
-                )
-
-
-        messages.success(
-            request,
-            (
-                f'"{article.title}" was updated '
-                f'successfully.'
-            ),
         )
 
+        try:
+
+            validate_uploaded_article_images(
+                featured_image=featured_image,
+                attachments=(
+                    attachments
+                    if attachment_mode
+                    == Article.AttachmentMode.IMAGE
+                    else []
+                ),
+            )
+
+            if (
+                attachment_mode
+                == Article.AttachmentMode.VIDEO
+            ):
+                if attachments:
+                    raise ValidationError(
+                        (
+                            "Image attachments cannot be uploaded "
+                            "while Video Attachments is selected."
+                        )
+                    )
+
+                validate_uploaded_article_videos(
+                    video_attachments
+                )
+
+                validate_existing_article_video_attachment_count(
+                    article,
+                    video_attachments,
+                    remove_video_attachment_ids,
+                )
+
+            else:
+                if video_attachments:
+                    raise ValidationError(
+                        (
+                            "Video attachments are only available "
+                            "for the Videos category with Video "
+                            "Attachments selected."
+                        )
+                    )
+
+                validate_attachment_mode_transition(
+                    article,
+                    attachment_mode,
+                    remove_attachment_ids,
+                    remove_video_attachment_ids,
+                )
+
+                if (
+                    attachment_mode
+                    == Article.AttachmentMode.VIDEO
+                ):
+                    validate_existing_article_video_attachment_count(
+                        article,
+                        video_attachments,
+                        remove_video_attachment_ids,
+                    )
+                else:
+                    validate_existing_article_attachment_count(
+                        article,
+                        attachments,
+                        remove_attachment_ids,
+                    )
+
+            validate_attachment_mode_transition(
+                article,
+                attachment_mode,
+                remove_attachment_ids,
+                remove_video_attachment_ids,
+            )
+
+        except ValidationError as error:
+
+            messages.error(
+                request,
+                get_validation_error_message(
+                    error
+                ),
+            )
+
+            return render(
+                request,
+                "publications/edit_published_article.html",
+                context,
+            )
+
+        try:
+
+            with transaction.atomic():
+
+                article = get_object_or_404(
+                    Article.objects
+                    .select_for_update(),
+                    id=article_id,
+                    author=request.user,
+                )
+
+                if (
+                    not article.is_published
+                    or article.is_archived
+                    or article.draft_type
+                    != Article.DraftType.NORMAL
+                ):
+
+                    messages.warning(
+                        request,
+                        (
+                            "This article is no longer "
+                            "available for direct editing."
+                        ),
+                    )
+
+                    return redirect(
+                        "published_articles"
+                    )
+
+                open_content_report_exists = (
+                    ContentReport.objects.filter(
+                        article=article,
+                        status=ContentReport.Status.OPEN,
+                    ).exists()
+                )
+
+                if open_content_report_exists:
+
+                    messages.warning(
+                        request,
+                        (
+                            "This article has an open Staff "
+                            "content report. Review the report "
+                            "before directly editing the article."
+                        ),
+                    )
+
+                    return redirect(
+                        "eic_content_reports"
+                    )
+
+                validate_existing_article_attachment_count(
+                    article,
+                    attachments,
+                    remove_attachment_ids,
+                )
+
+                ensure_current_article_version_baseline(
+                    article
+                )
+
+                slug = generate_unique_article_slug(
+                    title,
+                    exclude_article_id=article.id,
+                )
+
+                article.title = title
+                article.subtitle = subtitle
+                article.excerpt = excerpt
+                article.slug = slug
+                article.category = category
+                article.attachment_mode = attachment_mode
+                article.content = content
+
+                article.featured_image_caption = (
+                    featured_image_caption
+                )
+
+                article.featured_image_credit = (
+                    featured_image_credit
+                )
+
+                if featured_image:
+
+                    article.featured_image = (
+                        featured_image
+                    )
+
+                article.version_number += 1
+
+                article.save()
+
+                article.tags.set(
+                    tag_ids
+                )
+
+                set_article_contributors(
+                    article,
+                    submitted_contributors,
+                )
+
+                if remove_attachment_ids:
+
+                    ArticleAttachment.objects.filter(
+                        article=article,
+                        id__in=remove_attachment_ids,
+                    ).delete()
+
+                if remove_video_attachment_ids:
+
+                    ArticleVideoAttachment.objects.filter(
+                        article=article,
+                        id__in=remove_video_attachment_ids,
+                    ).delete()
+
+                for image in attachments:
+
+                    ArticleAttachment.objects.create(
+                        article=article,
+                        image=image,
+                    )
+
+                for video in video_attachments:
+
+                    ArticleVideoAttachment.objects.create(
+                        article=article,
+                        video=video,
+                    )
+
+                resolved_report_count = (
+                    resolve_eic_direct_revision_reports(
+                        article
+                    )
+                )
+
+                if resolved_report_count:
+                    version_change_type = (
+                        ArticleVersion
+                        .ChangeType
+                        .CORRECTIVE_REVISION
+                    )
+                else:
+                    version_change_type = (
+                        ArticleVersion
+                        .ChangeType
+                        .DIRECT_EDIT
+                    )
+
+                capture_article_version(
+                    article,
+                    version_change_type,
+                    created_by=request.user,
+                )
+
+        except ValidationError as error:
+
+            messages.error(
+                request,
+                get_validation_error_message(
+                    error
+                ),
+            )
+
+            return render(
+                request,
+                "publications/edit_published_article.html",
+                context,
+            )
+
+        if resolved_report_count:
+
+            messages.success(
+                request,
+                (
+                    f'"{article.title}" was updated '
+                    f'successfully and is now version '
+                    f'{article.version_number}. '
+                    f'{resolved_report_count} corrective '
+                    f'content report(s) were resolved.'
+                ),
+            )
+
+        else:
+
+            messages.success(
+                request,
+                (
+                    f'"{article.title}" was updated '
+                    f'successfully and is now version '
+                    f'{article.version_number}.'
+                ),
+            )
 
         return redirect(
             "published_articles"
         )
 
-
     return render(
         request,
         "publications/edit_published_article.html",
-        {
-            "article": article,
-            "categories": categories,
-            "tags": tags,
-        },
+        context,
     )
 
 
@@ -2349,7 +4373,6 @@ def archive_own_published_article(
     request,
     article_id,
 ):
-
     with transaction.atomic():
 
         article = get_object_or_404(
@@ -2359,7 +4382,6 @@ def archive_own_published_article(
             author=request.user,
             draft_type=Article.DraftType.NORMAL,
         )
-
 
         if article.is_archived:
 
@@ -2372,7 +4394,6 @@ def archive_own_published_article(
                 "published_articles"
             )
 
-
         if not article.is_published:
 
             messages.warning(
@@ -2384,11 +4405,9 @@ def archive_own_published_article(
                 "published_articles"
             )
 
-
         article.is_published = False
         article.is_archived = True
         article.archived_at = timezone.now()
-
 
         article.save(
             update_fields=[
@@ -2399,6 +4418,27 @@ def archive_own_published_article(
             ]
         )
 
+        resolved_report_count = (
+            resolve_reports_after_eic_archive(
+                article
+            )
+        )
+
+    if resolved_report_count:
+
+        messages.warning(
+            request,
+            (
+                f'"{article.title}" was removed from publication '
+                f'and moved to the archive. '
+                f'{resolved_report_count} active content '
+                f'report(s) were resolved.'
+            ),
+        )
+
+        return redirect(
+            "published_articles"
+        )
 
     messages.warning(
         request,
@@ -2407,7 +4447,6 @@ def archive_own_published_article(
             f'and moved to the archive.'
         ),
     )
-
 
     return redirect(
         "published_articles"
@@ -2426,7 +4465,6 @@ def request_article_edit(
     request,
     article_id,
 ):
-
     article = get_object_or_404(
         Article,
         id=article_id,
@@ -2436,7 +4474,6 @@ def request_article_edit(
         draft_type=Article.DraftType.NORMAL,
     )
 
-
     existing_request = EditRequest.objects.filter(
         article=article,
         requested_by=request.user,
@@ -2445,7 +4482,6 @@ def request_article_edit(
             EditRequest.Status.APPROVED,
         ],
     ).exists()
-
 
     if existing_request:
 
@@ -2461,7 +4497,6 @@ def request_article_edit(
             "published_articles"
         )
 
-
     pending_deletion_request = (
         DeletionRequest.objects.filter(
             article=article,
@@ -2469,7 +4504,6 @@ def request_article_edit(
             status=DeletionRequest.Status.PENDING,
         ).exists()
     )
-
 
     if pending_deletion_request:
 
@@ -2485,14 +4519,12 @@ def request_article_edit(
             "published_articles"
         )
 
-
     if request.method == "POST":
 
         reason = request.POST.get(
             "reason",
             "",
         ).strip()
-
 
         if not reason:
 
@@ -2504,7 +4536,6 @@ def request_article_edit(
                 ),
             )
 
-
         else:
 
             with transaction.atomic():
@@ -2515,7 +4546,6 @@ def request_article_edit(
                     id=article.id,
                     author=request.user,
                 )
-
 
                 if (
                     not locked_article.is_published
@@ -2536,7 +4566,6 @@ def request_article_edit(
                         "published_articles"
                     )
 
-
                 existing_request = (
                     EditRequest.objects.filter(
                         article=locked_article,
@@ -2547,7 +4576,6 @@ def request_article_edit(
                         ],
                     ).exists()
                 )
-
 
                 if existing_request:
 
@@ -2563,15 +4591,15 @@ def request_article_edit(
                         "published_articles"
                     )
 
-
                 pending_deletion_request = (
                     DeletionRequest.objects.filter(
                         article=locked_article,
                         requested_by=request.user,
-                        status=DeletionRequest.Status.PENDING,
+                        status=(
+                            DeletionRequest.Status.PENDING
+                        ),
                     ).exists()
                 )
-
 
                 if pending_deletion_request:
 
@@ -2587,13 +4615,11 @@ def request_article_edit(
                         "published_articles"
                     )
 
-
                 EditRequest.objects.create(
                     article=locked_article,
                     requested_by=request.user,
                     reason=reason,
                 )
-
 
                 notify_eics(
                     Notification.Type.EDIT_REQUEST,
@@ -2608,7 +4634,6 @@ def request_article_edit(
                     exclude_user_id=request.user.id,
                 )
 
-
             messages.success(
                 request,
                 (
@@ -2617,11 +4642,9 @@ def request_article_edit(
                 ),
             )
 
-
             return redirect(
                 "my_edit_requests"
             )
-
 
     return render(
         request,
@@ -2636,12 +4659,10 @@ def request_article_edit(
     User.Role.EDITOR
 )
 def my_edit_requests(request):
-
     search_query = request.GET.get(
         "q",
         "",
     ).strip()
-
 
     requests = (
         EditRequest.objects
@@ -2658,12 +4679,14 @@ def my_edit_requests(request):
         )
     )
 
-
     if search_query:
 
         requests = requests.filter(
             Q(
                 article__title__icontains=search_query
+            )
+            | Q(
+                article__subtitle__icontains=search_query
             )
             | Q(
                 article__content__icontains=search_query
@@ -2675,7 +4698,6 @@ def my_edit_requests(request):
                 reason__icontains=search_query
             )
         )
-
 
     return render(
         request,
@@ -2691,12 +4713,10 @@ def my_edit_requests(request):
     User.Role.EIC
 )
 def eic_edit_requests(request):
-
     search_query = request.GET.get(
         "q",
         "",
     ).strip()
-
 
     requests = (
         EditRequest.objects
@@ -2714,12 +4734,14 @@ def eic_edit_requests(request):
         )
     )
 
-
     if search_query:
 
         requests = requests.filter(
             Q(
                 article__title__icontains=search_query
+            )
+            | Q(
+                article__subtitle__icontains=search_query
             )
             | Q(
                 article__content__icontains=search_query
@@ -2734,7 +4756,6 @@ def eic_edit_requests(request):
                 reason__icontains=search_query
             )
         )
-
 
     return render(
         request,
@@ -2754,7 +4775,6 @@ def review_edit_request(
     request,
     request_id,
 ):
-
     action = request.POST.get(
         "action"
     )
@@ -2763,7 +4783,6 @@ def review_edit_request(
         "reviewer_notes",
         "",
     ).strip()
-
 
     if action not in [
         "approve",
@@ -2779,7 +4798,6 @@ def review_edit_request(
             "eic_edit_requests"
         )
 
-
     with transaction.atomic():
 
         edit_request = get_object_or_404(
@@ -2793,8 +4811,10 @@ def review_edit_request(
             id=request_id,
         )
 
-
-        if edit_request.status != EditRequest.Status.PENDING:
+        if (
+            edit_request.status
+            != EditRequest.Status.PENDING
+        ):
 
             messages.warning(
                 request,
@@ -2808,15 +4828,20 @@ def review_edit_request(
                 "eic_edit_requests"
             )
 
-
         original_article = (
             Article.objects
             .select_for_update()
+            .prefetch_related(
+                "tags",
+                "contributors",
+                "contributors__user",
+                "attachments",
+                "video_attachments",
+            )
             .get(
                 id=edit_request.article_id
             )
         )
-
 
         if (
             not original_article.is_published
@@ -2837,18 +4862,18 @@ def review_edit_request(
                 "eic_edit_requests"
             )
 
-
         if action == "approve":
 
             existing_draft = (
                 Article.objects.filter(
                     source_article=original_article,
-                    draft_type=Article.DraftType.EDIT_REQUEST,
+                    draft_type=(
+                        Article.DraftType.EDIT_REQUEST
+                    ),
                     is_published=False,
                     is_archived=False,
                 ).exists()
             )
-
 
             if existing_draft:
 
@@ -2864,14 +4889,14 @@ def review_edit_request(
                     "eic_edit_requests"
                 )
 
-
             pending_deletion = (
                 DeletionRequest.objects.filter(
                     article=original_article,
-                    status=DeletionRequest.Status.PENDING,
+                    status=(
+                        DeletionRequest.Status.PENDING
+                    ),
                 ).exists()
             )
-
 
             if pending_deletion:
 
@@ -2887,58 +4912,65 @@ def review_edit_request(
                     "eic_edit_requests"
                 )
 
-
-            base_slug = (
-                f"{original_article.slug}-edit-"
-                f"{edit_request.id}"
-            )
-
-            edit_draft_slug = base_slug
-            counter = 1
-
-
-            while Article.objects.filter(
-                slug=edit_draft_slug
-            ).exists():
-
-                edit_draft_slug = (
-                    f"{base_slug}-{counter}"
+            edit_draft_slug = (
+                generate_unique_article_slug(
+                    original_article.title,
+                    suffix=(
+                        f"edit-{edit_request.id}"
+                    ),
                 )
-
-                counter += 1
-
+            )
 
             edit_draft = Article.objects.create(
                 title=original_article.title,
+                subtitle=original_article.subtitle,
+                excerpt=original_article.excerpt,
                 slug=edit_draft_slug,
                 category=original_article.category,
+                attachment_mode=original_article.attachment_mode,
                 author=original_article.author,
                 content=original_article.content,
                 featured_image=(
                     original_article.featured_image
                 ),
-                draft_type=Article.DraftType.EDIT_REQUEST,
+                featured_image_caption=(
+                    original_article
+                    .featured_image_caption
+                ),
+                featured_image_credit=(
+                    original_article
+                    .featured_image_credit
+                ),
+                version_number=(
+                    original_article.version_number
+                    + 1
+                ),
+                draft_type=(
+                    Article.DraftType.EDIT_REQUEST
+                ),
                 source_article=original_article,
                 is_published=False,
                 is_archived=False,
             )
 
-
             edit_draft.tags.set(
                 original_article.tags.all()
             )
 
+            copy_article_contributors(
+                original_article,
+                edit_draft,
+            )
 
-            for attachment in (
-                original_article.attachments.all()
-            ):
+            copy_article_attachments(
+                original_article,
+                edit_draft,
+            )
 
-                ArticleAttachment.objects.create(
-                    article=edit_draft,
-                    image=attachment.image,
-                    caption=attachment.caption,
-                )
-
+            copy_article_video_attachments(
+                original_article,
+                edit_draft,
+            )
 
             edit_request.status = (
                 EditRequest.Status.APPROVED
@@ -2958,20 +4990,20 @@ def review_edit_request(
 
             edit_request.save()
 
-
             notify_user(
                 edit_request.requested_by,
                 Notification.Type.EDIT_REQUEST,
                 (
                     f'Your edit request for '
                     f'"{original_article.title}" was approved. '
-                    f'A revision draft is now available.'
+                    f'A revision draft for version '
+                    f'{edit_draft.version_number} '
+                    f'is now available.'
                 ),
                 reverse(
                     "my_drafts"
                 ),
             )
-
 
             messages.success(
                 request,
@@ -2980,7 +5012,6 @@ def review_edit_request(
                     f'"{original_article.title}" was approved.'
                 ),
             )
-
 
         elif action == "reject":
 
@@ -2996,7 +5027,6 @@ def review_edit_request(
                 timezone.now()
             )
 
-
             edit_request.save(
                 update_fields=[
                     "status",
@@ -3004,7 +5034,6 @@ def review_edit_request(
                     "reviewed_at",
                 ]
             )
-
 
             notify_user(
                 edit_request.requested_by,
@@ -3018,7 +5047,6 @@ def review_edit_request(
                 ),
             )
 
-
             messages.warning(
                 request,
                 (
@@ -3026,7 +5054,6 @@ def review_edit_request(
                     f'"{original_article.title}" was rejected.'
                 ),
             )
-
 
     return redirect(
         "eic_edit_requests"
@@ -3045,7 +5072,6 @@ def request_article_deletion(
     request,
     article_id,
 ):
-
     article = get_object_or_404(
         Article.objects.select_related(
             "category",
@@ -3058,7 +5084,6 @@ def request_article_deletion(
         draft_type=Article.DraftType.NORMAL,
     )
 
-
     existing_request = (
         DeletionRequest.objects.filter(
             article=article,
@@ -3066,7 +5091,6 @@ def request_article_deletion(
             status=DeletionRequest.Status.PENDING,
         ).exists()
     )
-
 
     if existing_request:
 
@@ -3082,7 +5106,6 @@ def request_article_deletion(
             "published_articles"
         )
 
-
     active_edit_request = (
         EditRequest.objects.filter(
             article=article,
@@ -3093,7 +5116,6 @@ def request_article_deletion(
             ],
         ).exists()
     )
-
 
     if active_edit_request:
 
@@ -3109,14 +5131,12 @@ def request_article_deletion(
             "published_articles"
         )
 
-
     if request.method == "POST":
 
         reason = request.POST.get(
             "reason",
             "",
         ).strip()
-
 
         if not reason:
 
@@ -3128,7 +5148,6 @@ def request_article_deletion(
                 ),
             )
 
-
         else:
 
             with transaction.atomic():
@@ -3139,7 +5158,6 @@ def request_article_deletion(
                     id=article.id,
                     author=request.user,
                 )
-
 
                 if (
                     not locked_article.is_published
@@ -3160,15 +5178,15 @@ def request_article_deletion(
                         "published_articles"
                     )
 
-
                 existing_request = (
                     DeletionRequest.objects.filter(
                         article=locked_article,
                         requested_by=request.user,
-                        status=DeletionRequest.Status.PENDING,
+                        status=(
+                            DeletionRequest.Status.PENDING
+                        ),
                     ).exists()
                 )
-
 
                 if existing_request:
 
@@ -3184,7 +5202,6 @@ def request_article_deletion(
                         "published_articles"
                     )
 
-
                 active_edit_request = (
                     EditRequest.objects.filter(
                         article=locked_article,
@@ -3194,7 +5211,6 @@ def request_article_deletion(
                         ],
                     ).exists()
                 )
-
 
                 if active_edit_request:
 
@@ -3210,7 +5226,6 @@ def request_article_deletion(
                         "published_articles"
                     )
 
-
                 DeletionRequest.objects.create(
                     article=locked_article,
                     requested_by=request.user,
@@ -3218,19 +5233,18 @@ def request_article_deletion(
                     status=DeletionRequest.Status.PENDING,
                 )
 
-
                 notify_eics(
                     Notification.Type.DELETION_REQUEST,
                     (
                         f'{request.user.username} requested '
-                        f'deletion of "{locked_article.title}".'
+                        f'deletion of '
+                        f'"{locked_article.title}".'
                     ),
                     reverse(
                         "eic_deletion_requests"
                     ),
                     exclude_user_id=request.user.id,
                 )
-
 
             messages.success(
                 request,
@@ -3240,11 +5254,9 @@ def request_article_deletion(
                 ),
             )
 
-
             return redirect(
                 "my_deletion_requests"
             )
-
 
     return render(
         request,
@@ -3259,12 +5271,10 @@ def request_article_deletion(
     User.Role.EDITOR
 )
 def my_deletion_requests(request):
-
     search_query = request.GET.get(
         "q",
         "",
     ).strip()
-
 
     requests = (
         DeletionRequest.objects
@@ -3277,12 +5287,14 @@ def my_deletion_requests(request):
         )
     )
 
-
     if search_query:
 
         requests = requests.filter(
             Q(
                 article__title__icontains=search_query
+            )
+            | Q(
+                article__subtitle__icontains=search_query
             )
             | Q(
                 article__content__icontains=search_query
@@ -3298,11 +5310,9 @@ def my_deletion_requests(request):
             )
         )
 
-
     requests = requests.order_by(
         "-created_at"
     )
-
 
     return render(
         request,
@@ -3318,12 +5328,10 @@ def my_deletion_requests(request):
     User.Role.EIC
 )
 def eic_deletion_requests(request):
-
     search_query = request.GET.get(
         "q",
         "",
     ).strip()
-
 
     requests = (
         DeletionRequest.objects
@@ -3338,12 +5346,14 @@ def eic_deletion_requests(request):
         )
     )
 
-
     if search_query:
 
         requests = requests.filter(
             Q(
                 article__title__icontains=search_query
+            )
+            | Q(
+                article__subtitle__icontains=search_query
             )
             | Q(
                 article__content__icontains=search_query
@@ -3359,11 +5369,9 @@ def eic_deletion_requests(request):
             )
         )
 
-
     requests = requests.order_by(
         "-created_at"
     )
-
 
     return render(
         request,
@@ -3383,7 +5391,6 @@ def review_deletion_request(
     request,
     request_id,
 ):
-
     action = request.POST.get(
         "action"
     )
@@ -3392,7 +5399,6 @@ def review_deletion_request(
         "reviewer_notes",
         "",
     ).strip()
-
 
     if action not in [
         "approve",
@@ -3408,7 +5414,6 @@ def review_deletion_request(
             "eic_deletion_requests"
         )
 
-
     with transaction.atomic():
 
         deletion_request = get_object_or_404(
@@ -3420,7 +5425,6 @@ def review_deletion_request(
             ),
             id=request_id,
         )
-
 
         if (
             deletion_request.status
@@ -3439,7 +5443,6 @@ def review_deletion_request(
                 "eic_deletion_requests"
             )
 
-
         article = (
             Article.objects
             .select_for_update()
@@ -3447,7 +5450,6 @@ def review_deletion_request(
                 id=deletion_request.article_id
             )
         )
-
 
         if action == "approve":
 
@@ -3461,7 +5463,6 @@ def review_deletion_request(
                 return redirect(
                     "eic_deletion_requests"
                 )
-
 
             if not article.is_published:
 
@@ -3477,7 +5478,6 @@ def review_deletion_request(
                     "eic_deletion_requests"
                 )
 
-
             active_edit_request = (
                 EditRequest.objects.filter(
                     article=article,
@@ -3487,7 +5487,6 @@ def review_deletion_request(
                     ],
                 ).exists()
             )
-
 
             if active_edit_request:
 
@@ -3504,13 +5503,9 @@ def review_deletion_request(
                     "eic_deletion_requests"
                 )
 
-
             article.is_published = False
             article.is_archived = True
-            article.archived_at = (
-                timezone.now()
-            )
-
+            article.archived_at = timezone.now()
 
             article.save(
                 update_fields=[
@@ -3520,7 +5515,6 @@ def review_deletion_request(
                     "updated_at",
                 ]
             )
-
 
             deletion_request.status = (
                 DeletionRequest.Status.APPROVED
@@ -3534,7 +5528,6 @@ def review_deletion_request(
                 timezone.now()
             )
 
-
             deletion_request.save(
                 update_fields=[
                     "status",
@@ -3542,7 +5535,6 @@ def review_deletion_request(
                     "reviewed_at",
                 ]
             )
-
 
             notify_user(
                 deletion_request.requested_by,
@@ -3557,7 +5549,6 @@ def review_deletion_request(
                 ),
             )
 
-
             messages.success(
                 request,
                 (
@@ -3565,7 +5556,6 @@ def review_deletion_request(
                     f'archived successfully.'
                 ),
             )
-
 
         elif action == "reject":
 
@@ -3581,7 +5571,6 @@ def review_deletion_request(
                 timezone.now()
             )
 
-
             deletion_request.save(
                 update_fields=[
                     "status",
@@ -3589,7 +5578,6 @@ def review_deletion_request(
                     "reviewed_at",
                 ]
             )
-
 
             notify_user(
                 deletion_request.requested_by,
@@ -3603,7 +5591,6 @@ def review_deletion_request(
                 ),
             )
 
-
             messages.warning(
                 request,
                 (
@@ -3611,7 +5598,6 @@ def review_deletion_request(
                     f'"{article.title}" was rejected.'
                 ),
             )
-
 
     return redirect(
         "eic_deletion_requests"
@@ -3630,7 +5616,6 @@ def report_article_content(
     request,
     article_id,
 ):
-
     article = get_object_or_404(
         Article.objects.select_related(
             "category",
@@ -3642,7 +5627,6 @@ def report_article_content(
         draft_type=Article.DraftType.NORMAL,
     )
 
-
     existing_report = (
         ContentReport.objects.filter(
             article=article,
@@ -3653,7 +5637,6 @@ def report_article_content(
             ],
         ).exists()
     )
-
 
     if existing_report:
 
@@ -3669,14 +5652,12 @@ def report_article_content(
             "my_content_reports"
         )
 
-
     if request.method == "POST":
 
         description = request.POST.get(
             "description",
             "",
         ).strip()
-
 
         if not description:
 
@@ -3688,7 +5669,6 @@ def report_article_content(
                 ),
             )
 
-
         else:
 
             with transaction.atomic():
@@ -3698,7 +5678,6 @@ def report_article_content(
                     .select_for_update(),
                     id=article.id,
                 )
-
 
                 if (
                     not locked_article.is_published
@@ -3719,7 +5698,6 @@ def report_article_content(
                         "published_articles"
                     )
 
-
                 existing_report = (
                     ContentReport.objects.filter(
                         article=locked_article,
@@ -3730,7 +5708,6 @@ def report_article_content(
                         ],
                     ).exists()
                 )
-
 
                 if existing_report:
 
@@ -3746,14 +5723,12 @@ def report_article_content(
                         "my_content_reports"
                     )
 
-
                 ContentReport.objects.create(
                     article=locked_article,
                     reported_by=request.user,
                     description=description,
                     status=ContentReport.Status.OPEN,
                 )
-
 
                 notify_eics(
                     Notification.Type.CONTENT_REPORT,
@@ -3768,7 +5743,6 @@ def report_article_content(
                     exclude_user_id=request.user.id,
                 )
 
-
             messages.success(
                 request,
                 (
@@ -3777,11 +5751,9 @@ def report_article_content(
                 ),
             )
 
-
             return redirect(
                 "my_content_reports"
             )
-
 
     return render(
         request,
@@ -3796,12 +5768,10 @@ def report_article_content(
     User.Role.STAFF
 )
 def my_content_reports(request):
-
     search_query = request.GET.get(
         "q",
         "",
     ).strip()
-
 
     reports = (
         ContentReport.objects
@@ -3817,12 +5787,14 @@ def my_content_reports(request):
         )
     )
 
-
     if search_query:
 
         reports = reports.filter(
             Q(
                 article__title__icontains=search_query
+            )
+            | Q(
+                article__subtitle__icontains=search_query
             )
             | Q(
                 article__content__icontains=search_query
@@ -3838,11 +5810,9 @@ def my_content_reports(request):
             )
         )
 
-
     reports = reports.order_by(
         "-created_at"
     )
-
 
     return render(
         request,
@@ -3862,7 +5832,6 @@ def cancel_content_report(
     request,
     report_id,
 ):
-
     with transaction.atomic():
 
         report = get_object_or_404(
@@ -3875,8 +5844,10 @@ def cancel_content_report(
             reported_by=request.user,
         )
 
-
-        if report.status != ContentReport.Status.OPEN:
+        if (
+            report.status
+            != ContentReport.Status.OPEN
+        ):
 
             messages.warning(
                 request,
@@ -3890,11 +5861,9 @@ def cancel_content_report(
                 "my_content_reports"
             )
 
-
         report.status = (
             ContentReport.Status.CANCELLED
         )
-
 
         report.save(
             update_fields=[
@@ -3903,7 +5872,6 @@ def cancel_content_report(
             ]
         )
 
-
     messages.warning(
         request,
         (
@@ -3911,7 +5879,6 @@ def cancel_content_report(
             f'"{report.article.title}" was cancelled.'
         ),
     )
-
 
     return redirect(
         "my_content_reports"
@@ -3922,12 +5889,10 @@ def cancel_content_report(
     User.Role.EIC
 )
 def eic_content_reports(request):
-
     search_query = request.GET.get(
         "q",
         "",
     ).strip()
-
 
     reports = (
         ContentReport.objects
@@ -3947,12 +5912,14 @@ def eic_content_reports(request):
         )
     )
 
-
     if search_query:
 
         reports = reports.filter(
             Q(
                 article__title__icontains=search_query
+            )
+            | Q(
+                article__subtitle__icontains=search_query
             )
             | Q(
                 article__content__icontains=search_query
@@ -3974,11 +5941,9 @@ def eic_content_reports(request):
             )
         )
 
-
     reports = reports.order_by(
         "-created_at"
     )
-
 
     return render(
         request,
@@ -3998,12 +5963,10 @@ def resolve_content_report(
     request,
     report_id,
 ):
-
     staff_notes = request.POST.get(
         "staff_notes",
         "",
     ).strip()
-
 
     if not staff_notes:
 
@@ -4019,7 +5982,6 @@ def resolve_content_report(
             "eic_content_reports"
         )
 
-
     with transaction.atomic():
 
         report = get_object_or_404(
@@ -4032,8 +5994,10 @@ def resolve_content_report(
             id=report_id,
         )
 
-
-        if report.status != ContentReport.Status.OPEN:
+        if (
+            report.status
+            != ContentReport.Status.OPEN
+        ):
 
             messages.warning(
                 request,
@@ -4047,14 +6011,12 @@ def resolve_content_report(
                 "eic_content_reports"
             )
 
-
         report.status = (
             ContentReport.Status.RESOLVED
         )
 
         report.staff_notes = staff_notes
         report.resolved_at = timezone.now()
-
 
         report.save(
             update_fields=[
@@ -4064,7 +6026,6 @@ def resolve_content_report(
                 "updated_at",
             ]
         )
-
 
         notify_user(
             report.reported_by,
@@ -4079,7 +6040,6 @@ def resolve_content_report(
             ),
         )
 
-
     messages.success(
         request,
         (
@@ -4087,7 +6047,6 @@ def resolve_content_report(
             f'"{report.article.title}" was resolved.'
         ),
     )
-
 
     return redirect(
         "eic_content_reports"
@@ -4102,12 +6061,10 @@ def require_revision_from_report(
     request,
     report_id,
 ):
-
     staff_notes = request.POST.get(
         "staff_notes",
         "",
     ).strip()
-
 
     if not staff_notes:
 
@@ -4119,7 +6076,6 @@ def require_revision_from_report(
         return redirect(
             "eic_content_reports"
         )
-
 
     with transaction.atomic():
 
@@ -4134,8 +6090,10 @@ def require_revision_from_report(
             id=report_id,
         )
 
-
-        if report.status != ContentReport.Status.OPEN:
+        if (
+            report.status
+            != ContentReport.Status.OPEN
+        ):
 
             messages.warning(
                 request,
@@ -4149,7 +6107,6 @@ def require_revision_from_report(
                 "eic_content_reports"
             )
 
-
         original_article = (
             Article.objects
             .select_for_update()
@@ -4157,11 +6114,17 @@ def require_revision_from_report(
                 "author",
                 "category",
             )
+            .prefetch_related(
+                "tags",
+                "contributors",
+                "contributors__user",
+                "attachments",
+                "video_attachments",
+            )
             .get(
                 id=report.article_id
             )
         )
-
 
         if not original_article.is_published:
 
@@ -4177,21 +6140,16 @@ def require_revision_from_report(
                 "eic_content_reports"
             )
 
-
         if original_article.is_archived:
 
             messages.warning(
                 request,
-                (
-                    "This article is already "
-                    "archived."
-                ),
+                "This article is already archived.",
             )
 
             return redirect(
                 "eic_content_reports"
             )
-
 
         if (
             original_article.draft_type
@@ -4210,18 +6168,17 @@ def require_revision_from_report(
                 "eic_content_reports"
             )
 
-
-        if (
-            original_article.author.role
-            != User.Role.EDITOR
-        ):
+        if original_article.author.role not in [
+            User.Role.EDITOR,
+            User.Role.EIC,
+        ]:
 
             messages.warning(
                 request,
                 (
-                    "This corrective revision workflow "
-                    "currently requires the published "
-                    "article to belong to an Editor."
+                    "Corrective revisions can only be "
+                    "assigned to articles authored by an "
+                    "Editor or the Editor in Chief."
                 ),
             )
 
@@ -4229,6 +6186,70 @@ def require_revision_from_report(
                 "eic_content_reports"
             )
 
+        if (
+            original_article.author.role
+            == User.Role.EIC
+        ):
+
+            report.status = (
+                ContentReport.Status.REVISION_REQUIRED
+            )
+
+            report.staff_notes = staff_notes
+
+            report.forced_edit_request = None
+
+            report.save(
+                update_fields=[
+                    "status",
+                    "staff_notes",
+                    "forced_edit_request",
+                    "updated_at",
+                ]
+            )
+
+            notify_user(
+                original_article.author,
+                Notification.Type.REVISION,
+                (
+                    f'A corrective revision is required for '
+                    f'your article "{original_article.title}" '
+                    f'because of a Staff content report.'
+                ),
+                reverse(
+                    "edit_published_article",
+                    args=[
+                        original_article.id
+                    ],
+                ),
+            )
+
+            notify_user(
+                report.reported_by,
+                Notification.Type.CONTENT_REPORT,
+                (
+                    f'The EIC reviewed your report for '
+                    f'"{original_article.title}" and marked '
+                    f'the article for corrective revision.'
+                ),
+                reverse(
+                    "my_content_reports"
+                ),
+            )
+
+            messages.success(
+                request,
+                (
+                    f'"{original_article.title}" was marked '
+                    f'for corrective revision. Because the '
+                    f'article belongs to the EIC, the revision '
+                    f'will be completed through direct editing.'
+                ),
+            )
+
+            return redirect(
+                "eic_content_reports"
+            )
 
         existing_edit_request = (
             EditRequest.objects.filter(
@@ -4239,7 +6260,6 @@ def require_revision_from_report(
                 ],
             ).exists()
         )
-
 
         if existing_edit_request:
 
@@ -4255,14 +6275,12 @@ def require_revision_from_report(
                 "eic_content_reports"
             )
 
-
         existing_deletion_request = (
             DeletionRequest.objects.filter(
                 article=original_article,
                 status=DeletionRequest.Status.PENDING,
             ).exists()
         )
-
 
         if existing_deletion_request:
 
@@ -4278,16 +6296,16 @@ def require_revision_from_report(
                 "eic_content_reports"
             )
 
-
         existing_draft = (
             Article.objects.filter(
                 source_article=original_article,
-                draft_type=Article.DraftType.EDIT_REQUEST,
+                draft_type=(
+                    Article.DraftType.EDIT_REQUEST
+                ),
                 is_published=False,
                 is_archived=False,
             ).exists()
         )
-
 
         if existing_draft:
 
@@ -4303,14 +6321,14 @@ def require_revision_from_report(
                 "eic_content_reports"
             )
 
-
         forced_edit_request = (
             EditRequest.objects.create(
                 article=original_article,
                 requested_by=original_article.author,
                 reason=(
-                    "Revision required by the Editor in Chief "
-                    f"because of Staff Content Report #{report.id}."
+                    "Revision required by the "
+                    "Editor in Chief because of "
+                    f"Staff Content Report #{report.id}."
                 ),
                 status=EditRequest.Status.APPROVED,
                 reviewer_notes=staff_notes,
@@ -4318,70 +6336,75 @@ def require_revision_from_report(
             )
         )
 
-
-        base_slug = (
-            f"{original_article.slug}-"
-            f"report-revision-{report.id}"
-        )
-
-        edit_draft_slug = base_slug
-        counter = 1
-
-
-        while Article.objects.filter(
-            slug=edit_draft_slug
-        ).exists():
-
-            edit_draft_slug = (
-                f"{base_slug}-{counter}"
+        edit_draft_slug = (
+            generate_unique_article_slug(
+                original_article.title,
+                suffix=(
+                    f"report-revision-{report.id}"
+                ),
             )
-
-            counter += 1
-
+        )
 
         edit_draft = Article.objects.create(
             title=original_article.title,
+            subtitle=original_article.subtitle,
+            excerpt=original_article.excerpt,
             slug=edit_draft_slug,
             category=original_article.category,
+            attachment_mode=original_article.attachment_mode,
             author=original_article.author,
             content=original_article.content,
             featured_image=(
                 original_article.featured_image
             ),
-            draft_type=Article.DraftType.EDIT_REQUEST,
+            featured_image_caption=(
+                original_article
+                .featured_image_caption
+            ),
+            featured_image_credit=(
+                original_article
+                .featured_image_credit
+            ),
+            version_number=(
+                original_article.version_number
+                + 1
+            ),
+            draft_type=(
+                Article.DraftType.EDIT_REQUEST
+            ),
             source_article=original_article,
             is_published=False,
             is_archived=False,
         )
 
-
         edit_draft.tags.set(
             original_article.tags.all()
         )
 
+        copy_article_contributors(
+            original_article,
+            edit_draft,
+        )
 
-        for attachment in (
-            original_article.attachments.all()
-        ):
+        copy_article_attachments(
+            original_article,
+            edit_draft,
+        )
 
-            ArticleAttachment.objects.create(
-                article=edit_draft,
-                image=attachment.image,
-                caption=attachment.caption,
-            )
-
+        copy_article_video_attachments(
+            original_article,
+            edit_draft,
+        )
 
         forced_edit_request.draft_article = (
             edit_draft
         )
-
 
         forced_edit_request.save(
             update_fields=[
                 "draft_article",
             ]
         )
-
 
         report.status = (
             ContentReport.Status.REVISION_REQUIRED
@@ -4393,7 +6416,6 @@ def require_revision_from_report(
             forced_edit_request
         )
 
-
         report.save(
             update_fields=[
                 "status",
@@ -4402,7 +6424,6 @@ def require_revision_from_report(
                 "updated_at",
             ]
         )
-
 
         notify_user(
             original_article.author,
@@ -4417,7 +6438,6 @@ def require_revision_from_report(
             ),
         )
 
-
         notify_user(
             report.reported_by,
             Notification.Type.CONTENT_REPORT,
@@ -4431,7 +6451,6 @@ def require_revision_from_report(
             ),
         )
 
-
     messages.success(
         request,
         (
@@ -4440,7 +6459,6 @@ def require_revision_from_report(
             f'to {original_article.author.username}.'
         ),
     )
-
 
     return redirect(
         "eic_content_reports"
@@ -4456,12 +6474,10 @@ def require_revision_from_report(
     User.Role.EIC
 )
 def archived_articles(request):
-
     search_query = request.GET.get(
         "q",
         "",
     ).strip()
-
 
     articles = (
         Article.objects
@@ -4475,16 +6491,24 @@ def archived_articles(request):
         )
         .prefetch_related(
             "attachments",
+            "video_attachments",
             "tags",
+            "contributors",
+            "contributors__user",
         )
     )
-
 
     if search_query:
 
         articles = articles.filter(
             Q(
                 title__icontains=search_query
+            )
+            | Q(
+                subtitle__icontains=search_query
+            )
+            | Q(
+                excerpt__icontains=search_query
             )
             | Q(
                 content__icontains=search_query
@@ -4496,10 +6520,15 @@ def archived_articles(request):
                 author__username__icontains=search_query
             )
             | Q(
+                contributors__user__username__icontains=search_query
+            )
+            | Q(
+                contributors__role__icontains=search_query
+            )
+            | Q(
                 tags__name__icontains=search_query
             )
         )
-
 
     articles = (
         articles
@@ -4509,7 +6538,6 @@ def archived_articles(request):
         )
         .distinct()
     )
-
 
     return render(
         request,
@@ -4529,7 +6557,6 @@ def restore_archived_article(
     request,
     article_id,
 ):
-
     with transaction.atomic():
 
         article = get_object_or_404(
@@ -4542,7 +6569,6 @@ def restore_archived_article(
             id=article_id,
             draft_type=Article.DraftType.NORMAL,
         )
-
 
         if not article.is_archived:
 
@@ -4558,7 +6584,6 @@ def restore_archived_article(
                 "archived_articles"
             )
 
-
         active_edit_request = (
             EditRequest.objects.filter(
                 article=article,
@@ -4568,7 +6593,6 @@ def restore_archived_article(
                 ],
             ).exists()
         )
-
 
         if active_edit_request:
 
@@ -4584,16 +6608,15 @@ def restore_archived_article(
                 "archived_articles"
             )
 
-
         article.is_archived = False
         article.is_published = True
         article.archived_at = None
 
-
         if article.published_at is None:
 
-            article.published_at = timezone.now()
-
+            article.published_at = (
+                timezone.now()
+            )
 
         article.save(
             update_fields=[
@@ -4605,21 +6628,23 @@ def restore_archived_article(
             ]
         )
 
-
-        if article.author.role == User.Role.EDITOR:
+        if (
+            article.author.role
+            == User.Role.EDITOR
+        ):
 
             notify_user(
                 article.author,
                 Notification.Type.GENERAL,
                 (
-                    f'The archived article "{article.title}" '
-                    f'was restored by the Editor in Chief.'
+                    f'The archived article '
+                    f'"{article.title}" was restored '
+                    f'by the Editor in Chief.'
                 ),
                 reverse(
                     "published_articles"
                 ),
             )
-
 
     messages.success(
         request,
@@ -4628,7 +6653,6 @@ def restore_archived_article(
             f'and published again.'
         ),
     )
-
 
     return redirect(
         "archived_articles"

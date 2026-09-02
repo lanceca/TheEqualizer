@@ -1,0 +1,457 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<style>
+
+    .version-detail-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .version-detail-header h1 {
+        margin-bottom: 6px;
+    }
+
+    .version-detail-heading-meta {
+        margin: 0;
+        color: var(--eq-muted);
+    }
+
+    .version-detail-panel {
+        padding: 26px;
+        background: var(--eq-white);
+        border: 1px solid var(--eq-border);
+        border-radius: var(--eq-radius);
+        box-shadow: var(--eq-shadow);
+    }
+
+    .version-detail-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 18px;
+    }
+
+    .version-detail-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(
+                auto-fit,
+                minmax(190px, 1fr)
+            );
+        gap: 12px;
+        margin: 18px 0 24px;
+    }
+
+    .version-detail-meta-card {
+        padding: 12px 14px;
+        border: 1px solid var(--eq-border);
+        border-radius: 7px;
+        background: var(--eq-offwhite);
+    }
+
+    .version-detail-meta-card span {
+        display: block;
+        margin-bottom: 3px;
+        color: var(--eq-muted);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+    }
+
+    .version-detail-meta-card strong {
+        color: var(--eq-charcoal);
+    }
+
+    .version-detail-section {
+        margin-top: 28px;
+        padding-top: 20px;
+        border-top: 1px solid var(--eq-border);
+    }
+
+    .version-detail-section h2 {
+        margin-top: 0;
+        padding-bottom: 8px;
+        border-bottom: 2px solid var(--eq-green-soft);
+        font-size: 20px;
+    }
+
+    .version-detail-content {
+        overflow-wrap: anywhere;
+        line-height: 1.75;
+    }
+
+    .version-detail-contributor-list {
+        display: grid;
+        gap: 7px;
+    }
+
+    .version-video-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(
+                auto-fill,
+                minmax(280px, 1fr)
+            );
+        gap: 18px;
+    }
+
+    .version-video-card {
+        padding: 12px;
+        border: 1px solid var(--eq-border);
+        border-radius: 8px;
+        background: var(--eq-offwhite);
+    }
+
+    .version-video-card video {
+        display: block;
+        width: 100%;
+        max-height: 380px;
+        background: #000000;
+        border-radius: 6px;
+    }
+
+</style>
+
+
+<div class="version-detail-header">
+
+    <div>
+
+        <h1>
+            Version {{ article_version.version_number }}
+        </h1>
+
+        <p class="version-detail-heading-meta">
+            {{ article.title }}
+        </p>
+
+    </div>
+
+    <a
+        href="{% url 'article_version_history' article.id %}"
+        class="secondary-button"
+    >
+        Back to Version History
+    </a>
+
+</div>
+
+
+<div class="version-detail-panel">
+
+    <div class="version-detail-badges">
+
+        <span class="status-badge status-approved">
+            Version {{ article_version.version_number }}
+        </span>
+
+        <span class="status-badge badge-edit">
+            {{ article_version.get_change_type_display }}
+        </span>
+
+        {% if article_version.version_number == article.version_number %}
+
+            <span class="status-badge status-approved">
+                Current Published Version
+            </span>
+
+        {% endif %}
+
+    </div>
+
+
+    <h2>
+        {{ article_version.title }}
+    </h2>
+
+    {% if article_version.subtitle %}
+
+        <p class="article-detail-subtitle">
+            {{ article_version.subtitle }}
+        </p>
+
+    {% endif %}
+
+
+    <div class="version-detail-grid">
+
+        <div class="version-detail-meta-card">
+            <span>Category</span>
+            <strong>
+                {{ article_version.category_name|default:"Unavailable" }}
+            </strong>
+        </div>
+
+        <div class="version-detail-meta-card">
+            <span>Primary Author</span>
+            <strong>
+                {{ article_version.author_name|default:"Unavailable" }}
+            </strong>
+        </div>
+
+        <div class="version-detail-meta-card">
+            <span>Attachment Type</span>
+            <strong>
+                {{ article_version.get_attachment_mode_display }}
+            </strong>
+        </div>
+
+        <div class="version-detail-meta-card">
+            <span>Version Created</span>
+            <strong>
+                {{ article_version.created_at|date:"M. d, Y - g:i A" }}
+            </strong>
+        </div>
+
+        <div class="version-detail-meta-card">
+            <span>Version Created By</span>
+            <strong>
+                {% if article_version.created_by_name %}
+                    {{ article_version.created_by_name }}
+                {% else %}
+                    System / pre-history baseline
+                {% endif %}
+            </strong>
+        </div>
+
+        <div class="version-detail-meta-card">
+            <span>Change Type</span>
+            <strong>
+                {{ article_version.get_change_type_display }}
+            </strong>
+        </div>
+
+    </div>
+
+
+    {% if article_version.excerpt %}
+
+        <div class="article-excerpt-box">
+
+            <strong>
+                Summary
+            </strong>
+
+            <p>
+                {{ article_version.excerpt|linebreaksbr }}
+            </p>
+
+        </div>
+
+    {% endif %}
+
+
+    {% if article_version.contributors %}
+
+        <section class="version-detail-section">
+
+            <h2>
+                Contributors
+            </h2>
+
+            <div class="version-detail-contributor-list">
+
+                {% for contributor in article_version.contributors %}
+
+                    <p class="article-meta">
+                        <strong>
+                            {{ contributor.role_display }}:
+                        </strong>
+                        {{ contributor.username }}
+                    </p>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+    {% endif %}
+
+
+    {% if article_version.featured_image %}
+
+        <section class="version-detail-section">
+
+            <h2>
+                Featured Image
+            </h2>
+
+            <img
+                src="{{ article_version.featured_image_url }}"
+                alt="{{ article_version.title }}"
+                class="featured-image"
+                tabindex="0"
+                role="button"
+                data-lightbox-image
+            >
+
+            {% if article_version.featured_image_caption %}
+
+                <p class="featured-image-caption">
+                    {{ article_version.featured_image_caption }}
+                </p>
+
+            {% endif %}
+
+            {% if article_version.featured_image_credit %}
+
+                <p class="featured-image-credit">
+                    {{ article_version.featured_image_credit }}
+                </p>
+
+            {% endif %}
+
+        </section>
+
+    {% endif %}
+
+
+    <section class="version-detail-section">
+
+        <h2>
+            Article Content
+        </h2>
+
+        <div class="version-detail-content">
+            {{ article_version.content|linebreaksbr }}
+        </div>
+
+    </section>
+
+
+    {% if article_version.tags %}
+
+        <section class="version-detail-section">
+
+            <h2>
+                Tags
+            </h2>
+
+            <div class="tag-list">
+
+                {% for tag in article_version.tags %}
+
+                    <span class="tag-item">
+                        {{ tag }}
+                    </span>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+    {% endif %}
+
+
+    {% if article_version.image_attachments.all %}
+
+        <section class="version-detail-section">
+
+            <h2>
+                Attached Images
+            </h2>
+
+            <p class="form-help">
+                Click an image to enlarge it.
+            </p>
+
+            <div class="attachment-gallery">
+
+                {% for attachment in article_version.image_attachments.all %}
+
+                    <div class="attachment-item">
+
+                        <img
+                            src="{{ attachment.image_url }}"
+                            alt="{{ attachment.alt_text|default:attachment.caption|default:'Article version attachment' }}"
+                            class="attachment-image"
+                            tabindex="0"
+                            role="button"
+                            data-lightbox-image
+                        >
+
+                        {% if attachment.caption %}
+
+                            <p class="attachment-caption">
+                                {{ attachment.caption }}
+                            </p>
+
+                        {% endif %}
+
+                        {% if attachment.credit %}
+
+                            <p class="attachment-credit">
+                                {{ attachment.credit }}
+                            </p>
+
+                        {% endif %}
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+    {% endif %}
+
+
+    {% if article_version.video_attachments.all %}
+
+        <section class="version-detail-section">
+
+            <h2>
+                Attached Videos
+            </h2>
+
+            <div class="version-video-grid">
+
+                {% for attachment in article_version.video_attachments.all %}
+
+                    <div class="version-video-card">
+
+                        <video controls preload="metadata">
+                            <source src="{{ attachment.video_url }}">
+                            Your browser does not support video playback.
+                        </video>
+
+                        {% if attachment.caption %}
+
+                            <p class="attachment-caption">
+                                {{ attachment.caption }}
+                            </p>
+
+                        {% endif %}
+
+                        {% if attachment.credit %}
+
+                            <p class="attachment-credit">
+                                {{ attachment.credit }}
+                            </p>
+
+                        {% endif %}
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+    {% endif %}
+
+</div>
+
+
+{% endblock %}

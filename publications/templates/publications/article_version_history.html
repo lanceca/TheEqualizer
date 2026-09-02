@@ -1,0 +1,242 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<style>
+
+    .version-history-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .version-history-header h1 {
+        margin-bottom: 6px;
+    }
+
+    .version-history-summary {
+        margin: 0;
+        color: var(--eq-muted);
+    }
+
+    .version-history-list {
+        position: relative;
+        display: grid;
+        gap: 16px;
+        margin-top: 24px;
+    }
+
+    .version-history-card {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 16px;
+        padding: 20px;
+        background: var(--eq-white);
+        border: 1px solid var(--eq-border);
+        border-left: 5px solid var(--eq-green);
+        border-radius: var(--eq-radius);
+        box-shadow: var(--eq-shadow);
+    }
+
+    .version-history-card.current {
+        border-left-color: var(--eq-gold);
+    }
+
+    .version-number-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        background: var(--eq-green-deep);
+        color: var(--eq-white);
+        font-weight: 800;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+
+    .version-history-card.current .version-number-badge {
+        background: var(--eq-gold);
+        color: var(--eq-green-deep);
+    }
+
+    .version-history-main h2 {
+        margin: 0 0 6px;
+        padding: 0;
+        border: none;
+        font-size: 18px;
+    }
+
+    .version-history-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+        margin: 0;
+        color: var(--eq-muted);
+        font-size: 13px;
+    }
+
+    .version-history-current {
+        display: inline-block;
+        margin-left: 8px;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: var(--eq-cream);
+        color: #705814;
+        font-size: 11px;
+        font-weight: 700;
+        vertical-align: middle;
+    }
+
+    .version-history-empty {
+        margin-top: 20px;
+    }
+
+    @media (max-width: 700px) {
+
+        .version-history-card {
+            grid-template-columns: auto 1fr;
+        }
+
+        .version-history-action {
+            grid-column: 1 / -1;
+        }
+
+        .version-history-action a {
+            width: 100%;
+            text-align: center;
+        }
+
+    }
+
+</style>
+
+
+<div class="version-history-header">
+
+    <div>
+
+        <h1>
+            Version History
+        </h1>
+
+        <p class="version-history-summary">
+            <strong>{{ article.title }}</strong>
+            &middot;
+            Current published version:
+            {{ article.version_number }}
+        </p>
+
+    </div>
+
+    <a
+        href="{% url 'published_articles' %}"
+        class="secondary-button"
+    >
+        Back to Published Articles
+    </a>
+
+</div>
+
+
+<div class="info-box">
+
+    This timeline contains official published states only.
+    Draft saves and unapproved submissions do not create article versions.
+
+</div>
+
+
+{% if versions %}
+
+    <div class="version-history-list">
+
+        {% for version in versions %}
+
+            <article
+                class="version-history-card{% if version.version_number == article.version_number %} current{% endif %}"
+            >
+
+                <div class="version-number-badge">
+                    V{{ version.version_number }}
+                </div>
+
+
+                <div class="version-history-main">
+
+                    <h2>
+
+                        {{ version.get_change_type_display }}
+
+                        {% if version.version_number == article.version_number %}
+
+                            <span class="version-history-current">
+                                Current
+                            </span>
+
+                        {% endif %}
+
+                    </h2>
+
+                    <p class="version-history-meta">
+
+                        <span>
+                            {{ version.created_at|date:"M. d, Y - g:i A" }}
+                        </span>
+
+                        <span>
+                            By
+                            {% if version.created_by_name %}
+                                {{ version.created_by_name }}
+                            {% else %}
+                                System / pre-history baseline
+                            {% endif %}
+                        </span>
+
+                        {% if version.category_name %}
+
+                            <span>
+                                {{ version.category_name }}
+                            </span>
+
+                        {% endif %}
+
+                    </p>
+
+                </div>
+
+
+                <div class="version-history-action">
+
+                    <a
+                        href="{% url 'article_version_detail' article.id version.version_number %}"
+                        class="secondary-button"
+                    >
+                        View Version
+                    </a>
+
+                </div>
+
+            </article>
+
+        {% endfor %}
+
+    </div>
+
+{% else %}
+
+    <div class="empty-message version-history-empty">
+
+        No saved article-version snapshots are available yet.
+
+    </div>
+
+{% endif %}
+
+
+{% endblock %}

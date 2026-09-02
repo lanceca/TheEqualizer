@@ -26,6 +26,210 @@
     <style>
 
         /* ==========================================
+           GLOBAL SITE HEADER / BRAND
+           ========================================== */
+
+        :root {
+            --eq-header-green: #184536;
+            --eq-header-green-deep: #0f2d24;
+            --eq-header-gold: #d6ad32;
+            --eq-header-muted: #6f7a74;
+            --eq-header-border: #d5ddd8;
+            --eq-header-bg: #ffffff;
+        }
+
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 4000;
+
+            width: 100%;
+
+            background: var(--eq-header-bg);
+
+            border-bottom:
+                1px solid var(--eq-header-border);
+
+            box-shadow:
+                0 3px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .site-header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 24px;
+
+            width: 100%;
+
+            padding: 14px 24px;
+        }
+
+        .site-brand {
+            display: inline-flex;
+            align-items: center;
+
+            gap: 13px;
+
+            min-width: 0;
+
+            color: var(--eq-header-green);
+
+            text-decoration: none;
+        }
+
+        .site-brand:hover {
+            color: var(--eq-header-green-deep);
+        }
+
+        .site-brand-logo {
+            display: block;
+
+            width: 50px;
+            height: 50px;
+
+            flex: 0 0 50px;
+
+            object-fit: cover;
+
+            border: 2px solid var(--eq-header-gold);
+            border-radius: 50%;
+
+            background: #ffffff;
+
+            box-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .site-brand-text {
+            display: flex;
+            flex-direction: column;
+
+            min-width: 0;
+        }
+
+        .site-brand-title {
+            margin: 0;
+            padding: 0;
+
+            border: none;
+
+            color: var(--eq-header-green);
+
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1.1;
+
+            letter-spacing: 0.2px;
+        }
+
+        .site-brand-subtitle {
+            margin-top: 4px;
+
+            color: var(--eq-header-muted);
+
+            font-size: 12px;
+            line-height: 1.2;
+        }
+
+        .site-nav {
+            display: flex;
+            align-items: center;
+
+            gap: 8px;
+
+            margin-left: auto;
+        }
+
+        .site-nav-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            min-height: 38px;
+
+            padding: 8px 13px;
+
+            border: 1px solid transparent;
+            border-radius: 999px;
+
+            color: var(--eq-header-green);
+
+            font-size: 14px;
+            font-weight: 600;
+
+            text-decoration: none;
+
+            transition:
+                background 0.2s ease,
+                border-color 0.2s ease,
+                color 0.2s ease;
+        }
+
+        .site-nav-link:hover {
+            background: #f1f6f3;
+
+            border-color: var(--eq-header-border);
+
+            color: var(--eq-header-green-deep);
+        }
+
+        .site-nav-link-primary {
+            background: var(--eq-header-green);
+
+            border-color: var(--eq-header-green);
+
+            color: #ffffff;
+        }
+
+        .site-nav-link-primary:hover {
+            background: var(--eq-header-green-deep);
+
+            border-color: var(--eq-header-green-deep);
+
+            color: #ffffff;
+        }
+
+        @media (max-width: 720px) {
+
+            .site-header-inner {
+                align-items: flex-start;
+                flex-direction: column;
+
+                gap: 12px;
+
+                padding: 12px 16px;
+            }
+
+            .site-brand-logo {
+                width: 44px;
+                height: 44px;
+
+                flex-basis: 44px;
+            }
+
+            .site-brand-title {
+                font-size: 19px;
+            }
+
+            .site-brand-subtitle {
+                font-size: 11px;
+            }
+
+            .site-nav {
+                width: 100%;
+                margin-left: 0;
+            }
+
+            .site-nav-link {
+                flex: 1;
+            }
+
+        }
+
+
+        /* ==========================================
            GLOBAL MESSAGE POPUPS
            ========================================== */
 
@@ -164,38 +368,76 @@
 </head>
 
 
-<body>
+<body class="{% block body_class %}{% endblock %}">
 
 
-    <header>
+    <header class="site-header">
 
-        <h1>
-            The Equalizer
-        </h1>
+        <div class="site-header-inner">
 
+            <a
+                href="{% url 'home' %}"
+                class="site-brand"
+                aria-label="The Equalizer homepage"
+            >
 
-        <nav>
+                <img
+                    src="{% static 'images/equalizer-logo.jpg' %}"
+                    alt="The Equalizer logo"
+                    class="site-brand-logo"
+                >
 
-            <a href="{% url 'home' %}">
-                Home
+                <span class="site-brand-text">
+
+                    <span class="site-brand-title">
+                        The Equalizer
+                    </span>
+
+                    <span class="site-brand-subtitle">
+                        Student Publication Portal
+                    </span>
+
+                </span>
+
             </a>
 
 
-            {% if user.is_authenticated %}
+            <nav
+                class="site-nav"
+                aria-label="Primary navigation"
+            >
 
-                <a href="{% url 'dashboard' %}">
-                    Dashboard
+                <a
+                    href="{% url 'home' %}"
+                    class="site-nav-link"
+                >
+                    Home
                 </a>
 
-            {% else %}
 
-                <a href="{% url 'login' %}">
-                    Staff Login
-                </a>
+                {% if user.is_authenticated %}
 
-            {% endif %}
+                    <a
+                        href="{% url 'dashboard' %}"
+                        class="site-nav-link"
+                    >
+                        Dashboard
+                    </a>
 
-        </nav>
+                {% else %}
+
+                    <a
+                        href="{% url 'login' %}"
+                        class="site-nav-link site-nav-link-primary"
+                    >
+                        Staff Login
+                    </a>
+
+                {% endif %}
+
+            </nav>
+
+        </div>
 
     </header>
 

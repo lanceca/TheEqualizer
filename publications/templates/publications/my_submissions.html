@@ -264,6 +264,35 @@
 
                     </p>
 
+                    {% if submission.snapshot_contributors %}
+
+                        <div class="article-contributors">
+                            <h3>Contributors</h3>
+
+                            {% for contributor in submission.snapshot_contributors %}
+                                <p class="submission-meta">
+                                    <strong>{{ contributor.role_display }}:</strong>
+                                    {{ contributor.username }}
+                                </p>
+                            {% endfor %}
+                        </div>
+
+                    {% elif not submission.snapshot_title and submission.article.contributors.all %}
+
+                        <div class="article-contributors">
+                            <h3>Contributors</h3>
+
+                            {% for contributor in submission.article.contributors.all %}
+                                <p class="submission-meta">
+                                    <strong>{{ contributor.get_role_display }}:</strong>
+                                    {{ contributor.user.username }}
+                                </p>
+                            {% endfor %}
+                        </div>
+
+                    {% endif %}
+
+
                     {% if submission.reviewed_at %}
 
                         <p class="submission-meta">

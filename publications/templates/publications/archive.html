@@ -121,6 +121,23 @@
                                 {{ article.author.username }}
                             </p>
 
+                            {% if article.contributors.all %}
+
+                                <div class="article-contributors">
+                                    <p class="article-meta">
+                                        <strong>Contributors:</strong>
+                                    </p>
+
+                                    {% for contributor in article.contributors.all %}
+                                        <p class="article-meta">
+                                            <strong>{{ contributor.get_role_display }}:</strong>
+                                            {{ contributor.user.username }}
+                                        </p>
+                                    {% endfor %}
+                                </div>
+
+                            {% endif %}
+
                             <p class="article-meta">
                                 <strong>Category:</strong>
                                 {{ article.category.name }}

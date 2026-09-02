@@ -67,6 +67,7 @@
 
                     <option
                         value="{{ category.id }}"
+                        data-category-slug="{{ category.slug }}"
                         {% if category.id == article.category_id %}
                             selected
                         {% endif %}
@@ -126,39 +127,88 @@
         </div>
 
 
-        <div class="form-group">
+
+        <div class="form-group" id="attachment-mode-group" hidden>
 
             <label>
-                Current Attachments
+                Attachment Type
             </label>
 
-            {% if article.attachments.all %}
+            <input
+                type="hidden"
+                id="attachment_mode"
+                name="attachment_mode"
+                value="{{ article.attachment_mode }}"
+            >
 
-                <div class="attachment-gallery">
+            <div
+                id="attachment-mode-toggle"
+                class="media-type-toggle"
+                hidden
+            >
+                <button
+                    type="button"
+                    class="media-type-button"
+                    data-attachment-mode="IMAGE"
+                    aria-pressed="false"
+                >
+                    Image Attachments
+                </button>
+
+                <button
+                    type="button"
+                    class="media-type-button"
+                    data-attachment-mode="VIDEO"
+                    aria-pressed="false"
+                >
+                    Video Attachments
+                </button>
+            </div>
+
+            <p class="form-help">
+                The attachment type toggle is available only for the Videos category.
+            </p>
+
+        </div>
+
+
+        {% if article.attachments.all %}
+
+            <div class="form-group">
+
+                <label>
+                    Current Image Attachments
+                </label>
+
+                <p class="form-help">
+                    Select Remove for image attachments that should not remain.
+                </p>
+
+                <div class="editable-attachment-gallery">
 
                     {% for attachment in article.attachments.all %}
 
-                        <div class="attachment-edit-item">
+                        <div class="editable-attachment-card">
 
                             <img
                                 src="{{ attachment.image.url }}"
-                                alt="{{ attachment.caption|default:'Article attachment' }}"
+                                alt="{{ attachment.alt_text|default:attachment.caption|default:'Article attachment' }}"
                                 class="attachment-image"
-                                tabindex="0"
-                                role="button"
-                                data-lightbox-image
                             >
 
-                            <label class="attachment-remove-option">
+                            {% if attachment.caption %}
+                                <p class="attachment-caption">
+                                    {{ attachment.caption }}
+                                </p>
+                            {% endif %}
 
+                            <label class="remove-attachment">
                                 <input
                                     type="checkbox"
                                     name="remove_attachments"
                                     value="{{ attachment.id }}"
                                 >
-
-                                Remove image
-
+                                <span>Remove</span>
                             </label>
 
                         </div>
@@ -167,30 +217,106 @@
 
                 </div>
 
-            {% else %}
+            </div>
+
+        {% endif %}
+
+
+        {% if article.video_attachments.all %}
+
+            <div class="form-group">
+
+                <label>
+                    Current Video Attachments
+                </label>
 
                 <p class="form-help">
-                    This article currently has no attachments.
+                    Select Remove for video attachments that should not remain.
                 </p>
 
-            {% endif %}
+                <div class="video-attachment-grid">
 
-        </div>
+                    {% for attachment in article.video_attachments.all %}
+
+                        <div class="video-attachment-card">
+
+                            <video controls preload="metadata">
+                                <source src="{{ attachment.video.url }}">
+                                Your browser does not support HTML video.
+                            </video>
+
+                            {% if attachment.caption %}
+                                <p class="attachment-caption">
+                                    {{ attachment.caption }}
+                                </p>
+                            {% endif %}
+
+                            <label class="remove-attachment">
+                                <input
+                                    type="checkbox"
+                                    name="remove_video_attachments"
+                                    value="{{ attachment.id }}"
+                                >
+                                <span>Remove</span>
+                            </label>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        {% endif %}
 
 
-        <div class="form-group">
+        <div
+            class="form-group"
+            id="image-attachment-panel"
+        >
 
             <label for="attachments">
-                Add Attachments
+                Add Image Attachments
             </label>
 
             <input
                 type="file"
                 id="attachments"
                 name="attachments"
-                accept="image/*"
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                 multiple
             >
+
+            <p class="form-help">
+                Up to 15 image attachments per article.
+            </p>
+
+        </div>
+
+
+        <div
+            class="form-group"
+            id="video-attachment-panel"
+            hidden
+        >
+
+            <label for="video_attachments">
+                Add Video Attachments
+            </label>
+
+            <input
+                type="file"
+                id="video_attachments"
+                name="video_attachments"
+                accept=".mp4,.mov,.webm,.m4v,video/mp4,video/quicktime,video/webm,video/x-m4v"
+                multiple
+                disabled
+            >
+
+            <p class="form-help">
+                Videos category only. Up to 5 MP4, MOV, WEBM, or M4V files.
+            </p>
 
         </div>
 
@@ -269,5 +395,123 @@
 
 </div>
 
+
+<style>
+
+.media-type-toggle {
+    display: inline-flex;
+    gap: 8px;
+    padding: 5px;
+    margin-top: 10px;
+    border: 1px solid var(--eq-border);
+    border-radius: 10px;
+    background: var(--eq-offwhite);
+}
+
+.media-type-button {
+    border: 1px solid transparent;
+    border-radius: 7px;
+    padding: 9px 14px;
+    background: transparent;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.media-type-button.is-active {
+    border-color: var(--eq-border);
+    background: #ffffff;
+}
+
+.video-attachment-grid {
+    display: grid;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.video-attachment-card {
+    padding: 12px;
+    border: 1px solid var(--eq-border);
+    border-radius: 8px;
+    background: var(--eq-offwhite);
+}
+
+.video-attachment-card video {
+    display: block;
+    width: 100%;
+    max-height: 320px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    background: #000000;
+}
+
+</style>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const categorySelect = document.getElementById("category");
+    const modeGroup = document.getElementById("attachment-mode-group");
+    const toggleWrap = document.getElementById("attachment-mode-toggle");
+    const modeInput = document.getElementById("attachment_mode");
+    const imagePanel = document.getElementById("image-attachment-panel");
+    const videoPanel = document.getElementById("video-attachment-panel");
+    const imageInput = document.getElementById("attachments");
+    const videoInput = document.getElementById("video_attachments");
+    const buttons = document.querySelectorAll("[data-attachment-mode]");
+
+    if (!categorySelect || !modeGroup || !toggleWrap || !modeInput || !imagePanel || !videoPanel) {
+        return;
+    }
+
+    function selectedCategorySlug() {
+        const option = categorySelect.options[categorySelect.selectedIndex];
+        return option ? option.dataset.categorySlug || "" : "";
+    }
+
+    function setMode(mode) {
+        const isVideosCategory = selectedCategorySlug() === "videos";
+
+        if (!isVideosCategory) {
+            mode = "IMAGE";
+        }
+
+        modeInput.value = mode;
+        modeGroup.hidden = !isVideosCategory;
+        toggleWrap.hidden = !isVideosCategory;
+        imagePanel.hidden = mode !== "IMAGE";
+        videoPanel.hidden = mode !== "VIDEO";
+
+        if (imageInput) {
+            imageInput.disabled = mode !== "IMAGE";
+        }
+
+        if (videoInput) {
+            videoInput.disabled = mode !== "VIDEO";
+        }
+
+        buttons.forEach(function (button) {
+            const active = button.dataset.attachmentMode === mode;
+            button.classList.toggle("is-active", active);
+            button.setAttribute("aria-pressed", active ? "true" : "false");
+        });
+    }
+
+    buttons.forEach(function (button) {
+        button.addEventListener("click", function () {
+            setMode(button.dataset.attachmentMode);
+        });
+    });
+
+    categorySelect.addEventListener("change", function () {
+        if (selectedCategorySlug() === "videos") {
+            setMode(modeInput.value === "VIDEO" ? "VIDEO" : "IMAGE");
+        } else {
+            setMode("IMAGE");
+        }
+    });
+
+    setMode(modeInput.value || "IMAGE");
+});
+</script>
 
 {% endblock %}

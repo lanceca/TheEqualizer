@@ -1,9 +1,73 @@
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import F
 from django.http import HttpResponseForbidden
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import (
+    get_object_or_404,
+    redirect,
+    render,
+)
+from django.utils import timezone
 
+from analytics.models import ArticleDailyAnalytics
 from publications.models import Article
+
+
+# ==========================================================
+# ANALYTICS HELPERS
+# ==========================================================
+
+
+def increment_daily_article_analytics(
+    article,
+    *,
+    views=0,
+    reactions=0,
+    shares=0,
+):
+    """
+    Increment the current Manila-calendar-day analytics row
+    for a published article.
+
+    Lifetime counters remain stored on Article itself.
+    This model provides historical daily trend data.
+    """
+
+    today = timezone.localdate()
+
+    with transaction.atomic():
+
+        daily_analytics, created = (
+            ArticleDailyAnalytics.objects
+            .select_for_update()
+            .get_or_create(
+                article=article,
+                date=today,
+            )
+        )
+
+        updates = {}
+
+        if views:
+            updates["views"] = F("views") + views
+
+        if reactions:
+            updates["reactions"] = (
+                F("reactions") + reactions
+            )
+
+        if shares:
+            updates["shares"] = (
+                F("shares") + shares
+            )
+
+        if updates:
+
+            ArticleDailyAnalytics.objects.filter(
+                id=daily_analytics.id
+            ).update(
+                **updates
+            )
 
 
 # ==========================================================
@@ -37,7 +101,9 @@ def home(request):
         request,
         "home/home.html",
         {
-            "published_articles": published_articles,
+            "published_articles": (
+                published_articles
+            ),
         },
     )
 
@@ -82,11 +148,20 @@ def article_detail(
 
     if article.id not in viewed_articles:
 
-        Article.objects.filter(
-            id=article.id
-        ).update(
-            view_count=F("view_count") + 1
-        )
+        with transaction.atomic():
+
+            Article.objects.filter(
+                id=article.id
+            ).update(
+                view_count=F(
+                    "view_count"
+                ) + 1
+            )
+
+            increment_daily_article_analytics(
+                article,
+                views=1,
+            )
 
         viewed_articles.append(
             article.id
@@ -102,7 +177,6 @@ def article_detail(
             ]
         )
 
-
     reacted_articles = request.session.get(
         "reacted_articles",
         [],
@@ -112,7 +186,6 @@ def article_detail(
         "shared_articles",
         [],
     )
-
 
     return render(
         request,
@@ -144,10 +217,10 @@ def react_to_article(
 ):
 
     if request.method != "POST":
+
         return HttpResponseForbidden(
             "This action requires a POST request."
         )
-
 
     article = get_object_or_404(
         Article,
@@ -157,12 +230,10 @@ def react_to_article(
         is_archived=False,
     )
 
-
     reacted_articles = request.session.get(
         "reacted_articles",
         [],
     )
-
 
     if article.id in reacted_articles:
 
@@ -176,13 +247,20 @@ def react_to_article(
             slug=article.slug,
         )
 
+    with transaction.atomic():
 
-    Article.objects.filter(
-        id=article.id
-    ).update(
-        reaction_count=F("reaction_count") + 1
-    )
+        Article.objects.filter(
+            id=article.id
+        ).update(
+            reaction_count=F(
+                "reaction_count"
+            ) + 1
+        )
 
+        increment_daily_article_analytics(
+            article,
+            reactions=1,
+        )
 
     reacted_articles.append(
         article.id
@@ -192,12 +270,10 @@ def react_to_article(
         "reacted_articles"
     ] = reacted_articles
 
-
     messages.success(
         request,
         "Your reaction was recorded.",
     )
-
 
     return redirect(
         "article_detail",
@@ -216,10 +292,10 @@ def share_article(
 ):
 
     if request.method != "POST":
+
         return HttpResponseForbidden(
             "This action requires a POST request."
         )
-
 
     article = get_object_or_404(
         Article,
@@ -229,21 +305,27 @@ def share_article(
         is_archived=False,
     )
 
-
     shared_articles = request.session.get(
         "shared_articles",
         [],
     )
 
-
     if article.id not in shared_articles:
 
-        Article.objects.filter(
-            id=article.id
-        ).update(
-            share_count=F("share_count") + 1
-        )
+        with transaction.atomic():
 
+            Article.objects.filter(
+                id=article.id
+            ).update(
+                share_count=F(
+                    "share_count"
+                ) + 1
+            )
+
+            increment_daily_article_analytics(
+                article,
+                shares=1,
+            )
 
         shared_articles.append(
             article.id
@@ -252,7 +334,6 @@ def share_article(
         request.session[
             "shared_articles"
         ] = shared_articles
-
 
     return redirect(
         "article_detail",

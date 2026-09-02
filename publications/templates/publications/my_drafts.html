@@ -152,6 +152,24 @@
                         {% endif %}
 
 
+                        {% if article.contributors.all %}
+
+                            <div class="article-contributors">
+
+                                <h3>Contributors</h3>
+
+                                {% for contributor in article.contributors.all %}
+                                    <p class="article-meta">
+                                        <strong>{{ contributor.get_role_display }}:</strong>
+                                        {{ contributor.user.username }}
+                                    </p>
+                                {% endfor %}
+
+                            </div>
+
+                        {% endif %}
+
+
                         <h3>
                             Article Content
                         </h3>
@@ -395,6 +413,24 @@
                                     role="button"
                                     data-lightbox-image
                                 >
+
+                            {% endif %}
+
+
+                            {% if article.contributors.all %}
+
+                                <div class="article-contributors">
+
+                                    <h3>Contributors</h3>
+
+                                    {% for contributor in article.contributors.all %}
+                                        <p class="article-meta">
+                                            <strong>{{ contributor.get_role_display }}:</strong>
+                                            {{ contributor.user.username }}
+                                        </p>
+                                    {% endfor %}
+
+                                </div>
 
                             {% endif %}
 
