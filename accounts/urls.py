@@ -77,9 +77,25 @@ urlpatterns = [
     ),
 
     path(
+        "profile/change-username/",
+        views.change_username,
+        name="change_username",
+    ),
+
+    path(
         "profile/change-password/",
         views.change_password,
         name="change_password",
+    ),
+
+    # =========================
+    # ADVISER / EIC DIRECTORY
+    # =========================
+
+    path(
+        "staff-directory/",
+        views.staff_directory,
+        name="staff_directory",
     ),
 
     # =========================

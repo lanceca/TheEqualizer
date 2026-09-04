@@ -218,4 +218,48 @@ urlpatterns = [
         name="restore_archived_article",
     ),
 
+
+    path(
+        "archive/<int:article_id>/delete-permanently/",
+        views.permanently_delete_archived_article,
+        name="permanently_delete_archived_article",
+    ),
+
+
+
+    # =========================
+    # DIGITAL PUBLICATIONS
+    # EIC MANAGEMENT
+    # =========================
+
+    path(
+        "digital-publications/",
+        views.digital_publication_management,
+        name="digital_publication_management",
+    ),
+
+    path(
+        "digital-publications/create/",
+        views.create_digital_publication,
+        name="create_digital_publication",
+    ),
+
+    path(
+        "digital-publications/<int:publication_id>/edit/",
+        views.edit_digital_publication,
+        name="edit_digital_publication",
+    ),
+
+    path(
+        "digital-publications/<int:publication_id>/status/",
+        views.set_digital_publication_status,
+        name="set_digital_publication_status",
+    ),
+
+    path(
+        "digital-publications/<int:publication_id>/delete/",
+        views.delete_digital_publication,
+        name="delete_digital_publication",
+    ),
+
 ]

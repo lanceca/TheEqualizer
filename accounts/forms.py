@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.validators import UnicodeUsernameValidator
 
 
 User = get_user_model()
@@ -522,3 +523,120 @@ class StaffAccountEditForm(forms.ModelForm):
             )
 
         return role
+
+# ==========================================================
+# SELF-SERVICE USERNAME CHANGE
+# ==========================================================
+
+
+class UsernameChangeForm(forms.Form):
+
+    new_username = forms.CharField(
+        label="New Username",
+        max_length=150,
+        validators=[
+            UnicodeUsernameValidator(),
+        ],
+        widget=forms.TextInput(
+            attrs={
+                "autocomplete": "username",
+                "placeholder": "Enter your new username",
+            }
+        ),
+    )
+
+    current_password = forms.CharField(
+        label="Current Password",
+        widget=forms.PasswordInput(
+            attrs={
+                "autocomplete": "current-password",
+                "placeholder": "Confirm with your current password",
+            }
+        ),
+    )
+
+    def __init__(
+        self,
+        *args,
+        user,
+        **kwargs,
+    ):
+        super().__init__(
+            *args,
+            **kwargs,
+        )
+
+        self.user = user
+
+        self.fields[
+            "new_username"
+        ].initial = user.username
+
+    def clean_new_username(self):
+
+        username = (
+            self.cleaned_data.get(
+                "new_username",
+                "",
+            )
+            .strip()
+        )
+
+        if not username:
+            raise forms.ValidationError(
+                "Username is required."
+            )
+
+        existing_user = (
+            User.objects
+            .filter(
+                username__iexact=username
+            )
+            .exclude(
+                id=self.user.id
+            )
+            .exists()
+        )
+
+        if existing_user:
+            raise forms.ValidationError(
+                (
+                    "Another account is already using "
+                    "this username."
+                )
+            )
+
+        return username
+
+    def clean_current_password(self):
+
+        password = self.cleaned_data.get(
+            "current_password",
+            "",
+        )
+
+        if not self.user.check_password(
+            password
+        ):
+            raise forms.ValidationError(
+                "Your current password is incorrect."
+            )
+
+        return password
+
+    def save(self):
+
+        self.user.username = (
+            self.cleaned_data[
+                "new_username"
+            ]
+        )
+
+        self.user.save(
+            update_fields=[
+                "username",
+            ]
+        )
+
+        return self.user
+

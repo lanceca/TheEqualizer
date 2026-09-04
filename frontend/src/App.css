@@ -1,0 +1,84 @@
+.react-reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 4500;
+  width: 100%;
+  height: 3px;
+  pointer-events: none;
+}
+
+.react-reading-progress__bar {
+  width: 0;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--react-eq-gold),
+    #f0d36f
+  );
+  box-shadow:
+    0 1px 6px rgba(214, 173, 50, 0.35);
+  transition: width 0.08s linear;
+}
+
+.react-back-to-top {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 3500;
+
+  display: grid;
+  place-items: center;
+
+  width: 44px;
+  height: 44px;
+
+  border:
+    1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+
+  background: var(--react-eq-green);
+  color: var(--react-eq-white);
+
+  box-shadow:
+    0 8px 24px rgba(15, 45, 36, 0.22);
+
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 800;
+
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease,
+    background 0.18s ease;
+}
+
+.react-back-to-top:hover {
+  background: var(--react-eq-green-deep);
+}
+
+.react-back-to-top.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+@media (max-width: 720px) {
+  .react-back-to-top {
+    right: 14px;
+    bottom: 14px;
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .react-reading-progress__bar,
+  .react-back-to-top {
+    transition: none;
+  }
+}

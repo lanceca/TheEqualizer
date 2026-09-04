@@ -3,6 +3,8 @@ from pathlib import Path
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from PIL import Image, UnidentifiedImageError
+from pypdf import PdfReader
+from pypdf.errors import PdfReadError
 
 
 def validate_article_image(uploaded_file):
@@ -425,3 +427,292 @@ def validate_article_video(uploaded_file):
         ):
             pass
 
+# ==========================================================
+# ARTICLE / REPORT TEXT LIMITS
+# ==========================================================
+
+ARTICLE_TEXT_LIMITS = {
+    "title": 255,
+    "subtitle": 300,
+    "excerpt": 600,
+    "content": 30_000,
+    "featured_image_caption": 255,
+    "featured_image_credit": 255,
+}
+
+CONTENT_REPORT_DESCRIPTION_MAX_LENGTH = 2_000
+
+
+def validate_text_length(
+    value,
+    *,
+    field_label,
+    max_length,
+):
+    """
+    Enforce a server-side character limit.
+
+    HTML maxlength is only a convenience for the browser and can
+    be bypassed, so staff-submitted text is checked again here.
+    """
+
+    value = value or ""
+
+    if len(value) > max_length:
+        raise ValidationError(
+            (
+                f"{field_label} cannot exceed "
+                f"{max_length:,} characters. "
+                f"Current length: {len(value):,}."
+            )
+        )
+
+
+def validate_article_text_fields(
+    *,
+    title="",
+    subtitle="",
+    excerpt="",
+    content="",
+    featured_image_caption="",
+    featured_image_credit="",
+):
+    fields = (
+        (
+            title,
+            "Article title",
+            ARTICLE_TEXT_LIMITS["title"],
+        ),
+        (
+            subtitle,
+            "Subtitle",
+            ARTICLE_TEXT_LIMITS["subtitle"],
+        ),
+        (
+            excerpt,
+            "Excerpt / Summary",
+            ARTICLE_TEXT_LIMITS["excerpt"],
+        ),
+        (
+            content,
+            "Article content",
+            ARTICLE_TEXT_LIMITS["content"],
+        ),
+        (
+            featured_image_caption,
+            "Featured image caption",
+            ARTICLE_TEXT_LIMITS[
+                "featured_image_caption"
+            ],
+        ),
+        (
+            featured_image_credit,
+            "Featured image credit",
+            ARTICLE_TEXT_LIMITS[
+                "featured_image_credit"
+            ],
+        ),
+    )
+
+    for value, field_label, max_length in fields:
+        validate_text_length(
+            value,
+            field_label=field_label,
+            max_length=max_length,
+        )
+
+
+def validate_content_report_description(
+    description,
+):
+    validate_text_length(
+        description,
+        field_label="Content concern",
+        max_length=(
+            CONTENT_REPORT_DESCRIPTION_MAX_LENGTH
+        ),
+    )
+
+
+
+# ==========================================================
+# DIGITAL PUBLICATION PDF VALIDATION
+# ==========================================================
+
+
+def inspect_digital_publication_pdf(uploaded_file):
+    """
+    Validate and inspect a Digital Publication PDF.
+
+    Returns metadata used by DigitalPublication:
+    {
+        "page_count": int,
+        "file_size": int,
+    }
+    """
+
+    if not uploaded_file:
+        raise ValidationError(
+            "Please upload a PDF file."
+        )
+
+    max_size = getattr(
+        settings,
+        "DIGITAL_PUBLICATION_PDF_MAX_SIZE",
+        100 * 1024 * 1024,
+    )
+
+    file_size = getattr(
+        uploaded_file,
+        "size",
+        None,
+    )
+
+    if (
+        file_size is not None
+        and file_size > max_size
+    ):
+        max_size_mb = (
+            max_size / 1024 / 1024
+        )
+
+        raise ValidationError(
+            (
+                "PDF file is too large. "
+                "The maximum allowed size is "
+                f"{max_size_mb:.0f} MB."
+            )
+        )
+
+    filename = getattr(
+        uploaded_file,
+        "name",
+        "",
+    )
+
+    extension = (
+        Path(filename)
+        .suffix
+        .lower()
+    )
+
+    if extension != ".pdf":
+        raise ValidationError(
+            "Digital publications must use a .pdf file."
+        )
+
+    content_type = (
+        getattr(
+            uploaded_file,
+            "content_type",
+            "",
+        )
+        or ""
+    ).lower()
+
+    if (
+        content_type
+        and content_type
+        not in {
+            "application/pdf",
+            "application/x-pdf",
+        }
+    ):
+        raise ValidationError(
+            "The uploaded file is not reported as a PDF."
+        )
+
+    original_position = 0
+
+    try:
+        if hasattr(
+            uploaded_file,
+            "tell",
+        ):
+            original_position = (
+                uploaded_file.tell()
+            )
+
+        uploaded_file.seek(0)
+
+        signature = uploaded_file.read(5)
+
+        if signature != b"%PDF-":
+            raise ValidationError(
+                (
+                    "The uploaded file does not appear "
+                    "to be a valid PDF document."
+                )
+            )
+
+        uploaded_file.seek(0)
+
+        reader = PdfReader(
+            uploaded_file,
+            strict=False,
+        )
+
+        if reader.is_encrypted:
+            raise ValidationError(
+                (
+                    "Password-protected or encrypted PDFs "
+                    "cannot be used as Digital Publications."
+                )
+            )
+
+        page_count = len(
+            reader.pages
+        )
+
+        if page_count < 1:
+            raise ValidationError(
+                (
+                    "The uploaded PDF does not contain "
+                    "any readable pages."
+                )
+            )
+
+        return {
+            "page_count": page_count,
+            "file_size": (
+                file_size
+                if file_size is not None
+                else 0
+            ),
+        }
+
+    except ValidationError:
+        raise
+
+    except (
+        PdfReadError,
+        OSError,
+        ValueError,
+        TypeError,
+    ) as error:
+        raise ValidationError(
+            (
+                "The uploaded PDF could not be read. "
+                "Please use a valid, non-encrypted PDF."
+            )
+        ) from error
+
+    finally:
+        try:
+            uploaded_file.seek(
+                original_position
+            )
+        except (
+            AttributeError,
+            OSError,
+            ValueError,
+        ):
+            pass
+
+
+def validate_digital_publication_pdf(
+    uploaded_file,
+):
+    inspect_digital_publication_pdf(
+        uploaded_file
+    )

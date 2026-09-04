@@ -49,7 +49,55 @@
                 name="title"
                 value="{{ article.title }}"
                 required
+            
+                maxlength="255"
+                data-char-limit="255"
+                data-char-counter-field="title">
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="subtitle">
+                Subtitle
+            </label>
+
+            <input
+                type="text"
+                id="subtitle"
+                name="subtitle"
+                value="{{ article.subtitle }}"
+                maxlength="300"
+                data-char-limit="300"
+                data-char-counter-field="subtitle"
             >
+
+            <p class="form-help">
+                Optional secondary headline displayed below the main title.
+            </p>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="excerpt">
+                Excerpt / Summary
+            </label>
+
+            <textarea
+                id="excerpt"
+                name="excerpt"
+                rows="4"
+                maxlength="600"
+                data-char-limit="600"
+                data-char-counter-field="excerpt"
+            >{{ article.excerpt }}</textarea>
+
+            <p class="form-help">
+                Optional short summary used in article previews and search results.
+            </p>
 
         </div>
 
@@ -81,6 +129,271 @@
                 {% endfor %}
 
             </select>
+
+        </div>
+
+
+        <!-- ==================================================
+             CONTRIBUTORS
+             ================================================== -->
+
+        <div class="form-group">
+
+            <label>
+                Contributors
+            </label>
+
+            <p class="form-help">
+                Credit publication members who contributed to this article.
+                The primary author does not need to be added again.
+            </p>
+
+
+            {% if available_contributors %}
+
+                <div
+                    id="contributor-list"
+                    class="contributor-list"
+                >
+
+                    {% if article.contributors.all %}
+
+                        {% for contributor in article.contributors.all %}
+
+                            <div class="contributor-row">
+
+                                <div class="contributor-field">
+
+                                    <label>
+                                        Role
+                                    </label>
+
+                                    <select name="contributor_roles">
+
+                                        <option value="">
+                                            Select Role
+                                        </option>
+
+                                        {% for role_value, role_label in contributor_role_choices %}
+
+                                            <option
+                                                value="{{ role_value }}"
+                                                {% if contributor.role == role_value %}
+                                                    selected
+                                                {% endif %}
+                                            >
+                                                {{ role_label }}
+                                            </option>
+
+                                        {% endfor %}
+
+                                    </select>
+
+                                </div>
+
+
+                                <div class="contributor-field">
+
+                                    <label>
+                                        Name
+                                    </label>
+
+                                    <select name="contributor_users">
+
+                                        <option value="">
+                                            Select Publication Member
+                                        </option>
+
+                                        {% for contributor_user in available_contributors %}
+
+                                            <option
+                                                value="{{ contributor_user.id }}"
+                                                {% if contributor.user_id == contributor_user.id %}
+                                                    selected
+                                                {% endif %}
+                                            >
+                                                {{ contributor_user.username }}
+                                            </option>
+
+                                        {% endfor %}
+
+                                    </select>
+
+                                </div>
+
+
+                                <div class="contributor-remove-field">
+
+                                    <button
+                                        type="button"
+                                        class="danger-button contributor-remove-button"
+                                    >
+                                        Remove
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        {% endfor %}
+
+                    {% else %}
+
+                        <div class="contributor-row">
+
+                            <div class="contributor-field">
+
+                                <label>
+                                    Role
+                                </label>
+
+                                <select name="contributor_roles">
+
+                                    <option value="">
+                                        Select Role
+                                    </option>
+
+                                    {% for role_value, role_label in contributor_role_choices %}
+
+                                        <option value="{{ role_value }}">
+                                            {{ role_label }}
+                                        </option>
+
+                                    {% endfor %}
+
+                                </select>
+
+                            </div>
+
+
+                            <div class="contributor-field">
+
+                                <label>
+                                    Name
+                                </label>
+
+                                <select name="contributor_users">
+
+                                    <option value="">
+                                        Select Publication Member
+                                    </option>
+
+                                    {% for contributor_user in available_contributors %}
+
+                                        <option value="{{ contributor_user.id }}">
+                                            {{ contributor_user.username }}
+                                        </option>
+
+                                    {% endfor %}
+
+                                </select>
+
+                            </div>
+
+
+                            <div class="contributor-remove-field">
+
+                                <button
+                                    type="button"
+                                    class="danger-button contributor-remove-button"
+                                >
+                                    Remove
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <button
+                    type="button"
+                    id="add-contributor-button"
+                    class="secondary-action-button"
+                >
+                    + Add Contributor
+                </button>
+
+
+                <template id="contributor-row-template">
+
+                    <div class="contributor-row">
+
+                        <div class="contributor-field">
+
+                            <label>
+                                Role
+                            </label>
+
+                            <select name="contributor_roles">
+
+                                <option value="">
+                                    Select Role
+                                </option>
+
+                                {% for role_value, role_label in contributor_role_choices %}
+
+                                    <option value="{{ role_value }}">
+                                        {{ role_label }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="contributor-field">
+
+                            <label>
+                                Name
+                            </label>
+
+                            <select name="contributor_users">
+
+                                <option value="">
+                                    Select Publication Member
+                                </option>
+
+                                {% for contributor_user in available_contributors %}
+
+                                    <option value="{{ contributor_user.id }}">
+                                        {{ contributor_user.username }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="contributor-remove-field">
+
+                            <button
+                                type="button"
+                                class="danger-button contributor-remove-button"
+                            >
+                                Remove
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </template>
+
+            {% else %}
+
+                <p class="form-help">
+                    No additional publication users are currently available as contributors.
+                </p>
+
+            {% endif %}
 
         </div>
 
@@ -140,7 +453,10 @@
                 name="content"
                 class="article-content-input"
                 required
-            >{{ article.content }}</textarea>
+            
+                maxlength="30000"
+                data-char-limit="30000"
+                data-char-counter-field="content">{{ article.content }}</textarea>
 
         </div>
 
@@ -189,6 +505,52 @@
 
         </div>
 
+
+
+        <div class="form-group">
+
+            <label for="featured_image_caption">
+                Featured Image Caption
+            </label>
+
+            <input
+                type="text"
+                id="featured_image_caption"
+                name="featured_image_caption"
+                value="{{ article.featured_image_caption }}"
+                maxlength="255"
+                data-char-limit="255"
+                data-char-counter-field="featured_image_caption"
+            >
+
+            <p class="form-help">
+                Optional caption displayed with the featured image.
+            </p>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="featured_image_credit">
+                Featured Image Credit
+            </label>
+
+            <input
+                type="text"
+                id="featured_image_credit"
+                name="featured_image_credit"
+                value="{{ article.featured_image_credit }}"
+                maxlength="255"
+                data-char-limit="255"
+                data-char-counter-field="featured_image_credit"
+            >
+
+            <p class="form-help">
+                Optional photographer, artist, or source credit.
+            </p>
+
+        </div>
 
 
         <div class="form-group" id="attachment-mode-group" hidden>
@@ -386,7 +748,16 @@
 
         <div class="form-actions">
 
+            
             <button
+                type="button"
+                class="secondary-button article-preview-button"
+                data-article-preview-button
+            >
+                Preview Article
+            </button>
+
+<button
                 type="submit"
                 class="approve-button"
                 data-confirm-title="Resubmit Article"
@@ -524,6 +895,83 @@ document.addEventListener("DOMContentLoaded", function () {
 
     setMode(modeInput.value || "IMAGE");
 });
+</script>
+
+
+<script>
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const limitedFields = document.querySelectorAll(
+            "[data-char-limit]"
+        );
+
+        limitedFields.forEach(
+            function (field) {
+
+                const maxLength = Number(
+                    field.dataset.charLimit
+                );
+
+                if (!maxLength) {
+                    return;
+                }
+
+                const counter = document.createElement(
+                    "div"
+                );
+
+                counter.className =
+                    "field-character-counter";
+
+                field.insertAdjacentElement(
+                    "afterend",
+                    counter
+                );
+
+
+                function updateCharacterCounter() {
+
+                    const currentLength =
+                        field.value.length;
+
+                    counter.textContent =
+                        currentLength.toLocaleString()
+                        + " / "
+                        + maxLength.toLocaleString();
+
+                    const ratio =
+                        currentLength / maxLength;
+
+                    counter.classList.toggle(
+                        "is-warning",
+                        ratio >= 0.85
+                        && currentLength
+                        < maxLength
+                    );
+
+                    counter.classList.toggle(
+                        "is-limit",
+                        currentLength
+                        >= maxLength
+                    );
+
+                }
+
+
+                field.addEventListener(
+                    "input",
+                    updateCharacterCounter
+                );
+
+                updateCharacterCounter();
+
+            }
+        );
+
+    }
+);
 </script>
 
 {% endblock %}

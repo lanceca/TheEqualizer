@@ -1,0 +1,409 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<style>
+    .digital-publication-grid {
+        display: grid;
+        grid-template-columns: minmax(300px, 0.9fr) minmax(0, 1.6fr);
+        gap: 22px;
+        align-items: start;
+    }
+
+    .digital-publication-panel,
+    .digital-publication-card {
+        background: var(--eq-white);
+        border: 1px solid var(--eq-border);
+        border-radius: var(--eq-radius);
+        box-shadow: var(--eq-shadow);
+    }
+
+    .digital-publication-panel {
+        padding: 22px;
+        position: sticky;
+        top: 20px;
+    }
+
+    .digital-publication-panel h2,
+    .digital-publication-list h2 {
+        margin-top: 0;
+    }
+
+    .digital-field {
+        display: grid;
+        gap: 6px;
+        margin-bottom: 14px;
+    }
+
+    .digital-field label {
+        font-weight: 700;
+        color: var(--eq-charcoal);
+    }
+
+    .digital-field input,
+    .digital-field textarea,
+    .digital-field select {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 10px 11px;
+        border: 1px solid var(--eq-border);
+        border-radius: 8px;
+        background: #fff;
+        font: inherit;
+    }
+
+    .digital-field textarea {
+        min-height: 110px;
+        resize: vertical;
+    }
+
+    .digital-publication-list {
+        display: grid;
+        gap: 14px;
+    }
+
+    .digital-publication-card {
+        display: grid;
+        grid-template-columns: 120px minmax(0, 1fr);
+        gap: 18px;
+        padding: 18px;
+    }
+
+    .digital-publication-cover {
+        width: 120px;
+        aspect-ratio: 3 / 4;
+        border-radius: 8px;
+        object-fit: cover;
+        background: #edf1ee;
+        border: 1px solid var(--eq-border);
+    }
+
+    .digital-publication-cover-placeholder {
+        display: grid;
+        place-items: center;
+        text-align: center;
+        padding: 10px;
+        color: var(--eq-muted);
+        font-size: 12px;
+    }
+
+    .digital-publication-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px 13px;
+        color: var(--eq-muted);
+        font-size: 13px;
+    }
+
+    .digital-publication-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+    }
+
+    .digital-publication-actions form {
+        margin: 0;
+    }
+
+    @media (max-width: 900px) {
+        .digital-publication-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .digital-publication-panel {
+            position: static;
+        }
+    }
+
+    @media (max-width: 560px) {
+        .digital-publication-card {
+            grid-template-columns: 1fr;
+        }
+
+        .digital-publication-cover {
+            width: 100%;
+            max-width: 180px;
+        }
+    }
+</style>
+
+
+<div class="dashboard-header">
+    <h1>Digital Publications</h1>
+    <p class="dashboard-subtitle">
+        Upload, organize, publish, hide, and manage PDF issues of The Equalizer.
+    </p>
+</div>
+
+
+<div class="digital-publication-grid">
+
+    <section class="digital-publication-panel">
+
+        <h2>Upload Publication</h2>
+
+        <form
+            method="POST"
+            action="{% url 'create_digital_publication' %}"
+            enctype="multipart/form-data"
+        >
+            {% csrf_token %}
+
+            <div class="digital-field">
+                <label for="digital-title">Title</label>
+                <input
+                    id="digital-title"
+                    type="text"
+                    name="title"
+                    maxlength="255"
+                    required
+                >
+            </div>
+
+            <div class="digital-field">
+                <label for="digital-volume">Volume</label>
+                <input
+                    id="digital-volume"
+                    type="text"
+                    name="volume"
+                    maxlength="50"
+                    placeholder="Example: Volume 4"
+                >
+            </div>
+
+            <div class="digital-field">
+                <label for="digital-issue">Issue Number</label>
+                <input
+                    id="digital-issue"
+                    type="text"
+                    name="issue_number"
+                    maxlength="50"
+                    placeholder="Example: Issue 2"
+                >
+            </div>
+
+            <div class="digital-field">
+                <label for="digital-date">Publication Date</label>
+                <input
+                    id="digital-date"
+                    type="date"
+                    name="publication_date"
+                    required
+                >
+            </div>
+
+            <div class="digital-field">
+                <label for="digital-description">Description</label>
+                <textarea
+                    id="digital-description"
+                    name="description"
+                ></textarea>
+            </div>
+
+            <div class="digital-field">
+                <label for="digital-cover">Cover Image</label>
+                <input
+                    id="digital-cover"
+                    type="file"
+                    name="cover_image"
+                    accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                >
+            </div>
+
+            <div class="digital-field">
+                <label for="digital-pdf">PDF File</label>
+                <input
+                    id="digital-pdf"
+                    type="file"
+                    name="pdf_file"
+                    accept=".pdf,application/pdf"
+                    required
+                >
+            </div>
+
+            <div class="digital-field">
+                <label for="digital-status">Status</label>
+                <select
+                    id="digital-status"
+                    name="status"
+                >
+                    {% for value, label in status_choices %}
+                        <option value="{{ value }}">
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="digital-field">
+                <label for="digital-order">Display Order</label>
+                <input
+                    id="digital-order"
+                    type="number"
+                    name="display_order"
+                    min="0"
+                    value="0"
+                >
+            </div>
+
+            <button
+                type="submit"
+                class="primary-button"
+                data-loading-title="Uploading Publication"
+                data-loading-message="The PDF is being validated and saved."
+            >
+                Upload Publication
+            </button>
+
+        </form>
+
+    </section>
+
+
+    <section class="digital-publication-list">
+
+        <h2>Existing Publications</h2>
+
+        {% for publication in digital_publications %}
+
+            <article class="digital-publication-card">
+
+                {% if publication.cover_image %}
+
+                    <img
+                        src="{{ publication.cover_image.url }}"
+                        alt="{{ publication.title }} cover"
+                        class="digital-publication-cover"
+                    >
+
+                {% else %}
+
+                    <div class="digital-publication-cover digital-publication-cover-placeholder">
+                        No cover image
+                    </div>
+
+                {% endif %}
+
+
+                <div>
+
+                    <h3>{{ publication.title }}</h3>
+
+                    <div class="digital-publication-meta">
+                        <span>{{ publication.get_status_display }}</span>
+                        <span>{{ publication.publication_date|date:"M. d, Y" }}</span>
+                        <span>{{ publication.page_count }} pages</span>
+
+                        {% if publication.volume %}
+                            <span>{{ publication.volume }}</span>
+                        {% endif %}
+
+                        {% if publication.issue_number %}
+                            <span>{{ publication.issue_number }}</span>
+                        {% endif %}
+                    </div>
+
+                    {% if publication.description %}
+                        <p>
+                            {{ publication.description|truncatewords:30 }}
+                        </p>
+                    {% endif %}
+
+                    <div class="digital-publication-actions">
+
+                        <a
+                            href="{% url 'edit_digital_publication' publication.id %}"
+                            class="secondary-button"
+                        >
+                            Edit
+                        </a>
+
+                        {% if publication.status != "PUBLISHED" %}
+
+                            <form
+                                method="POST"
+                                action="{% url 'set_digital_publication_status' publication.id %}"
+                            >
+                                {% csrf_token %}
+                                <input
+                                    type="hidden"
+                                    name="status"
+                                    value="PUBLISHED"
+                                >
+                                <button
+                                    type="submit"
+                                    class="primary-button"
+                                >
+                                    Publish
+                                </button>
+                            </form>
+
+                        {% else %}
+
+                            <a
+                                href="{% url 'digital_publication_detail' publication.slug %}"
+                                class="secondary-button"
+                                target="_blank"
+                                rel="noopener"
+                            >
+                                Reader View
+                            </a>
+
+                            <form
+                                method="POST"
+                                action="{% url 'set_digital_publication_status' publication.id %}"
+                            >
+                                {% csrf_token %}
+                                <input
+                                    type="hidden"
+                                    name="status"
+                                    value="HIDDEN"
+                                >
+                                <button
+                                    type="submit"
+                                    class="secondary-button"
+                                >
+                                    Hide
+                                </button>
+                            </form>
+
+                        {% endif %}
+
+                        <form
+                            method="POST"
+                            action="{% url 'delete_digital_publication' publication.id %}"
+                            data-confirm="Permanently delete this Digital Publication and its uploaded files?"
+                        >
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                class="secondary-button"
+                            >
+                                Delete
+                            </button>
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </article>
+
+        {% empty %}
+
+            <div class="digital-publication-panel">
+                <h3>No Digital Publications yet</h3>
+                <p>
+                    Upload the first PDF issue using the form.
+                </p>
+            </div>
+
+        {% endfor %}
+
+    </section>
+
+</div>
+
+{% endblock %}

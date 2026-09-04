@@ -2,201 +2,258 @@
 
 {% block staff_content %}
 
-<h1>Manage Publication Staff</h1>
+<div class="account-workspace-header account-workspace-header--actions">
 
-<p class="section-description">
-    Create and manage Adviser, Editor in Chief, Editor, and Staff accounts.
-</p>
+    <div>
+        <p class="workflow-eyebrow">
+            Administration
+        </p>
 
+        <h1>
+            Manage Publication Staff
+        </h1>
 
-<div class="article-actions">
+        <p class="section-description">
+            Create and manage Adviser, Editor in Chief, Editor,
+            and Staff accounts.
+        </p>
+    </div>
 
     <a
         href="{% url 'create_staff_account' %}"
         class="approve-button"
     >
-        Create Staff Account
+        + Create Staff Account
     </a>
 
 </div>
 
 
-<form
-    method="GET"
-    action="{% url 'manage_staff_accounts' %}"
-    class="search-form"
->
+<div class="account-management-toolbar">
 
-    <input
-        type="text"
-        name="q"
-        value="{{ search_query }}"
-        placeholder="Search accounts..."
+    <form
+        method="GET"
+        action="{% url 'manage_staff_accounts' %}"
+        class="account-filter-form"
     >
 
-    <select name="role">
+        <div class="account-search-field">
 
-        <option value="ALL">
-            All Roles
-        </option>
+            <label for="staff-account-search">
+                Search
+            </label>
 
-        {% for value, label in role_choices %}
-
-            <option
-                value="{{ value }}"
-                {% if selected_role == value %}
-                    selected
-                {% endif %}
+            <input
+                type="text"
+                id="staff-account-search"
+                name="q"
+                value="{{ search_query }}"
+                placeholder="Username, name, or email"
             >
-                {{ label }}
-            </option>
 
-        {% endfor %}
-
-    </select>
+        </div>
 
 
-    <button
-        type="submit"
-        class="edit-link"
-    >
-        Filter
-    </button>
+        <div class="account-search-field">
 
-    {% if search_query or selected_role != "ALL" %}
+            <label for="staff-role-filter">
+                Role
+            </label>
 
-        <a
-            href="{% url 'manage_staff_accounts' %}"
-            class="edit-link"
+            <select
+                id="staff-role-filter"
+                name="role"
+            >
+
+                <option value="ALL">
+                    All Roles
+                </option>
+
+                {% for value, label in role_choices %}
+
+                    <option
+                        value="{{ value }}"
+                        {% if selected_role == value %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ label }}
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        <button
+            type="submit"
+            class="secondary-button"
         >
-            Clear
-        </a>
+            Apply Filters
+        </button>
 
-    {% endif %}
 
-</form>
+        {% if search_query or selected_role != "ALL" %}
+
+            <a
+                href="{% url 'manage_staff_accounts' %}"
+                class="text-action-link"
+            >
+                Clear
+            </a>
+
+        {% endif %}
+
+    </form>
+
+    <div class="account-result-count">
+        {{ staff_accounts|length }}
+        account{{ staff_accounts|length|pluralize }}
+    </div>
+
+</div>
 
 
 {% if staff_accounts %}
 
-    <div class="submission-list">
+    <div class="account-management-grid">
 
         {% for account in staff_accounts %}
 
-            <div class="submission-card">
+            <article class="account-management-card">
 
-                <div class="submission-details">
+                <div class="account-card-top">
 
-                    <h2>
-                        {{ account.username }}
-                    </h2>
+                    <div class="account-card-avatar">
 
-                    <p>
-                        <strong>Name:</strong>
-
-                        {% if account.first_name or account.last_name %}
-                            {{ account.first_name }} {{ account.last_name }}
-                        {% else %}
-                            Not provided
-                        {% endif %}
-                    </p>
-
-                    <p>
-                        <strong>Email:</strong>
-
-                        {% if account.email %}
-                            {{ account.email }}
-                        {% else %}
-                            Not provided
-                        {% endif %}
-                    </p>
-
-                    <p>
-                        <strong>Role:</strong>
-                        {{ account.get_role_display }}
-                    </p>
-
-                    <p>
-                        <strong>Status:</strong>
-
-                        {% if account.is_active %}
-
-                            <span class="status-badge status-approved">
-                                Active
-                            </span>
-
-                        {% else %}
-
-                            <span class="status-badge status-rejected">
-                                Inactive
-                            </span>
-
-                        {% endif %}
-
-                    </p>
-
-                    <p>
-                        <strong>Date Joined:</strong>
-                        {{ account.date_joined|date:"M. d, Y" }}
-                    </p>
-
-
-                    <div class="article-actions">
-
-                        <a
-                            href="{% url 'edit_staff_account' account.id %}"
-                            class="edit-link"
-                        >
-                            Edit Account
-                        </a>
-
-                        {% if account.is_active %}
-
-                            <form
-                                method="POST"
-                                action="{% url 'toggle_staff_account_status' account.id %}"
-                                data-confirm-title="Deactivate Account"
-                                data-confirm="Are you sure you want to deactivate {{ account.username }}?"
+                        {% if account.profile_picture %}
+                            <img
+                                src="{{ account.profile_picture.url }}"
+                                alt="{{ account.username }} profile picture"
                             >
-
-                                {% csrf_token %}
-
-                                <button
-                                    type="submit"
-                                    class="danger-link"
-                                >
-                                    Deactivate
-                                </button>
-
-                            </form>
-
                         {% else %}
-
-                            <form
-                                method="POST"
-                                action="{% url 'toggle_staff_account_status' account.id %}"
-                                data-confirm-title="Activate Account"
-                                data-confirm="Are you sure you want to activate {{ account.username }}?"
-                            >
-
-                                {% csrf_token %}
-
-                                <button
-                                    type="submit"
-                                    class="approve-button"
-                                >
-                                    Activate
-                                </button>
-
-                            </form>
-
+                            <span>
+                                {{ account.username|slice:":1"|upper }}
+                            </span>
                         {% endif %}
 
                     </div>
 
+
+                    <div class="account-card-identity">
+
+                        <span class="account-role-chip">
+                            {{ account.get_role_display }}
+                        </span>
+
+                        <h2>
+                            {{ account.username }}
+                        </h2>
+
+                        <p>
+                            {% if account.get_full_name %}
+                                {{ account.get_full_name }}
+                            {% else %}
+                                Name not provided
+                            {% endif %}
+                        </p>
+
+                    </div>
+
+
+                    {% if account.is_active %}
+                        <span class="account-status-pill is-active">
+                            Active
+                        </span>
+                    {% else %}
+                        <span class="account-status-pill is-inactive">
+                            Inactive
+                        </span>
+                    {% endif %}
+
                 </div>
 
-            </div>
+
+                <dl class="account-card-details">
+
+                    <div>
+                        <dt>Email</dt>
+                        <dd>
+                            {% if account.email %}
+                                {{ account.email }}
+                            {% else %}
+                                Not provided
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div>
+                        <dt>Date Joined</dt>
+                        <dd>{{ account.date_joined|date:"M. d, Y" }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Last Login</dt>
+                        <dd>
+                            {% if account.last_login %}
+                                {{ account.last_login|date:"M. d, Y - g:i A" }}
+                            {% else %}
+                                Never
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                </dl>
+
+
+                <div class="account-card-actions">
+
+                    <a
+                        href="{% url 'edit_staff_account' account.id %}"
+                        class="secondary-button"
+                    >
+                        Edit Account
+                    </a>
+
+
+                    <form
+                        method="POST"
+                        action="{% url 'toggle_staff_account_status' account.id %}"
+                    >
+
+                        {% csrf_token %}
+
+                        {% if account.is_active %}
+
+                            <button
+                                type="submit"
+                                class="danger-button"
+                                data-confirm-title="Deactivate Account"
+                                data-confirm="Are you sure you want to deactivate {{ account.username }}?"
+                            >
+                                Deactivate
+                            </button>
+
+                        {% else %}
+
+                            <button
+                                type="submit"
+                                class="approve-button"
+                                data-confirm-title="Activate Account"
+                                data-confirm="Are you sure you want to activate {{ account.username }}?"
+                            >
+                                Activate
+                            </button>
+
+                        {% endif %}
+
+                    </form>
+
+                </div>
+
+            </article>
 
         {% endfor %}
 
@@ -204,9 +261,12 @@
 
 {% else %}
 
-    <p class="empty-message">
-        No publication staff accounts found.
-    </p>
+    <div class="account-empty-state">
+        <strong>No publication staff accounts found.</strong>
+        <p>
+            Change the filters or create a new account.
+        </p>
+    </div>
 
 {% endif %}
 

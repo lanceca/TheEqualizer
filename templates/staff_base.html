@@ -7,7 +7,7 @@
 
 <link
     rel="stylesheet"
-    href="{% static 'css/equalizer.css' %}?v=20260902-5"
+    href="{% static 'css/equalizer.css' %}?v=20260903-editorial-lists-2"
 >
 
 
@@ -17,13 +17,37 @@
 
         <div class="staff-identity">
 
-            <strong class="staff-identity-name">
-                {{ request.user.username }}
-            </strong>
+            <div class="staff-identity-avatar">
 
-            <span class="staff-identity-role">
-                {{ request.user.get_role_display }}
-            </span>
+                {% if request.user.profile_picture %}
+
+                    <img
+                        src="{{ request.user.profile_picture.url }}"
+                        alt="{{ request.user.username }} profile picture"
+                    >
+
+                {% else %}
+
+                    <span>
+                        {{ request.user.username|slice:":1"|upper }}
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+
+            <div class="staff-identity-text">
+
+                <strong class="staff-identity-name">
+                    {{ request.user.username }}
+                </strong>
+
+                <span class="staff-identity-role">
+                    {{ request.user.get_role_display }}
+                </span>
+
+            </div>
 
         </div>
 
@@ -64,11 +88,27 @@
                         Account
                     </p>
 
-                    <a href="{% url 'notification_list' %}">
-                        Notifications
+                    <a
+                        href="{% url 'notification_list' %}"
+                        class="staff-notification-link"
+                    >
+                        <span>
+                            Notifications
+                        </span>
 
                         {% if global_unread_notification_count > 0 %}
-                            ({{ global_unread_notification_count }})
+
+                            <span
+                                class="staff-notification-badge"
+                                aria-label="{{ global_unread_notification_count }} unread notifications"
+                            >
+                                {% if global_unread_notification_count > 99 %}
+                                    99+
+                                {% else %}
+                                    {{ global_unread_notification_count }}
+                                {% endif %}
+                            </span>
+
                         {% endif %}
                     </a>
 
@@ -100,11 +140,27 @@
                         Account
                     </p>
 
-                    <a href="{% url 'notification_list' %}">
-                        Notifications
+                    <a
+                        href="{% url 'notification_list' %}"
+                        class="staff-notification-link"
+                    >
+                        <span>
+                            Notifications
+                        </span>
 
                         {% if global_unread_notification_count > 0 %}
-                            ({{ global_unread_notification_count }})
+
+                            <span
+                                class="staff-notification-badge"
+                                aria-label="{{ global_unread_notification_count }} unread notifications"
+                            >
+                                {% if global_unread_notification_count > 99 %}
+                                    99+
+                                {% else %}
+                                    {{ global_unread_notification_count }}
+                                {% endif %}
+                            </span>
+
                         {% endif %}
                     </a>
 
@@ -127,6 +183,11 @@
                         Analytics
                     </a>
 
+
+                    <a href="{% url 'staff_directory' %}">
+                        Staff Directory
+                    </a>
+
                 </div>
 
 
@@ -136,11 +197,27 @@
                         Account
                     </p>
 
-                    <a href="{% url 'notification_list' %}">
-                        Notifications
+                    <a
+                        href="{% url 'notification_list' %}"
+                        class="staff-notification-link"
+                    >
+                        <span>
+                            Notifications
+                        </span>
 
                         {% if global_unread_notification_count > 0 %}
-                            ({{ global_unread_notification_count }})
+
+                            <span
+                                class="staff-notification-badge"
+                                aria-label="{{ global_unread_notification_count }} unread notifications"
+                            >
+                                {% if global_unread_notification_count > 99 %}
+                                    99+
+                                {% else %}
+                                    {{ global_unread_notification_count }}
+                                {% endif %}
+                            </span>
+
                         {% endif %}
                     </a>
 
@@ -209,6 +286,16 @@
                         Archive
                     </a>
 
+
+                    <a href="{% url 'digital_publication_management' %}">
+                        Digital Publications
+                    </a>
+
+
+                    <a href="{% url 'staff_directory' %}">
+                        Staff Directory
+                    </a>
+
                 </div>
 
 
@@ -218,11 +305,27 @@
                         Account
                     </p>
 
-                    <a href="{% url 'notification_list' %}">
-                        Notifications
+                    <a
+                        href="{% url 'notification_list' %}"
+                        class="staff-notification-link"
+                    >
+                        <span>
+                            Notifications
+                        </span>
 
                         {% if global_unread_notification_count > 0 %}
-                            ({{ global_unread_notification_count }})
+
+                            <span
+                                class="staff-notification-badge"
+                                aria-label="{{ global_unread_notification_count }} unread notifications"
+                            >
+                                {% if global_unread_notification_count > 99 %}
+                                    99+
+                                {% else %}
+                                    {{ global_unread_notification_count }}
+                                {% endif %}
+                            </span>
+
                         {% endif %}
                     </a>
 
@@ -287,11 +390,27 @@
                         Account
                     </p>
 
-                    <a href="{% url 'notification_list' %}">
-                        Notifications
+                    <a
+                        href="{% url 'notification_list' %}"
+                        class="staff-notification-link"
+                    >
+                        <span>
+                            Notifications
+                        </span>
 
                         {% if global_unread_notification_count > 0 %}
-                            ({{ global_unread_notification_count }})
+
+                            <span
+                                class="staff-notification-badge"
+                                aria-label="{{ global_unread_notification_count }} unread notifications"
+                            >
+                                {% if global_unread_notification_count > 99 %}
+                                    99+
+                                {% else %}
+                                    {{ global_unread_notification_count }}
+                                {% endif %}
+                            </span>
+
                         {% endif %}
                     </a>
 
@@ -327,11 +446,27 @@
                         Account
                     </p>
 
-                    <a href="{% url 'notification_list' %}">
-                        Notifications
+                    <a
+                        href="{% url 'notification_list' %}"
+                        class="staff-notification-link"
+                    >
+                        <span>
+                            Notifications
+                        </span>
 
                         {% if global_unread_notification_count > 0 %}
-                            ({{ global_unread_notification_count }})
+
+                            <span
+                                class="staff-notification-badge"
+                                aria-label="{{ global_unread_notification_count }} unread notifications"
+                            >
+                                {% if global_unread_notification_count > 99 %}
+                                    99+
+                                {% else %}
+                                    {{ global_unread_notification_count }}
+                                {% endif %}
+                            </span>
+
                         {% endif %}
                     </a>
 
@@ -550,6 +685,1315 @@ document.addEventListener("DOMContentLoaded", function () {
 
 });
 
+</script>
+
+
+
+
+
+
+
+<!-- ======================================================
+     SAVED / SUBMITTED ARTICLE READER PREVIEW
+     ====================================================== -->
+
+<div
+    class="saved-article-preview-overlay"
+    id="saved-article-preview-overlay"
+    aria-hidden="true"
+>
+
+    <section
+        class="saved-article-preview-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="saved-article-preview-heading"
+    >
+
+        <div class="saved-article-preview-toolbar">
+
+            <div>
+
+                <span>
+                    Reader Preview
+                </span>
+
+                <strong id="saved-article-preview-heading">
+                    Article Preview
+                </strong>
+
+            </div>
+
+            <button
+                type="button"
+                class="saved-article-preview-close"
+                id="saved-article-preview-close"
+                aria-label="Close article preview"
+            >
+                &times;
+            </button>
+
+        </div>
+
+
+        <div
+            class="saved-article-preview-scroll"
+            id="saved-article-preview-content"
+        ></div>
+
+    </section>
+
+</div>
+
+<!-- ======================================================
+     GLOBAL EQUALIZER LOADING OVERLAY
+     ====================================================== -->
+
+<div
+    class="equalizer-loading-overlay"
+    id="equalizer-loading-overlay"
+    aria-hidden="true"
+>
+
+    <div class="equalizer-loading-card">
+
+        <div class="equalizer-loading-mark">
+
+            <span class="equalizer-loading-ring"></span>
+
+            <img
+                src="{% static 'images/equalizer-logo.jpg' %}"
+                alt=""
+                aria-hidden="true"
+            >
+
+        </div>
+
+        <strong id="equalizer-loading-title">
+            Processing
+        </strong>
+
+        <span id="equalizer-loading-message">
+            Please wait while The Equalizer completes your request.
+        </span>
+
+    </div>
+
+</div>
+
+<!-- ======================================================
+     STAFF ARTICLE PREVIEW MODAL
+     ====================================================== -->
+
+<div
+    class="staff-article-preview-overlay"
+    id="staff-article-preview-overlay"
+    aria-hidden="true"
+>
+
+    <section
+        class="staff-article-preview-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="staff-preview-title"
+    >
+
+        <div class="staff-article-preview-toolbar">
+
+            <div>
+                <span class="staff-preview-label">
+                    Reader Preview
+                </span>
+
+                <strong>
+                    This preview is not published.
+                </strong>
+            </div>
+
+            <button
+                type="button"
+                class="staff-preview-close"
+                id="staff-article-preview-close"
+                aria-label="Close article preview"
+            >
+                &times;
+            </button>
+
+        </div>
+
+
+        <div class="staff-preview-scroll">
+
+            <article class="staff-reader-preview">
+
+                <p
+                    class="staff-reader-preview-category"
+                    id="staff-preview-category"
+                ></p>
+
+                <h1 id="staff-preview-title">
+                    Untitled Article
+                </h1>
+
+                <p
+                    class="staff-reader-preview-subtitle"
+                    id="staff-preview-subtitle"
+                    hidden
+                ></p>
+
+
+                <div class="staff-reader-preview-byline">
+
+                    <span>
+                        By
+                        <strong>
+                            {{ request.user.username }}
+                        </strong>
+                    </span>
+
+                    <span id="staff-preview-contributors"></span>
+
+                </div>
+
+
+                <figure
+                    class="staff-reader-preview-featured"
+                    id="staff-preview-featured-wrap"
+                    hidden
+                >
+
+                    <img
+                        id="staff-preview-featured"
+                        src=""
+                        alt="Article preview featured image"
+                    >
+
+                    <figcaption
+                        id="staff-preview-featured-caption"
+                    ></figcaption>
+
+                </figure>
+
+
+                <p
+                    class="staff-reader-preview-excerpt"
+                    id="staff-preview-excerpt"
+                    hidden
+                ></p>
+
+
+                <div
+                    class="staff-reader-preview-content"
+                    id="staff-preview-content"
+                ></div>
+
+
+                <div
+                    class="staff-reader-preview-tags"
+                    id="staff-preview-tags"
+                ></div>
+
+
+                <section
+                    class="staff-reader-preview-media"
+                    id="staff-preview-media"
+                    hidden
+                >
+
+                    <h2>
+                        Selected / Existing Media
+                    </h2>
+
+                    <div
+                        class="staff-reader-preview-media-grid"
+                        id="staff-preview-media-grid"
+                    ></div>
+
+                </section>
+
+            </article>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<script>
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const overlay = document.getElementById(
+            "staff-article-preview-overlay"
+        );
+
+        const closeButton = document.getElementById(
+            "staff-article-preview-close"
+        );
+
+        if (!overlay) {
+            return;
+        }
+
+
+        function setText(
+            id,
+            value,
+            fallback=""
+        ) {
+
+            const element = document.getElementById(
+                id
+            );
+
+            if (!element) {
+                return;
+            }
+
+            const finalValue =
+                value
+                ? String(value).trim()
+                : fallback;
+
+            element.textContent = finalValue;
+
+            if (
+                element.hasAttribute("hidden")
+            ) {
+                element.hidden = !finalValue;
+            }
+
+        }
+
+
+        function getSelectedText(select) {
+
+            if (
+                !select
+                || select.selectedIndex < 0
+            ) {
+                return "";
+            }
+
+            return (
+                select.options[
+                    select.selectedIndex
+                ].textContent
+                || ""
+            ).trim();
+
+        }
+
+
+        function buildContributors(form) {
+
+            const rows = form.querySelectorAll(
+                ".contributor-row"
+            );
+
+            const credits = [];
+
+            rows.forEach(
+                function (row) {
+
+                    const role = row.querySelector(
+                        'select[name="contributor_roles"]'
+                    );
+
+                    const person = row.querySelector(
+                        'select[name="contributor_users"]'
+                    );
+
+                    const roleText =
+                        getSelectedText(role);
+
+                    const personText =
+                        getSelectedText(person);
+
+                    if (
+                        role
+                        && role.value
+                        && person
+                        && person.value
+                    ) {
+                        credits.push(
+                            roleText
+                            + ": "
+                            + personText
+                        );
+                    }
+
+                }
+            );
+
+            return credits.join(" • ");
+
+        }
+
+
+        function buildTags(form) {
+
+            const checked = form.querySelectorAll(
+                'input[name="tags"]:checked'
+            );
+
+            return Array.from(
+                checked
+            ).map(
+                function (input) {
+
+                    const label = input.closest(
+                        "label"
+                    );
+
+                    return label
+                        ? label.textContent.trim()
+                        : "";
+
+                }
+            ).filter(Boolean);
+
+        }
+
+
+        function clearMediaGrid() {
+
+            const mediaGrid = document.getElementById(
+                "staff-preview-media-grid"
+            );
+
+            if (!mediaGrid) {
+                return;
+            }
+
+            mediaGrid.innerHTML = "";
+
+        }
+
+
+        function appendPreviewImage(
+            mediaGrid,
+            src,
+            label
+        ) {
+
+            const card = document.createElement(
+                "figure"
+            );
+
+            card.className =
+                "staff-reader-preview-media-card";
+
+            const image = document.createElement(
+                "img"
+            );
+
+            image.src = src;
+            image.alt = label || "Article image";
+
+            card.appendChild(
+                image
+            );
+
+            if (label) {
+
+                const caption =
+                    document.createElement(
+                        "figcaption"
+                    );
+
+                caption.textContent = label;
+
+                card.appendChild(
+                    caption
+                );
+
+            }
+
+            mediaGrid.appendChild(
+                card
+            );
+
+        }
+
+
+        function appendPreviewVideo(
+            mediaGrid,
+            src,
+            label
+        ) {
+
+            const card = document.createElement(
+                "figure"
+            );
+
+            card.className =
+                "staff-reader-preview-media-card";
+
+            const video = document.createElement(
+                "video"
+            );
+
+            video.controls = true;
+            video.preload = "metadata";
+            video.src = src;
+
+            card.appendChild(
+                video
+            );
+
+            if (label) {
+
+                const caption =
+                    document.createElement(
+                        "figcaption"
+                    );
+
+                caption.textContent = label;
+
+                card.appendChild(
+                    caption
+                );
+
+            }
+
+            mediaGrid.appendChild(
+                card
+            );
+
+        }
+
+
+        function populateMediaPreview(form) {
+
+            const mediaSection =
+                document.getElementById(
+                    "staff-preview-media"
+                );
+
+            const mediaGrid =
+                document.getElementById(
+                    "staff-preview-media-grid"
+                );
+
+            if (
+                !mediaSection
+                || !mediaGrid
+            ) {
+                return;
+            }
+
+            clearMediaGrid();
+
+            let mediaCount = 0;
+
+
+            form.querySelectorAll(
+                ".editable-attachment-card"
+            ).forEach(
+                function (card) {
+
+                    const remove = card.querySelector(
+                        'input[name="remove_attachments"]'
+                    );
+
+                    const image = card.querySelector(
+                        "img"
+                    );
+
+                    if (
+                        image
+                        && !(remove && remove.checked)
+                    ) {
+
+                        appendPreviewImage(
+                            mediaGrid,
+                            image.src,
+                            "Existing image"
+                        );
+
+                        mediaCount += 1;
+
+                    }
+
+                }
+            );
+
+
+            form.querySelectorAll(
+                ".video-attachment-card"
+            ).forEach(
+                function (card) {
+
+                    const remove = card.querySelector(
+                        'input[name="remove_video_attachments"]'
+                    );
+
+                    const video = card.querySelector(
+                        "video"
+                    );
+
+                    if (
+                        video
+                        && !(remove && remove.checked)
+                    ) {
+
+                        const source = video.querySelector(
+                            "source"
+                        );
+
+                        appendPreviewVideo(
+                            mediaGrid,
+                            source
+                                ? source.src
+                                : video.src,
+                            "Existing video"
+                        );
+
+                        mediaCount += 1;
+
+                    }
+
+                }
+            );
+
+
+            const imageInput = form.querySelector(
+                'input[name="attachments"]'
+            );
+
+            if (
+                imageInput
+                && imageInput.files
+            ) {
+
+                Array.from(
+                    imageInput.files
+                ).forEach(
+                    function (file) {
+
+                        appendPreviewImage(
+                            mediaGrid,
+                            URL.createObjectURL(file),
+                            file.name
+                        );
+
+                        mediaCount += 1;
+
+                    }
+                );
+
+            }
+
+
+            const videoInput = form.querySelector(
+                'input[name="video_attachments"]'
+            );
+
+            if (
+                videoInput
+                && videoInput.files
+            ) {
+
+                Array.from(
+                    videoInput.files
+                ).forEach(
+                    function (file) {
+
+                        appendPreviewVideo(
+                            mediaGrid,
+                            URL.createObjectURL(file),
+                            file.name
+                        );
+
+                        mediaCount += 1;
+
+                    }
+                );
+
+            }
+
+
+            mediaSection.hidden =
+                mediaCount === 0;
+
+        }
+
+
+        function populateFeaturedImage(form) {
+
+            const wrap = document.getElementById(
+                "staff-preview-featured-wrap"
+            );
+
+            const image = document.getElementById(
+                "staff-preview-featured"
+            );
+
+            const caption = document.getElementById(
+                "staff-preview-featured-caption"
+            );
+
+            if (
+                !wrap
+                || !image
+                || !caption
+            ) {
+                return;
+            }
+
+            const featuredInput =
+                form.querySelector(
+                    'input[name="featured_image"]'
+                );
+
+            const captionInput =
+                form.querySelector(
+                    'input[name="featured_image_caption"]'
+                );
+
+            const creditInput =
+                form.querySelector(
+                    'input[name="featured_image_credit"]'
+                );
+
+            let src = "";
+
+            if (
+                featuredInput
+                && featuredInput.files
+                && featuredInput.files[0]
+            ) {
+
+                src = URL.createObjectURL(
+                    featuredInput.files[0]
+                );
+
+            } else {
+
+                const currentImage =
+                    form.querySelector(
+                        ".edit-draft-featured-preview, "
+                        + ".current-image, "
+                        + ".featured-image"
+                    );
+
+                if (currentImage) {
+                    src = currentImage.src;
+                }
+
+            }
+
+            if (!src) {
+                wrap.hidden = true;
+                image.src = "";
+                caption.textContent = "";
+                return;
+            }
+
+            image.src = src;
+
+            const captionText =
+                captionInput
+                ? captionInput.value.trim()
+                : "";
+
+            const creditText =
+                creditInput
+                ? creditInput.value.trim()
+                : "";
+
+            caption.textContent = [
+                captionText,
+                creditText
+            ].filter(Boolean).join(" • ");
+
+            wrap.hidden = false;
+
+        }
+
+
+        function populateArticlePreview(form) {
+
+            const title =
+                form.querySelector(
+                    '[name="title"]'
+                );
+
+            const subtitle =
+                form.querySelector(
+                    '[name="subtitle"]'
+                );
+
+            const excerpt =
+                form.querySelector(
+                    '[name="excerpt"]'
+                );
+
+            const content =
+                form.querySelector(
+                    '[name="content"]'
+                );
+
+            const category =
+                form.querySelector(
+                    '[name="category"]'
+                );
+
+            setText(
+                "staff-preview-title",
+                title ? title.value : "",
+                "Untitled Article"
+            );
+
+            setText(
+                "staff-preview-subtitle",
+                subtitle ? subtitle.value : ""
+            );
+
+            setText(
+                "staff-preview-excerpt",
+                excerpt ? excerpt.value : ""
+            );
+
+            setText(
+                "staff-preview-category",
+                getSelectedText(category)
+            );
+
+            setText(
+                "staff-preview-contributors",
+                buildContributors(form)
+            );
+
+
+            const contentElement =
+                document.getElementById(
+                    "staff-preview-content"
+                );
+
+            if (contentElement) {
+
+                contentElement.innerHTML = "";
+
+                const contentValue =
+                    content
+                    ? content.value.trim()
+                    : "";
+
+                const paragraphs =
+                    contentValue
+                    ? contentValue.split(
+                        /\n\s*\n/
+                    )
+                    : [
+                        "Article content will appear here."
+                    ];
+
+                paragraphs.forEach(
+                    function (paragraphText) {
+
+                        const paragraph =
+                            document.createElement(
+                                "p"
+                            );
+
+                        paragraph.textContent =
+                            paragraphText;
+
+                        contentElement.appendChild(
+                            paragraph
+                        );
+
+                    }
+                );
+
+            }
+
+
+            const tagContainer =
+                document.getElementById(
+                    "staff-preview-tags"
+                );
+
+            if (tagContainer) {
+
+                tagContainer.innerHTML = "";
+
+                buildTags(form).forEach(
+                    function (tag) {
+
+                        const item =
+                            document.createElement(
+                                "span"
+                            );
+
+                        item.textContent = tag;
+
+                        tagContainer.appendChild(
+                            item
+                        );
+
+                    }
+                );
+
+            }
+
+            populateFeaturedImage(
+                form
+            );
+
+            populateMediaPreview(
+                form
+            );
+
+        }
+
+
+        function openPreview(form) {
+
+            populateArticlePreview(
+                form
+            );
+
+            overlay.classList.add(
+                "is-open"
+            );
+
+            overlay.setAttribute(
+                "aria-hidden",
+                "false"
+            );
+
+            document.body.classList.add(
+                "staff-preview-open"
+            );
+
+            if (closeButton) {
+                closeButton.focus();
+            }
+
+        }
+
+
+        function closePreview() {
+
+            overlay.classList.remove(
+                "is-open"
+            );
+
+            overlay.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            document.body.classList.remove(
+                "staff-preview-open"
+            );
+
+        }
+
+
+        document.querySelectorAll(
+            "[data-article-preview-button]"
+        ).forEach(
+            function (button) {
+
+                button.addEventListener(
+                    "click",
+                    function () {
+
+                        const form = button.closest(
+                            "form"
+                        );
+
+                        if (form) {
+                            openPreview(
+                                form
+                            );
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+
+        if (closeButton) {
+
+            closeButton.addEventListener(
+                "click",
+                closePreview
+            );
+
+        }
+
+
+        overlay.addEventListener(
+            "click",
+            function (event) {
+
+                if (event.target === overlay) {
+                    closePreview();
+                }
+
+            }
+        );
+
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (
+                    event.key === "Escape"
+                    && overlay.classList.contains(
+                        "is-open"
+                    )
+                ) {
+                    closePreview();
+                }
+
+            }
+        );
+
+    }
+);
+</script>
+
+
+<script>
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const loadingOverlay =
+            document.getElementById(
+                "equalizer-loading-overlay"
+            );
+
+        const loadingTitle =
+            document.getElementById(
+                "equalizer-loading-title"
+            );
+
+        const loadingMessage =
+            document.getElementById(
+                "equalizer-loading-message"
+            );
+
+
+        if (!loadingOverlay) {
+            return;
+        }
+
+
+        function showEqualizerLoading(
+            title,
+            message
+        ) {
+
+            if (loadingTitle) {
+                loadingTitle.textContent =
+                    title || "Processing";
+            }
+
+            if (loadingMessage) {
+                loadingMessage.textContent =
+                    message
+                    || (
+                        "Please wait while The Equalizer "
+                        + "completes your request."
+                    );
+            }
+
+            loadingOverlay.classList.add(
+                "is-visible"
+            );
+
+            loadingOverlay.setAttribute(
+                "aria-hidden",
+                "false"
+            );
+
+        }
+
+
+        document.querySelectorAll(
+            "form"
+        ).forEach(
+            function (form) {
+
+                const method = (
+                    form.getAttribute(
+                        "method"
+                    )
+                    || "GET"
+                ).toUpperCase();
+
+                if (
+                    method === "GET"
+                    || form.hasAttribute(
+                        "data-no-loading"
+                    )
+                ) {
+                    return;
+                }
+
+
+                form.addEventListener(
+                    "submit",
+                    function (event) {
+
+                        /*
+                         * Confirmation handling in base.html runs in
+                         * the same submit cycle. Waiting one task lets
+                         * us see whether that handler cancelled the
+                         * submission before showing the loader.
+                         */
+                        window.setTimeout(
+                            function () {
+
+                                if (
+                                    event.defaultPrevented
+                                    || !form.checkValidity()
+                                ) {
+                                    return;
+                                }
+
+                                const submitter =
+                                    event.submitter;
+
+                                const title = (
+                                    submitter
+                                    && submitter.dataset.loadingTitle
+                                )
+                                    || form.dataset.loadingTitle
+                                    || "Processing";
+
+                                const message = (
+                                    submitter
+                                    && submitter.dataset.loadingMessage
+                                )
+                                    || form.dataset.loadingMessage
+                                    || (
+                                        "Please wait while The Equalizer "
+                                        + "completes your request."
+                                    );
+
+                                showEqualizerLoading(
+                                    title,
+                                    message
+                                );
+
+                            },
+                            0
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+
+        window.addEventListener(
+            "pageshow",
+            function () {
+
+                loadingOverlay.classList.remove(
+                    "is-visible"
+                );
+
+                loadingOverlay.setAttribute(
+                    "aria-hidden",
+                    "true"
+                );
+
+            }
+        );
+
+    }
+);
+</script>
+
+
+<script>
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const overlay =
+            document.getElementById(
+                "saved-article-preview-overlay"
+            );
+
+        const dialogContent =
+            document.getElementById(
+                "saved-article-preview-content"
+            );
+
+        const closeButton =
+            document.getElementById(
+                "saved-article-preview-close"
+            );
+
+        if (
+            !overlay
+            || !dialogContent
+        ) {
+            return;
+        }
+
+
+        function stopPreviewMedia() {
+
+            dialogContent
+                .querySelectorAll(
+                    "video, audio"
+                )
+                .forEach(
+                    function (media) {
+
+                        try {
+                            media.pause();
+                        } catch (error) {
+                            // Ignore unsupported media pause failures.
+                        }
+
+                    }
+                );
+
+        }
+
+
+        function openSavedPreview(
+            templateId
+        ) {
+
+            const template =
+                document.getElementById(
+                    templateId
+                );
+
+            if (!template) {
+                return;
+            }
+
+            dialogContent.innerHTML = "";
+
+            dialogContent.appendChild(
+                template.content.cloneNode(
+                    true
+                )
+            );
+
+            overlay.classList.add(
+                "is-open"
+            );
+
+            overlay.setAttribute(
+                "aria-hidden",
+                "false"
+            );
+
+            document.body.classList.add(
+                "saved-article-preview-open"
+            );
+
+            if (closeButton) {
+                closeButton.focus();
+            }
+
+        }
+
+
+        function closeSavedPreview() {
+
+            stopPreviewMedia();
+
+            overlay.classList.remove(
+                "is-open"
+            );
+
+            overlay.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            document.body.classList.remove(
+                "saved-article-preview-open"
+            );
+
+            dialogContent.innerHTML = "";
+
+        }
+
+
+        document.querySelectorAll(
+            "[data-saved-article-preview]"
+        ).forEach(
+            function (button) {
+
+                button.addEventListener(
+                    "click",
+                    function () {
+
+                        openSavedPreview(
+                            button.dataset
+                                .previewTemplateId
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+
+        if (closeButton) {
+
+            closeButton.addEventListener(
+                "click",
+                closeSavedPreview
+            );
+
+        }
+
+
+        overlay.addEventListener(
+            "click",
+            function (event) {
+
+                if (event.target === overlay) {
+                    closeSavedPreview();
+                }
+
+            }
+        );
+
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (
+                    event.key === "Escape"
+                    && overlay.classList.contains(
+                        "is-open"
+                    )
+                ) {
+                    closeSavedPreview();
+                }
+
+            }
+        );
+
+    }
+);
 </script>
 
 {% endblock %}

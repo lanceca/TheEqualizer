@@ -2,96 +2,640 @@
 
 {% block staff_content %}
 
-<h1>Report Article Content</h1>
+<div class="workflow-page-header">
 
-<p class="section-description">
-    Submit a content concern for the Editor in Chief to review.
-</p>
-
-
-<div class="article-request-info info-box">
-
-    <span class="status-badge status-approved">
-        Published Article
-    </span>
-
-    <h2>
-        {{ article.title }}
-    </h2>
-
-    <p>
-        <strong>Category:</strong>
-        {{ article.category.name }}
-    </p>
-
-    <p>
-        <strong>Author:</strong>
-        {{ article.author.username }}
-    </p>
-
-    {% if article.published_at %}
-
-        <p>
-            <strong>Published:</strong>
-            {{ article.published_at|date:"M. d, Y - g:i A" }}
+    <div>
+        <p class="workflow-eyebrow">
+            Staff Content Review
         </p>
 
-    {% endif %}
+        <h1>
+            Report Article Content
+        </h1>
+
+        <p class="section-description">
+            Send a clear editorial concern to the Editor in Chief.
+            Reports are intended for factual, editorial, media, credit,
+            or publication-quality issues that require review.
+        </p>
+    </div>
 
 </div>
 
 
-<div class="content-panel request-form-panel">
+<div class="report-workspace">
 
-    <form
-        method="POST"
-        class="request-form"
-    >
+    <aside class="report-article-card">
 
-        {% csrf_token %}
+        <div class="report-article-card-header">
+            <span class="status-badge status-approved">
+                Published Article
+            </span>
 
-        <div class="form-group">
+            <span class="report-readonly-label">
+                Read-only reference
+            </span>
+        </div>
 
-            <label for="description">
-                Content Concern
-            </label>
 
-            <textarea
-                id="description"
-                name="description"
-                placeholder="Describe the issue or concern you found in this article..."
-                required
-            ></textarea>
+        {% if article.featured_image %}
 
-            <p class="form-help">
-                Explain the concern clearly so the EIC can review the article and decide what action is needed.
+            <div class="report-article-thumbnail">
+
+                <img
+                    src="{{ article.featured_image.url }}"
+                    alt="{{ article.title }}"
+                >
+
+            </div>
+
+        {% endif %}
+
+
+        <div class="report-article-card-body">
+
+            <p class="report-article-category">
+                {{ article.category.name }}
+            </p>
+
+            <h2>
+                {{ article.title }}
+            </h2>
+
+
+            {% if article.subtitle %}
+
+                <p class="report-article-subtitle">
+                    {{ article.subtitle }}
+                </p>
+
+            {% endif %}
+
+
+            <dl class="report-article-meta">
+
+                <div>
+                    <dt>Author</dt>
+                    <dd>{{ article.author.username }}</dd>
+                </div>
+
+                {% if article.published_at %}
+
+                    <div>
+                        <dt>Published</dt>
+                        <dd>
+                            {{ article.published_at|date:"M. d, Y - g:i A" }}
+                        </dd>
+                    </div>
+
+                {% endif %}
+
+                <div>
+                    <dt>Version</dt>
+                    <dd>{{ article.version_number }}</dd>
+                </div>
+
+            </dl>
+
+
+            <button
+                type="button"
+                class="secondary-button report-preview-button"
+                id="open-report-article-preview"
+            >
+                Preview Full Article
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <section class="report-form-card">
+
+        <div class="report-form-heading">
+
+            <p class="workflow-eyebrow">
+                Concern Details
+            </p>
+
+            <h2>
+                What needs editorial attention?
+            </h2>
+
+            <p>
+                Be specific about where the issue appears and what should
+                be checked. The EIC will use this description when deciding
+                whether the article requires a corrective revision.
             </p>
 
         </div>
 
 
-        <div class="form-actions">
+        <form
+            method="POST"
+            class="request-form report-form"
+        >
+
+            {% csrf_token %}
+
+
+            <div class="form-group">
+
+                <div class="field-label-row">
+
+                    <label for="description">
+                        Content Concern
+                    </label>
+
+                    <span class="field-required-badge">
+                        Required
+                    </span>
+
+                </div>
+
+                <textarea
+                    id="description"
+                    name="description"
+                    rows="10"
+                    maxlength="2000"
+                    data-char-limit="2000"
+                    data-char-counter-field="description"
+                    placeholder="Example: The second paragraph lists an incorrect event date. Please verify the date against the source before the article remains published."
+                    required
+                ></textarea>
+
+                <p class="form-help">
+                    Maximum 2,000 characters. Include enough context for
+                    the EIC to locate and understand the concern.
+                </p>
+
+            </div>
+
+
+            <div class="report-guidance-box">
+
+                <strong>
+                    A useful report usually includes:
+                </strong>
+
+                <ul>
+                    <li>where in the article the issue appears;</li>
+                    <li>what appears incorrect or inappropriate; and</li>
+                    <li>what the EIC should verify or review.</li>
+                </ul>
+
+            </div>
+
+
+            <div class="form-actions form-actions-sticky">
+
+                <a
+                    href="{% url 'published_articles' %}"
+                    class="secondary-button"
+                >
+                    Cancel
+                </a>
+
+                <button
+                    type="submit"
+                    class="danger-button"
+                    data-confirm-title="Submit Content Report"
+                    data-confirm="Are you sure you want to submit this content concern to the Editor in Chief?"
+                >
+                    Submit Report
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+</div>
+
+
+<script>
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const limitedFields = document.querySelectorAll(
+            "[data-char-limit]"
+        );
+
+        limitedFields.forEach(
+            function (field) {
+
+                const maxLength = Number(
+                    field.dataset.charLimit
+                );
+
+                const counter = document.createElement(
+                    "div"
+                );
+
+                counter.className =
+                    "field-character-counter";
+
+                field.insertAdjacentElement(
+                    "afterend",
+                    counter
+                );
+
+
+                function updateCharacterCounter() {
+
+                    const currentLength =
+                        field.value.length;
+
+                    counter.textContent =
+                        currentLength.toLocaleString()
+                        + " / "
+                        + maxLength.toLocaleString();
+
+                    const ratio =
+                        currentLength / maxLength;
+
+                    counter.classList.toggle(
+                        "is-warning",
+                        ratio >= 0.85
+                        && currentLength
+                        < maxLength
+                    );
+
+                    counter.classList.toggle(
+                        "is-limit",
+                        currentLength
+                        >= maxLength
+                    );
+
+                }
+
+                field.addEventListener(
+                    "input",
+                    updateCharacterCounter
+                );
+
+                updateCharacterCounter();
+
+            }
+        );
+
+    }
+);
+</script>
+
+
+
+<div
+    class="report-preview-overlay"
+    id="report-preview-overlay"
+    aria-hidden="true"
+>
+
+    <section
+        class="report-preview-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="report-preview-title"
+    >
+
+        <div class="staff-article-preview-toolbar">
+
+            <div>
+                <span class="staff-preview-label">
+                    Published Article Preview
+                </span>
+
+                <strong>
+                    Use this reference while writing your report.
+                </strong>
+            </div>
 
             <button
-                type="submit"
-                class="danger-button"
-                data-confirm-title="Submit Content Report"
-                data-confirm="Are you sure you want to submit this content concern to the Editor in Chief?"
+                type="button"
+                class="staff-preview-close"
+                id="close-report-article-preview"
+                aria-label="Close article preview"
             >
-                Submit Report
+                &times;
             </button>
-
-            <a
-                href="{% url 'published_articles' %}"
-                class="cancel-link"
-            >
-                Cancel
-            </a>
 
         </div>
 
-    </form>
+
+        <div class="staff-preview-scroll">
+
+            <article class="staff-reader-preview">
+
+                <p class="staff-reader-preview-category">
+                    {{ article.category.name }}
+                </p>
+
+                <h1 id="report-preview-title">
+                    {{ article.title }}
+                </h1>
+
+
+                {% if article.subtitle %}
+
+                    <p class="staff-reader-preview-subtitle">
+                        {{ article.subtitle }}
+                    </p>
+
+                {% endif %}
+
+
+                <div class="staff-reader-preview-byline">
+
+                    <span>
+                        By
+                        <strong>
+                            {{ article.author.username }}
+                        </strong>
+                    </span>
+
+
+                    {% if article.published_at %}
+
+                        <span>
+                            {{ article.published_at|date:"M. d, Y - g:i A" }}
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+
+                {% if article.contributors.all %}
+
+                    <div class="report-preview-contributors">
+
+                        {% for contributor in article.contributors.all %}
+
+                            <span>
+                                {{ contributor.get_role_display }}:
+                                {{ contributor.user.username }}
+                            </span>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% endif %}
+
+
+                {% if article.featured_image %}
+
+                    <figure class="staff-reader-preview-featured">
+
+                        <img
+                            src="{{ article.featured_image.url }}"
+                            alt="{{ article.title }}"
+                        >
+
+                        {% if article.featured_image_caption or article.featured_image_credit %}
+
+                            <figcaption>
+
+                                {% if article.featured_image_caption %}
+                                    {{ article.featured_image_caption }}
+                                {% endif %}
+
+                                {% if article.featured_image_credit %}
+                                    • {{ article.featured_image_credit }}
+                                {% endif %}
+
+                            </figcaption>
+
+                        {% endif %}
+
+                    </figure>
+
+                {% endif %}
+
+
+                {% if article.excerpt %}
+
+                    <p class="staff-reader-preview-excerpt">
+                        {{ article.excerpt }}
+                    </p>
+
+                {% endif %}
+
+
+                <div class="staff-reader-preview-content">
+                    {{ article.content|linebreaks }}
+                </div>
+
+
+                {% if article.attachments.all %}
+
+                    <section class="staff-reader-preview-media">
+
+                        <h2>
+                            Article Images
+                        </h2>
+
+                        <div class="staff-reader-preview-media-grid">
+
+                            {% for attachment in article.attachments.all %}
+
+                                <figure class="staff-reader-preview-media-card">
+
+                                    <img
+                                        src="{{ attachment.image.url }}"
+                                        alt="{{ attachment.alt_text|default:attachment.caption|default:'Article image' }}"
+                                    >
+
+                                    {% if attachment.caption %}
+                                        <figcaption>
+                                            {{ attachment.caption }}
+                                        </figcaption>
+                                    {% endif %}
+
+                                </figure>
+
+                            {% endfor %}
+
+                        </div>
+
+                    </section>
+
+                {% endif %}
+
+
+                {% if article.video_attachments.all %}
+
+                    <section class="staff-reader-preview-media">
+
+                        <h2>
+                            Article Videos
+                        </h2>
+
+                        <div class="staff-reader-preview-media-grid">
+
+                            {% for attachment in article.video_attachments.all %}
+
+                                <figure class="staff-reader-preview-media-card">
+
+                                    <video controls preload="metadata">
+                                        <source src="{{ attachment.video.url }}">
+                                    </video>
+
+                                    {% if attachment.caption %}
+                                        <figcaption>
+                                            {{ attachment.caption }}
+                                        </figcaption>
+                                    {% endif %}
+
+                                </figure>
+
+                            {% endfor %}
+
+                        </div>
+
+                    </section>
+
+                {% endif %}
+
+
+                {% if article.tags.all %}
+
+                    <div class="staff-reader-preview-tags">
+
+                        {% for tag in article.tags.all %}
+                            <span>{{ tag.name }}</span>
+                        {% endfor %}
+
+                    </div>
+
+                {% endif %}
+
+            </article>
+
+        </div>
+
+    </section>
 
 </div>
+
+
+<script>
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const openButton =
+            document.getElementById(
+                "open-report-article-preview"
+            );
+
+        const overlay =
+            document.getElementById(
+                "report-preview-overlay"
+            );
+
+        const closeButton =
+            document.getElementById(
+                "close-report-article-preview"
+            );
+
+        if (
+            !openButton
+            || !overlay
+        ) {
+            return;
+        }
+
+
+        function openPreview() {
+
+            overlay.classList.add(
+                "is-open"
+            );
+
+            overlay.setAttribute(
+                "aria-hidden",
+                "false"
+            );
+
+            document.body.classList.add(
+                "staff-preview-open"
+            );
+
+            if (closeButton) {
+                closeButton.focus();
+            }
+
+        }
+
+
+        function closePreview() {
+
+            overlay.classList.remove(
+                "is-open"
+            );
+
+            overlay.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            document.body.classList.remove(
+                "staff-preview-open"
+            );
+
+        }
+
+
+        openButton.addEventListener(
+            "click",
+            openPreview
+        );
+
+
+        if (closeButton) {
+
+            closeButton.addEventListener(
+                "click",
+                closePreview
+            );
+
+        }
+
+
+        overlay.addEventListener(
+            "click",
+            function (event) {
+
+                if (event.target === overlay) {
+                    closePreview();
+                }
+
+            }
+        );
+
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (
+                    event.key === "Escape"
+                    && overlay.classList.contains(
+                        "is-open"
+                    )
+                ) {
+                    closePreview();
+                }
+
+            }
+        );
+
+    }
+);
+</script>
 
 {% endblock %}

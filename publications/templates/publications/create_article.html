@@ -50,7 +50,10 @@
                 id="title"
                 name="title"
                 required
-            >
+            
+                maxlength="255"
+                data-char-limit="255"
+                data-char-counter-field="title">
 
         </div>
 
@@ -66,7 +69,9 @@
                 id="subtitle"
                 name="subtitle"
                 maxlength="300"
-            >
+            
+                data-char-limit="300"
+                data-char-counter-field="subtitle">
 
             <p class="form-help">
                 Optional secondary headline displayed below the main title.
@@ -85,7 +90,10 @@
                 id="excerpt"
                 name="excerpt"
                 rows="4"
-            ></textarea>
+            
+                maxlength="600"
+                data-char-limit="600"
+                data-char-counter-field="excerpt"></textarea>
 
             <p class="form-help">
                 Optional short summary for article previews and search results.
@@ -358,7 +366,10 @@
                 name="content"
                 class="article-content-input"
                 required
-            ></textarea>
+            
+                maxlength="30000"
+                data-char-limit="30000"
+                data-char-counter-field="content"></textarea>
 
         </div>
 
@@ -394,7 +405,9 @@
                 id="featured_image_caption"
                 name="featured_image_caption"
                 maxlength="255"
-            >
+            
+                data-char-limit="255"
+                data-char-counter-field="featured_image_caption">
 
             <p class="form-help">
                 Optional caption describing the featured image.
@@ -414,7 +427,9 @@
                 id="featured_image_credit"
                 name="featured_image_credit"
                 maxlength="255"
-            >
+            
+                data-char-limit="255"
+                data-char-counter-field="featured_image_credit">
 
             <p class="form-help">
                 Example: Photo by Juan Dela Cruz / The Equalizer.
@@ -520,7 +535,16 @@
 
         <div class="form-actions">
 
+            
             <button
+                type="button"
+                class="secondary-button article-preview-button"
+                data-article-preview-button
+            >
+                Preview Article
+            </button>
+
+<button
                 type="submit"
                 name="action"
                 value="draft"
@@ -902,6 +926,83 @@ document.addEventListener("DOMContentLoaded", function () {
 
     setMode(modeInput.value || "IMAGE");
 });
+</script>
+
+
+<script>
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const limitedFields = document.querySelectorAll(
+            "[data-char-limit]"
+        );
+
+        limitedFields.forEach(
+            function (field) {
+
+                const maxLength = Number(
+                    field.dataset.charLimit
+                );
+
+                if (!maxLength) {
+                    return;
+                }
+
+                const counter = document.createElement(
+                    "div"
+                );
+
+                counter.className =
+                    "field-character-counter";
+
+                field.insertAdjacentElement(
+                    "afterend",
+                    counter
+                );
+
+
+                function updateCharacterCounter() {
+
+                    const currentLength =
+                        field.value.length;
+
+                    counter.textContent =
+                        currentLength.toLocaleString()
+                        + " / "
+                        + maxLength.toLocaleString();
+
+                    const ratio =
+                        currentLength / maxLength;
+
+                    counter.classList.toggle(
+                        "is-warning",
+                        ratio >= 0.85
+                        && currentLength
+                        < maxLength
+                    );
+
+                    counter.classList.toggle(
+                        "is-limit",
+                        currentLength
+                        >= maxLength
+                    );
+
+                }
+
+
+                field.addEventListener(
+                    "input",
+                    updateCharacterCounter
+                );
+
+                updateCharacterCounter();
+
+            }
+        );
+
+    }
+);
 </script>
 
 {% endblock %}

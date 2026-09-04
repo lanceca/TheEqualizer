@@ -38,4 +38,28 @@ urlpatterns = [
         name="share_article",
     ),
 
+
+
+    # ======================================================
+    # DIGITAL PUBLICATIONS
+    # ======================================================
+
+    path(
+        "digital-publications/",
+        views.digital_publications,
+        name="digital_publications",
+    ),
+
+    path(
+        "digital-publications/<slug:slug>/",
+        views.digital_publication_detail,
+        name="digital_publication_detail",
+    ),
+
+    path(
+        "api/digital-publications/<slug:slug>/",
+        views.digital_publication_api,
+        name="digital_publication_api",
+    ),
+
 ]

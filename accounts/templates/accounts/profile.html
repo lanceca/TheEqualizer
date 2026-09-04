@@ -2,113 +2,220 @@
 
 {% block staff_content %}
 
-<h1>My Profile</h1>
+<div class="profile-page">
 
-<p class="section-description">
-    View your account information and update your personal details.
-</p>
+    <div class="profile-page-header">
 
-
-<div class="submission-card">
-
-    <div class="submission-details">
-
-        <p>
-            <strong>Username:</strong>
-            {{ request.user.username }}
-        </p>
-
-        <p>
-            <strong>Role:</strong>
-            {{ request.user.get_role_display }}
-        </p>
-
-        <p>
-            <strong>Account Status:</strong>
-
-            {% if request.user.is_active %}
-                Active
-            {% else %}
-                Inactive
-            {% endif %}
-        </p>
-
-        <p>
-            <strong>Date Joined:</strong>
-            {{ request.user.date_joined|date:"M. d, Y - g:i A" }}
-        </p>
-
-        {% if request.user.last_login %}
-
-            <p>
-                <strong>Last Login:</strong>
-                {{ request.user.last_login|date:"M. d, Y - g:i A" }}
+        <div>
+            <p class="workflow-eyebrow">
+                Account
             </p>
 
-        {% endif %}
+            <h1>
+                Profile
+            </h1>
+
+            <p class="section-description">
+                Manage your personal staff information and profile picture.
+            </p>
+        </div>
+
+    </div>
+
+
+    <div class="profile-layout">
+
+        <aside class="profile-photo-panel">
+
+            <div class="profile-photo-large">
+
+                {% if request.user.profile_picture %}
+
+                    <img
+                        src="{{ request.user.profile_picture.url }}"
+                        alt="{{ request.user.username }} profile picture"
+                    >
+
+                {% else %}
+
+                    <span>
+                        {{ request.user.username|slice:":1"|upper }}
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+
+            <h2>
+                {{ request.user.username }}
+            </h2>
+
+            <p class="profile-role-label">
+                {{ request.user.get_role_display }}
+            </p>
+
+            <p class="profile-photo-help">
+                JPG, JPEG, PNG, or WEBP. Maximum 5 MB.
+            </p>
+
+        </aside>
+
+
+        <section class="profile-form-panel">
+
+            <form
+                method="POST"
+                enctype="multipart/form-data"
+                class="profile-edit-form"
+            >
+
+                {% csrf_token %}
+
+
+                <div class="profile-form-section">
+
+                    <h2>
+                        Profile Picture
+                    </h2>
+
+                    <div class="form-group">
+
+                        <label for="profile_picture">
+                            Upload New Picture
+                        </label>
+
+                        <input
+                            type="file"
+                            id="profile_picture"
+                            name="profile_picture"
+                            accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                        >
+
+                    </div>
+
+
+                    {% if request.user.profile_picture %}
+
+                        <label class="profile-remove-picture">
+
+                            <input
+                                type="checkbox"
+                                name="remove_profile_picture"
+                                value="1"
+                            >
+
+                            <span>
+                                Remove current profile picture
+                            </span>
+
+                        </label>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="profile-form-section">
+
+                    <h2>
+                        Personal Information
+                    </h2>
+
+                    <div class="profile-form-generated">
+                        {{ form.as_p }}
+                    </div>
+
+                </div>
+
+
+                <div class="profile-readonly-grid">
+
+                    <div>
+                        <span>
+                            Username
+                        </span>
+
+                        <strong>
+                            {{ request.user.username }}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>
+                            Role
+                        </span>
+
+                        <strong>
+                            {{ request.user.get_role_display }}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>
+                            Account Status
+                        </span>
+
+                        <strong>
+                            {% if request.user.is_active %}
+                                Active
+                            {% else %}
+                                Inactive
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>
+                            Date Joined
+                        </span>
+
+                        <strong>
+                            {{ request.user.date_joined|date:"M. d, Y" }}
+                        </strong>
+                    </div>
+
+                </div>
+
+
+                <div class="profile-form-actions">
+
+                    <a
+                        href="{% url 'dashboard' %}"
+                        class="secondary-button"
+                    >
+                        Back to Dashboard
+                    </a>
+
+                    <a
+                        href="{% url 'change_username' %}"
+                        class="secondary-button"
+                    >
+                        Change Username
+                    </a>
+
+                    <a
+                        href="{% url 'change_password' %}"
+                        class="secondary-button"
+                    >
+                        Change Password
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="approve-button"
+                    >
+                        Save Profile
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
 
     </div>
 
 </div>
-
-
-<h2>Personal Information</h2>
-
-<form method="POST">
-
-    {% csrf_token %}
-
-    {{ form.non_field_errors }}
-
-    {% for field in form %}
-
-        <div class="form-group">
-
-            <label for="{{ field.id_for_label }}">
-                {{ field.label }}
-            </label>
-
-            {{ field }}
-
-            {% if field.errors %}
-
-                <div class="form-errors">
-
-                    {% for error in field.errors %}
-
-                        <p>
-                            {{ error }}
-                        </p>
-
-                    {% endfor %}
-
-                </div>
-
-            {% endif %}
-
-        </div>
-
-    {% endfor %}
-
-
-    <div class="article-actions">
-
-        <button
-            type="submit"
-            class="approve-button"
-        >
-            Save Profile
-        </button>
-
-        <a
-            href="{% url 'change_password' %}"
-            class="edit-link"
-        >
-            Change Password
-        </a>
-
-    </div>
-
-</form>
 
 {% endblock %}

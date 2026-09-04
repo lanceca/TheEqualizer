@@ -2,247 +2,228 @@
 
 {% block staff_content %}
 
-<h1>My Drafts</h1>
+<div class="editorial-list-page">
 
-{% if request.user.role == "EIC" %}
+    <div class="editorial-page-header">
 
-    <p class="section-description">
-        Continue working on your saved articles before publishing them.
-    </p>
+        <div>
 
-{% else %}
+            <p class="workflow-eyebrow">
+                Editorial Workspace
+            </p>
 
-    <p class="section-description">
-        Continue working on saved articles or approved edit-request drafts
-        before submitting them for EIC approval.
-    </p>
+            <h1>
+                My Drafts
+            </h1>
 
-{% endif %}
+            {% if request.user.role == "EIC" %}
 
+                <p class="section-description">
+                    Continue working on saved articles before publishing them.
+                </p>
 
-<div class="draft-toolbar">
+            {% else %}
 
-    <form
-        method="GET"
-        action="{% url 'my_drafts' %}"
-        class="search-form"
-    >
+                <p class="section-description">
+                    Continue writing new articles or approved edit-request drafts
+                    before sending them to the Editor in Chief.
+                </p>
 
-        <input
-            type="text"
-            name="q"
-            value="{{ search_query }}"
-            placeholder="Search title, content, category, or tags..."
-            class="search-input"
+            {% endif %}
+
+        </div>
+
+        <a
+            href="{% url 'create_article' %}"
+            class="approve-button"
         >
-
-        <button
-            type="submit"
-            class="search-button"
-        >
-            Search
-        </button>
-
-        {% if search_query %}
-
-            <a
-                href="{% url 'my_drafts' %}"
-                class="clear-search"
-            >
-                Clear
-            </a>
-
-        {% endif %}
-
-    </form>
-
-</div>
-
-
-<section class="draft-section">
-
-    <div class="draft-section-header">
-
-        <h2 class="draft-section-title">
-            My Drafts
-        </h2>
-
-        <p class="draft-section-description">
-            Articles you created and saved without publishing or submitting yet.
-        </p>
+            + Create Article
+        </a>
 
     </div>
 
 
-    {% if normal_drafts %}
+    <div class="editorial-toolbar">
 
-        <div class="article-tile-grid">
+        <form
+            method="GET"
+            action="{% url 'my_drafts' %}"
+            class="editorial-search-form"
+        >
 
-            {% for article in normal_drafts %}
+            <div class="editorial-search-field">
 
-                <details class="article-tile">
+                <label for="draft-search">
+                    Search Drafts
+                </label>
 
-                    <summary class="article-tile-summary">
+                <input
+                    type="text"
+                    id="draft-search"
+                    name="q"
+                    value="{{ search_query }}"
+                    placeholder="Title, content, category, tag, or contributor"
+                >
 
-                        {% if article.featured_image %}
+            </div>
 
-                            <div class="article-tile-image-wrapper">
+            <button
+                type="submit"
+                class="secondary-button"
+            >
+                Search
+            </button>
+
+            {% if search_query %}
+
+                <a
+                    href="{% url 'my_drafts' %}"
+                    class="text-action-link"
+                >
+                    Clear
+                </a>
+
+            {% endif %}
+
+        </form>
+
+    </div>
+
+
+    <section class="editorial-section">
+
+        <div class="editorial-section-heading">
+
+            <div>
+
+                <h2>
+                    Article Drafts
+                </h2>
+
+                <p>
+                    Unsaved-to-workflow articles that are still under your control.
+                </p>
+
+            </div>
+
+            <span class="editorial-count-pill">
+                {{ normal_drafts|length }}
+            </span>
+
+        </div>
+
+
+        {% if normal_drafts %}
+
+            <div class="editorial-card-list">
+
+                {% for article in normal_drafts %}
+
+                    <article class="editorial-item-card">
+
+                        <div class="editorial-item-thumb">
+
+                            {% if article.featured_image %}
 
                                 <img
                                     src="{{ article.featured_image.url }}"
                                     alt="{{ article.title }}"
-                                    class="article-tile-image"
                                 >
 
-                            </div>
+                            {% else %}
 
-                        {% else %}
+                                <div class="editorial-thumb-placeholder">
+                                    <span>
+                                        {{ article.category.name|slice:":1"|upper }}
+                                    </span>
+                                </div>
 
-                            <div class="article-tile-image-wrapper article-tile-placeholder">
-                                No Featured Image
-                            </div>
-
-                        {% endif %}
-
-
-                        <div class="article-tile-overlay">
-
-                            <span class="draft-badge badge-normal">
-                                Draft
-                            </span>
-
-                            <h3 class="article-tile-title">
-                                {{ article.title }}
-                            </h3>
-
-                            <p class="article-tile-category">
-                                {{ article.category.name }}
-                            </p>
-
-                            <p class="article-tile-author">
-                                Updated {{ article.updated_at|date:"M. d, Y" }}
-                            </p>
-
-                            <span class="article-tile-expand">
-                                Click to expand
-                            </span>
+                            {% endif %}
 
                         </div>
 
-                    </summary>
 
+                        <div class="editorial-item-main">
 
-                    <div class="article-tile-details">
+                            <div class="editorial-item-badges">
 
-                        {% if article.featured_image %}
+                                <span class="editorial-status-chip is-draft">
+                                    Draft
+                                </span>
 
-                            <h3>
-                                Featured Image
-                            </h3>
+                                <span class="editorial-meta-chip">
+                                    {{ article.category.name }}
+                                </span>
 
-                            <img
-                                src="{{ article.featured_image.url }}"
-                                alt="{{ article.title }}"
-                                class="featured-image"
-                                tabindex="0"
-                                role="button"
-                                data-lightbox-image
-                            >
-
-                        {% endif %}
-
-
-                        {% if article.contributors.all %}
-
-                            <div class="article-contributors">
-
-                                <h3>Contributors</h3>
-
-                                {% for contributor in article.contributors.all %}
-                                    <p class="article-meta">
-                                        <strong>{{ contributor.get_role_display }}:</strong>
-                                        {{ contributor.user.username }}
-                                    </p>
-                                {% endfor %}
+                                <span class="editorial-meta-chip">
+                                    Version {{ article.version_number }}
+                                </span>
 
                             </div>
 
-                        {% endif %}
+
+                            <h2>
+                                {{ article.title }}
+                            </h2>
 
 
-                        <h3>
-                            Article Content
-                        </h3>
+                            {% if article.subtitle %}
 
-                        <p>
-                            {{ article.content|linebreaksbr }}
-                        </p>
+                                <p class="editorial-item-subtitle">
+                                    {{ article.subtitle }}
+                                </p>
+
+                            {% endif %}
 
 
-                        {% if article.tags.all %}
+                            {% if article.excerpt %}
 
-                            <h3>
-                                Tags
-                            </h3>
+                                <p class="editorial-item-summary">
+                                    {{ article.excerpt|truncatechars:180 }}
+                                </p>
 
-                            <div class="tag-list">
+                            {% else %}
 
-                                {% for tag in article.tags.all %}
+                                <p class="editorial-item-summary">
+                                    {{ article.content|striptags|truncatechars:180 }}
+                                </p>
 
-                                    <span class="tag-item">
-                                        {{ tag.name }}
+                            {% endif %}
+
+
+                            <div class="editorial-item-meta">
+
+                                <span>
+                                    Updated
+                                    <strong>
+                                        {{ article.updated_at|date:"M. d, Y - g:i A" }}
+                                    </strong>
+                                </span>
+
+                                {% if article.contributors.all %}
+
+                                    <span>
+                                        {{ article.contributors.all|length }}
+                                        contributor{{ article.contributors.all|length|pluralize }}
                                     </span>
 
-                                {% endfor %}
+                                {% endif %}
 
                             </div>
 
-                        {% endif %}
+                        </div>
 
 
-                        {% if article.attachments.all %}
+                        <div class="editorial-item-actions">
 
-                            <h3>
-                                Attached Images
-                            </h3>
-
-                            <p class="form-help">
-                                Click an image to enlarge it.
-                            </p>
-
-                            <div class="attachment-gallery">
-
-                                {% for attachment in article.attachments.all %}
-
-                                    <div class="attachment-item">
-
-                                        <img
-                                            src="{{ attachment.image.url }}"
-                                            alt="{{ attachment.caption|default:'Article attachment' }}"
-                                            class="attachment-image"
-                                            tabindex="0"
-                                            role="button"
-                                            data-lightbox-image
-                                        >
-
-                                        {% if attachment.caption %}
-
-                                            <p class="attachment-caption">
-                                                {{ attachment.caption }}
-                                            </p>
-
-                                        {% endif %}
-
-                                    </div>
-
-                                {% endfor %}
-
-                            </div>
-
-                        {% endif %}
-
-
-                        <div class="draft-actions">
+                            <button
+                                type="button"
+                                class="secondary-button"
+                                data-saved-article-preview
+                                data-preview-template-id="draft-preview-{{ article.id }}"
+                            >
+                                Preview Article
+                            </button>
 
                             <a
                                 href="{% url 'edit_draft' article.id %}"
@@ -271,243 +252,374 @@
 
                         </div>
 
-                    </div>
+                    </article>
 
-                </details>
 
-            {% endfor %}
+<template id="draft-preview-{{ article.id }}">
+
+    <article class="saved-preview-article">
+
+        <p class="saved-preview-category">
+            {{ article.category.name }}
+        </p>
+
+        <h1>
+            {{ article.title }}
+        </h1>
+
+        {% if article.subtitle %}
+            <p class="saved-preview-subtitle">
+                {{ article.subtitle }}
+            </p>
+        {% endif %}
+
+        <div class="saved-preview-byline">
+
+            <span>
+                By
+                <strong>
+                    {{ article.author.username }}
+                </strong>
+            </span>
+
+            <span>
+                Version {{ article.version_number }}
+            </span>
 
         </div>
 
-    {% else %}
+        {% if article.contributors.all %}
 
-        {% if search_query %}
+            <div class="saved-preview-contributors">
 
-            <p class="empty-message">
-                No drafts matched your search.
-            </p>
+                {% for contributor in article.contributors.all %}
+                    <span>
+                        {{ contributor.get_role_display }}:
+                        {{ contributor.user.username }}
+                    </span>
+                {% endfor %}
 
-        {% else %}
+            </div>
 
-            <p class="empty-message">
-                You currently have no drafts.
+        {% endif %}
+
+        {% if article.featured_image %}
+
+            <figure class="saved-preview-featured">
+
+                <img
+                    src="{{ article.featured_image.url }}"
+                    alt="{{ article.title }}"
+                >
+
+                {% if article.featured_image_caption or article.featured_image_credit %}
+
+                    <figcaption>
+
+                        {% if article.featured_image_caption %}
+                            {{ article.featured_image_caption }}
+                        {% endif %}
+
+                        {% if article.featured_image_credit %}
+                            <span>
+                                {{ article.featured_image_credit }}
+                            </span>
+                        {% endif %}
+
+                    </figcaption>
+
+                {% endif %}
+
+            </figure>
+
+        {% endif %}
+
+        {% if article.excerpt %}
+
+            <p class="saved-preview-excerpt">
+                {{ article.excerpt }}
             </p>
 
         {% endif %}
 
-    {% endif %}
-
-</section>
-
-
-{% if request.user.role == "EDITOR" %}
-
-    <section class="draft-section">
-
-        <div class="draft-section-header">
-
-            <h2 class="draft-section-title">
-                Edit Request Drafts
-            </h2>
-
-            <p class="draft-section-description">
-                Published articles that the EIC approved for editing.
-            </p>
-
+        <div class="saved-preview-content">
+            {{ article.content|linebreaks }}
         </div>
 
+        {% if article.attachments.all %}
 
-        {% if edit_request_drafts %}
+            <section class="saved-preview-media">
 
-            <div class="article-tile-grid">
+                <h2>
+                    Article Images
+                </h2>
 
-                {% for article in edit_request_drafts %}
+                <div class="saved-preview-media-grid">
 
-                    <details class="article-tile">
+                    {% for attachment in article.attachments.all %}
 
-                        <summary class="article-tile-summary">
+                        <figure class="saved-preview-media-card">
 
-                            {% if article.featured_image %}
+                            <img
+                                src="{{ attachment.image.url }}"
+                                alt="{{ attachment.alt_text|default:attachment.caption|default:'Article image' }}"
+                            >
 
-                                <div class="article-tile-image-wrapper">
+                            {% if attachment.caption or attachment.credit %}
+
+                                <figcaption>
+
+                                    {% if attachment.caption %}
+                                        {{ attachment.caption }}
+                                    {% endif %}
+
+                                    {% if attachment.credit %}
+                                        <span>
+                                            {{ attachment.credit }}
+                                        </span>
+                                    {% endif %}
+
+                                </figcaption>
+
+                            {% endif %}
+
+                        </figure>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+        {% if article.video_attachments.all %}
+
+            <section class="saved-preview-media">
+
+                <h2>
+                    Article Videos
+                </h2>
+
+                <div class="saved-preview-media-grid">
+
+                    {% for attachment in article.video_attachments.all %}
+
+                        <figure class="saved-preview-media-card">
+
+                            <video
+                                controls
+                                preload="metadata"
+                            >
+                                <source src="{{ attachment.video.url }}">
+                            </video>
+
+                            {% if attachment.caption or attachment.credit %}
+
+                                <figcaption>
+
+                                    {% if attachment.caption %}
+                                        {{ attachment.caption }}
+                                    {% endif %}
+
+                                    {% if attachment.credit %}
+                                        <span>
+                                            {{ attachment.credit }}
+                                        </span>
+                                    {% endif %}
+
+                                </figcaption>
+
+                            {% endif %}
+
+                        </figure>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+        {% if article.tags.all %}
+
+            <div class="saved-preview-tags">
+
+                {% for tag in article.tags.all %}
+                    <span>
+                        {{ tag.name }}
+                    </span>
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+    </article>
+
+</template>
+
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="editorial-empty-state">
+
+                <strong>
+                    {% if search_query %}
+                        No drafts matched your search.
+                    {% else %}
+                        You currently have no article drafts.
+                    {% endif %}
+                </strong>
+
+                <p>
+                    Create a new article when you're ready to start writing.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+
+    {% if request.user.role == "EDITOR" %}
+
+        <section class="editorial-section">
+
+            <div class="editorial-section-heading">
+
+                <div>
+
+                    <h2>
+                        Edit Request Drafts
+                    </h2>
+
+                    <p>
+                        Published articles the EIC has approved for revision.
+                    </p>
+
+                </div>
+
+                <span class="editorial-count-pill">
+                    {{ edit_request_drafts|length }}
+                </span>
+
+            </div>
+
+
+            {% if edit_request_drafts %}
+
+                <div class="editorial-card-list">
+
+                    {% for article in edit_request_drafts %}
+
+                        <article class="editorial-item-card editorial-item-card--revision">
+
+                            <div class="editorial-item-thumb">
+
+                                {% if article.featured_image %}
 
                                     <img
                                         src="{{ article.featured_image.url }}"
                                         alt="{{ article.title }}"
-                                        class="article-tile-image"
                                     >
 
-                                </div>
+                                {% else %}
 
-                            {% else %}
+                                    <div class="editorial-thumb-placeholder">
+                                        <span>
+                                            E
+                                        </span>
+                                    </div>
 
-                                <div class="article-tile-image-wrapper article-tile-placeholder">
-                                    No Featured Image
-                                </div>
-
-                            {% endif %}
-
-
-                            <div class="article-tile-overlay">
-
-                                <span class="draft-badge badge-edit">
-                                    Edit Request Draft
-                                </span>
-
-                                <h3 class="article-tile-title">
-                                    {{ article.title }}
-                                </h3>
-
-                                <p class="article-tile-category">
-                                    {{ article.category.name }}
-                                </p>
-
-                                <p class="article-tile-author">
-                                    Updated {{ article.updated_at|date:"M. d, Y" }}
-                                </p>
-
-                                <span class="article-tile-expand">
-                                    Click to expand
-                                </span>
+                                {% endif %}
 
                             </div>
 
-                        </summary>
 
+                            <div class="editorial-item-main">
 
-                        <div class="article-tile-details">
+                                <div class="editorial-item-badges">
 
-                            {% if article.source_article %}
+                                    <span class="editorial-status-chip is-revision">
+                                        Edit Request Draft
+                                    </span>
 
-                                <div class="source-article-box">
-
-                                    <strong>
-                                        Original Published Article
-                                    </strong>
-
-                                    <p>
-                                        {{ article.source_article.title }}
-                                    </p>
-
-                                    <p>
-                                        This draft will replace the content of the
-                                        original published article after EIC approval.
-                                    </p>
+                                    <span class="editorial-meta-chip">
+                                        {{ article.category.name }}
+                                    </span>
 
                                 </div>
 
-                            {% endif %}
+                                <h2>
+                                    {{ article.title }}
+                                </h2>
 
 
-                            {% if article.featured_image %}
+                                {% if article.source_article %}
 
-                                <h3>
-                                    Featured Image
-                                </h3>
+                                    <p class="editorial-source-note">
+                                        Revising published article:
+                                        <strong>
+                                            {{ article.source_article.title }}
+                                        </strong>
+                                    </p>
 
-                                <img
-                                    src="{{ article.featured_image.url }}"
-                                    alt="{{ article.title }}"
-                                    class="featured-image"
-                                    tabindex="0"
-                                    role="button"
-                                    data-lightbox-image
+                                {% endif %}
+
+
+                                {% if article.excerpt %}
+
+                                    <p class="editorial-item-summary">
+                                        {{ article.excerpt|truncatechars:180 }}
+                                    </p>
+
+                                {% else %}
+
+                                    <p class="editorial-item-summary">
+                                        {{ article.content|striptags|truncatechars:180 }}
+                                    </p>
+
+                                {% endif %}
+
+
+                                <div class="editorial-item-meta">
+
+                                    <span>
+                                        Updated
+                                        <strong>
+                                            {{ article.updated_at|date:"M. d, Y - g:i A" }}
+                                        </strong>
+                                    </span>
+
+                                    <span>
+                                        Revision Version
+                                        <strong>
+                                            {{ article.version_number }}
+                                        </strong>
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="editorial-item-actions">
+
+                                <button
+                                    type="button"
+                                    class="secondary-button"
+                                    data-saved-article-preview
+                                    data-preview-template-id="edit-draft-preview-{{ article.id }}"
                                 >
-
-                            {% endif %}
-
-
-                            {% if article.contributors.all %}
-
-                                <div class="article-contributors">
-
-                                    <h3>Contributors</h3>
-
-                                    {% for contributor in article.contributors.all %}
-                                        <p class="article-meta">
-                                            <strong>{{ contributor.get_role_display }}:</strong>
-                                            {{ contributor.user.username }}
-                                        </p>
-                                    {% endfor %}
-
-                                </div>
-
-                            {% endif %}
-
-
-                            <h3>
-                                Article Content
-                            </h3>
-
-                            <p>
-                                {{ article.content|linebreaksbr }}
-                            </p>
-
-
-                            {% if article.tags.all %}
-
-                                <h3>
-                                    Tags
-                                </h3>
-
-                                <div class="tag-list">
-
-                                    {% for tag in article.tags.all %}
-
-                                        <span class="tag-item">
-                                            {{ tag.name }}
-                                        </span>
-
-                                    {% endfor %}
-
-                                </div>
-
-                            {% endif %}
-
-
-                            {% if article.attachments.all %}
-
-                                <h3>
-                                    Attached Images
-                                </h3>
-
-                                <p class="form-help">
-                                    Click an image to enlarge it.
-                                </p>
-
-                                <div class="attachment-gallery">
-
-                                    {% for attachment in article.attachments.all %}
-
-                                        <div class="attachment-item">
-
-                                            <img
-                                                src="{{ attachment.image.url }}"
-                                                alt="{{ attachment.caption|default:'Article attachment' }}"
-                                                class="attachment-image"
-                                                tabindex="0"
-                                                role="button"
-                                                data-lightbox-image
-                                            >
-
-                                            {% if attachment.caption %}
-
-                                                <p class="attachment-caption">
-                                                    {{ attachment.caption }}
-                                                </p>
-
-                                            {% endif %}
-
-                                        </div>
-
-                                    {% endfor %}
-
-                                </div>
-
-                            {% endif %}
-
-
-                            <div class="draft-actions">
+                                    Preview Article
+                                </button>
 
                                 <a
                                     href="{% url 'edit_draft' article.id %}"
@@ -518,34 +630,239 @@
 
                             </div>
 
-                        </div>
+                        </article>
 
-                    </details>
 
+<template id="edit-draft-preview-{{ article.id }}">
+
+    <article class="saved-preview-article">
+
+        <p class="saved-preview-category">
+            {{ article.category.name }}
+        </p>
+
+        <h1>
+            {{ article.title }}
+        </h1>
+
+        {% if article.subtitle %}
+            <p class="saved-preview-subtitle">
+                {{ article.subtitle }}
+            </p>
+        {% endif %}
+
+        <div class="saved-preview-byline">
+
+            <span>
+                By
+                <strong>
+                    {{ article.author.username }}
+                </strong>
+            </span>
+
+            <span>
+                Version {{ article.version_number }}
+            </span>
+
+        </div>
+
+        {% if article.contributors.all %}
+
+            <div class="saved-preview-contributors">
+
+                {% for contributor in article.contributors.all %}
+                    <span>
+                        {{ contributor.get_role_display }}:
+                        {{ contributor.user.username }}
+                    </span>
                 {% endfor %}
 
             </div>
 
-        {% else %}
+        {% endif %}
 
-            {% if search_query %}
+        {% if article.featured_image %}
 
-                <p class="empty-message">
-                    No edit-request drafts matched your search.
-                </p>
+            <figure class="saved-preview-featured">
 
-            {% else %}
+                <img
+                    src="{{ article.featured_image.url }}"
+                    alt="{{ article.title }}"
+                >
 
-                <p class="empty-message">
-                    You currently have no approved edit-request drafts.
-                </p>
+                {% if article.featured_image_caption or article.featured_image_credit %}
 
-            {% endif %}
+                    <figcaption>
+
+                        {% if article.featured_image_caption %}
+                            {{ article.featured_image_caption }}
+                        {% endif %}
+
+                        {% if article.featured_image_credit %}
+                            <span>
+                                {{ article.featured_image_credit }}
+                            </span>
+                        {% endif %}
+
+                    </figcaption>
+
+                {% endif %}
+
+            </figure>
 
         {% endif %}
 
-    </section>
+        {% if article.excerpt %}
 
-{% endif %}
+            <p class="saved-preview-excerpt">
+                {{ article.excerpt }}
+            </p>
+
+        {% endif %}
+
+        <div class="saved-preview-content">
+            {{ article.content|linebreaks }}
+        </div>
+
+        {% if article.attachments.all %}
+
+            <section class="saved-preview-media">
+
+                <h2>
+                    Article Images
+                </h2>
+
+                <div class="saved-preview-media-grid">
+
+                    {% for attachment in article.attachments.all %}
+
+                        <figure class="saved-preview-media-card">
+
+                            <img
+                                src="{{ attachment.image.url }}"
+                                alt="{{ attachment.alt_text|default:attachment.caption|default:'Article image' }}"
+                            >
+
+                            {% if attachment.caption or attachment.credit %}
+
+                                <figcaption>
+
+                                    {% if attachment.caption %}
+                                        {{ attachment.caption }}
+                                    {% endif %}
+
+                                    {% if attachment.credit %}
+                                        <span>
+                                            {{ attachment.credit }}
+                                        </span>
+                                    {% endif %}
+
+                                </figcaption>
+
+                            {% endif %}
+
+                        </figure>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+        {% if article.video_attachments.all %}
+
+            <section class="saved-preview-media">
+
+                <h2>
+                    Article Videos
+                </h2>
+
+                <div class="saved-preview-media-grid">
+
+                    {% for attachment in article.video_attachments.all %}
+
+                        <figure class="saved-preview-media-card">
+
+                            <video
+                                controls
+                                preload="metadata"
+                            >
+                                <source src="{{ attachment.video.url }}">
+                            </video>
+
+                            {% if attachment.caption or attachment.credit %}
+
+                                <figcaption>
+
+                                    {% if attachment.caption %}
+                                        {{ attachment.caption }}
+                                    {% endif %}
+
+                                    {% if attachment.credit %}
+                                        <span>
+                                            {{ attachment.credit }}
+                                        </span>
+                                    {% endif %}
+
+                                </figcaption>
+
+                            {% endif %}
+
+                        </figure>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+        {% if article.tags.all %}
+
+            <div class="saved-preview-tags">
+
+                {% for tag in article.tags.all %}
+                    <span>
+                        {{ tag.name }}
+                    </span>
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+    </article>
+
+</template>
+
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="editorial-empty-state">
+
+                    <strong>
+                        {% if search_query %}
+                            No edit-request drafts matched your search.
+                        {% else %}
+                            You currently have no approved edit-request drafts.
+                        {% endif %}
+                    </strong>
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+    {% endif %}
+
+</div>
 
 {% endblock %}

@@ -65,6 +65,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    "rest_framework",
+
     "accounts",
     "home",
     "analytics",
@@ -213,6 +215,10 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
+STATIC_ROOT = (
+    BASE_DIR / "staticfiles"
+)
+
 
 MEDIA_URL = "/media/"
 
@@ -258,6 +264,29 @@ ARTICLE_MAX_ATTACHMENTS = 15
 FILE_UPLOAD_MAX_MEMORY_SIZE = (
     2 * 1024 * 1024
 )
+
+DIGITAL_PUBLICATION_PDF_MAX_SIZE = (
+    300 * 1024 * 1024
+)
+
+# ==========================================================
+# DJANGO REST FRAMEWORK
+# ==========================================================
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        (
+            "rest_framework.authentication."
+            "SessionAuthentication"
+        ),
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        (
+            "rest_framework.permissions."
+            "IsAuthenticated"
+        ),
+    ],
+}
 
 
 # ==========================================================

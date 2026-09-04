@@ -2,179 +2,221 @@
 
 {% block staff_content %}
 
-<h1>Manage Admin Accounts</h1>
+<div class="account-workspace-header account-workspace-header--actions">
 
-<p class="section-description">
-    Create and manage Admin accounts for The Equalizer.
-</p>
+    <div>
+        <p class="workflow-eyebrow">
+            Super Admin
+        </p>
 
+        <h1>
+            Manage Admin Accounts
+        </h1>
 
-<div class="article-actions">
+        <p class="section-description">
+            Create, review, and manage administrators responsible for
+            publication staff access.
+        </p>
+    </div>
 
     <a
         href="{% url 'create_admin_account' %}"
         class="approve-button"
     >
-        Create Admin Account
+        + Create Admin
     </a>
 
 </div>
 
 
-<form
-    method="GET"
-    action="{% url 'manage_admin_accounts' %}"
-    class="search-form"
->
+<div class="account-management-toolbar">
 
-    <input
-        type="text"
-        name="q"
-        value="{{ search_query }}"
-        placeholder="Search admin accounts..."
+    <form
+        method="GET"
+        action="{% url 'manage_admin_accounts' %}"
+        class="account-filter-form"
     >
 
-    <button
-        type="submit"
-        class="edit-link"
-    >
-        Search
-    </button>
+        <div class="account-search-field">
 
-    {% if search_query %}
+            <label for="admin-account-search">
+                Search
+            </label>
 
-        <a
-            href="{% url 'manage_admin_accounts' %}"
-            class="edit-link"
+            <input
+                type="text"
+                id="admin-account-search"
+                name="q"
+                value="{{ search_query }}"
+                placeholder="Username, name, or email"
+            >
+
+        </div>
+
+        <button
+            type="submit"
+            class="secondary-button"
         >
-            Clear
-        </a>
+            Search
+        </button>
 
-    {% endif %}
+        {% if search_query %}
 
-</form>
+            <a
+                href="{% url 'manage_admin_accounts' %}"
+                class="text-action-link"
+            >
+                Clear Search
+            </a>
+
+        {% endif %}
+
+    </form>
+
+    <div class="account-result-count">
+        {{ admins|length }} account{{ admins|length|pluralize }}
+    </div>
+
+</div>
 
 
 {% if admins %}
 
-    <div class="submission-list">
+    <div class="account-management-grid">
 
         {% for admin in admins %}
 
-            <div class="submission-card">
+            <article class="account-management-card">
 
-                <div class="submission-details">
+                <div class="account-card-top">
 
-                    <h2>
-                        {{ admin.username }}
-                    </h2>
+                    <div class="account-card-avatar">
 
-                    <p>
-                        <strong>Name:</strong>
-
-                        {% if admin.first_name or admin.last_name %}
-                            {{ admin.first_name }} {{ admin.last_name }}
-                        {% else %}
-                            Not provided
-                        {% endif %}
-                    </p>
-
-                    <p>
-                        <strong>Email:</strong>
-
-                        {% if admin.email %}
-                            {{ admin.email }}
-                        {% else %}
-                            Not provided
-                        {% endif %}
-                    </p>
-
-                    <p>
-                        <strong>Role:</strong>
-                        {{ admin.get_role_display }}
-                    </p>
-
-                    <p>
-                        <strong>Status:</strong>
-
-                        {% if admin.is_active %}
-
-                            <span class="status-badge status-approved">
-                                Active
-                            </span>
-
-                        {% else %}
-
-                            <span class="status-badge status-rejected">
-                                Inactive
-                            </span>
-
-                        {% endif %}
-
-                    </p>
-
-                    <p>
-                        <strong>Date Joined:</strong>
-                        {{ admin.date_joined|date:"M. d, Y" }}
-                    </p>
-
-
-                    <div class="article-actions">
-
-                        <a
-                            href="{% url 'edit_admin_account' admin.id %}"
-                            class="edit-link"
-                        >
-                            Edit Account
-                        </a>
-
-                        {% if admin.is_active %}
-
-                            <form
-                                method="POST"
-                                action="{% url 'toggle_admin_account_status' admin.id %}"
-                                data-confirm-title="Deactivate Admin"
-                                data-confirm="Are you sure you want to deactivate {{ admin.username }}?"
+                        {% if admin.profile_picture %}
+                            <img
+                                src="{{ admin.profile_picture.url }}"
+                                alt="{{ admin.username }} profile picture"
                             >
-
-                                {% csrf_token %}
-
-                                <button
-                                    type="submit"
-                                    class="danger-link"
-                                >
-                                    Deactivate
-                                </button>
-
-                            </form>
-
                         {% else %}
-
-                            <form
-                                method="POST"
-                                action="{% url 'toggle_admin_account_status' admin.id %}"
-                                data-confirm-title="Activate Admin"
-                                data-confirm="Are you sure you want to activate {{ admin.username }}?"
-                            >
-
-                                {% csrf_token %}
-
-                                <button
-                                    type="submit"
-                                    class="approve-button"
-                                >
-                                    Activate
-                                </button>
-
-                            </form>
-
+                            <span>
+                                {{ admin.username|slice:":1"|upper }}
+                            </span>
                         {% endif %}
 
                     </div>
 
+
+                    <div class="account-card-identity">
+
+                        <span class="account-role-chip">
+                            {{ admin.get_role_display }}
+                        </span>
+
+                        <h2>
+                            {{ admin.username }}
+                        </h2>
+
+                        <p>
+                            {% if admin.get_full_name %}
+                                {{ admin.get_full_name }}
+                            {% else %}
+                                Name not provided
+                            {% endif %}
+                        </p>
+
+                    </div>
+
+
+                    {% if admin.is_active %}
+                        <span class="account-status-pill is-active">
+                            Active
+                        </span>
+                    {% else %}
+                        <span class="account-status-pill is-inactive">
+                            Inactive
+                        </span>
+                    {% endif %}
+
                 </div>
 
-            </div>
+
+                <dl class="account-card-details">
+
+                    <div>
+                        <dt>Email</dt>
+                        <dd>
+                            {% if admin.email %}
+                                {{ admin.email }}
+                            {% else %}
+                                Not provided
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div>
+                        <dt>Date Joined</dt>
+                        <dd>{{ admin.date_joined|date:"M. d, Y" }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Last Login</dt>
+                        <dd>
+                            {% if admin.last_login %}
+                                {{ admin.last_login|date:"M. d, Y - g:i A" }}
+                            {% else %}
+                                Never
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                </dl>
+
+
+                <div class="account-card-actions">
+
+                    <a
+                        href="{% url 'edit_admin_account' admin.id %}"
+                        class="secondary-button"
+                    >
+                        Edit Account
+                    </a>
+
+                    <form
+                        method="POST"
+                        action="{% url 'toggle_admin_account_status' admin.id %}"
+                    >
+
+                        {% csrf_token %}
+
+                        {% if admin.is_active %}
+
+                            <button
+                                type="submit"
+                                class="danger-button"
+                                data-confirm-title="Deactivate Admin"
+                                data-confirm="Are you sure you want to deactivate {{ admin.username }}?"
+                            >
+                                Deactivate
+                            </button>
+
+                        {% else %}
+
+                            <button
+                                type="submit"
+                                class="approve-button"
+                                data-confirm-title="Activate Admin"
+                                data-confirm="Are you sure you want to activate {{ admin.username }}?"
+                            >
+                                Activate
+                            </button>
+
+                        {% endif %}
+
+                    </form>
+
+                </div>
+
+            </article>
 
         {% endfor %}
 
@@ -182,9 +224,12 @@
 
 {% else %}
 
-    <p class="empty-message">
-        No Admin accounts found.
-    </p>
+    <div class="account-empty-state">
+        <strong>No Admin accounts found.</strong>
+        <p>
+            Try changing your search or create a new administrator.
+        </p>
+    </div>
 
 {% endif %}
 

@@ -21,4 +21,16 @@ urlpatterns = [
         views.mark_all_notifications_read,
         name="mark_all_notifications_read",
     ),
+
+    path(
+        "clear-read/",
+        views.clear_read_notifications,
+        name="clear_read_notifications",
+    ),
+
+    path(
+        "clear-all/",
+        views.clear_all_notifications,
+        name="clear_all_notifications",
+    ),
 ]

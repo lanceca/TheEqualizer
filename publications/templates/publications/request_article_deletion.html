@@ -2,113 +2,418 @@
 
 {% block staff_content %}
 
-<h1>Request Article Deletion</h1>
+<div class="editorial-request-page">
 
-<p class="section-description">
-    Request permission from the Editor in Chief to remove a published article from the active publication.
-</p>
+    <div class="editorial-page-header">
 
+        <div>
 
-<div class="article-request-info info-box">
+            <p class="workflow-eyebrow">
+                Published Article Request
+            </p>
 
-    <span class="status-badge status-approved">
-        Published Article
-    </span>
+            <h1>
+                Request Article Deletion
+            </h1>
 
-    <h2>
-        {{ article.title }}
-    </h2>
-
-    <p>
-        <strong>Category:</strong>
-        {{ article.category.name }}
-    </p>
-
-    <p>
-        <strong>Author:</strong>
-        {{ article.author.username }}
-    </p>
-
-    {% if article.published_at %}
-
-        <p>
-            <strong>Published:</strong>
-            {{ article.published_at|date:"M. d, Y - g:i A" }}
-        </p>
-
-    {% endif %}
-
-</div>
-
-
-<div class="warning-box info-box">
-
-    <strong>
-        Important
-    </strong>
-
-    <p>
-        If the EIC approves this request, the article will be archived and removed from the active published article list.
-    </p>
-
-    <p>
-        The article will not be permanently deleted from the database.
-    </p>
-
-</div>
-
-
-<div class="content-panel request-form-panel">
-
-    <form
-        method="POST"
-        class="request-form"
-    >
-
-        {% csrf_token %}
-
-        <div class="form-group">
-
-            <label for="reason">
-                Reason for Deletion Request
-            </label>
-
-            <textarea
-                id="reason"
-                name="reason"
-                placeholder="Explain why this published article should be removed..."
-                required
-            ></textarea>
-
-            <p class="form-help">
-                The EIC will review your reason before deciding whether the article should be archived.
+            <p class="section-description">
+                Ask the Editor in Chief to remove this article from the active
+                publication and move it into the archive.
             </p>
 
         </div>
 
+    </div>
 
-        <div class="form-actions">
 
-            <button
-                type="submit"
-                class="danger-button"
-                data-confirm-title="Submit Deletion Request"
-                data-confirm="Are you sure you want to request deletion of this published article?"
+    <div class="request-workspace-modern">
+
+        <aside class="request-article-reference request-article-reference--danger">
+
+            <div class="request-reference-status">
+
+                <span class="editorial-status-chip is-approved">
+                    Published
+                </span>
+
+                <span class="editorial-meta-chip">
+                    Version {{ article.version_number }}
+                </span>
+
+            </div>
+
+
+            {% if article.featured_image %}
+
+                <div class="request-reference-image">
+
+                    <img
+                        src="{{ article.featured_image.url }}"
+                        alt="{{ article.title }}"
+                    >
+
+                </div>
+
+            {% endif %}
+
+
+            <div class="request-reference-copy">
+
+                <p class="request-reference-category">
+                    {{ article.category.name }}
+                </p>
+
+                <h2>
+                    {{ article.title }}
+                </h2>
+
+
+                {% if article.subtitle %}
+
+                    <p class="request-reference-subtitle">
+                        {{ article.subtitle }}
+                    </p>
+
+                {% endif %}
+
+
+                <dl class="request-reference-meta">
+
+                    <div>
+                        <dt>Author</dt>
+                        <dd>{{ article.author.username }}</dd>
+                    </div>
+
+
+                    {% if article.published_at %}
+
+                        <div>
+                            <dt>Published</dt>
+                            <dd>
+                                {{ article.published_at|date:"M. d, Y - g:i A" }}
+                            </dd>
+                        </div>
+
+                    {% endif %}
+
+                </dl>
+
+
+                <button
+                    type="button"
+                    class="secondary-button request-reference-preview"
+                    data-saved-article-preview
+                    data-preview-template-id="request-deletion-preview"
+                >
+                    Preview Full Article
+                </button>
+
+            </div>
+
+        </aside>
+
+
+        <section class="request-form-card-modern request-form-card-modern--danger">
+
+            <div class="request-form-heading-modern">
+
+                <p class="workflow-eyebrow">
+                    Deletion Request
+                </p>
+
+                <h2>
+                    Why should this article be removed?
+                </h2>
+
+                <p>
+                    The EIC will review your explanation before deciding whether
+                    the article should be removed from the active publication.
+                    An approved request archives the article rather than
+                    permanently deleting its database record.
+                </p>
+
+            </div>
+
+
+            <form
+                method="POST"
+                class="request-form request-form-modern"
             >
-                Submit Deletion Request
-            </button>
 
-            <a
-                href="{% url 'published_articles' %}"
-                class="cancel-link"
-            >
-                Cancel
-            </a>
+                {% csrf_token %}
+
+
+                <div class="form-group">
+
+                    <div class="field-label-row">
+
+                        <label for="reason">
+                            Reason for Deletion Request
+                        </label>
+
+                        <span class="field-required-badge">
+                            Required
+                        </span>
+
+                    </div>
+
+                    <textarea
+                        id="reason"
+                        name="reason"
+                        rows="10"
+                        placeholder="Explain why this published article should be removed from the active publication..."
+                        required
+                    ></textarea>
+
+                    <p class="form-help">
+                        Give the EIC a clear editorial, factual, policy, or
+                        publication-related reason for removing the article.
+                    </p>
+
+                </div>
+
+
+                <div class="request-danger-guidance">
+
+                    <strong>
+                        What happens if this request is approved?
+                    </strong>
+
+                    <p>
+                        The article is removed from the active published list and
+                        moved to the archive. It is not permanently erased from
+                        the database.
+                    </p>
+
+                </div>
+
+
+                <div class="form-actions form-actions-sticky">
+
+                    <a
+                        href="{% url 'published_articles' %}"
+                        class="secondary-button"
+                    >
+                        Cancel
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="danger-button"
+                        data-confirm-title="Submit Deletion Request"
+                        data-confirm="Submit this deletion request to the Editor in Chief? The article will remain published until the request is approved."
+                    >
+                        Submit Deletion Request
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
+
+    </div>
+
+</div>
+
+
+<template id="request-deletion-preview">
+
+    <article class="saved-preview-article">
+
+        <p class="saved-preview-category">
+            {{ article.category.name }}
+        </p>
+
+        <h1>
+            {{ article.title }}
+        </h1>
+
+        {% if article.subtitle %}
+            <p class="saved-preview-subtitle">
+                {{ article.subtitle }}
+            </p>
+        {% endif %}
+
+        <div class="saved-preview-byline">
+
+            <span>
+                By
+                <strong>
+                    {{ article.author.username }}
+                </strong>
+            </span>
+
+            <span>
+                Version {{ article.version_number }}
+            </span>
 
         </div>
 
-    </form>
+        {% if article.contributors.all %}
 
-</div>
+            <div class="saved-preview-contributors">
+
+                {% for contributor in article.contributors.all %}
+                    <span>
+                        {{ contributor.get_role_display }}:
+                        {{ contributor.user.username }}
+                    </span>
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+        {% if article.featured_image %}
+
+            <figure class="saved-preview-featured">
+
+                <img
+                    src="{{ article.featured_image.url }}"
+                    alt="{{ article.title }}"
+                >
+
+                {% if article.featured_image_caption or article.featured_image_credit %}
+
+                    <figcaption>
+
+                        {% if article.featured_image_caption %}
+                            {{ article.featured_image_caption }}
+                        {% endif %}
+
+                        {% if article.featured_image_credit %}
+                            <span>
+                                {{ article.featured_image_credit }}
+                            </span>
+                        {% endif %}
+
+                    </figcaption>
+
+                {% endif %}
+
+            </figure>
+
+        {% endif %}
+
+        {% if article.excerpt %}
+            <p class="saved-preview-excerpt">
+                {{ article.excerpt }}
+            </p>
+        {% endif %}
+
+        <div class="saved-preview-content">
+            {{ article.content|linebreaks }}
+        </div>
+
+        {% if article.attachments.all %}
+
+            <section class="saved-preview-media">
+
+                <h2>
+                    Article Images
+                </h2>
+
+                <div class="saved-preview-media-grid">
+
+                    {% for attachment in article.attachments.all %}
+
+                        <figure class="saved-preview-media-card">
+
+                            <img
+                                src="{{ attachment.image.url }}"
+                                alt="{{ attachment.alt_text|default:attachment.caption|default:'Article image' }}"
+                            >
+
+                            {% if attachment.caption or attachment.credit %}
+
+                                <figcaption>
+
+                                    {% if attachment.caption %}
+                                        {{ attachment.caption }}
+                                    {% endif %}
+
+                                    {% if attachment.credit %}
+                                        <span>
+                                            {{ attachment.credit }}
+                                        </span>
+                                    {% endif %}
+
+                                </figcaption>
+
+                            {% endif %}
+
+                        </figure>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+        {% if article.video_attachments.all %}
+
+            <section class="saved-preview-media">
+
+                <h2>
+                    Article Videos
+                </h2>
+
+                <div class="saved-preview-media-grid">
+
+                    {% for attachment in article.video_attachments.all %}
+
+                        <figure class="saved-preview-media-card">
+
+                            <video controls preload="metadata">
+                                <source src="{{ attachment.video.url }}">
+                            </video>
+
+                            {% if attachment.caption or attachment.credit %}
+
+                                <figcaption>
+
+                                    {% if attachment.caption %}
+                                        {{ attachment.caption }}
+                                    {% endif %}
+
+                                    {% if attachment.credit %}
+                                        <span>
+                                            {{ attachment.credit }}
+                                        </span>
+                                    {% endif %}
+
+                                </figcaption>
+
+                            {% endif %}
+
+                        </figure>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+        {% if article.tags.all %}
+
+            <div class="saved-preview-tags">
+
+                {% for tag in article.tags.all %}
+                    <span>{{ tag.name }}</span>
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+    </article>
+
+</template>
+
 
 {% endblock %}

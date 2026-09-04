@@ -8,6 +8,7 @@ from .models import (
     DeletionRequest,
     ContentReport,
     ArticleAttachment,
+    DigitalPublication,
 )
 
 
@@ -160,3 +161,40 @@ class ArticleAttachmentAdmin(admin.ModelAdmin):
         return str(obj)
 
     attachment_name.short_description = "Attachment"
+
+
+@admin.register(DigitalPublication)
+class DigitalPublicationAdmin(admin.ModelAdmin):
+    list_display = (
+        "title",
+        "volume",
+        "issue_number",
+        "publication_date",
+        "status",
+        "page_count",
+        "display_order",
+        "uploaded_by",
+    )
+
+    list_filter = (
+        "status",
+        "publication_date",
+        "created_at",
+    )
+
+    search_fields = (
+        "title",
+        "volume",
+        "issue_number",
+        "description",
+        "uploaded_by__username",
+    )
+
+    readonly_fields = (
+        "slug",
+        "page_count",
+        "file_size",
+        "published_at",
+        "created_at",
+        "updated_at",
+    )

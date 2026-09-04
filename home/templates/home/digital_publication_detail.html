@@ -1,0 +1,139 @@
+{% extends "public_base.html" %}
+
+{% block title %}
+{{ publication.title }} | The Equalizer
+{% endblock %}
+
+{% block public_content %}
+
+<style>
+    .digital-detail-page {
+        width: min(1240px, calc(100% - 30px));
+        margin: 0 auto;
+        padding: 34px 0 70px;
+    }
+
+    .digital-detail-header {
+        margin-bottom: 22px;
+    }
+
+    .digital-detail-header h1 {
+        margin: 4px 0 9px;
+        color: #0e2a22;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(32px, 4.5vw, 54px);
+    }
+
+    .digital-detail-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px 15px;
+        color: #68756f;
+        font-size: 13px;
+    }
+
+    .digital-viewer-shell {
+        min-height: 620px;
+        margin-top: 24px;
+        padding: 20px;
+        border: 1px solid #dce4df;
+        border-radius: 14px;
+        background: #f5f8f6;
+    }
+
+    .digital-viewer-fallback {
+        display: grid;
+        place-items: center;
+        min-height: 560px;
+        text-align: center;
+    }
+
+    .digital-viewer-fallback a {
+        color: #173f32;
+        font-weight: 800;
+    }
+</style>
+
+
+<main class="digital-detail-page">
+
+    <header class="digital-detail-header">
+
+        <p
+            style="
+                margin:0;
+                color:#c9a227;
+                font-weight:800;
+                text-transform:uppercase;
+                letter-spacing:1.2px;
+            "
+        >
+            Digital Publication
+        </p>
+
+        <h1>{{ publication.title }}</h1>
+
+        <div class="digital-detail-meta">
+
+            <span>
+                {{ publication.publication_date|date:"M. d, Y" }}
+            </span>
+
+            <span>
+                {{ publication.page_count }} pages
+            </span>
+
+            {% if publication.volume %}
+                <span>{{ publication.volume }}</span>
+            {% endif %}
+
+            {% if publication.issue_number %}
+                <span>{{ publication.issue_number }}</span>
+            {% endif %}
+
+        </div>
+
+        {% if publication.description %}
+            <p>
+                {{ publication.description }}
+            </p>
+        {% endif %}
+
+    </header>
+
+
+    <section
+        class="digital-viewer-shell"
+        data-react-component="DigitalPublicationViewer"
+        data-api-url="{% url 'digital_publication_api' publication.slug %}"
+    >
+
+        <div class="digital-viewer-fallback">
+
+            <div>
+
+                <h2>Digital reader ready for React connection</h2>
+
+                <p>
+                    The publication has been uploaded and validated successfully.
+                </p>
+
+                <p>
+                    <a
+                        href="{{ publication.pdf_file.url }}"
+                        target="_blank"
+                        rel="noopener"
+                    >
+                        Open the PDF directly
+                    </a>
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+{% endblock %}

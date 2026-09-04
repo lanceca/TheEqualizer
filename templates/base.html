@@ -365,6 +365,13 @@
 
     </style>
 
+
+    <!-- React/Vite progressive enhancement -->
+    <link
+        rel="stylesheet"
+        href="{% static 'react-dist/assets/equalizer-react.css' %}?v=20260904-flipbook-2"
+    >
+
 </head>
 
 
@@ -536,6 +543,12 @@
         {% endblock %}
 
     </main>
+
+    <!-- React mounts here without replacing the Django page -->
+    <div
+        data-react-component="ReaderTools"
+    ></div>
+
 
 
 
@@ -954,6 +967,14 @@
 
     </script>
 
+
+
+
+    <!-- React/Vite production/watch bundle -->
+    <script
+        type="module"
+        src="{% static 'react-dist/assets/equalizer-react.js' %}?v=20260904-flipbook-2"
+    ></script>
 
 </body>
 

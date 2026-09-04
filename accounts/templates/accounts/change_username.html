@@ -1,0 +1,122 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<div class="credential-page">
+
+    <div class="account-workspace-header">
+
+        <div>
+
+            <p class="workflow-eyebrow">
+                Login Credentials
+            </p>
+
+            <h1>
+                Change Username
+            </h1>
+
+            <p class="section-description">
+                Change the username you use to sign in to The Equalizer CMS.
+                Your current password is required to confirm the change.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="credential-layout">
+
+        <aside class="credential-summary">
+
+            <span>
+                Current Username
+            </span>
+
+            <strong>
+                {{ request.user.username }}
+            </strong>
+
+            <p>
+                After saving, use your new username the next time you log in.
+                Your current session will remain active.
+            </p>
+
+        </aside>
+
+
+        <section class="account-form-card">
+
+            <form
+                method="POST"
+                class="account-editor-form"
+            >
+
+                {% csrf_token %}
+
+                {{ form.non_field_errors }}
+
+
+                {% for field in form %}
+
+                    <div class="account-form-field">
+
+                        <label for="{{ field.id_for_label }}">
+                            {{ field.label }}
+                        </label>
+
+                        {{ field }}
+
+                        {% if field.help_text %}
+                            <div class="account-field-help">
+                                {{ field.help_text|safe }}
+                            </div>
+                        {% endif %}
+
+                        {% if field.errors %}
+
+                            <div class="form-errors">
+
+                                {% for error in field.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+                {% endfor %}
+
+
+                <div class="account-form-actions">
+
+                    <a
+                        href="{% url 'profile' %}"
+                        class="secondary-button"
+                    >
+                        Cancel
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="approve-button"
+                        data-confirm-title="Change Username"
+                        data-confirm="Are you sure you want to change your login username?"
+                    >
+                        Change Username
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
+
+    </div>
+
+</div>
+
+{% endblock %}

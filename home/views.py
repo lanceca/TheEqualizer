@@ -9,8 +9,18 @@ from django.shortcuts import (
 )
 from django.utils import timezone
 
+from rest_framework.decorators import (
+    api_view,
+    permission_classes,
+)
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+
 from analytics.models import ArticleDailyAnalytics
-from publications.models import Article
+from publications.models import (
+    Article,
+    DigitalPublication,
+)
 
 
 # ==========================================================
@@ -90,11 +100,37 @@ def home(request):
         )
         .prefetch_related(
             "tags",
+            "attachments",
+            "video_attachments",
+            "contributors",
+            "contributors__user",
         )
         .order_by(
             "-published_at",
             "-created_at",
         )
+    )
+
+    published_articles = list(
+        published_articles
+    )
+
+    lead_article = (
+        published_articles[0]
+        if published_articles
+        else None
+    )
+
+    secondary_articles = (
+        published_articles[1:5]
+        if published_articles
+        else []
+    )
+
+    more_articles = (
+        published_articles[5:]
+        if published_articles
+        else []
     )
 
     return render(
@@ -103,6 +139,15 @@ def home(request):
         {
             "published_articles": (
                 published_articles
+            ),
+            "lead_article": (
+                lead_article
+            ),
+            "secondary_articles": (
+                secondary_articles
+            ),
+            "more_articles": (
+                more_articles
             ),
         },
     )
@@ -127,6 +172,9 @@ def article_detail(
         .prefetch_related(
             "tags",
             "attachments",
+            "video_attachments",
+            "contributors",
+            "contributors__user",
         ),
         slug=slug,
         draft_type=Article.DraftType.NORMAL,
@@ -338,4 +386,117 @@ def share_article(
     return redirect(
         "article_detail",
         slug=article.slug,
+    )
+
+# ==========================================================
+# PUBLIC DIGITAL PUBLICATIONS
+# ==========================================================
+
+
+def digital_publications(
+    request,
+):
+    publications = (
+        DigitalPublication.objects
+        .filter(
+            status=(
+                DigitalPublication
+                .Status
+                .PUBLISHED
+            )
+        )
+        .select_related(
+            "uploaded_by"
+        )
+    )
+
+    return render(
+        request,
+        "home/digital_publications.html",
+        {
+            "digital_publications": (
+                publications
+            ),
+        },
+    )
+
+
+def digital_publication_detail(
+    request,
+    slug,
+):
+    publication = get_object_or_404(
+        DigitalPublication,
+        slug=slug,
+        status=(
+            DigitalPublication
+            .Status
+            .PUBLISHED
+        ),
+    )
+
+    return render(
+        request,
+        (
+            "home/"
+            "digital_publication_detail.html"
+        ),
+        {
+            "publication": publication,
+        },
+    )
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def digital_publication_api(
+    request,
+    slug,
+):
+    publication = get_object_or_404(
+        DigitalPublication,
+        slug=slug,
+        status=(
+            DigitalPublication
+            .Status
+            .PUBLISHED
+        ),
+    )
+
+    return Response(
+        {
+            "id": publication.id,
+            "title": publication.title,
+            "slug": publication.slug,
+            "volume": publication.volume,
+            "issue_number": (
+                publication.issue_number
+            ),
+            "publication_date": (
+                publication
+                .publication_date
+                .isoformat()
+            ),
+            "description": (
+                publication.description
+            ),
+            "cover_image_url": (
+                request.build_absolute_uri(
+                    publication.cover_image.url
+                )
+                if publication.cover_image
+                else ""
+            ),
+            "pdf_url": (
+                request.build_absolute_uri(
+                    publication.pdf_file.url
+                )
+            ),
+            "page_count": (
+                publication.page_count
+            ),
+            "file_size": (
+                publication.file_size
+            ),
+        }
     )

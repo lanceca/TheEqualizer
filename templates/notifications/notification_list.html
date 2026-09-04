@@ -2,119 +2,263 @@
 
 {% block staff_content %}
 
-<h1>Notifications</h1>
+<div class="notification-page">
 
-<p class="section-description">
-    View updates related to submissions, requests, reports, revisions, and other publication activity.
-</p>
+    <div class="notification-page-header">
+
+        <div>
+
+            <p class="workflow-eyebrow">
+                Activity Center
+            </p>
+
+            <h1>
+                Notifications
+            </h1>
+
+            <p class="section-description">
+                Track publication submissions, requests, reports,
+                revisions, and other account activity.
+            </p>
+
+        </div>
 
 
-<div class="notification-toolbar">
+        <div class="notification-summary-card">
 
-    <div class="info-box">
+            <span>
+                Unread
+            </span>
 
-        <strong>
-            Unread Notifications:
-        </strong>
+            <strong>
+                {{ unread_count }}
+            </strong>
 
-        {{ unread_count }}
+        </div>
 
     </div>
 
-    {% if unread_count > 0 %}
 
-        <form
-            method="POST"
-            action="{% url 'mark_all_notifications_read' %}"
+    <div class="notification-tabs">
+
+        <a
+            href="{% url 'notification_list' %}?filter=all"
+            class="notification-tab {% if selected_filter == 'all' %}is-active{% endif %}"
         >
+            All
+            <span>{{ total_count }}</span>
+        </a>
 
-            {% csrf_token %}
+        <a
+            href="{% url 'notification_list' %}?filter=unread"
+            class="notification-tab {% if selected_filter == 'unread' %}is-active{% endif %}"
+        >
+            Unread
+            <span class="{% if unread_count > 0 %}notification-tab-count-hot{% endif %}">
+                {{ unread_count }}
+            </span>
+        </a>
 
-            <button
-                type="submit"
-                class="approve-button"
-            >
-                Mark All as Read
-            </button>
+        <a
+            href="{% url 'notification_list' %}?filter=read"
+            class="notification-tab {% if selected_filter == 'read' %}is-active{% endif %}"
+        >
+            Read
+            <span>{{ read_count }}</span>
+        </a>
 
-        </form>
-
-    {% endif %}
-
-</div>
+    </div>
 
 
-{% if notifications %}
+    <div class="notification-toolbar-modern">
 
-    <div class="submission-list">
+        <div class="notification-toolbar-copy">
 
-        {% for notification in notifications %}
+            {% if selected_filter == "unread" %}
 
-            <div class="submission-card">
+                Showing unread notifications.
 
-                <div class="submission-details">
+            {% elif selected_filter == "read" %}
 
-                    <div class="submission-summary-info">
+                Showing notifications you have already opened.
 
-                        <div class="submission-badges">
+            {% else %}
 
-                            {% if notification.is_read %}
+                Showing all notification activity.
 
-                                <span class="status-badge status-approved">
-                                    Read
+            {% endif %}
+
+        </div>
+
+
+        <div class="notification-toolbar-actions">
+
+            {% if unread_count > 0 %}
+
+                <form
+                    method="POST"
+                    action="{% url 'mark_all_notifications_read' %}"
+                >
+
+                    {% csrf_token %}
+
+                    <button
+                        type="submit"
+                        class="secondary-button"
+                    >
+                        Mark All Read
+                    </button>
+
+                </form>
+
+            {% endif %}
+
+
+            {% if read_count > 0 %}
+
+                <form
+                    method="POST"
+                    action="{% url 'clear_read_notifications' %}"
+                >
+
+                    {% csrf_token %}
+
+                    <button
+                        type="submit"
+                        class="secondary-button"
+                        data-confirm-title="Clear Read Notifications"
+                        data-confirm="Clear all notifications that have already been read? This cannot be undone."
+                    >
+                        Clear Read
+                    </button>
+
+                </form>
+
+            {% endif %}
+
+
+            {% if total_count > 0 %}
+
+                <form
+                    method="POST"
+                    action="{% url 'clear_all_notifications' %}"
+                >
+
+                    {% csrf_token %}
+
+                    <button
+                        type="submit"
+                        class="danger-button"
+                        data-confirm-title="Clear All Notifications"
+                        data-confirm="Clear every notification in your account? This cannot be undone."
+                    >
+                        Clear All
+                    </button>
+
+                </form>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    {% if notifications %}
+
+        <div class="notification-feed">
+
+            {% for notification in notifications %}
+
+                <article
+                    class="notification-feed-item {% if not notification.is_read %}is-unread{% endif %}"
+                >
+
+                    <div class="notification-type-icon notification-type-{{ notification.notification_type|lower }}">
+
+                        {% if notification.notification_type == "SUBMISSION" %}
+                            S
+                        {% elif notification.notification_type == "EDIT_REQUEST" %}
+                            E
+                        {% elif notification.notification_type == "DELETION_REQUEST" %}
+                            D
+                        {% elif notification.notification_type == "CONTENT_REPORT" %}
+                            R
+                        {% elif notification.notification_type == "REVISION" %}
+                            V
+                        {% else %}
+                            N
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="notification-feed-content">
+
+                        <div class="notification-feed-heading">
+
+                            <div class="notification-feed-badges">
+
+                                <span class="notification-type-pill">
+                                    {{ notification.get_notification_type_display }}
                                 </span>
 
-                            {% else %}
+                                {% if not notification.is_read %}
 
-                                <span class="status-badge status-pending">
-                                    Unread
-                                </span>
+                                    <span class="notification-unread-pill">
+                                        New
+                                    </span>
 
-                            {% endif %}
+                                {% endif %}
 
-                            <span class="badge badge-edit">
-                                {{ notification.get_notification_type_display }}
-                            </span>
+                            </div>
+
+                            <time>
+                                {{ notification.created_at|date:"M. d, Y - g:i A" }}
+                            </time>
 
                         </div>
 
 
-                        <p class="submission-meta">
-
-                            <strong>
-                                Received:
-                            </strong>
-
-                            {{ notification.created_at|date:"M. d, Y - g:i A" }}
-
-                        </p>
-
-                    </div>
-
-
-                    <div class="article-content">
-
-                        <p>
+                        <p class="notification-feed-message">
                             {{ notification.message }}
                         </p>
 
-                    </div>
 
+                        <div class="notification-feed-actions">
 
-                    <div class="article-actions">
+                            {% if notification.related_url %}
 
-                        {% if notification.related_url %}
+                                {% if notification.is_read %}
 
-                            {% if notification.is_read %}
+                                    <a
+                                        href="{{ notification.related_url }}"
+                                        class="secondary-button"
+                                    >
+                                        Open
+                                    </a>
 
-                                <a
-                                    href="{{ notification.related_url }}"
-                                    class="edit-link"
-                                >
-                                    View
-                                </a>
+                                {% else %}
 
-                            {% else %}
+                                    <form
+                                        method="POST"
+                                        action="{% url 'mark_notification_read' notification.id %}"
+                                    >
+
+                                        {% csrf_token %}
+
+                                        <button
+                                            type="submit"
+                                            class="approve-button"
+                                        >
+                                            Open
+                                        </button>
+
+                                    </form>
+
+                                {% endif %}
+
+                            {% elif not notification.is_read %}
 
                                 <form
                                     method="POST"
@@ -125,51 +269,45 @@
 
                                     <button
                                         type="submit"
-                                        class="edit-link"
+                                        class="secondary-button"
                                     >
-                                        View
+                                        Mark as Read
                                     </button>
 
                                 </form>
 
                             {% endif %}
 
-                        {% elif not notification.is_read %}
-
-                            <form
-                                method="POST"
-                                action="{% url 'mark_notification_read' notification.id %}"
-                            >
-
-                                {% csrf_token %}
-
-                                <button
-                                    type="submit"
-                                    class="edit-link"
-                                >
-                                    Mark as Read
-                                </button>
-
-                            </form>
-
-                        {% endif %}
+                        </div>
 
                     </div>
 
-                </div>
+                </article>
 
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <div class="notification-empty-state">
+
+            <div class="notification-empty-icon">
+                ✓
             </div>
 
-        {% endfor %}
+            <strong>
+                No notifications here.
+            </strong>
 
-    </div>
+            <p>
+                You're caught up for this notification view.
+            </p>
 
-{% else %}
+        </div>
 
-    <p class="empty-message">
-        You currently have no notifications.
-    </p>
+    {% endif %}
 
-{% endif %}
+</div>
 
 {% endblock %}

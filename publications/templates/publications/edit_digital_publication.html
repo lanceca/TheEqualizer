@@ -1,0 +1,201 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<div class="dashboard-header">
+    <h1>Edit Digital Publication</h1>
+    <p class="dashboard-subtitle">
+        Update metadata, cover image, PDF file, status, or display order.
+    </p>
+</div>
+
+<section
+    style="
+        max-width: 760px;
+        padding: 22px;
+        background: var(--eq-white);
+        border: 1px solid var(--eq-border);
+        border-radius: var(--eq-radius);
+        box-shadow: var(--eq-shadow);
+    "
+>
+
+    <form
+        method="POST"
+        enctype="multipart/form-data"
+    >
+        {% csrf_token %}
+
+        <p>
+            <label>
+                <strong>Title</strong><br>
+                <input
+                    type="text"
+                    name="title"
+                    value="{{ publication.title }}"
+                    maxlength="255"
+                    required
+                    style="width:100%;box-sizing:border-box;padding:10px;"
+                >
+            </label>
+        </p>
+
+        <p>
+            <label>
+                <strong>Volume</strong><br>
+                <input
+                    type="text"
+                    name="volume"
+                    value="{{ publication.volume }}"
+                    maxlength="50"
+                    style="width:100%;box-sizing:border-box;padding:10px;"
+                >
+            </label>
+        </p>
+
+        <p>
+            <label>
+                <strong>Issue Number</strong><br>
+                <input
+                    type="text"
+                    name="issue_number"
+                    value="{{ publication.issue_number }}"
+                    maxlength="50"
+                    style="width:100%;box-sizing:border-box;padding:10px;"
+                >
+            </label>
+        </p>
+
+        <p>
+            <label>
+                <strong>Publication Date</strong><br>
+                <input
+                    type="date"
+                    name="publication_date"
+                    value="{{ publication.publication_date|date:'Y-m-d' }}"
+                    required
+                    style="width:100%;box-sizing:border-box;padding:10px;"
+                >
+            </label>
+        </p>
+
+        <p>
+            <label>
+                <strong>Description</strong><br>
+                <textarea
+                    name="description"
+                    rows="6"
+                    style="width:100%;box-sizing:border-box;padding:10px;"
+                >{{ publication.description }}</textarea>
+            </label>
+        </p>
+
+        {% if publication.cover_image %}
+            <p>
+                Current cover:
+                <a
+                    href="{{ publication.cover_image.url }}"
+                    target="_blank"
+                    rel="noopener"
+                >
+                    View image
+                </a>
+            </p>
+
+            <label>
+                <input
+                    type="checkbox"
+                    name="remove_cover"
+                    value="1"
+                >
+                Remove current cover
+            </label>
+        {% endif %}
+
+        <p>
+            <label>
+                <strong>Replace Cover Image</strong><br>
+                <input
+                    type="file"
+                    name="cover_image"
+                    accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                >
+            </label>
+        </p>
+
+        <p>
+            Current PDF:
+            <a
+                href="{{ publication.pdf_file.url }}"
+                target="_blank"
+                rel="noopener"
+            >
+                Open PDF
+            </a>
+            — {{ publication.page_count }} pages
+        </p>
+
+        <p>
+            <label>
+                <strong>Replace PDF</strong><br>
+                <input
+                    type="file"
+                    name="pdf_file"
+                    accept=".pdf,application/pdf"
+                >
+            </label>
+        </p>
+
+        <p>
+            <label>
+                <strong>Status</strong><br>
+                <select
+                    name="status"
+                    style="width:100%;box-sizing:border-box;padding:10px;"
+                >
+                    {% for value, label in status_choices %}
+                        <option
+                            value="{{ value }}"
+                            {% if publication.status == value %}selected{% endif %}
+                        >
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+        </p>
+
+        <p>
+            <label>
+                <strong>Display Order</strong><br>
+                <input
+                    type="number"
+                    name="display_order"
+                    value="{{ publication.display_order }}"
+                    min="0"
+                    style="width:100%;box-sizing:border-box;padding:10px;"
+                >
+            </label>
+        </p>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button
+                type="submit"
+                class="primary-button"
+            >
+                Save Changes
+            </button>
+
+            <a
+                href="{% url 'digital_publication_management' %}"
+                class="secondary-button"
+            >
+                Cancel
+            </a>
+        </div>
+
+    </form>
+
+</section>
+
+{% endblock %}

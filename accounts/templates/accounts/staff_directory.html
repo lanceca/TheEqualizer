@@ -1,0 +1,205 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<div class="account-workspace-header">
+
+    <div>
+
+        <p class="workflow-eyebrow">
+            Publication Team
+        </p>
+
+        <h1>
+            Staff Directory
+        </h1>
+
+        <p class="section-description">
+            View the currently active Editor in Chief, Editors,
+            and Staff members of The Equalizer.
+        </p>
+
+    </div>
+
+</div>
+
+
+<div class="directory-toolbar">
+
+    <form
+        method="GET"
+        action="{% url 'staff_directory' %}"
+        class="account-filter-form"
+    >
+
+        <div class="account-search-field">
+
+            <label for="directory-search">
+                Search
+            </label>
+
+            <input
+                type="text"
+                id="directory-search"
+                name="q"
+                value="{{ search_query }}"
+                placeholder="Name, username, or email"
+            >
+
+        </div>
+
+
+        <div class="account-search-field">
+
+            <label for="directory-role">
+                Role
+            </label>
+
+            <select
+                id="directory-role"
+                name="role"
+            >
+
+                <option value="ALL">
+                    All Roles
+                </option>
+
+                {% for value, label in role_choices %}
+
+                    <option
+                        value="{{ value }}"
+                        {% if selected_role == value %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ label }}
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        <button
+            type="submit"
+            class="secondary-button"
+        >
+            Filter
+        </button>
+
+
+        {% if search_query or selected_role != "ALL" %}
+
+            <a
+                href="{% url 'staff_directory' %}"
+                class="text-action-link"
+            >
+                Clear
+            </a>
+
+        {% endif %}
+
+    </form>
+
+</div>
+
+
+{% if staff_accounts %}
+
+    <div class="staff-directory-grid">
+
+        {% for account in staff_accounts %}
+
+            <article class="staff-directory-card">
+
+                <div class="staff-directory-photo">
+
+                    {% if account.profile_picture %}
+
+                        <img
+                            src="{{ account.profile_picture.url }}"
+                            alt="{{ account.username }} profile picture"
+                        >
+
+                    {% else %}
+
+                        <span>
+                            {{ account.username|slice:":1"|upper }}
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="staff-directory-copy">
+
+                    <span class="account-role-chip">
+                        {{ account.get_role_display }}
+                    </span>
+
+                    <h2>
+                        {% if account.get_full_name %}
+                            {{ account.get_full_name }}
+                        {% else %}
+                            {{ account.username }}
+                        {% endif %}
+                    </h2>
+
+                    <p class="staff-directory-username">
+                        @{{ account.username }}
+                    </p>
+
+
+                    <dl class="staff-directory-details">
+
+                        <div>
+                            <dt>Email</dt>
+                            <dd>
+                                {% if account.email %}
+                                    {{ account.email }}
+                                {% else %}
+                                    Not provided
+                                {% endif %}
+                            </dd>
+                        </div>
+
+                        <div>
+                            <dt>Joined</dt>
+                            <dd>
+                                {{ account.date_joined|date:"M. d, Y" }}
+                            </dd>
+                        </div>
+
+                        <div>
+                            <dt>Last Login</dt>
+                            <dd>
+                                {% if account.last_login %}
+                                    {{ account.last_login|date:"M. d, Y - g:i A" }}
+                                {% else %}
+                                    Never
+                                {% endif %}
+                            </dd>
+                        </div>
+
+                    </dl>
+
+                </div>
+
+            </article>
+
+        {% endfor %}
+
+    </div>
+
+{% else %}
+
+    <div class="account-empty-state">
+        <strong>No staff members match your filters.</strong>
+    </div>
+
+{% endif %}
+
+{% endblock %}

@@ -2,68 +2,124 @@
 
 {% block staff_content %}
 
-<h1>Create Publication Staff Account</h1>
+<div class="account-workspace-header">
 
-<p class="section-description">
-    Create an Adviser, Editor in Chief, Editor, or Staff account.
-</p>
+    <div>
 
+        <p class="workflow-eyebrow">
+            Administration
+        </p>
 
-<form method="POST">
+        <h1>Create Publication Staff Account</h1>
 
-    {% csrf_token %}
-
-    {{ form.non_field_errors }}
-
-    {% for field in form %}
-
-        <div class="form-group">
-
-            <label for="{{ field.id_for_label }}">
-                {{ field.label }}
-            </label>
-
-            {{ field }}
-
-            {% if field.errors %}
-
-                <div class="form-errors">
-
-                    {% for error in field.errors %}
-
-                        <p>
-                            {{ error }}
-                        </p>
-
-                    {% endfor %}
-
-                </div>
-
-            {% endif %}
-
-        </div>
-
-    {% endfor %}
-
-
-    <div class="article-actions">
-
-        <button
-            type="submit"
-            class="approve-button"
-        >
-            Create Account
-        </button>
-
-        <a
-            href="{% url 'manage_staff_accounts' %}"
-            class="edit-link"
-        >
-            Cancel
-        </a>
+        <p class="section-description">
+            Create an Adviser, Editor in Chief, Editor, or Staff account.
+        </p>
 
     </div>
 
-</form>
+</div>
+
+
+<div class="account-form-layout">
+
+    <aside class="account-form-guide">
+
+        <div class="account-form-guide-icon">
+            +
+        </div>
+
+        <h2>Publication Access</h2>
+
+        <p>
+            Choose the publication role carefully. Each role receives a different workspace and permission set.
+        </p>
+
+        <div class="account-guide-note">
+            Login credentials should be given only to the intended
+            account owner.
+        </div>
+
+    </aside>
+
+
+    <section class="account-form-card">
+
+        <form
+            method="POST"
+            class="account-editor-form"
+        >
+
+            {% csrf_token %}
+
+            {{ form.non_field_errors }}
+
+
+            {% for field in form %}
+
+                <div class="account-form-field">
+
+                    <div class="account-field-label-row">
+
+                        <label for="{{ field.id_for_label }}">
+                            {{ field.label }}
+                        </label>
+
+                        {% if field.field.required %}
+                            <span class="field-required-badge">
+                                Required
+                            </span>
+                        {% endif %}
+
+                    </div>
+
+                    {{ field }}
+
+                    {% if field.help_text %}
+                        <div class="account-field-help">
+                            {{ field.help_text|safe }}
+                        </div>
+                    {% endif %}
+
+                    {% if field.errors %}
+
+                        <div class="form-errors">
+
+                            {% for error in field.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            {% endfor %}
+
+
+            <div class="account-form-actions">
+
+                <a
+                    href="{% url 'manage_staff_accounts' %}"
+                    class="secondary-button"
+                >
+                    Cancel
+                </a>
+
+                <button
+                    type="submit"
+                    class="approve-button"
+                >
+                    Create Account
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+</div>
 
 {% endblock %}

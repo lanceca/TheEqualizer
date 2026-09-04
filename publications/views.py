@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
+from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponseForbidden
@@ -28,14 +29,18 @@ from .models import (
     Category,
     ContentReport,
     DeletionRequest,
+    DigitalPublication,
     EditRequest,
     Submission,
     Tag,
 )
 
 from .validators import (
+    inspect_digital_publication_pdf,
     validate_article_image,
+    validate_article_text_fields,
     validate_article_video,
+    validate_content_report_description,
 )
 
 
@@ -1196,6 +1201,37 @@ def create_article(request):
             "featured_image_credit",
             "",
         ).strip()
+
+
+        try:
+
+            validate_article_text_fields(
+                title=title,
+                subtitle=subtitle,
+                excerpt=excerpt,
+                content=content,
+                featured_image_caption=(
+                    featured_image_caption
+                ),
+                featured_image_credit=(
+                    featured_image_credit
+                ),
+            )
+
+        except ValidationError as error:
+
+            messages.error(
+                request,
+                get_validation_error_message(
+                    error
+                ),
+            )
+
+            return render(
+                request,
+                "publications/create_article.html",
+                context,
+            )
 
         action = request.POST.get(
             "action"
@@ -2443,6 +2479,37 @@ def revise_submission(
             "",
         ).strip()
 
+
+        try:
+
+            validate_article_text_fields(
+                title=title,
+                subtitle=subtitle,
+                excerpt=excerpt,
+                content=content,
+                featured_image_caption=(
+                    featured_image_caption
+                ),
+                featured_image_credit=(
+                    featured_image_credit
+                ),
+            )
+
+        except ValidationError as error:
+
+            messages.error(
+                request,
+                get_validation_error_message(
+                    error
+                ),
+            )
+
+            return render(
+                request,
+                "publications/revise_submission.html",
+                context,
+            )
+
         featured_image = request.FILES.get(
             "featured_image"
         )
@@ -3085,6 +3152,37 @@ def edit_draft(
             "featured_image_credit",
             "",
         ).strip()
+
+
+        try:
+
+            validate_article_text_fields(
+                title=title,
+                subtitle=subtitle,
+                excerpt=excerpt,
+                content=content,
+                featured_image_caption=(
+                    featured_image_caption
+                ),
+                featured_image_credit=(
+                    featured_image_credit
+                ),
+            )
+
+        except ValidationError as error:
+
+            messages.error(
+                request,
+                get_validation_error_message(
+                    error
+                ),
+            )
+
+            return render(
+                request,
+                "publications/edit_draft.html",
+                context,
+            )
 
         action = request.POST.get(
             "action"
@@ -3772,20 +3870,26 @@ def get_version_history_article_for_user(
     article_id,
 ):
     """
-    Return a published normal article that the current role may
-    inspect in version history.
+    Return a normal article that the current role may inspect
+    in version history.
 
-    EIC and Staff may inspect all currently published articles.
-    Editors may inspect only their own currently published articles.
-    Adviser access is intentionally excluded for now.
+    EIC:
+    - may inspect currently published normal articles;
+    - may also inspect archived normal articles.
+
+    Staff:
+    - may inspect currently published normal articles only.
+
+    Editor:
+    - may inspect only their own currently published normal articles.
+
+    Adviser access remains intentionally excluded.
     """
 
     queryset = (
         Article.objects
         .filter(
             id=article_id,
-            is_published=True,
-            is_archived=False,
             draft_type=Article.DraftType.NORMAL,
         )
         .select_related(
@@ -3794,10 +3898,38 @@ def get_version_history_article_for_user(
         )
     )
 
-    if request.user.role == User.Role.EDITOR:
+    if request.user.role == User.Role.EIC:
+
         queryset = queryset.filter(
-            author=request.user
+            Q(
+                is_published=True,
+                is_archived=False,
+            )
+            |
+            Q(
+                is_published=False,
+                is_archived=True,
+            )
         )
+
+    elif request.user.role == User.Role.EDITOR:
+
+        queryset = queryset.filter(
+            author=request.user,
+            is_published=True,
+            is_archived=False,
+        )
+
+    elif request.user.role == User.Role.STAFF:
+
+        queryset = queryset.filter(
+            is_published=True,
+            is_archived=False,
+        )
+
+    else:
+
+        queryset = Article.objects.none()
 
     return get_object_or_404(
         queryset
@@ -3980,6 +4112,37 @@ def edit_published_article(
             "featured_image_credit",
             "",
         ).strip()
+
+
+        try:
+
+            validate_article_text_fields(
+                title=title,
+                subtitle=subtitle,
+                excerpt=excerpt,
+                content=content,
+                featured_image_caption=(
+                    featured_image_caption
+                ),
+                featured_image_credit=(
+                    featured_image_credit
+                ),
+            )
+
+        except ValidationError as error:
+
+            messages.error(
+                request,
+                get_validation_error_message(
+                    error
+                ),
+            )
+
+            return render(
+                request,
+                "publications/edit_published_article.html",
+                context,
+            )
 
         featured_image = request.FILES.get(
             "featured_image"
@@ -5659,6 +5822,30 @@ def report_article_content(
             "",
         ).strip()
 
+
+        try:
+
+            validate_content_report_description(
+                description
+            )
+
+        except ValidationError as error:
+
+            messages.error(
+                request,
+                get_validation_error_message(
+                    error
+                ),
+            )
+
+            return render(
+                request,
+                "publications/report_article_content.html",
+                {
+                    "article": article,
+                },
+            )
+
         if not description:
 
             messages.error(
@@ -6656,4 +6843,807 @@ def restore_archived_article(
 
     return redirect(
         "archived_articles"
+    )
+
+
+@publication_role_required(
+    User.Role.EIC
+)
+@require_POST
+def permanently_delete_archived_article(
+    request,
+    article_id,
+):
+    """
+    Permanently purge an archived NORMAL article.
+
+    Database relations tied to the article are removed through the
+    models' existing on_delete behavior. Media paths owned by the
+    archived article, its historical submission snapshots, version
+    snapshots, and its edit-request drafts are collected before the
+    database purge and then removed from storage.
+    """
+
+    media_names = set()
+
+    with transaction.atomic():
+
+        article = get_object_or_404(
+            Article.objects
+            .select_for_update()
+            .select_related(
+                "author",
+                "category",
+            )
+            .prefetch_related(
+                "attachments",
+                "video_attachments",
+                "submissions",
+                "submissions__snapshot_attachments",
+                "submissions__snapshot_video_attachments",
+            ),
+            id=article_id,
+            is_archived=True,
+            draft_type=Article.DraftType.NORMAL,
+        )
+
+        active_edit_request_exists = (
+            EditRequest.objects.filter(
+                article=article,
+                status__in=[
+                    EditRequest.Status.PENDING,
+                    EditRequest.Status.APPROVED,
+                ],
+            ).exists()
+        )
+
+        active_content_report_exists = (
+            ContentReport.objects.filter(
+                article=article,
+                status__in=[
+                    ContentReport.Status.OPEN,
+                    ContentReport.Status.REVISION_REQUIRED,
+                ],
+            ).exists()
+        )
+
+        if (
+            active_edit_request_exists
+            or active_content_report_exists
+        ):
+
+            messages.warning(
+                request,
+                (
+                    "This archived article cannot be permanently "
+                    "deleted while an editorial workflow is still active."
+                ),
+            )
+
+            return redirect(
+                "archived_articles"
+            )
+
+        article_title = article.title
+
+        # --------------------------------------------------
+        # Current article media
+        # --------------------------------------------------
+
+        if article.featured_image:
+            media_names.add(
+                article.featured_image.name
+            )
+
+        for attachment in article.attachments.all():
+
+            if attachment.image:
+                media_names.add(
+                    attachment.image.name
+                )
+
+        for attachment in article.video_attachments.all():
+
+            if attachment.video:
+                media_names.add(
+                    attachment.video.name
+                )
+
+        # --------------------------------------------------
+        # Submission snapshot media
+        # --------------------------------------------------
+
+        for submission in article.submissions.all():
+
+            if submission.snapshot_featured_image:
+                media_names.add(
+                    submission.snapshot_featured_image
+                )
+
+            for attachment in (
+                submission.snapshot_attachments.all()
+            ):
+
+                if attachment.image:
+                    media_names.add(
+                        attachment.image
+                    )
+
+            for attachment in (
+                submission.snapshot_video_attachments.all()
+            ):
+
+                if attachment.video:
+                    media_names.add(
+                        attachment.video
+                    )
+
+        # --------------------------------------------------
+        # Immutable article-version snapshot media
+        # --------------------------------------------------
+
+        media_names.update(
+            name
+            for name in (
+                ArticleVersion.objects
+                .filter(article=article)
+                .exclude(featured_image="")
+                .values_list(
+                    "featured_image",
+                    flat=True,
+                )
+            )
+            if name
+        )
+
+        media_names.update(
+            name
+            for name in (
+                ArticleVersionImageAttachment.objects
+                .filter(
+                    article_version__article=article
+                )
+                .exclude(image="")
+                .values_list(
+                    "image",
+                    flat=True,
+                )
+            )
+            if name
+        )
+
+        media_names.update(
+            name
+            for name in (
+                ArticleVersionVideoAttachment.objects
+                .filter(
+                    article_version__article=article
+                )
+                .exclude(video="")
+                .values_list(
+                    "video",
+                    flat=True,
+                )
+            )
+            if name
+        )
+
+        # --------------------------------------------------
+        # Historical edit-request drafts sourced from article
+        # --------------------------------------------------
+
+        related_edit_drafts = list(
+            Article.objects
+            .filter(
+                source_article=article,
+                draft_type=Article.DraftType.EDIT_REQUEST,
+            )
+            .prefetch_related(
+                "attachments",
+                "video_attachments",
+            )
+        )
+
+        for draft in related_edit_drafts:
+
+            if draft.featured_image:
+                media_names.add(
+                    draft.featured_image.name
+                )
+
+            for attachment in draft.attachments.all():
+
+                if attachment.image:
+                    media_names.add(
+                        attachment.image.name
+                    )
+
+            for attachment in draft.video_attachments.all():
+
+                if attachment.video:
+                    media_names.add(
+                        attachment.video.name
+                    )
+
+        # Delete edit drafts first because source_article uses SET_NULL.
+        for draft in related_edit_drafts:
+            draft.delete()
+
+        # Existing CASCADE relations remove submissions, reports,
+        # requests, contributors, attachments, versions, etc.
+        article.delete()
+
+    # Storage deletion happens only after the database transaction
+    # successfully commits.
+    storage_cleanup_failed = False
+
+    for media_name in media_names:
+
+        if not media_name:
+            continue
+
+        try:
+
+            if default_storage.exists(
+                media_name
+            ):
+                default_storage.delete(
+                    media_name
+                )
+
+        except Exception:
+            storage_cleanup_failed = True
+
+    if storage_cleanup_failed:
+
+        messages.warning(
+            request,
+            (
+                f'"{article_title}" was permanently deleted from '
+                "the database, but one or more associated media "
+                "files could not be removed from storage."
+            ),
+        )
+
+    else:
+
+        messages.success(
+            request,
+            (
+                f'"{article_title}" was permanently deleted.'
+            ),
+        )
+
+    return redirect(
+        "archived_articles"
+    )
+
+
+
+# ==========================================================
+# DIGITAL PUBLICATION MANAGEMENT
+# EIC ONLY
+# ==========================================================
+
+
+def get_digital_publication_form_data(
+    request,
+):
+    title = request.POST.get(
+        "title",
+        "",
+    ).strip()
+
+    volume = request.POST.get(
+        "volume",
+        "",
+    ).strip()
+
+    issue_number = request.POST.get(
+        "issue_number",
+        "",
+    ).strip()
+
+    publication_date = request.POST.get(
+        "publication_date",
+        "",
+    ).strip()
+
+    description = request.POST.get(
+        "description",
+        "",
+    ).strip()
+
+    status = request.POST.get(
+        "status",
+        DigitalPublication.Status.DRAFT,
+    ).strip()
+
+    display_order_raw = request.POST.get(
+        "display_order",
+        "0",
+    ).strip()
+
+    if not title:
+        raise ValidationError(
+            "Please provide a publication title."
+        )
+
+    if not publication_date:
+        raise ValidationError(
+            "Please provide a publication date."
+        )
+
+    valid_statuses = {
+        choice_value
+        for choice_value, choice_label
+        in DigitalPublication.Status.choices
+    }
+
+    if status not in valid_statuses:
+        raise ValidationError(
+            "An invalid publication status was selected."
+        )
+
+    try:
+        display_order = int(
+            display_order_raw or 0
+        )
+    except ValueError as error:
+        raise ValidationError(
+            "Display order must be a whole number."
+        ) from error
+
+    if display_order < 0:
+        raise ValidationError(
+            "Display order cannot be negative."
+        )
+
+    return {
+        "title": title,
+        "volume": volume,
+        "issue_number": issue_number,
+        "publication_date": publication_date,
+        "description": description,
+        "status": status,
+        "display_order": display_order,
+    }
+
+
+@publication_role_required(
+    User.Role.EIC
+)
+def digital_publication_management(
+    request,
+):
+    publications = (
+        DigitalPublication.objects
+        .select_related(
+            "uploaded_by"
+        )
+        .all()
+    )
+
+    return render(
+        request,
+        (
+            "publications/"
+            "digital_publication_management.html"
+        ),
+        {
+            "digital_publications": (
+                publications
+            ),
+            "status_choices": (
+                DigitalPublication.Status.choices
+            ),
+        },
+    )
+
+
+@publication_role_required(
+    User.Role.EIC
+)
+@require_POST
+def create_digital_publication(
+    request,
+):
+    try:
+        form_data = (
+            get_digital_publication_form_data(
+                request
+            )
+        )
+
+        pdf_file = request.FILES.get(
+            "pdf_file"
+        )
+
+        cover_image = request.FILES.get(
+            "cover_image"
+        )
+
+        if not pdf_file:
+            raise ValidationError(
+                "Please upload a publication PDF."
+            )
+
+        metadata = (
+            inspect_digital_publication_pdf(
+                pdf_file
+            )
+        )
+
+        publication = (
+            DigitalPublication(
+                uploaded_by=request.user,
+                pdf_file=pdf_file,
+                cover_image=cover_image,
+                page_count=(
+                    metadata["page_count"]
+                ),
+                file_size=(
+                    metadata["file_size"]
+                ),
+                **form_data,
+            )
+        )
+
+        if (
+            publication.status
+            == DigitalPublication.Status.PUBLISHED
+        ):
+            publication.published_at = (
+                timezone.now()
+            )
+
+        publication.full_clean()
+        publication.save()
+
+    except ValidationError as error:
+        messages.error(
+            request,
+            get_validation_error_message(
+                error
+            ),
+        )
+
+        return redirect(
+            "digital_publication_management"
+        )
+
+    messages.success(
+        request,
+        (
+            f'"{publication.title}" '
+            "was added successfully."
+        ),
+    )
+
+    return redirect(
+        "digital_publication_management"
+    )
+
+
+@publication_role_required(
+    User.Role.EIC
+)
+def edit_digital_publication(
+    request,
+    publication_id,
+):
+    publication = get_object_or_404(
+        DigitalPublication,
+        id=publication_id,
+    )
+
+    if request.method == "POST":
+        old_pdf_name = (
+            publication.pdf_file.name
+            if publication.pdf_file
+            else ""
+        )
+
+        old_cover_name = (
+            publication.cover_image.name
+            if publication.cover_image
+            else ""
+        )
+
+        try:
+            form_data = (
+                get_digital_publication_form_data(
+                    request
+                )
+            )
+
+            replacement_pdf = (
+                request.FILES.get(
+                    "pdf_file"
+                )
+            )
+
+            replacement_cover = (
+                request.FILES.get(
+                    "cover_image"
+                )
+            )
+
+            remove_cover = (
+                request.POST.get(
+                    "remove_cover"
+                )
+                == "1"
+            )
+
+            publication.title = (
+                form_data["title"]
+            )
+            publication.volume = (
+                form_data["volume"]
+            )
+            publication.issue_number = (
+                form_data["issue_number"]
+            )
+            publication.publication_date = (
+                form_data[
+                    "publication_date"
+                ]
+            )
+            publication.description = (
+                form_data["description"]
+            )
+            publication.status = (
+                form_data["status"]
+            )
+            publication.display_order = (
+                form_data["display_order"]
+            )
+
+            if replacement_pdf:
+                metadata = (
+                    inspect_digital_publication_pdf(
+                        replacement_pdf
+                    )
+                )
+
+                publication.pdf_file = (
+                    replacement_pdf
+                )
+
+                publication.page_count = (
+                    metadata["page_count"]
+                )
+
+                publication.file_size = (
+                    metadata["file_size"]
+                )
+
+            if replacement_cover:
+                publication.cover_image = (
+                    replacement_cover
+                )
+            elif remove_cover:
+                publication.cover_image = None
+
+            if (
+                publication.status
+                == DigitalPublication.Status.PUBLISHED
+            ):
+                if not publication.published_at:
+                    publication.published_at = (
+                        timezone.now()
+                    )
+            else:
+                publication.published_at = None
+
+            publication.full_clean()
+            publication.save()
+
+        except ValidationError as error:
+            messages.error(
+                request,
+                get_validation_error_message(
+                    error
+                ),
+            )
+
+            return render(
+                request,
+                (
+                    "publications/"
+                    "edit_digital_publication.html"
+                ),
+                {
+                    "publication": publication,
+                    "status_choices": (
+                        DigitalPublication
+                        .Status
+                        .choices
+                    ),
+                },
+            )
+
+        if (
+            replacement_pdf
+            and old_pdf_name
+            and old_pdf_name
+            != publication.pdf_file.name
+            and default_storage.exists(
+                old_pdf_name
+            )
+        ):
+            default_storage.delete(
+                old_pdf_name
+            )
+
+        if (
+            (
+                replacement_cover
+                or remove_cover
+            )
+            and old_cover_name
+            and (
+                not publication.cover_image
+                or old_cover_name
+                != publication.cover_image.name
+            )
+            and default_storage.exists(
+                old_cover_name
+            )
+        ):
+            default_storage.delete(
+                old_cover_name
+            )
+
+        messages.success(
+            request,
+            (
+                f'"{publication.title}" '
+                "was updated successfully."
+            ),
+        )
+
+        return redirect(
+            "digital_publication_management"
+        )
+
+    return render(
+        request,
+        (
+            "publications/"
+            "edit_digital_publication.html"
+        ),
+        {
+            "publication": publication,
+            "status_choices": (
+                DigitalPublication.Status.choices
+            ),
+        },
+    )
+
+
+@publication_role_required(
+    User.Role.EIC
+)
+@require_POST
+def set_digital_publication_status(
+    request,
+    publication_id,
+):
+    publication = get_object_or_404(
+        DigitalPublication,
+        id=publication_id,
+    )
+
+    requested_status = request.POST.get(
+        "status",
+        "",
+    )
+
+    valid_statuses = {
+        choice_value
+        for choice_value, choice_label
+        in DigitalPublication.Status.choices
+    }
+
+    if requested_status not in valid_statuses:
+        messages.error(
+            request,
+            "Invalid publication status.",
+        )
+
+        return redirect(
+            "digital_publication_management"
+        )
+
+    publication.status = (
+        requested_status
+    )
+
+    if (
+        requested_status
+        == DigitalPublication.Status.PUBLISHED
+    ):
+        if not publication.published_at:
+            publication.published_at = (
+                timezone.now()
+            )
+    else:
+        publication.published_at = None
+
+    publication.save(
+        update_fields=[
+            "status",
+            "published_at",
+            "updated_at",
+        ]
+    )
+
+    messages.success(
+        request,
+        (
+            f'"{publication.title}" is now '
+            f'{publication.get_status_display()}.'
+        ),
+    )
+
+    return redirect(
+        "digital_publication_management"
+    )
+
+
+@publication_role_required(
+    User.Role.EIC
+)
+@require_POST
+def delete_digital_publication(
+    request,
+    publication_id,
+):
+    publication = get_object_or_404(
+        DigitalPublication,
+        id=publication_id,
+    )
+
+    title = publication.title
+
+    pdf_name = (
+        publication.pdf_file.name
+        if publication.pdf_file
+        else ""
+    )
+
+    cover_name = (
+        publication.cover_image.name
+        if publication.cover_image
+        else ""
+    )
+
+    publication.delete()
+
+    for file_name in {
+        pdf_name,
+        cover_name,
+    }:
+        if (
+            file_name
+            and default_storage.exists(
+                file_name
+            )
+        ):
+            default_storage.delete(
+                file_name
+            )
+
+    messages.success(
+        request,
+        (
+            f'"{title}" was permanently deleted '
+            "from Digital Publications."
+        ),
+    )
+
+    return redirect(
+        "digital_publication_management"
     )

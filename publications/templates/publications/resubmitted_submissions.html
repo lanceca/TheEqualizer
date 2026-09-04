@@ -2,85 +2,118 @@
 
 {% block staff_content %}
 
-<h1>Resubmitted Submissions</h1>
+<div class="editorial-list-page">
 
-<p class="section-description">
-    View articles that were revised and resubmitted for EIC approval.
-</p>
+    <div class="editorial-page-header">
+
+        <div>
+
+            <p class="workflow-eyebrow">
+                Revision Tracking
+            </p>
+
+            <h1>
+                Resubmitted Submissions
+            </h1>
+
+            <p class="section-description">
+                Review revised articles you sent back to the EIC and compare
+                the resubmitted version with the previous submission.
+            </p>
+
+        </div>
+
+        <div class="editorial-queue-count">
+            <span>Resubmissions</span>
+            <strong>{{ submissions|length }}</strong>
+        </div>
+
+    </div>
 
 
-{% if submissions %}
+    {% if submissions %}
 
-    <div class="article-tile-grid">
+        <div class="editorial-card-list">
 
-        {% for submission in submissions %}
+            {% for submission in submissions %}
 
-            <details class="article-tile">
+                <article class="editorial-item-card editorial-item-card--revision">
 
-                <summary class="article-tile-summary">
+                    <div class="editorial-item-thumb">
 
-                    {% if submission.snapshot_featured_image %}
-
-                        <div class="article-tile-image-wrapper">
+                        {% if submission.snapshot_featured_image %}
 
                             <img
                                 src="{{ submission.snapshot_featured_image_url }}"
                                 alt="{{ submission.snapshot_title|default:submission.article.title }}"
-                                class="article-tile-image"
                             >
 
-                        </div>
-
-                    {% elif submission.article.featured_image %}
-
-                        <div class="article-tile-image-wrapper">
+                        {% elif submission.article.featured_image %}
 
                             <img
                                 src="{{ submission.article.featured_image.url }}"
                                 alt="{{ submission.article.title }}"
-                                class="article-tile-image"
                             >
 
-                        </div>
+                        {% else %}
 
-                    {% else %}
-
-                        <div class="article-tile-image-wrapper article-tile-placeholder">
-                            No Featured Image
-                        </div>
-
-                    {% endif %}
-
-
-                    <div class="article-tile-overlay">
-
-                        {% if submission.status == "PENDING" %}
-
-                            <span class="status-badge status-pending">
-                                {{ submission.get_status_display }}
-                            </span>
-
-                        {% elif submission.status == "APPROVED" %}
-
-                            <span class="status-badge status-approved">
-                                {{ submission.get_status_display }}
-                            </span>
-
-                        {% elif submission.status == "REJECTED" %}
-
-                            <span class="status-badge status-rejected">
-                                {{ submission.get_status_display }}
-                            </span>
-
-                        {% elif submission.status == "REVISION" %}
-
-                            <span class="status-badge status-revision">
-                                {{ submission.get_status_display }}
-                            </span>
+                            <div class="editorial-thumb-placeholder">
+                                <span>R</span>
+                            </div>
 
                         {% endif %}
 
-                        <h2 class="article-tile-title">
+                    </div>
+
+
+                    <div class="editorial-item-main">
+
+                        <div class="editorial-item-badges">
+
+                            {% if submission.status == "PENDING" %}
+
+                                <span class="editorial-status-chip is-pending">
+                                    Pending Review
+                                </span>
+
+                            {% elif submission.status == "APPROVED" %}
+
+                                <span class="editorial-status-chip is-approved">
+                                    Approved
+                                </span>
+
+                            {% elif submission.status == "REJECTED" %}
+
+                                <span class="editorial-status-chip is-rejected">
+                                    Rejected
+                                </span>
+
+                            {% else %}
+
+                                <span class="editorial-status-chip is-revision">
+                                    Revision Required
+                                </span>
+
+                            {% endif %}
+
+                            <span class="editorial-meta-chip is-special">
+                                Resubmission
+                            </span>
+
+                            <span class="editorial-meta-chip">
+
+                                {% if submission.snapshot_category_name %}
+                                    {{ submission.snapshot_category_name }}
+                                {% else %}
+                                    {{ submission.article.category.name }}
+                                {% endif %}
+
+                            </span>
+
+                        </div>
+
+
+                        <h2>
 
                             {% if submission.snapshot_title %}
                                 {{ submission.snapshot_title }}
@@ -90,350 +123,630 @@
 
                         </h2>
 
-                        <p class="article-tile-category">
 
-                            {% if submission.snapshot_category_name %}
-                                {{ submission.snapshot_category_name }}
-                            {% else %}
-                                {{ submission.article.category.name }}
-                            {% endif %}
+                        {% if submission.snapshot_subtitle %}
 
-                        </p>
-
-                        <p class="article-tile-author">
-                            Resubmitted {{ submission.submitted_at|date:"M. d, Y" }}
-                        </p>
-
-                        <span class="article-tile-expand">
-                            Click to compare versions
-                        </span>
-
-                    </div>
-
-                </summary>
-
-
-                <div class="article-tile-details">
-
-                    <div class="submission-version-header">
-
-                        <h3>
-                            Resubmitted Version
-                        </h3>
-
-                        <p>
-                            Submitted on
-                            {{ submission.submitted_at|date:"M. d, Y - g:i A" }}.
-                        </p>
-
-                    </div>
-
-
-                    {% if submission.snapshot_contributors %}
-
-                        <div class="article-contributors">
-                            <h3>Contributors</h3>
-
-                            {% for contributor in submission.snapshot_contributors %}
-                                <p class="submission-meta">
-                                    <strong>{{ contributor.role_display }}:</strong>
-                                    {{ contributor.username }}
-                                </p>
-                            {% endfor %}
-                        </div>
-
-                    {% elif not submission.snapshot_title and submission.article.contributors.all %}
-
-                        <div class="article-contributors">
-                            <h3>Contributors</h3>
-
-                            {% for contributor in submission.article.contributors.all %}
-                                <p class="submission-meta">
-                                    <strong>{{ contributor.get_role_display }}:</strong>
-                                    {{ contributor.user.username }}
-                                </p>
-                            {% endfor %}
-                        </div>
-
-                    {% endif %}
-
-
-                    {% if submission.snapshot_featured_image %}
-
-                        <div class="featured-image-container">
-
-                            <h3>
-                                Featured Image
-                            </h3>
-
-                            <img
-                                src="{{ submission.snapshot_featured_image_url }}"
-                                alt="{{ submission.snapshot_title|default:submission.article.title }}"
-                                class="featured-image"
-                                tabindex="0"
-                                role="button"
-                                data-lightbox-image
-                            >
-
-                        </div>
-
-                    {% endif %}
-
-
-                    <div class="article-content">
-
-                        <h3>
-                            Article Content
-                        </h3>
-
-                        <p>
-
-                            {% if submission.snapshot_content %}
-                                {{ submission.snapshot_content|linebreaksbr }}
-                            {% else %}
-                                {{ submission.article.content|linebreaksbr }}
-                            {% endif %}
-
-                        </p>
-
-                    </div>
-
-
-                    {% if submission.snapshot_tags %}
-
-                        <div class="article-tags">
-
-                            <h3>
-                                Tags
-                            </h3>
-
-                            <div class="tag-list">
-
-                                {% for tag in submission.snapshot_tags %}
-
-                                    <span class="tag-item">
-                                        {{ tag }}
-                                    </span>
-
-                                {% endfor %}
-
-                            </div>
-
-                        </div>
-
-                    {% endif %}
-
-
-                    {% if submission.snapshot_attachments.all %}
-
-                        <div class="article-attachments">
-
-                            <h3>
-                                Attached Images
-                            </h3>
-
-                            <p class="form-help">
-                                Click an image to enlarge it.
+                            <p class="editorial-item-subtitle">
+                                {{ submission.snapshot_subtitle }}
                             </p>
-
-                            <div class="attachment-gallery">
-
-                                {% for attachment in submission.snapshot_attachments.all %}
-
-                                    <div class="attachment-item">
-
-                                        <img
-                                            src="{{ attachment.image_url }}"
-                                            alt="{{ attachment.caption|default:'Article attachment' }}"
-                                            class="attachment-image"
-                                            tabindex="0"
-                                            role="button"
-                                            data-lightbox-image
-                                        >
-
-                                        {% if attachment.caption %}
-
-                                            <p class="attachment-caption">
-                                                {{ attachment.caption }}
-                                            </p>
-
-                                        {% endif %}
-
-                                    </div>
-
-                                {% endfor %}
-
-                            </div>
-
-                        </div>
-
-                    {% endif %}
-
-
-                    {% if submission.resubmission_of %}
-
-                        <div class="source-article-box">
-
-                            <h3>
-                                Previous Submission
-                            </h3>
-
-                            <p class="submission-meta">
-                                <strong>Originally Submitted:</strong>
-                                {{ submission.resubmission_of.submitted_at|date:"M. d, Y - g:i A" }}
-                            </p>
-
-                            {% if submission.resubmission_of.reviewed_at %}
-
-                                <p class="submission-meta">
-                                    <strong>Reviewed:</strong>
-                                    {{ submission.resubmission_of.reviewed_at|date:"M. d, Y - g:i A" }}
-                                </p>
-
-                            {% endif %}
-
-                        </div>
-
-
-                        {% if submission.resubmission_of.snapshot_title %}
-
-                            <div class="previous-version-panel">
-
-                                <h3>
-                                    {{ submission.resubmission_of.snapshot_title }}
-                                </h3>
-
-                                <p class="submission-meta">
-                                    <strong>Category:</strong>
-                                    {{ submission.resubmission_of.snapshot_category_name }}
-                                </p>
-
-                                {% if submission.resubmission_of.snapshot_contributors %}
-
-                                    <div class="article-contributors">
-                                        <h4>Previous Contributors</h4>
-
-                                        {% for contributor in submission.resubmission_of.snapshot_contributors %}
-                                            <p class="submission-meta">
-                                                <strong>{{ contributor.role_display }}:</strong>
-                                                {{ contributor.username }}
-                                            </p>
-                                        {% endfor %}
-                                    </div>
-
-                                {% endif %}
-
-
-                                {% if submission.resubmission_of.snapshot_featured_image %}
-
-                                    <img
-                                        src="{{ submission.resubmission_of.snapshot_featured_image_url }}"
-                                        alt="{{ submission.resubmission_of.snapshot_title }}"
-                                        class="featured-image"
-                                        tabindex="0"
-                                        role="button"
-                                        data-lightbox-image
-                                    >
-
-                                {% endif %}
-
-
-                                <h4>
-                                    Previous Article Content
-                                </h4>
-
-                                <p>
-                                    {{ submission.resubmission_of.snapshot_content|linebreaksbr }}
-                                </p>
-
-
-                                {% if submission.resubmission_of.snapshot_tags %}
-
-                                    <h4>
-                                        Previous Tags
-                                    </h4>
-
-                                    <div class="tag-list">
-
-                                        {% for tag in submission.resubmission_of.snapshot_tags %}
-
-                                            <span class="tag-item">
-                                                {{ tag }}
-                                            </span>
-
-                                        {% endfor %}
-
-                                    </div>
-
-                                {% endif %}
-
-
-                                {% if submission.resubmission_of.snapshot_attachments.all %}
-
-                                    <h4>
-                                        Previous Attached Images
-                                    </h4>
-
-                                    <div class="attachment-gallery">
-
-                                        {% for attachment in submission.resubmission_of.snapshot_attachments.all %}
-
-                                            <div class="attachment-item">
-
-                                                <img
-                                                    src="{{ attachment.image_url }}"
-                                                    alt="{{ attachment.caption|default:'Article attachment' }}"
-                                                    class="attachment-image"
-                                                    tabindex="0"
-                                                    role="button"
-                                                    data-lightbox-image
-                                                >
-
-                                            </div>
-
-                                        {% endfor %}
-
-                                    </div>
-
-                                {% endif %}
-
-                            </div>
 
                         {% endif %}
+
+
+                        {% if submission.snapshot_excerpt %}
+
+                            <p class="editorial-item-summary">
+                                {{ submission.snapshot_excerpt|truncatechars:180 }}
+                            </p>
+
+                        {% elif submission.snapshot_content %}
+
+                            <p class="editorial-item-summary">
+                                {{ submission.snapshot_content|striptags|truncatechars:180 }}
+                            </p>
+
+                        {% else %}
+
+                            <p class="editorial-item-summary">
+                                {{ submission.article.content|striptags|truncatechars:180 }}
+                            </p>
+
+                        {% endif %}
+
+
+                        <div class="editorial-item-meta">
+
+                            <span>
+                                Resubmitted
+                                <strong>
+                                    {{ submission.submitted_at|date:"M. d, Y - g:i A" }}
+                                </strong>
+                            </span>
+
+                            {% if submission.resubmission_of %}
+
+                                <span>
+                                    Original submission
+                                    <strong>
+                                        {{ submission.resubmission_of.submitted_at|date:"M. d, Y" }}
+                                    </strong>
+                                </span>
+
+                            {% endif %}
+
+                        </div>
 
 
                         {% if submission.resubmission_of.reviewer_notes %}
 
-                            <div class="revision-notes warning-box info-box">
-
-                                <strong>
-                                    EIC Reviewer Notes
-                                </strong>
-
+                            <div class="editorial-review-note">
+                                <strong>Previous EIC Notes</strong>
                                 <p>
                                     {{ submission.resubmission_of.reviewer_notes|linebreaksbr }}
                                 </p>
-
                             </div>
 
                         {% endif %}
 
+                    </div>
+
+
+                    <div class="editorial-item-actions">
+
+                        <button
+                            type="button"
+                            class="secondary-button"
+                            data-saved-article-preview
+                            data-preview-template-id="resubmission-preview-{{ submission.id }}"
+                        >
+                            Preview Resubmitted Version
+                        </button>
+
+
+                        {% if submission.resubmission_of %}
+
+                            <button
+                                type="button"
+                                class="secondary-button"
+                                data-saved-article-preview
+                                data-preview-template-id="previous-submission-preview-{{ submission.id }}"
+                            >
+                                Preview Previous Version
+                            </button>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    {% if submission.resubmission_of %}
+
+                        <details class="editorial-review-drawer">
+
+                            <summary>
+                                Revision History
+                            </summary>
+
+                            <div class="editorial-review-panel">
+
+                                <div class="request-detail-grid">
+
+                                    <div>
+                                        <span>Previous Status</span>
+                                        <strong>
+                                            {{ submission.resubmission_of.get_status_display }}
+                                        </strong>
+                                    </div>
+
+                                    <div>
+                                        <span>Previous Submitted</span>
+                                        <strong>
+                                            {{ submission.resubmission_of.submitted_at|date:"M. d, Y - g:i A" }}
+                                        </strong>
+                                    </div>
+
+                                    {% if submission.resubmission_of.reviewed_at %}
+
+                                        <div>
+                                            <span>Previous Reviewed</span>
+                                            <strong>
+                                                {{ submission.resubmission_of.reviewed_at|date:"M. d, Y - g:i A" }}
+                                            </strong>
+                                        </div>
+
+                                    {% endif %}
+
+                                </div>
+
+                            </div>
+
+                        </details>
+
                     {% endif %}
+
+                </article>
+
+
+<template id="resubmission-preview-{{ submission.id }}">
+
+    <article class="saved-preview-article">
+
+        <p class="saved-preview-category">
+            {% if submission.snapshot_category_name %}
+                {{ submission.snapshot_category_name }}
+            {% else %}
+                {{ submission.article.category.name }}
+            {% endif %}
+        </p>
+
+        <h1>
+            {% if submission.snapshot_title %}
+                {{ submission.snapshot_title }}
+            {% else %}
+                {{ submission.article.title }}
+            {% endif %}
+        </h1>
+
+        {% if submission.snapshot_subtitle %}
+
+            <p class="saved-preview-subtitle">
+                {{ submission.snapshot_subtitle }}
+            </p>
+
+        {% elif not submission.snapshot_title and submission.article.subtitle %}
+
+            <p class="saved-preview-subtitle">
+                {{ submission.article.subtitle }}
+            </p>
+
+        {% endif %}
+
+        <div class="saved-preview-byline">
+
+            <span>
+                Resubmitted by
+                <strong>
+                    {{ submission.submitted_by.username }}
+                </strong>
+            </span>
+
+            <span>
+                {{ submission.submitted_at|date:"M. d, Y - g:i A" }}
+            </span>
+
+        </div>
+
+        {% if submission.snapshot_contributors %}
+
+            <div class="saved-preview-contributors">
+
+                {% for contributor in submission.snapshot_contributors %}
+                    <span>
+                        {{ contributor.role_display }}:
+                        {{ contributor.username }}
+                    </span>
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+        {% if submission.snapshot_featured_image %}
+
+            <figure class="saved-preview-featured">
+
+                <img
+                    src="{{ submission.snapshot_featured_image_url }}"
+                    alt="{{ submission.snapshot_title|default:submission.article.title }}"
+                >
+
+                {% if submission.snapshot_featured_image_caption or submission.snapshot_featured_image_credit %}
+
+                    <figcaption>
+
+                        {% if submission.snapshot_featured_image_caption %}
+                            {{ submission.snapshot_featured_image_caption }}
+                        {% endif %}
+
+                        {% if submission.snapshot_featured_image_credit %}
+                            <span>
+                                {{ submission.snapshot_featured_image_credit }}
+                            </span>
+                        {% endif %}
+
+                    </figcaption>
+
+                {% endif %}
+
+            </figure>
+
+        {% elif not submission.snapshot_title and submission.article.featured_image %}
+
+            <figure class="saved-preview-featured">
+                <img
+                    src="{{ submission.article.featured_image.url }}"
+                    alt="{{ submission.article.title }}"
+                >
+            </figure>
+
+        {% endif %}
+
+        {% if submission.snapshot_excerpt %}
+
+            <p class="saved-preview-excerpt">
+                {{ submission.snapshot_excerpt }}
+            </p>
+
+        {% endif %}
+
+        <div class="saved-preview-content">
+
+            {% if submission.snapshot_content %}
+                {{ submission.snapshot_content|linebreaks }}
+            {% else %}
+                {{ submission.article.content|linebreaks }}
+            {% endif %}
+
+        </div>
+
+        {% if submission.snapshot_attachments.all %}
+
+            <section class="saved-preview-media">
+
+                <h2>
+                    Article Images
+                </h2>
+
+                <div class="saved-preview-media-grid">
+
+                    {% for attachment in submission.snapshot_attachments.all %}
+
+                        <figure class="saved-preview-media-card">
+
+                            <img
+                                src="{{ attachment.image_url }}"
+                                alt="{{ attachment.alt_text|default:attachment.caption|default:'Article image' }}"
+                            >
+
+                            {% if attachment.caption or attachment.credit %}
+
+                                <figcaption>
+
+                                    {% if attachment.caption %}
+                                        {{ attachment.caption }}
+                                    {% endif %}
+
+                                    {% if attachment.credit %}
+                                        <span>
+                                            {{ attachment.credit }}
+                                        </span>
+                                    {% endif %}
+
+                                </figcaption>
+
+                            {% endif %}
+
+                        </figure>
+
+                    {% endfor %}
 
                 </div>
 
-            </details>
+            </section>
 
-        {% endfor %}
+        {% endif %}
 
-    </div>
+        {% if submission.snapshot_video_attachments.all %}
 
-{% else %}
+            <section class="saved-preview-media">
 
-    <p class="empty-message">
-        You do not have any resubmitted submissions yet.
-    </p>
+                <h2>
+                    Article Videos
+                </h2>
 
-{% endif %}
+                <div class="saved-preview-media-grid">
+
+                    {% for attachment in submission.snapshot_video_attachments.all %}
+
+                        <figure class="saved-preview-media-card">
+
+                            <video controls preload="metadata">
+                                <source src="{{ attachment.video_url }}">
+                            </video>
+
+                            {% if attachment.caption or attachment.credit %}
+
+                                <figcaption>
+
+                                    {% if attachment.caption %}
+                                        {{ attachment.caption }}
+                                    {% endif %}
+
+                                    {% if attachment.credit %}
+                                        <span>
+                                            {{ attachment.credit }}
+                                        </span>
+                                    {% endif %}
+
+                                </figcaption>
+
+                            {% endif %}
+
+                        </figure>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+        {% if submission.snapshot_tags %}
+
+            <div class="saved-preview-tags">
+                {% for tag in submission.snapshot_tags %}
+                    <span>{{ tag }}</span>
+                {% endfor %}
+            </div>
+
+        {% endif %}
+
+    </article>
+
+</template>
+
+
+                {% if submission.resubmission_of %}
+
+
+<template id="previous-submission-preview-{{ submission.id }}">
+
+    <article class="saved-preview-article">
+
+        <p class="saved-preview-category">
+            {% if submission.resubmission_of.snapshot_category_name %}
+                {{ submission.resubmission_of.snapshot_category_name }}
+            {% else %}
+                {{ submission.resubmission_of.article.category.name }}
+            {% endif %}
+        </p>
+
+        <h1>
+            {% if submission.resubmission_of.snapshot_title %}
+                {{ submission.resubmission_of.snapshot_title }}
+            {% else %}
+                {{ submission.resubmission_of.article.title }}
+            {% endif %}
+        </h1>
+
+        {% if submission.resubmission_of.snapshot_subtitle %}
+
+            <p class="saved-preview-subtitle">
+                {{ submission.resubmission_of.snapshot_subtitle }}
+            </p>
+
+        {% elif not submission.resubmission_of.snapshot_title and submission.resubmission_of.article.subtitle %}
+
+            <p class="saved-preview-subtitle">
+                {{ submission.resubmission_of.article.subtitle }}
+            </p>
+
+        {% endif %}
+
+        <div class="saved-preview-byline">
+
+            <span>
+                Resubmitted by
+                <strong>
+                    {{ submission.resubmission_of.submitted_by.username }}
+                </strong>
+            </span>
+
+            <span>
+                {{ submission.resubmission_of.submitted_at|date:"M. d, Y - g:i A" }}
+            </span>
+
+        </div>
+
+        {% if submission.resubmission_of.snapshot_contributors %}
+
+            <div class="saved-preview-contributors">
+
+                {% for contributor in submission.resubmission_of.snapshot_contributors %}
+                    <span>
+                        {{ contributor.role_display }}:
+                        {{ contributor.username }}
+                    </span>
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+        {% if submission.resubmission_of.snapshot_featured_image %}
+
+            <figure class="saved-preview-featured">
+
+                <img
+                    src="{{ submission.resubmission_of.snapshot_featured_image_url }}"
+                    alt="{{ submission.resubmission_of.snapshot_title|default:submission.article.title }}"
+                >
+
+                {% if submission.resubmission_of.snapshot_featured_image_caption or submission.resubmission_of.snapshot_featured_image_credit %}
+
+                    <figcaption>
+
+                        {% if submission.resubmission_of.snapshot_featured_image_caption %}
+                            {{ submission.resubmission_of.snapshot_featured_image_caption }}
+                        {% endif %}
+
+                        {% if submission.resubmission_of.snapshot_featured_image_credit %}
+                            <span>
+                                {{ submission.resubmission_of.snapshot_featured_image_credit }}
+                            </span>
+                        {% endif %}
+
+                    </figcaption>
+
+                {% endif %}
+
+            </figure>
+
+        {% elif not submission.resubmission_of.snapshot_title and submission.resubmission_of.article.featured_image %}
+
+            <figure class="saved-preview-featured">
+                <img
+                    src="{{ submission.resubmission_of.article.featured_image.url }}"
+                    alt="{{ submission.resubmission_of.article.title }}"
+                >
+            </figure>
+
+        {% endif %}
+
+        {% if submission.resubmission_of.snapshot_excerpt %}
+
+            <p class="saved-preview-excerpt">
+                {{ submission.resubmission_of.snapshot_excerpt }}
+            </p>
+
+        {% endif %}
+
+        <div class="saved-preview-content">
+
+            {% if submission.resubmission_of.snapshot_content %}
+                {{ submission.resubmission_of.snapshot_content|linebreaks }}
+            {% else %}
+                {{ submission.resubmission_of.article.content|linebreaks }}
+            {% endif %}
+
+        </div>
+
+        {% if submission.resubmission_of.snapshot_attachments.all %}
+
+            <section class="saved-preview-media">
+
+                <h2>
+                    Article Images
+                </h2>
+
+                <div class="saved-preview-media-grid">
+
+                    {% for attachment in submission.resubmission_of.snapshot_attachments.all %}
+
+                        <figure class="saved-preview-media-card">
+
+                            <img
+                                src="{{ attachment.image_url }}"
+                                alt="{{ attachment.alt_text|default:attachment.caption|default:'Article image' }}"
+                            >
+
+                            {% if attachment.caption or attachment.credit %}
+
+                                <figcaption>
+
+                                    {% if attachment.caption %}
+                                        {{ attachment.caption }}
+                                    {% endif %}
+
+                                    {% if attachment.credit %}
+                                        <span>
+                                            {{ attachment.credit }}
+                                        </span>
+                                    {% endif %}
+
+                                </figcaption>
+
+                            {% endif %}
+
+                        </figure>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+        {% if submission.resubmission_of.snapshot_video_attachments.all %}
+
+            <section class="saved-preview-media">
+
+                <h2>
+                    Article Videos
+                </h2>
+
+                <div class="saved-preview-media-grid">
+
+                    {% for attachment in submission.resubmission_of.snapshot_video_attachments.all %}
+
+                        <figure class="saved-preview-media-card">
+
+                            <video controls preload="metadata">
+                                <source src="{{ attachment.video_url }}">
+                            </video>
+
+                            {% if attachment.caption or attachment.credit %}
+
+                                <figcaption>
+
+                                    {% if attachment.caption %}
+                                        {{ attachment.caption }}
+                                    {% endif %}
+
+                                    {% if attachment.credit %}
+                                        <span>
+                                            {{ attachment.credit }}
+                                        </span>
+                                    {% endif %}
+
+                                </figcaption>
+
+                            {% endif %}
+
+                        </figure>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+        {% if submission.resubmission_of.snapshot_tags %}
+
+            <div class="saved-preview-tags">
+                {% for tag in submission.resubmission_of.snapshot_tags %}
+                    <span>{{ tag }}</span>
+                {% endfor %}
+            </div>
+
+        {% endif %}
+
+    </article>
+
+</template>
+
+
+                {% endif %}
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <div class="editorial-empty-state">
+            <strong>You do not have any resubmitted submissions yet.</strong>
+            <p>
+                Articles you revise and resubmit after EIC feedback will appear here.
+            </p>
+        </div>
+
+    {% endif %}
+
+</div>
 
 {% endblock %}

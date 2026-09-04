@@ -2,286 +2,188 @@
 
 {% block staff_content %}
 
-<h1>Staff Content Reports</h1>
+<div class="editorial-list-page">
 
-<p class="section-description">
-    Review content concerns submitted by publication staff and determine whether corrective action is required.
-</p>
+    <div class="editorial-page-header">
 
+        <div>
 
-<div class="submission-toolbar">
+            <p class="workflow-eyebrow">
+                Editor in Chief Oversight
+            </p>
 
-    <form
-        method="GET"
-        action="{% url 'eic_content_reports' %}"
-        class="search-form"
-    >
+            <h1>
+                Staff Content Reports
+            </h1>
 
-        <input
-            type="text"
-            name="q"
-            value="{{ search_query }}"
-            placeholder="Search article, category, author, reporter, concern, or notes..."
-            class="search-input"
-        >
+            <p class="section-description">
+                Review active content concerns, preview the reported article,
+                and determine whether corrective revision is required.
+            </p>
 
-        <button
-            type="submit"
-            class="search-button"
-        >
-            Search
-        </button>
-
-        {% if search_query %}
-
-            <a
-                href="{% url 'eic_content_reports' %}"
-                class="clear-search"
-            >
-                Clear
-            </a>
-
-        {% endif %}
-
-    </form>
-
-</div>
+        </div>
 
 
-{% if search_query %}
+        <div class="editorial-queue-count">
 
-    <div class="info-box">
+            <span>
+                Active Reports
+            </span>
 
-        Search results for:
-        <strong>{{ search_query }}</strong>
+            <strong>
+                {{ content_reports|length }}
+            </strong>
+
+        </div>
 
     </div>
 
-{% endif %}
+
+    <div class="editorial-toolbar">
+
+        <form
+            method="GET"
+            action="{% url 'eic_content_reports' %}"
+            class="editorial-search-form"
+        >
+
+            <div class="editorial-search-field">
+
+                <label for="eic-report-search">
+                    Search Reports
+                </label>
+
+                <input
+                    type="text"
+                    id="eic-report-search"
+                    name="q"
+                    value="{{ search_query }}"
+                    placeholder="Article, author, reporter, category, concern, or notes"
+                >
+
+            </div>
+
+            <button
+                type="submit"
+                class="secondary-button"
+            >
+                Search
+            </button>
 
 
-{% if content_reports %}
+            {% if search_query %}
 
-    <div class="submission-list">
+                <a
+                    href="{% url 'eic_content_reports' %}"
+                    class="text-action-link"
+                >
+                    Clear
+                </a>
 
-        {% for report in content_reports %}
+            {% endif %}
 
-            <details class="submission-card">
+        </form>
 
-                <summary class="submission-summary">
+    </div>
 
-                    <div class="submission-summary-content">
 
-                        <div class="submission-summary-info">
+    {% if content_reports %}
 
-                            <h2 class="submission-title">
-                                {{ report.article.title }}
-                            </h2>
+        <div class="editorial-card-list">
 
-                            <p class="submission-meta">
-                                <strong>Reported by:</strong>
-                                {{ report.reported_by.username }}
-                            </p>
+            {% for report in content_reports %}
 
-                            <p class="submission-meta">
-                                <strong>Reported:</strong>
-                                {{ report.created_at|date:"M. d, Y - g:i A" }}
-                            </p>
+                <article class="editorial-item-card editorial-item-card--report">
 
-                            <div class="submission-badges">
+                    <div class="editorial-item-thumb">
 
-                                {% if report.status == "OPEN" %}
+                        {% if report.article.featured_image %}
 
-                                    <span class="status-badge status-pending">
-                                        Open
-                                    </span>
+                            <img
+                                src="{{ report.article.featured_image.url }}"
+                                alt="{{ report.article.title }}"
+                            >
 
-                                {% elif report.status == "REVISION_REQUIRED" %}
+                        {% else %}
 
-                                    <span class="status-badge status-pending">
-                                        Revision Required
-                                    </span>
-
-                                {% endif %}
-
-                                <span class="badge badge-edit">
-                                    Content Report
-                                </span>
-
+                            <div class="editorial-thumb-placeholder">
+                                <span>R</span>
                             </div>
-
-                        </div>
-
-                        <span class="expand-indicator"></span>
-
-                    </div>
-
-                </summary>
-
-
-                <div class="submission-details">
-
-                    <div class="submission-information">
-
-                        <p class="submission-meta">
-                            <strong>Category:</strong>
-                            {{ report.article.category.name }}
-                        </p>
-
-                        <p class="submission-meta">
-                            <strong>Author:</strong>
-                            {{ report.article.author.username }}
-                        </p>
-
-                        <p class="submission-meta">
-
-                            <strong>Current Article Status:</strong>
-
-                            {% if report.article.is_archived %}
-
-                                Archived
-
-                            {% elif report.article.is_published %}
-
-                                Published
-
-                            {% else %}
-
-                                Unpublished
-
-                            {% endif %}
-
-                        </p>
-
-                        {% if report.article.published_at %}
-
-                            <p class="submission-meta">
-
-                                <strong>Published:</strong>
-
-                                {{ report.article.published_at|date:"M. d, Y - g:i A" }}
-
-                            </p>
 
                         {% endif %}
 
                     </div>
 
 
-                    <div class="article-content">
+                    <div class="editorial-item-main">
 
-                        <h3>
-                            Reported Concern
-                        </h3>
+                        <div class="editorial-item-badges">
 
-                        <p>
-                            {{ report.description|linebreaksbr }}
+                            {% if report.status == "OPEN" %}
+
+                                <span class="editorial-status-chip is-pending">
+                                    Decision Required
+                                </span>
+
+                            {% else %}
+
+                                <span class="editorial-status-chip is-revision">
+                                    Corrective Revision
+                                </span>
+
+                            {% endif %}
+
+
+                            <span class="editorial-meta-chip">
+                                {{ report.article.category.name }}
+                            </span>
+
+                            <span class="editorial-meta-chip is-special">
+                                Content Report
+                            </span>
+
+                        </div>
+
+
+                        <h2>
+                            {{ report.article.title }}
+                        </h2>
+
+
+                        <p class="editorial-item-summary">
+                            {{ report.description|truncatechars:200 }}
                         </p>
 
-                    </div>
 
+                        <div class="editorial-item-meta">
 
-                    {% if report.status == "OPEN" %}
+                            <span>
+                                Reported by
+                                <strong>
+                                    {{ report.reported_by.username }}
+                                </strong>
+                            </span>
 
-                        <div class="info-box">
+                            <span>
+                                Article author
+                                <strong>
+                                    {{ report.article.author.username }}
+                                </strong>
+                            </span>
 
-                            <strong>
-                                EIC Decision Required
-                            </strong>
-
-                            <p>
-                                If the concern requires a correction, choose Require Revision.
-                            </p>
-
-                            <p>
-                                If no article modification is needed, choose Resolve Without Revision and explain the decision.
-                            </p>
-
-                        </div>
-
-
-                        <div class="review-section">
-
-                            <h3>
-                                Review Content Report
-                            </h3>
-
-                            <form method="POST">
-
-                                {% csrf_token %}
-
-                                <label for="staff_notes_{{ report.id }}">
-                                    EIC Notes / Revision Instructions
-                                </label>
-
-                                <textarea
-                                    id="staff_notes_{{ report.id }}"
-                                    name="staff_notes"
-                                    placeholder="Explain what the Editor needs to correct, or explain why no revision is necessary..."
-                                    required
-                                ></textarea>
-
-
-                                <div class="review-actions">
-
-                                    <button
-                                        type="submit"
-                                        formaction="{% url 'require_revision_from_report' report.id %}"
-                                        class="revision-button"
-                                        data-confirm-title="Require Corrective Revision"
-                                        data-confirm="Are you sure you want to require a corrective revision for this article? A revision draft will be assigned to the article's Editor."
-                                    >
-                                        Require Revision
-                                    </button>
-
-                                    <button
-                                        type="submit"
-                                        formaction="{% url 'resolve_content_report' report.id %}"
-                                        class="approve-button"
-                                        data-confirm-title="Resolve Content Report"
-                                        data-confirm="Are you sure you want to resolve this report without requiring a revision?"
-                                    >
-                                        Resolve Without Revision
-                                    </button>
-
-                                </div>
-
-                            </form>
-
-                        </div>
-
-
-                    {% elif report.status == "REVISION_REQUIRED" %}
-
-                        <div class="info-box">
-
-                            <strong>
-                                Corrective Revision Required
-                            </strong>
-
-                            <p>
-                                The EIC has required a correction to this published article.
-                            </p>
-
-                            <p>
-                                A temporary revision draft has been assigned to
-                                <strong>{{ report.article.author.username }}</strong>.
-                            </p>
-
-                            <p>
-                                The currently published article remains unchanged until the corrected draft is approved.
-                            </p>
-
-                            <p>
-                                This Staff report will automatically become Resolved after the corrective submission is approved.
-                            </p>
+                            <span>
+                                Reported
+                                <strong>
+                                    {{ report.created_at|date:"M. d, Y - g:i A" }}
+                                </strong>
+                            </span>
 
                         </div>
 
 
                         {% if report.staff_notes %}
 
-                            <div class="reviewer-notes info-box">
+                            <div class="editorial-review-note">
 
                                 <strong>
                                     Revision Instructions
@@ -295,91 +197,399 @@
 
                         {% endif %}
 
+                    </div>
 
-                        {% if report.forced_edit_request %}
 
-                            <div class="submission-information">
+                    <div class="editorial-item-actions">
+
+                        <button
+                            type="button"
+                            class="secondary-button"
+                            data-saved-article-preview
+                            data-preview-template-id="eic-report-preview-{{ report.id }}"
+                        >
+                            Preview Article
+                        </button>
+
+                    </div>
+
+
+                    <details class="editorial-review-drawer">
+
+                        <summary>
+                            {% if report.status == "OPEN" %}
+                                Review Content Report
+                            {% else %}
+                                Corrective Revision Progress
+                            {% endif %}
+                        </summary>
+
+
+                        <div class="editorial-review-panel">
+
+                            <div class="request-detail-block">
+
+                                <span>
+                                    Reported Concern
+                                </span>
 
                                 <p>
-
-                                    <strong>
-                                        Corrective Edit Request:
-                                    </strong>
-
-                                    {{ report.forced_edit_request.get_status_display }}
-
+                                    {{ report.description|linebreaksbr }}
                                 </p>
-
-                                {% if report.forced_edit_request.draft_article %}
-
-                                    <p>
-
-                                        <strong>
-                                            Revision Draft:
-                                        </strong>
-
-                                        {{ report.forced_edit_request.draft_article.title }}
-
-                                    </p>
-
-                                    {% if report.forced_edit_request.draft_article.submissions.exists %}
-
-                                        <p>
-
-                                            <strong>
-                                                Draft Submission:
-                                            </strong>
-
-                                            Submitted for EIC review
-
-                                        </p>
-
-                                    {% else %}
-
-                                        <p>
-
-                                            <strong>
-                                                Draft Submission:
-                                            </strong>
-
-                                            Awaiting Editor revision
-
-                                        </p>
-
-                                    {% endif %}
-
-                                {% endif %}
 
                             </div>
 
+
+                            {% if report.status == "OPEN" %}
+
+                                <form
+                                    method="POST"
+                                    class="eic-report-review-form"
+                                >
+
+                                    {% csrf_token %}
+
+                                    <div class="form-group">
+
+                                        <label for="staff_notes_{{ report.id }}">
+                                            EIC Notes / Revision Instructions
+                                        </label>
+
+                                        <textarea
+                                            id="staff_notes_{{ report.id }}"
+                                            name="staff_notes"
+                                            rows="5"
+                                            placeholder="Explain the correction required, or explain why no revision is necessary..."
+                                            required
+                                        ></textarea>
+
+                                    </div>
+
+
+                                    <div class="review-actions">
+
+                                        <button
+                                            type="submit"
+                                            formaction="{% url 'require_revision_from_report' report.id %}"
+                                            class="revision-button"
+                                            data-confirm-title="Require Corrective Revision"
+                                            data-confirm="Require a corrective revision for this article? A revision draft will be assigned to the article's Editor."
+                                        >
+                                            Require Revision
+                                        </button>
+
+
+                                        <button
+                                            type="submit"
+                                            formaction="{% url 'resolve_content_report' report.id %}"
+                                            class="approve-button"
+                                            data-confirm-title="Resolve Content Report"
+                                            data-confirm="Resolve this report without requiring an article revision?"
+                                        >
+                                            Resolve Without Revision
+                                        </button>
+
+                                    </div>
+
+                                </form>
+
+
+                            {% else %}
+
+                                <div class="request-state-message is-warning">
+                                    A corrective revision has been required. The
+                                    published article remains unchanged until the
+                                    corrected version is approved.
+                                </div>
+
+
+                                {% if report.forced_edit_request %}
+
+                                    <div class="request-detail-grid report-workflow-grid">
+
+                                        <div>
+                                            <span>
+                                                Corrective Edit Request
+                                            </span>
+
+                                            <strong>
+                                                {{ report.forced_edit_request.get_status_display }}
+                                            </strong>
+                                        </div>
+
+
+                                        {% if report.forced_edit_request.draft_article %}
+
+                                            <div>
+                                                <span>
+                                                    Revision Draft
+                                                </span>
+
+                                                <strong>
+                                                    {{ report.forced_edit_request.draft_article.title }}
+                                                </strong>
+                                            </div>
+
+                                            <div>
+                                                <span>
+                                                    Submission Progress
+                                                </span>
+
+                                                <strong>
+                                                    {% if report.forced_edit_request.draft_article.submissions.exists %}
+                                                        Submitted for EIC review
+                                                    {% else %}
+                                                        Awaiting Editor revision
+                                                    {% endif %}
+                                                </strong>
+                                            </div>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                {% endif %}
+
+                            {% endif %}
+
+                        </div>
+
+                    </details>
+
+                </article>
+
+
+<template id="eic-report-preview-{{ report.id }}">
+
+    <article class="saved-preview-article">
+
+        <p class="saved-preview-category">
+            {{ report.article.category.name }}
+        </p>
+
+        <h1>
+            {{ report.article.title }}
+        </h1>
+
+        {% if report.article.subtitle %}
+
+            <p class="saved-preview-subtitle">
+                {{ report.article.subtitle }}
+            </p>
+
+        {% endif %}
+
+        <div class="saved-preview-byline">
+
+            <span>
+                By
+                <strong>
+                    {{ report.article.author.username }}
+                </strong>
+            </span>
+
+            <span>
+                Version {{ report.article.version_number }}
+            </span>
+
+        </div>
+
+        {% if report.article.contributors.all %}
+
+            <div class="saved-preview-contributors">
+
+                {% for contributor in report.article.contributors.all %}
+
+                    <span>
+                        {{ contributor.get_role_display }}:
+                        {{ contributor.user.username }}
+                    </span>
+
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+        {% if report.article.featured_image %}
+
+            <figure class="saved-preview-featured">
+
+                <img
+                    src="{{ report.article.featured_image.url }}"
+                    alt="{{ report.article.title }}"
+                >
+
+                {% if report.article.featured_image_caption or report.article.featured_image_credit %}
+
+                    <figcaption>
+
+                        {% if report.article.featured_image_caption %}
+                            {{ report.article.featured_image_caption }}
                         {% endif %}
 
-                    {% endif %}
+                        {% if report.article.featured_image_credit %}
+
+                            <span>
+                                {{ report.article.featured_image_credit }}
+                            </span>
+
+                        {% endif %}
+
+                    </figcaption>
+
+                {% endif %}
+
+            </figure>
+
+        {% endif %}
+
+        {% if report.article.excerpt %}
+
+            <p class="saved-preview-excerpt">
+                {{ report.article.excerpt }}
+            </p>
+
+        {% endif %}
+
+        <div class="saved-preview-content">
+            {{ report.article.content|linebreaks }}
+        </div>
+
+        {% if report.article.attachments.all %}
+
+            <section class="saved-preview-media">
+
+                <h2>
+                    Article Images
+                </h2>
+
+                <div class="saved-preview-media-grid">
+
+                    {% for attachment in report.article.attachments.all %}
+
+                        <figure class="saved-preview-media-card">
+
+                            <img
+                                src="{{ attachment.image.url }}"
+                                alt="{{ attachment.alt_text|default:attachment.caption|default:'Article image' }}"
+                            >
+
+                            {% if attachment.caption or attachment.credit %}
+
+                                <figcaption>
+
+                                    {% if attachment.caption %}
+                                        {{ attachment.caption }}
+                                    {% endif %}
+
+                                    {% if attachment.credit %}
+
+                                        <span>
+                                            {{ attachment.credit }}
+                                        </span>
+
+                                    {% endif %}
+
+                                </figcaption>
+
+                            {% endif %}
+
+                        </figure>
+
+                    {% endfor %}
 
                 </div>
 
-            </details>
+            </section>
 
-        {% endfor %}
+        {% endif %}
 
-    </div>
+        {% if report.article.video_attachments.all %}
 
-{% else %}
+            <section class="saved-preview-media">
 
-    {% if search_query %}
+                <h2>
+                    Article Videos
+                </h2>
 
-        <p class="empty-message">
-            No active content reports matched your search.
-        </p>
+                <div class="saved-preview-media-grid">
+
+                    {% for attachment in report.article.video_attachments.all %}
+
+                        <figure class="saved-preview-media-card">
+
+                            <video controls preload="metadata">
+                                <source src="{{ attachment.video.url }}">
+                            </video>
+
+                            {% if attachment.caption or attachment.credit %}
+
+                                <figcaption>
+
+                                    {% if attachment.caption %}
+                                        {{ attachment.caption }}
+                                    {% endif %}
+
+                                    {% if attachment.credit %}
+
+                                        <span>
+                                            {{ attachment.credit }}
+                                        </span>
+
+                                    {% endif %}
+
+                                </figcaption>
+
+                            {% endif %}
+
+                        </figure>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+        {% if report.article.tags.all %}
+
+            <div class="saved-preview-tags">
+
+                {% for tag in report.article.tags.all %}
+                    <span>{{ tag.name }}</span>
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+    </article>
+
+</template>
+
+
+            {% endfor %}
+
+        </div>
 
     {% else %}
 
-        <p class="empty-message">
-            There are currently no active content reports.
-        </p>
+        <div class="editorial-empty-state">
+
+            <strong>
+                {% if search_query %}
+                    No active content reports matched your search.
+                {% else %}
+                    There are currently no active content reports.
+                {% endif %}
+            </strong>
+
+        </div>
 
     {% endif %}
 
-{% endif %}
+</div>
 
 {% endblock %}

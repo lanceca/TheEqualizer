@@ -2,10 +2,13 @@ from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.db import models
 from django.db.models import Q
+from django.utils.text import slugify
 
 from .validators import (
+    inspect_digital_publication_pdf,
     validate_article_image,
     validate_article_video,
+    validate_digital_publication_pdf,
 )
 
 
@@ -1329,3 +1332,228 @@ class ContentReport(models.Model):
             f"{self.article.title} - "
             f"{self.get_status_display()}"
         )
+
+# ==========================================================
+# DIGITAL PUBLICATIONS
+# ==========================================================
+
+
+class DigitalPublication(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = "DRAFT", "Draft"
+        PUBLISHED = "PUBLISHED", "Published"
+        HIDDEN = "HIDDEN", "Hidden"
+
+    title = models.CharField(
+        max_length=255,
+    )
+
+    slug = models.SlugField(
+        max_length=255,
+        unique=True,
+        blank=True,
+    )
+
+    volume = models.CharField(
+        max_length=50,
+        blank=True,
+    )
+
+    issue_number = models.CharField(
+        max_length=50,
+        blank=True,
+    )
+
+    publication_date = models.DateField()
+
+    description = models.TextField(
+        blank=True,
+    )
+
+    cover_image = models.ImageField(
+        upload_to=(
+            "digital_publications/covers/"
+        ),
+        blank=True,
+        null=True,
+        validators=[
+            validate_article_image,
+        ],
+    )
+
+    pdf_file = models.FileField(
+        upload_to=(
+            "digital_publications/pdfs/"
+        ),
+        validators=[
+            validate_digital_publication_pdf,
+        ],
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.DRAFT,
+    )
+
+    display_order = models.PositiveIntegerField(
+        default=0,
+    )
+
+    page_count = models.PositiveIntegerField(
+        default=0,
+        editable=False,
+    )
+
+    file_size = models.PositiveBigIntegerField(
+        default=0,
+        editable=False,
+    )
+
+    uploaded_by = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.PROTECT,
+        related_name=(
+            "digital_publications_uploaded"
+        ),
+    )
+
+    published_at = models.DateTimeField(
+        blank=True,
+        null=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = [
+            "display_order",
+            "-publication_date",
+            "-created_at",
+        ]
+
+    def generate_unique_slug(self):
+        base_slug = (
+            slugify(self.title)
+            or "digital-publication"
+        )
+
+        slug = base_slug
+        counter = 1
+
+        queryset = (
+            DigitalPublication.objects
+            .all()
+        )
+
+        if self.pk:
+            queryset = queryset.exclude(
+                pk=self.pk
+            )
+
+        while queryset.filter(
+            slug=slug
+        ).exists():
+            slug = (
+                f"{base_slug}-{counter}"
+            )
+            counter += 1
+
+        return slug
+
+    def refresh_pdf_metadata(self):
+        if not self.pdf_file:
+            self.page_count = 0
+            self.file_size = 0
+            return
+
+        file_object = self.pdf_file
+
+        # New uploads may be backed by Django's
+        # TemporaryUploadedFile. Closing that file before
+        # FileField saves it can delete the temporary file.
+        if not getattr(
+            file_object,
+            "_committed",
+            True,
+        ):
+            metadata = (
+                inspect_digital_publication_pdf(
+                    file_object.file
+                )
+            )
+
+            self.page_count = (
+                metadata["page_count"]
+            )
+
+            self.file_size = (
+                metadata["file_size"]
+            )
+
+            return
+
+        # Files already committed to storage can be opened
+        # and closed normally.
+        try:
+            file_object.open("rb")
+
+            metadata = (
+                inspect_digital_publication_pdf(
+                    file_object
+                )
+            )
+
+            self.page_count = (
+                metadata["page_count"]
+            )
+
+            self.file_size = (
+                metadata["file_size"]
+            )
+
+        finally:
+            try:
+                file_object.close()
+            except (
+                AttributeError,
+                OSError,
+                ValueError,
+            ):
+                pass
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = (
+                self.generate_unique_slug()
+            )
+
+        pdf_changed = (
+            bool(self.pdf_file)
+            and (
+                not self.pk
+                or not getattr(
+                    self.pdf_file,
+                    "_committed",
+                    True,
+                )
+                or self.page_count < 1
+            )
+        )
+
+        if pdf_changed:
+            self.refresh_pdf_metadata()
+
+        super().save(
+            *args,
+            **kwargs,
+        )
+
+    def __str__(self):
+        return self.title

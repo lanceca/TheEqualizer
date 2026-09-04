@@ -1,6 +1,16 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
+
+    <!--
+        Reader stylesheet is loaded again with a version query so the
+        browser cannot keep using the old cached prototype stylesheet.
+    -->
+    <link
+        rel="stylesheet"
+        href="{% static 'css/style.css' %}?v=20260902-reader-home-2"
+    >
 
     <div class="public-layout">
         
@@ -8,6 +18,8 @@
         <nav class="public-navigation">
 
             <a href="{% url 'home' %}">Home</a>
+
+            <a href="{% url 'digital_publications' %}">Digital Publications</a>
 
             <a href="#">News</a>
 

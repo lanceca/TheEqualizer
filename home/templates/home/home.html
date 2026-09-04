@@ -1,172 +1,368 @@
 {% extends "public_base.html" %}
+{% load static %}
 
 {% block title %}
 The Equalizer
 {% endblock %}
 
+
 {% block public_content %}
 
-<div class="public-home-header">
+<!-- ======================================================
+     EQUALIZER PUBLICATION BANNER
+     ====================================================== -->
 
-    <h1>
-        The Equalizer
-    </h1>
+<section class="reader-banner-shell">
 
-    <p>
-        Student Publication
-    </p>
+    <img
+        src="{% static 'images/equalizer-cover.jpg' %}"
+        alt="The Equalizer student publication cover"
+        class="reader-banner-image"
+    >
 
-</div>
+</section>
 
 
-<!-- ==========================================
-     LATEST PUBLISHED ARTICLES
-     ========================================== -->
+<!-- ======================================================
+     TOP STORIES
+     ====================================================== -->
 
-<section class="public-articles-section">
+<section class="reader-homepage">
 
-    <div class="section-header">
+    <div class="reader-section-heading">
 
-        <h2>
-            Latest Articles
-        </h2>
+        <div>
 
-        <p>
-            Read the latest published stories from The Equalizer.
-        </p>
+            <p class="reader-section-kicker">
+                Latest from The Equalizer
+            </p>
+
+            <h1>
+                Top Stories
+            </h1>
+
+        </div>
+
+        {% if published_articles %}
+
+            <p class="reader-section-count">
+                {{ published_articles|length }}
+                published stor{{ published_articles|length|pluralize:"y,ies" }}
+            </p>
+
+        {% endif %}
 
     </div>
 
 
-    {% if published_articles %}
+    {% if lead_article %}
 
-        <div class="public-article-grid">
+        <div class="reader-lead-grid">
 
-            {% for article in published_articles %}
+            <!-- ==================================================
+                 LEAD STORY
+                 ================================================== -->
 
-                <article class="public-article-card">
+            <article class="reader-lead-story">
 
-                    {% if article.featured_image %}
+                <a
+                    href="{% url 'article_detail' lead_article.slug %}"
+                    class="reader-lead-media"
+                >
 
-                        <a
-                            href="{% url 'article_detail' article.slug %}"
-                            class="public-article-image-link"
+                    {% if lead_article.featured_image %}
+
+                        <img
+                            src="{{ lead_article.featured_image.url }}"
+                            alt="{{ lead_article.title }}"
                         >
 
-                            <img
-                                src="{{ article.featured_image.url }}"
-                                alt="{{ article.title }}"
-                                class="public-article-image"
-                            >
+                    {% else %}
 
+                        <div class="reader-image-placeholder">
+                            The Equalizer
+                        </div>
+
+                    {% endif %}
+
+                </a>
+
+
+                <div class="reader-lead-content">
+
+                    <p class="reader-story-category">
+                        {{ lead_article.category.name }}
+                    </p>
+
+                    <h2>
+
+                        <a href="{% url 'article_detail' lead_article.slug %}">
+                            {{ lead_article.title }}
                         </a>
+
+                    </h2>
+
+
+                    {% if lead_article.subtitle %}
+
+                        <p class="reader-story-deck">
+                            {{ lead_article.subtitle }}
+                        </p>
+
+                    {% elif lead_article.excerpt %}
+
+                        <p class="reader-story-deck">
+                            {{ lead_article.excerpt|truncatewords:32 }}
+                        </p>
 
                     {% endif %}
 
 
-                    <div class="public-article-card-content">
+                    <p class="reader-story-meta">
 
-                        <p class="public-article-category">
-                            {{ article.category.name }}
-                        </p>
+                        By
+                        <strong>
+                            {{ lead_article.author.username }}
+                        </strong>
 
+                        {% if lead_article.published_at %}
 
-                        <h2 class="public-article-title">
-
-                            <a href="{% url 'article_detail' article.slug %}">
-                                {{ article.title }}
-                            </a>
-
-                        </h2>
-
-
-                        <p class="public-article-meta">
-
-                            By
-                            <strong>
-                                {{ article.author.username }}
-                            </strong>
-
-                            {% if article.published_at %}
-
+                            <span aria-hidden="true">
                                 &middot;
+                            </span>
 
-                                {{ article.published_at|date:"M. d, Y" }}
-
-                            {% endif %}
-
-                        </p>
-
-
-                        <p class="public-article-excerpt">
-
-                            {{ article.content|striptags|truncatewords:35 }}
-
-                        </p>
-
-
-                        {% if article.tags.all %}
-
-                            <div class="public-article-tags">
-
-                                {% for tag in article.tags.all %}
-
-                                    <span class="tag-item">
-                                        {{ tag.name }}
-                                    </span>
-
-                                {% endfor %}
-
-                            </div>
+                            {{ lead_article.published_at|date:"M. d, Y" }}
 
                         {% endif %}
 
+                    </p>
 
-                        <div class="public-article-engagement">
 
-                            <span>
-                                {{ article.view_count }}
-                                view{{ article.view_count|pluralize }}
-                            </span>
+                    <p class="reader-story-excerpt">
 
-                            <span>
-                                {{ article.reaction_count }}
-                                reaction{{ article.reaction_count|pluralize }}
-                            </span>
+                        {% if lead_article.excerpt %}
 
-                            <span>
-                                {{ article.share_count }}
-                                share{{ article.share_count|pluralize }}
-                            </span>
+                            {{ lead_article.excerpt|truncatewords:48 }}
 
-                        </div>
+                        {% else %}
 
+                            {{ lead_article.content|striptags|truncatewords:48 }}
+
+                        {% endif %}
+
+                    </p>
+
+
+                    <a
+                        href="{% url 'article_detail' lead_article.slug %}"
+                        class="reader-read-link"
+                    >
+                        Read full story
+                    </a>
+
+                </div>
+
+            </article>
+
+
+            <!-- ==================================================
+                 SECONDARY STORIES
+                 ================================================== -->
+
+            <div class="reader-secondary-list">
+
+                {% for article in secondary_articles %}
+
+                    <article class="reader-secondary-story">
 
                         <a
                             href="{% url 'article_detail' article.slug %}"
-                            class="read-more-link"
+                            class="reader-secondary-media"
                         >
-                            Read Article
+
+                            {% if article.featured_image %}
+
+                                <img
+                                    src="{{ article.featured_image.url }}"
+                                    alt="{{ article.title }}"
+                                >
+
+                            {% else %}
+
+                                <div class="reader-image-placeholder">
+                                    The Equalizer
+                                </div>
+
+                            {% endif %}
+
                         </a>
 
-                    </div>
 
-                </article>
+                        <div class="reader-secondary-content">
 
-            {% endfor %}
+                            <p class="reader-story-category">
+                                {{ article.category.name }}
+                            </p>
+
+                            <h3>
+
+                                <a href="{% url 'article_detail' article.slug %}">
+                                    {{ article.title }}
+                                </a>
+
+                            </h3>
+
+                            <p class="reader-story-meta">
+
+                                By
+                                {{ article.author.username }}
+
+                                {% if article.published_at %}
+
+                                    <span aria-hidden="true">
+                                        &middot;
+                                    </span>
+
+                                    {{ article.published_at|date:"M. d" }}
+
+                                {% endif %}
+
+                            </p>
+
+                        </div>
+
+                    </article>
+
+                {% endfor %}
+
+            </div>
 
         </div>
 
+
+        <!-- ==================================================
+             MORE STORIES
+             ================================================== -->
+
+        {% if more_articles %}
+
+            <section class="reader-more-section">
+
+                <div class="reader-section-heading reader-section-heading-compact">
+
+                    <div>
+
+                        <p class="reader-section-kicker">
+                            More Stories
+                        </p>
+
+                        <h2>
+                            Keep Reading
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div class="reader-story-card-grid">
+
+                    {% for article in more_articles %}
+
+                        <article class="reader-story-card">
+
+                            <a
+                                href="{% url 'article_detail' article.slug %}"
+                                class="reader-story-card-media"
+                            >
+
+                                {% if article.featured_image %}
+
+                                    <img
+                                        src="{{ article.featured_image.url }}"
+                                        alt="{{ article.title }}"
+                                    >
+
+                                {% else %}
+
+                                    <div class="reader-image-placeholder">
+                                        The Equalizer
+                                    </div>
+
+                                {% endif %}
+
+                            </a>
+
+
+                            <div class="reader-story-card-body">
+
+                                <p class="reader-story-category">
+                                    {{ article.category.name }}
+                                </p>
+
+                                <h3>
+
+                                    <a href="{% url 'article_detail' article.slug %}">
+                                        {{ article.title }}
+                                    </a>
+
+                                </h3>
+
+                                <p class="reader-story-meta">
+
+                                    By
+                                    {{ article.author.username }}
+
+                                    {% if article.published_at %}
+
+                                        <span aria-hidden="true">
+                                            &middot;
+                                        </span>
+
+                                        {{ article.published_at|date:"M. d, Y" }}
+
+                                    {% endif %}
+
+                                </p>
+
+                                <p class="reader-story-card-excerpt">
+
+                                    {% if article.excerpt %}
+
+                                        {{ article.excerpt|truncatewords:28 }}
+
+                                    {% else %}
+
+                                        {{ article.content|striptags|truncatewords:28 }}
+
+                                    {% endif %}
+
+                                </p>
+
+                            </div>
+
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+
     {% else %}
 
-        <div class="empty-message">
+        <div class="reader-empty-state">
 
-            <h3>
-                No Articles Published Yet
-            </h3>
+            <h2>
+                No stories published yet
+            </h2>
 
             <p>
-                Published articles will appear here once they are approved by the Editor in Chief.
+                Published articles will appear here once they are approved
+                and released by The Equalizer.
             </p>
 
         </div>

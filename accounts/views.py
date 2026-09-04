@@ -11,6 +11,8 @@ from django.contrib.auth import (
 )
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
+from django.core.exceptions import ValidationError
+from django.core.files.storage import default_storage
 from django.db.models import Count, Q, Sum
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
@@ -34,6 +36,7 @@ from .forms import (
     ProfileForm,
     StaffAccountCreationForm,
     StaffAccountEditForm,
+    UsernameChangeForm,
 )
 
 
@@ -1002,23 +1005,92 @@ def profile(request):
             instance=request.user,
         )
 
+        uploaded_profile_picture = (
+            request.FILES.get(
+                "profile_picture"
+            )
+        )
+
+        remove_profile_picture = (
+            request.POST.get(
+                "remove_profile_picture"
+            )
+            == "1"
+        )
+
         if form.is_valid():
 
-            form.save()
+            user = form.save(
+                commit=False
+            )
 
-            messages.success(
+            old_profile_picture_name = (
+                request.user.profile_picture.name
+                if request.user.profile_picture
+                else ""
+            )
+
+            if remove_profile_picture:
+                user.profile_picture = None
+
+            elif uploaded_profile_picture:
+                user.profile_picture = (
+                    uploaded_profile_picture
+                )
+
+            try:
+
+                user.full_clean()
+
+            except ValidationError as error:
+
+                for message in error.messages:
+                    messages.error(
+                        request,
+                        message,
+                    )
+
+            else:
+
+                user.save()
+                form.save_m2m()
+
+                new_profile_picture_name = (
+                    user.profile_picture.name
+                    if user.profile_picture
+                    else ""
+                )
+
+                if (
+                    old_profile_picture_name
+                    and old_profile_picture_name
+                    != new_profile_picture_name
+                ):
+                    default_storage.delete(
+                        old_profile_picture_name
+                    )
+
+                messages.success(
+                    request,
+                    (
+                        "Your profile was updated "
+                        "successfully."
+                    ),
+                )
+
+                return redirect(
+                    "profile"
+                )
+
+        else:
+
+            messages.error(
                 request,
-                "Your profile was updated successfully.",
+                (
+                    "Your profile could not be updated. "
+                    "Please check the form."
+                ),
             )
-
-            return redirect(
-                "profile"
-            )
-
-        messages.error(
-            request,
-            "Your profile could not be updated. Please check the form.",
-        )
 
     else:
 
@@ -1080,6 +1152,170 @@ def change_password(request):
         "accounts/change_password.html",
         {
             "form": form,
+        },
+    )
+
+
+# ==========================================================
+# SELF-SERVICE USERNAME CHANGE
+# ==========================================================
+
+
+@never_cache
+@login_required
+def change_username(request):
+
+    old_username = request.user.username
+
+    if request.method == "POST":
+
+        form = UsernameChangeForm(
+            request.POST,
+            user=request.user,
+        )
+
+        if form.is_valid():
+
+            user = form.save()
+
+            messages.success(
+                request,
+                (
+                    f'Your login username was changed '
+                    f'from "{old_username}" to '
+                    f'"{user.username}".'
+                ),
+            )
+
+            return redirect(
+                "profile"
+            )
+
+        messages.error(
+            request,
+            (
+                "Your username could not be changed. "
+                "Please check the form."
+            ),
+        )
+
+    else:
+
+        form = UsernameChangeForm(
+            user=request.user
+        )
+
+    return render(
+        request,
+        "accounts/change_username.html",
+        {
+            "form": form,
+        },
+    )
+
+
+# ==========================================================
+# ADVISER / EIC - STAFF DIRECTORY
+# ==========================================================
+
+
+@role_required(
+    User.Role.ADVISER,
+    User.Role.EIC,
+)
+def staff_directory(request):
+
+    search_query = request.GET.get(
+        "q",
+        "",
+    ).strip()
+
+    selected_role = request.GET.get(
+        "role",
+        "ALL",
+    )
+
+    directory_roles = [
+        User.Role.EIC,
+        User.Role.EDITOR,
+        User.Role.STAFF,
+    ]
+
+    staff_accounts = (
+        User.objects
+        .filter(
+            role__in=directory_roles,
+            is_active=True,
+        )
+    )
+
+    if selected_role in directory_roles:
+
+        staff_accounts = (
+            staff_accounts.filter(
+                role=selected_role
+            )
+        )
+
+    if search_query:
+
+        staff_accounts = (
+            staff_accounts.filter(
+                Q(
+                    username__icontains=search_query
+                )
+                | Q(
+                    first_name__icontains=search_query
+                )
+                | Q(
+                    last_name__icontains=search_query
+                )
+                | Q(
+                    email__icontains=search_query
+                )
+            )
+        )
+
+    role_order = {
+        User.Role.EIC: 0,
+        User.Role.EDITOR: 1,
+        User.Role.STAFF: 2,
+    }
+
+    staff_accounts = sorted(
+        staff_accounts,
+        key=lambda user: (
+            role_order.get(
+                user.role,
+                99,
+            ),
+            user.username.lower(),
+        ),
+    )
+
+    return render(
+        request,
+        "accounts/staff_directory.html",
+        {
+            "staff_accounts": (
+                staff_accounts
+            ),
+            "search_query": search_query,
+            "selected_role": selected_role,
+            "role_choices": [
+                (
+                    User.Role.EIC,
+                    User.Role.EIC.label,
+                ),
+                (
+                    User.Role.EDITOR,
+                    User.Role.EDITOR.label,
+                ),
+                (
+                    User.Role.STAFF,
+                    User.Role.STAFF.label,
+                ),
+            ],
         },
     )
 

@@ -2,83 +2,159 @@
 
 {% block staff_content %}
 
-<h1>Edit Admin Account</h1>
+<div class="account-workspace-header">
 
-<p class="section-description">
-    Update the Admin account information and account status.
-</p>
+    <div>
 
+        <p class="workflow-eyebrow">
+            Super Admin
+        </p>
 
-<div class="submission-card">
+        <h1>Edit Admin Account</h1>
 
-    <p>
-        <strong>Username:</strong>
-        {{ managed_user.username }}
-    </p>
+        <p class="section-description">
+            Update administrator information and account status.
+        </p>
 
-    <p>
-        <strong>Role:</strong>
-        {{ managed_user.get_role_display }}
-    </p>
+    </div>
 
 </div>
 
 
-<form method="POST">
+<div class="account-form-layout">
 
-    {% csrf_token %}
+    <aside class="managed-account-summary">
 
-    {{ form.non_field_errors }}
+        <div class="managed-account-avatar">
 
-    {% for field in form %}
+            {% if managed_user.profile_picture %}
 
-        <div class="form-group">
+                <img
+                    src="{{ managed_user.profile_picture.url }}"
+                    alt="{{ managed_user.username }} profile picture"
+                >
 
-            <label for="{{ field.id_for_label }}">
-                {{ field.label }}
-            </label>
+            {% else %}
 
-            {{ field }}
-
-            {% if field.errors %}
-
-                <div class="form-errors">
-
-                    {% for error in field.errors %}
-
-                        <p>
-                            {{ error }}
-                        </p>
-
-                    {% endfor %}
-
-                </div>
+                <span>
+                    {{ managed_user.username|slice:":1"|upper }}
+                </span>
 
             {% endif %}
 
         </div>
 
-    {% endfor %}
+        <h2>{{ managed_user.username }}</h2>
+
+        <p class="managed-account-role">
+            {{ managed_user.get_role_display }}
+        </p>
+
+        <dl class="managed-account-meta">
+
+            <div>
+                <dt>Account Type</dt>
+                <dd>Administrator</dd>
+            </div>
+
+            <div>
+                <dt>Joined</dt>
+                <dd>{{ managed_user.date_joined|date:"M. d, Y" }}</dd>
+            </div>
+
+            <div>
+                <dt>Last Login</dt>
+                <dd>
+                    {% if managed_user.last_login %}
+                        {{ managed_user.last_login|date:"M. d, Y - g:i A" }}
+                    {% else %}
+                        Never
+                    {% endif %}
+                </dd>
+            </div>
+
+        </dl>
+
+    </aside>
 
 
-    <div class="article-actions">
+    <section class="account-form-card">
 
-        <button
-            type="submit"
-            class="approve-button"
+        <form
+            method="POST"
+            class="account-editor-form"
         >
-            Save Changes
-        </button>
 
-        <a
-            href="{% url 'manage_admin_accounts' %}"
-            class="edit-link"
-        >
-            Cancel
-        </a>
+            {% csrf_token %}
 
-    </div>
+            {{ form.non_field_errors }}
 
-</form>
+
+            {% for field in form %}
+
+                <div class="account-form-field">
+
+                    <div class="account-field-label-row">
+
+                        <label for="{{ field.id_for_label }}">
+                            {{ field.label }}
+                        </label>
+
+                        {% if field.field.required %}
+                            <span class="field-required-badge">
+                                Required
+                            </span>
+                        {% endif %}
+
+                    </div>
+
+                    {{ field }}
+
+                    {% if field.help_text %}
+                        <div class="account-field-help">
+                            {{ field.help_text|safe }}
+                        </div>
+                    {% endif %}
+
+                    {% if field.errors %}
+
+                        <div class="form-errors">
+
+                            {% for error in field.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            {% endfor %}
+
+
+            <div class="account-form-actions">
+
+                <a
+                    href="{% url 'manage_admin_accounts' %}"
+                    class="secondary-button"
+                >
+                    Cancel
+                </a>
+
+                <button
+                    type="submit"
+                    class="approve-button"
+                >
+                    Save Changes
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+</div>
 
 {% endblock %}

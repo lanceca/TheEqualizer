@@ -12,6 +12,55 @@
 
 </div>
 
+<div class="dashboard-profile-strip">
+
+    <div class="dashboard-profile-avatar">
+
+        {% if request.user.profile_picture %}
+
+            <img
+                src="{{ request.user.profile_picture.url }}"
+                alt="{{ request.user.username }} profile picture"
+            >
+
+        {% else %}
+
+            <span>
+                {{ request.user.username|slice:":1"|upper }}
+            </span>
+
+        {% endif %}
+
+    </div>
+
+
+    <div class="dashboard-profile-copy">
+
+        <span class="dashboard-profile-kicker">
+            Signed in as
+        </span>
+
+        <strong>
+            {{ request.user.username }}
+        </strong>
+
+        <span>
+            {{ request.user.get_role_display }}
+        </span>
+
+    </div>
+
+
+    <a
+        href="{% url 'profile' %}"
+        class="secondary-button dashboard-profile-link"
+    >
+        View Profile
+    </a>
+
+</div>
+
+
 
 <div class="dashboard-welcome">
 

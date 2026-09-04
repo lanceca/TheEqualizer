@@ -2,110 +2,155 @@
 
 {% block staff_content %}
 
-<h1>Pending Submissions</h1>
+<div class="editorial-list-page">
 
-<p class="section-description">
-    Articles waiting for Editor in Chief review.
-</p>
+    <div class="editorial-page-header">
+
+        <div>
+
+            <p class="workflow-eyebrow">
+                Editor in Chief Review Queue
+            </p>
+
+            <h1>
+                Pending Submissions
+            </h1>
+
+            <p class="section-description">
+                Review submitted articles, preview the exact stored submission,
+                then approve, request revision, or reject.
+            </p>
+
+        </div>
+
+        <div class="editorial-queue-count">
+
+            <span>
+                Waiting for review
+            </span>
+
+            <strong>
+                {{ submissions|length }}
+            </strong>
+
+        </div>
+
+    </div>
 
 
-<div class="submission-toolbar">
+    <div class="editorial-toolbar">
 
-    <form
-        method="GET"
-        action="{% url 'pending_submissions' %}"
-        class="search-form"
-    >
-
-        <input
-            type="text"
-            name="q"
-            value="{{ search_query }}"
-            placeholder="Search title, content, category, tags, or submitter..."
-            class="search-input"
+        <form
+            method="GET"
+            action="{% url 'pending_submissions' %}"
+            class="editorial-search-form"
         >
 
-        <button
-            type="submit"
-            class="search-button"
-        >
-            Search
-        </button>
+            <div class="editorial-search-field">
 
-        {% if search_query %}
+                <label for="pending-search">
+                    Search Queue
+                </label>
 
-            <a
-                href="{% url 'pending_submissions' %}"
-                class="clear-search"
+                <input
+                    type="text"
+                    id="pending-search"
+                    name="q"
+                    value="{{ search_query }}"
+                    placeholder="Title, category, tag, contributor, or submitter"
+                >
+
+            </div>
+
+            <button
+                type="submit"
+                class="secondary-button"
             >
-                Clear
-            </a>
-
-        {% endif %}
-
-    </form>
-
-</div>
+                Search
+            </button>
 
 
-{% if submissions %}
+            {% if search_query %}
 
-    <div class="article-tile-grid">
+                <a
+                    href="{% url 'pending_submissions' %}"
+                    class="text-action-link"
+                >
+                    Clear
+                </a>
 
-        {% for submission in submissions %}
+            {% endif %}
 
-            <details class="article-tile">
+        </form>
 
-                <summary class="article-tile-summary">
+    </div>
 
-                    {% if submission.snapshot_featured_image %}
 
-                        <div class="article-tile-image-wrapper">
+    {% if submissions %}
+
+        <div class="editorial-card-list">
+
+            {% for submission in submissions %}
+
+                <article class="editorial-item-card editorial-item-card--pending">
+
+                    <div class="editorial-item-thumb">
+
+                        {% if submission.snapshot_featured_image %}
 
                             <img
                                 src="{{ submission.snapshot_featured_image_url }}"
                                 alt="{{ submission.snapshot_title|default:submission.article.title }}"
-                                class="article-tile-image"
                             >
 
-                        </div>
-
-                    {% elif submission.article.featured_image %}
-
-                        <div class="article-tile-image-wrapper">
+                        {% elif submission.article.featured_image %}
 
                             <img
                                 src="{{ submission.article.featured_image.url }}"
                                 alt="{{ submission.article.title }}"
-                                class="article-tile-image"
                             >
 
-                        </div>
+                        {% else %}
 
-                    {% else %}
-
-                        <div class="article-tile-image-wrapper article-tile-placeholder">
-                            No Featured Image
-                        </div>
-
-                    {% endif %}
-
-
-                    <div class="article-tile-overlay">
-
-                        <span class="status-badge status-pending">
-                            Pending
-                        </span>
-
-                        {% if submission.article.draft_type == "EDIT_REQUEST" %}
-
-                            <span class="badge badge-edit">
-                                Edit Request
-                            </span>
+                            <div class="editorial-thumb-placeholder">
+                                <span>P</span>
+                            </div>
 
                         {% endif %}
 
-                        <h2 class="article-tile-title">
+                    </div>
+
+
+                    <div class="editorial-item-main">
+
+                        <div class="editorial-item-badges">
+
+                            <span class="editorial-status-chip is-pending">
+                                Pending Review
+                            </span>
+
+                            <span class="editorial-meta-chip">
+
+                                {% if submission.snapshot_category_name %}
+                                    {{ submission.snapshot_category_name }}
+                                {% else %}
+                                    {{ submission.article.category.name }}
+                                {% endif %}
+
+                            </span>
+
+                            {% if submission.article.draft_type == "EDIT_REQUEST" %}
+
+                                <span class="editorial-meta-chip is-special">
+                                    Edit Request
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <h2>
 
                             {% if submission.snapshot_title %}
                                 {{ submission.snapshot_title }}
@@ -115,414 +160,531 @@
 
                         </h2>
 
-                        <p class="article-tile-category">
 
-                            {% if submission.snapshot_category_name %}
-                                {{ submission.snapshot_category_name }}
-                            {% else %}
-                                {{ submission.article.category.name }}
-                            {% endif %}
+                        {% if submission.snapshot_subtitle %}
 
-                        </p>
-
-                        <p class="article-tile-author">
-                            Submitted by {{ submission.submitted_by.username }}
-                        </p>
-
-                        <span class="article-tile-expand">
-                            Click to review
-                        </span>
-
-                    </div>
-
-                </summary>
-
-
-                <div class="article-tile-details">
-
-                    {% if not submission.snapshot_title %}
-
-                        <div class="warning-box info-box">
-
-                            <strong>
-                                Legacy Submission
-                            </strong>
-
-                            <p>
-                                This submission was created before historical submission
-                                snapshots were enabled. The current article is shown because
-                                the exact submitted version was not stored.
+                            <p class="editorial-item-subtitle">
+                                {{ submission.snapshot_subtitle }}
                             </p>
 
-                        </div>
+                        {% elif not submission.snapshot_title and submission.article.subtitle %}
 
-                    {% endif %}
-
-
-                    {% if submission.article.draft_type == "EDIT_REQUEST" %}
-
-                        <div class="source-article-box">
-
-                            <strong>
-                                Edit Request Submission
-                            </strong>
-
-                            {% if submission.article.source_article %}
-
-                                <p>
-                                    <strong>Original Published Article:</strong>
-                                    {{ submission.article.source_article.title }}
-                                </p>
-
-                            {% endif %}
-
-                            <p>
-                                Approving this submission will update the existing
-                                published article instead of creating another copy.
+                            <p class="editorial-item-subtitle">
+                                {{ submission.article.subtitle }}
                             </p>
 
-                        </div>
-
-                    {% endif %}
-
-
-                    <p class="submission-meta">
-
-                        <strong>Category:</strong>
-
-                        {% if submission.snapshot_category_name %}
-                            {{ submission.snapshot_category_name }}
-                        {% else %}
-                            {{ submission.article.category.name }}
                         {% endif %}
 
-                    </p>
 
-                    <p class="submission-meta">
-                        <strong>Submitted by:</strong>
-                        {{ submission.submitted_by.username }}
-                    </p>
+                        {% if submission.snapshot_excerpt %}
 
-                    <p class="submission-meta">
-                        <strong>Submitted:</strong>
-                        {{ submission.submitted_at|date:"M. d, Y - g:i A" }}
-                    </p>
+                            <p class="editorial-item-summary">
+                                {{ submission.snapshot_excerpt|truncatechars:180 }}
+                            </p>
+
+                        {% elif not submission.snapshot_title and submission.article.excerpt %}
+
+                            <p class="editorial-item-summary">
+                                {{ submission.article.excerpt|truncatechars:180 }}
+                            </p>
+
+                        {% endif %}
 
 
-                    {% if submission.snapshot_contributors %}
+                        <div class="editorial-item-meta">
 
-                        <div class="article-contributors">
-                            <h3>Contributors</h3>
+                            <span>
+                                Submitted by
+                                <strong>
+                                    {{ submission.submitted_by.username }}
+                                </strong>
+                            </span>
 
-                            {% for contributor in submission.snapshot_contributors %}
-                                <p class="submission-meta">
-                                    <strong>{{ contributor.role_display }}:</strong>
-                                    {{ contributor.username }}
-                                </p>
-                            {% endfor %}
+                            <span>
+                                Submitted
+                                <strong>
+                                    {{ submission.submitted_at|date:"M. d, Y - g:i A" }}
+                                </strong>
+                            </span>
+
                         </div>
 
-                    {% elif not submission.snapshot_title and submission.article.contributors.all %}
 
-                        <div class="article-contributors">
-                            <h3>Contributors</h3>
+                        {% if submission.article.draft_type == "EDIT_REQUEST" and submission.article.source_article %}
 
-                            {% for contributor in submission.article.contributors.all %}
-                                <p class="submission-meta">
-                                    <strong>{{ contributor.get_role_display }}:</strong>
-                                    {{ contributor.user.username }}
-                                </p>
-                            {% endfor %}
-                        </div>
+                            <p class="editorial-source-note">
+                                Updates published article:
+                                <strong>
+                                    {{ submission.article.source_article.title }}
+                                </strong>
+                            </p>
 
-                    {% endif %}
+                        {% endif %}
 
 
-                    {% if submission.snapshot_featured_image %}
+                        {% if not submission.snapshot_title %}
 
-                        <div class="featured-image-container">
+                            <p class="editorial-legacy-note">
+                                Legacy submission: exact snapshot unavailable,
+                                so the current article state is shown.
+                            </p>
 
-                            <h3>
-                                Featured Image
-                            </h3>
+                        {% endif %}
 
-                            <img
-                                src="{{ submission.snapshot_featured_image_url }}"
-                                alt="{{ submission.snapshot_title|default:submission.article.title }}"
-                                class="featured-image"
-                                tabindex="0"
-                                role="button"
-                                data-lightbox-image
+                    </div>
+
+
+                    <div class="editorial-item-actions">
+
+                        <button
+                            type="button"
+                            class="secondary-button"
+                            data-saved-article-preview
+                            data-preview-template-id="pending-preview-{{ submission.id }}"
+                        >
+                            Preview Submission
+                        </button>
+
+                    </div>
+
+
+                    <details class="editorial-review-drawer">
+
+                        <summary>
+                            Review Submission
+                        </summary>
+
+                        <div class="editorial-review-panel">
+
+                            <form
+                                method="POST"
+                                action="{% url 'review_submission' submission.id %}"
                             >
 
+                                {% csrf_token %}
+
+                                <div class="form-group">
+
+                                    <label for="reviewer_notes_{{ submission.id }}">
+                                        Reviewer Notes
+                                    </label>
+
+                                    <textarea
+                                        id="reviewer_notes_{{ submission.id }}"
+                                        name="reviewer_notes"
+                                        rows="5"
+                                        placeholder="Optional notes for the Editor..."
+                                    ></textarea>
+
+                                    <p class="form-help">
+                                        Notes are especially useful when requesting a revision
+                                        or explaining a rejection.
+                                    </p>
+
+                                </div>
+
+
+                                <div class="review-actions">
+
+                                    <button
+                                        type="submit"
+                                        name="action"
+                                        value="approve"
+                                        class="approve-button"
+                                        data-confirm-title="Approve Submission"
+                                        data-confirm="Are you sure you want to approve this submission and publish the article?"
+                                    >
+                                        Approve & Publish
+                                    </button>
+
+                                    <button
+                                        type="submit"
+                                        name="action"
+                                        value="revision"
+                                        class="revision-button"
+                                        data-confirm-title="Request Revision"
+                                        data-confirm="Are you sure you want to send this submission back to the Editor for revision?"
+                                    >
+                                        Request Revision
+                                    </button>
+
+                                    <button
+                                        type="submit"
+                                        name="action"
+                                        value="reject"
+                                        class="danger-button"
+                                        data-confirm-title="Reject Submission"
+                                        data-confirm="Are you sure you want to reject this submission?"
+                                    >
+                                        Reject
+                                    </button>
+
+                                </div>
+
+                            </form>
+
                         </div>
 
-                    {% elif not submission.snapshot_title and submission.article.featured_image %}
+                    </details>
 
-                        <div class="featured-image-container">
+                </article>
 
-                            <h3>
-                                Featured Image
-                            </h3>
+
+<template id="pending-preview-{{ submission.id }}">
+
+    <article class="saved-preview-article">
+
+        <p class="saved-preview-category">
+            {% if submission.snapshot_category_name %}
+                {{ submission.snapshot_category_name }}
+            {% else %}
+                {{ submission.article.category.name }}
+            {% endif %}
+        </p>
+
+        <h1>
+            {% if submission.snapshot_title %}
+                {{ submission.snapshot_title }}
+            {% else %}
+                {{ submission.article.title }}
+            {% endif %}
+        </h1>
+
+        {% if submission.snapshot_subtitle %}
+
+            <p class="saved-preview-subtitle">
+                {{ submission.snapshot_subtitle }}
+            </p>
+
+        {% elif not submission.snapshot_title and submission.article.subtitle %}
+
+            <p class="saved-preview-subtitle">
+                {{ submission.article.subtitle }}
+            </p>
+
+        {% endif %}
+
+        <div class="saved-preview-byline">
+
+            <span>
+                By
+                <strong>
+                    {% if submission.snapshot_author_name %}
+                        {{ submission.snapshot_author_name }}
+                    {% else %}
+                        {{ submission.article.author.username }}
+                    {% endif %}
+                </strong>
+            </span>
+
+            <span>
+                Submitted {{ submission.submitted_at|date:"M. d, Y - g:i A" }}
+            </span>
+
+        </div>
+
+        {% if submission.snapshot_contributors %}
+
+            <div class="saved-preview-contributors">
+
+                {% for contributor in submission.snapshot_contributors %}
+                    <span>
+                        {{ contributor.role_display }}:
+                        {{ contributor.username }}
+                    </span>
+                {% endfor %}
+
+            </div>
+
+        {% elif not submission.snapshot_title and submission.article.contributors.all %}
+
+            <div class="saved-preview-contributors">
+
+                {% for contributor in submission.article.contributors.all %}
+                    <span>
+                        {{ contributor.get_role_display }}:
+                        {{ contributor.user.username }}
+                    </span>
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+        {% if submission.snapshot_featured_image %}
+
+            <figure class="saved-preview-featured">
+
+                <img
+                    src="{{ submission.snapshot_featured_image_url }}"
+                    alt="{{ submission.snapshot_title|default:submission.article.title }}"
+                >
+
+                {% if submission.snapshot_featured_image_caption or submission.snapshot_featured_image_credit %}
+
+                    <figcaption>
+
+                        {% if submission.snapshot_featured_image_caption %}
+                            {{ submission.snapshot_featured_image_caption }}
+                        {% endif %}
+
+                        {% if submission.snapshot_featured_image_credit %}
+                            <span>
+                                {{ submission.snapshot_featured_image_credit }}
+                            </span>
+                        {% endif %}
+
+                    </figcaption>
+
+                {% endif %}
+
+            </figure>
+
+        {% elif not submission.snapshot_title and submission.article.featured_image %}
+
+            <figure class="saved-preview-featured">
+
+                <img
+                    src="{{ submission.article.featured_image.url }}"
+                    alt="{{ submission.article.title }}"
+                >
+
+            </figure>
+
+        {% endif %}
+
+        {% if submission.snapshot_excerpt %}
+
+            <p class="saved-preview-excerpt">
+                {{ submission.snapshot_excerpt }}
+            </p>
+
+        {% elif not submission.snapshot_title and submission.article.excerpt %}
+
+            <p class="saved-preview-excerpt">
+                {{ submission.article.excerpt }}
+            </p>
+
+        {% endif %}
+
+        <div class="saved-preview-content">
+
+            {% if submission.snapshot_content %}
+                {{ submission.snapshot_content|linebreaks }}
+            {% else %}
+                {{ submission.article.content|linebreaks }}
+            {% endif %}
+
+        </div>
+
+        {% if submission.snapshot_attachments.all %}
+
+            <section class="saved-preview-media">
+
+                <h2>
+                    Article Images
+                </h2>
+
+                <div class="saved-preview-media-grid">
+
+                    {% for attachment in submission.snapshot_attachments.all %}
+
+                        <figure class="saved-preview-media-card">
 
                             <img
-                                src="{{ submission.article.featured_image.url }}"
-                                alt="{{ submission.article.title }}"
-                                class="featured-image"
-                                tabindex="0"
-                                role="button"
-                                data-lightbox-image
+                                src="{{ attachment.image_url }}"
+                                alt="{{ attachment.alt_text|default:attachment.caption|default:'Article image' }}"
                             >
 
-                        </div>
+                            {% if attachment.caption or attachment.credit %}
 
-                    {% endif %}
+                                <figcaption>
 
+                                    {% if attachment.caption %}
+                                        {{ attachment.caption }}
+                                    {% endif %}
 
-                    <div class="article-content">
+                                    {% if attachment.credit %}
+                                        <span>
+                                            {{ attachment.credit }}
+                                        </span>
+                                    {% endif %}
 
-                        <h3>
-                            Article Content
-                        </h3>
+                                </figcaption>
 
-                        <p>
-
-                            {% if submission.snapshot_content %}
-                                {{ submission.snapshot_content|linebreaksbr }}
-                            {% else %}
-                                {{ submission.article.content|linebreaksbr }}
                             {% endif %}
 
-                        </p>
+                        </figure>
 
-                    </div>
-
-
-                    {% if submission.snapshot_tags %}
-
-                        <div class="article-tags">
-
-                            <h3>
-                                Tags
-                            </h3>
-
-                            <div class="tag-list">
-
-                                {% for tag in submission.snapshot_tags %}
-
-                                    <span class="tag-item">
-                                        {{ tag }}
-                                    </span>
-
-                                {% endfor %}
-
-                            </div>
-
-                        </div>
-
-                    {% elif not submission.snapshot_title and submission.article.tags.all %}
-
-                        <div class="article-tags">
-
-                            <h3>
-                                Tags
-                            </h3>
-
-                            <div class="tag-list">
-
-                                {% for tag in submission.article.tags.all %}
-
-                                    <span class="tag-item">
-                                        {{ tag.name }}
-                                    </span>
-
-                                {% endfor %}
-
-                            </div>
-
-                        </div>
-
-                    {% endif %}
-
-
-                    {% if submission.snapshot_attachments.all %}
-
-                        <div class="article-attachments">
-
-                            <h3>
-                                Attached Images
-                            </h3>
-
-                            <p class="form-help">
-                                Click an image to enlarge it.
-                            </p>
-
-                            <div class="attachment-gallery">
-
-                                {% for attachment in submission.snapshot_attachments.all %}
-
-                                    <div class="attachment-item">
-
-                                        <img
-                                            src="{{ attachment.image_url }}"
-                                            alt="{{ attachment.caption|default:'Article attachment' }}"
-                                            class="attachment-image"
-                                            tabindex="0"
-                                            role="button"
-                                            data-lightbox-image
-                                        >
-
-                                        {% if attachment.caption %}
-
-                                            <p class="attachment-caption">
-                                                {{ attachment.caption }}
-                                            </p>
-
-                                        {% endif %}
-
-                                    </div>
-
-                                {% endfor %}
-
-                            </div>
-
-                        </div>
-
-                    {% elif not submission.snapshot_title and submission.article.attachments.all %}
-
-                        <div class="article-attachments">
-
-                            <h3>
-                                Attached Images
-                            </h3>
-
-                            <p class="form-help">
-                                Click an image to enlarge it.
-                            </p>
-
-                            <div class="attachment-gallery">
-
-                                {% for attachment in submission.article.attachments.all %}
-
-                                    <div class="attachment-item">
-
-                                        <img
-                                            src="{{ attachment.image.url }}"
-                                            alt="{{ attachment.caption|default:'Article attachment' }}"
-                                            class="attachment-image"
-                                            tabindex="0"
-                                            role="button"
-                                            data-lightbox-image
-                                        >
-
-                                        {% if attachment.caption %}
-
-                                            <p class="attachment-caption">
-                                                {{ attachment.caption }}
-                                            </p>
-
-                                        {% endif %}
-
-                                    </div>
-
-                                {% endfor %}
-
-                            </div>
-
-                        </div>
-
-                    {% endif %}
-
-
-                    <div class="review-section">
-
-                        <h3>
-                            Review Submission
-                        </h3>
-
-                        <form
-                            method="POST"
-                            action="{% url 'review_submission' submission.id %}"
-                        >
-
-                            {% csrf_token %}
-
-                            <label for="reviewer_notes_{{ submission.id }}">
-                                Reviewer Notes
-                            </label>
-
-                            <textarea
-                                id="reviewer_notes_{{ submission.id }}"
-                                name="reviewer_notes"
-                                placeholder="Add optional notes for the Editor..."
-                            ></textarea>
-
-
-                            <div class="review-actions">
-
-                                <button
-                                    type="submit"
-                                    name="action"
-                                    value="approve"
-                                    class="approve-button"
-                                    data-confirm-title="Approve Submission"
-                                    data-confirm="Are you sure you want to approve this submission and publish the article?"
-                                >
-                                    Approve
-                                </button>
-
-                                <button
-                                    type="submit"
-                                    name="action"
-                                    value="revision"
-                                    class="revision-button"
-                                    data-confirm-title="Request Revision"
-                                    data-confirm="Are you sure you want to send this submission back to the Editor for revision?"
-                                >
-                                    Send Back for Revision
-                                </button>
-
-                                <button
-                                    type="submit"
-                                    name="action"
-                                    value="reject"
-                                    class="danger-button"
-                                    data-confirm-title="Reject Submission"
-                                    data-confirm="Are you sure you want to reject this submission?"
-                                >
-                                    Reject
-                                </button>
-
-                            </div>
-
-                        </form>
-
-                    </div>
+                    {% endfor %}
 
                 </div>
 
-            </details>
+            </section>
 
-        {% endfor %}
+        {% elif not submission.snapshot_title and submission.article.attachments.all %}
 
-    </div>
+            <section class="saved-preview-media">
 
-{% else %}
+                <h2>
+                    Article Images
+                </h2>
 
-    {% if search_query %}
+                <div class="saved-preview-media-grid">
 
-        <p class="empty-message">
-            No pending submissions matched your search.
-        </p>
+                    {% for attachment in submission.article.attachments.all %}
+
+                        <figure class="saved-preview-media-card">
+
+                            <img
+                                src="{{ attachment.image.url }}"
+                                alt="{{ attachment.alt_text|default:attachment.caption|default:'Article image' }}"
+                            >
+
+                        </figure>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+        {% if submission.snapshot_video_attachments.all %}
+
+            <section class="saved-preview-media">
+
+                <h2>
+                    Article Videos
+                </h2>
+
+                <div class="saved-preview-media-grid">
+
+                    {% for attachment in submission.snapshot_video_attachments.all %}
+
+                        <figure class="saved-preview-media-card">
+
+                            <video
+                                controls
+                                preload="metadata"
+                            >
+                                <source src="{{ attachment.video_url }}">
+                            </video>
+
+                            {% if attachment.caption or attachment.credit %}
+
+                                <figcaption>
+
+                                    {% if attachment.caption %}
+                                        {{ attachment.caption }}
+                                    {% endif %}
+
+                                    {% if attachment.credit %}
+                                        <span>
+                                            {{ attachment.credit }}
+                                        </span>
+                                    {% endif %}
+
+                                </figcaption>
+
+                            {% endif %}
+
+                        </figure>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% elif not submission.snapshot_title and submission.article.video_attachments.all %}
+
+            <section class="saved-preview-media">
+
+                <h2>
+                    Article Videos
+                </h2>
+
+                <div class="saved-preview-media-grid">
+
+                    {% for attachment in submission.article.video_attachments.all %}
+
+                        <figure class="saved-preview-media-card">
+
+                            <video
+                                controls
+                                preload="metadata"
+                            >
+                                <source src="{{ attachment.video.url }}">
+                            </video>
+
+                        </figure>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+        {% if submission.snapshot_tags %}
+
+            <div class="saved-preview-tags">
+
+                {% for tag in submission.snapshot_tags %}
+                    <span>
+                        {{ tag }}
+                    </span>
+                {% endfor %}
+
+            </div>
+
+        {% elif not submission.snapshot_title and submission.article.tags.all %}
+
+            <div class="saved-preview-tags">
+
+                {% for tag in submission.article.tags.all %}
+                    <span>
+                        {{ tag.name }}
+                    </span>
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+    </article>
+
+</template>
+
+
+            {% endfor %}
+
+        </div>
 
     {% else %}
 
-        <p class="empty-message">
-            There are currently no pending submissions.
-        </p>
+        <div class="editorial-empty-state">
+
+            <strong>
+                {% if search_query %}
+                    No pending submissions matched your search.
+                {% else %}
+                    The review queue is clear.
+                {% endif %}
+            </strong>
+
+            <p>
+                New Editor submissions will appear here when they are ready
+                for EIC review.
+            </p>
+
+        </div>
 
     {% endif %}
 
-{% endif %}
+</div>
 
 {% endblock %}

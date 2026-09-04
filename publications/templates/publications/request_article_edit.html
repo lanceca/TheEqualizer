@@ -2,94 +2,411 @@
 
 {% block staff_content %}
 
-<h1>Request Article Edit</h1>
+<div class="editorial-request-page">
 
-<p class="section-description">
-    Request permission from the Editor in Chief to modify an existing published article.
-</p>
+    <div class="editorial-page-header">
 
+        <div>
 
-<div class="article-request-info info-box">
+            <p class="workflow-eyebrow">
+                Published Article Request
+            </p>
 
-    <span class="status-badge status-approved">
-        Published Article
-    </span>
+            <h1>
+                Request Article Edit
+            </h1>
 
-    <h2>
-        {{ article.title }}
-    </h2>
-
-    <p>
-        <strong>Category:</strong>
-        {{ article.category.name }}
-    </p>
-
-    <p>
-        <strong>Author:</strong>
-        {{ article.author.username }}
-    </p>
-
-    {% if article.published_at %}
-
-        <p>
-            <strong>Published:</strong>
-            {{ article.published_at|date:"M. d, Y - g:i A" }}
-        </p>
-
-    {% endif %}
-
-</div>
-
-
-<div class="content-panel request-form-panel">
-
-    <form
-        method="POST"
-        class="request-form"
-    >
-
-        {% csrf_token %}
-
-        <div class="form-group">
-
-            <label for="reason">
-                Reason for Edit Request
-            </label>
-
-            <textarea
-                id="reason"
-                name="reason"
-                placeholder="Explain what you need to change and why..."
-                required
-            ></textarea>
-
-            <p class="form-help">
-                The EIC will review this reason before granting access to an editable copy of the published article.
+            <p class="section-description">
+                Ask the Editor in Chief for permission to create an editable
+                revision of this published article.
             </p>
 
         </div>
 
+    </div>
 
-        <div class="form-actions">
 
-            <button
-                type="submit"
-                class="approve-button"
+    <div class="request-workspace-modern">
+
+        <aside class="request-article-reference">
+
+            <div class="request-reference-status">
+                <span class="editorial-status-chip is-approved">
+                    Published
+                </span>
+
+                <span class="editorial-meta-chip">
+                    Version {{ article.version_number }}
+                </span>
+            </div>
+
+
+            {% if article.featured_image %}
+
+                <div class="request-reference-image">
+
+                    <img
+                        src="{{ article.featured_image.url }}"
+                        alt="{{ article.title }}"
+                    >
+
+                </div>
+
+            {% endif %}
+
+
+            <div class="request-reference-copy">
+
+                <p class="request-reference-category">
+                    {{ article.category.name }}
+                </p>
+
+                <h2>
+                    {{ article.title }}
+                </h2>
+
+                {% if article.subtitle %}
+
+                    <p class="request-reference-subtitle">
+                        {{ article.subtitle }}
+                    </p>
+
+                {% endif %}
+
+
+                <dl class="request-reference-meta">
+
+                    <div>
+                        <dt>Author</dt>
+                        <dd>{{ article.author.username }}</dd>
+                    </div>
+
+                    {% if article.published_at %}
+
+                        <div>
+                            <dt>Published</dt>
+                            <dd>
+                                {{ article.published_at|date:"M. d, Y - g:i A" }}
+                            </dd>
+                        </div>
+
+                    {% endif %}
+
+                </dl>
+
+
+                <button
+                    type="button"
+                    class="secondary-button request-reference-preview"
+                    data-saved-article-preview
+                    data-preview-template-id="request-edit-preview"
+                >
+                    Preview Full Article
+                </button>
+
+            </div>
+
+        </aside>
+
+
+        <section class="request-form-card-modern">
+
+            <div class="request-form-heading-modern">
+
+                <p class="workflow-eyebrow">
+                    Request Details
+                </p>
+
+                <h2>
+                    What do you need to change?
+                </h2>
+
+                <p>
+                    Give the EIC enough context to understand why an editable
+                    revision is needed. Approval creates an edit-request draft;
+                    it does not immediately change the published article.
+                </p>
+
+            </div>
+
+
+            <form
+                method="POST"
+                class="request-form request-form-modern"
             >
-                Submit Edit Request
-            </button>
 
-            <a
-                href="{% url 'published_articles' %}"
-                class="cancel-link"
-            >
-                Cancel
-            </a>
+                {% csrf_token %}
+
+
+                <div class="form-group">
+
+                    <div class="field-label-row">
+
+                        <label for="reason">
+                            Reason for Edit Request
+                        </label>
+
+                        <span class="field-required-badge">
+                            Required
+                        </span>
+
+                    </div>
+
+                    <textarea
+                        id="reason"
+                        name="reason"
+                        rows="10"
+                        placeholder="Example: The article needs updated statistics and two paragraphs should be revised to reflect the latest event results."
+                        required
+                    ></textarea>
+
+                    <p class="form-help">
+                        Explain the specific parts you expect to revise and why
+                        the published version needs an update.
+                    </p>
+
+                </div>
+
+
+                <div class="request-guidance-box">
+
+                    <strong>A clear edit request should mention:</strong>
+
+                    <ul>
+                        <li>what information or section needs to change;</li>
+                        <li>why the change is necessary; and</li>
+                        <li>the approximate scope of the revision.</li>
+                    </ul>
+
+                </div>
+
+
+                <div class="form-actions form-actions-sticky">
+
+                    <a
+                        href="{% url 'published_articles' %}"
+                        class="secondary-button"
+                    >
+                        Cancel
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="approve-button"
+                        data-confirm-title="Submit Edit Request"
+                        data-confirm="Submit this edit request to the Editor in Chief?"
+                    >
+                        Submit Edit Request
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
+
+    </div>
+
+</div>
+
+
+<template id="request-edit-preview">
+
+    <article class="saved-preview-article">
+
+        <p class="saved-preview-category">
+            {{ article.category.name }}
+        </p>
+
+        <h1>
+            {{ article.title }}
+        </h1>
+
+        {% if article.subtitle %}
+            <p class="saved-preview-subtitle">
+                {{ article.subtitle }}
+            </p>
+        {% endif %}
+
+        <div class="saved-preview-byline">
+
+            <span>
+                By
+                <strong>
+                    {{ article.author.username }}
+                </strong>
+            </span>
+
+            <span>
+                Version {{ article.version_number }}
+            </span>
 
         </div>
 
-    </form>
+        {% if article.contributors.all %}
 
-</div>
+            <div class="saved-preview-contributors">
+
+                {% for contributor in article.contributors.all %}
+                    <span>
+                        {{ contributor.get_role_display }}:
+                        {{ contributor.user.username }}
+                    </span>
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+        {% if article.featured_image %}
+
+            <figure class="saved-preview-featured">
+
+                <img
+                    src="{{ article.featured_image.url }}"
+                    alt="{{ article.title }}"
+                >
+
+                {% if article.featured_image_caption or article.featured_image_credit %}
+
+                    <figcaption>
+
+                        {% if article.featured_image_caption %}
+                            {{ article.featured_image_caption }}
+                        {% endif %}
+
+                        {% if article.featured_image_credit %}
+                            <span>
+                                {{ article.featured_image_credit }}
+                            </span>
+                        {% endif %}
+
+                    </figcaption>
+
+                {% endif %}
+
+            </figure>
+
+        {% endif %}
+
+        {% if article.excerpt %}
+            <p class="saved-preview-excerpt">
+                {{ article.excerpt }}
+            </p>
+        {% endif %}
+
+        <div class="saved-preview-content">
+            {{ article.content|linebreaks }}
+        </div>
+
+        {% if article.attachments.all %}
+
+            <section class="saved-preview-media">
+
+                <h2>
+                    Article Images
+                </h2>
+
+                <div class="saved-preview-media-grid">
+
+                    {% for attachment in article.attachments.all %}
+
+                        <figure class="saved-preview-media-card">
+
+                            <img
+                                src="{{ attachment.image.url }}"
+                                alt="{{ attachment.alt_text|default:attachment.caption|default:'Article image' }}"
+                            >
+
+                            {% if attachment.caption or attachment.credit %}
+
+                                <figcaption>
+
+                                    {% if attachment.caption %}
+                                        {{ attachment.caption }}
+                                    {% endif %}
+
+                                    {% if attachment.credit %}
+                                        <span>
+                                            {{ attachment.credit }}
+                                        </span>
+                                    {% endif %}
+
+                                </figcaption>
+
+                            {% endif %}
+
+                        </figure>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+        {% if article.video_attachments.all %}
+
+            <section class="saved-preview-media">
+
+                <h2>
+                    Article Videos
+                </h2>
+
+                <div class="saved-preview-media-grid">
+
+                    {% for attachment in article.video_attachments.all %}
+
+                        <figure class="saved-preview-media-card">
+
+                            <video controls preload="metadata">
+                                <source src="{{ attachment.video.url }}">
+                            </video>
+
+                            {% if attachment.caption or attachment.credit %}
+
+                                <figcaption>
+
+                                    {% if attachment.caption %}
+                                        {{ attachment.caption }}
+                                    {% endif %}
+
+                                    {% if attachment.credit %}
+                                        <span>
+                                            {{ attachment.credit }}
+                                        </span>
+                                    {% endif %}
+
+                                </figcaption>
+
+                            {% endif %}
+
+                        </figure>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+        {% if article.tags.all %}
+
+            <div class="saved-preview-tags">
+
+                {% for tag in article.tags.all %}
+                    <span>{{ tag.name }}</span>
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+    </article>
+
+</template>
+
 
 {% endblock %}
