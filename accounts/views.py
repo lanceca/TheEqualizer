@@ -1,5 +1,7 @@
+import io
 from datetime import timedelta
 from functools import wraps
+from html import escape
 
 from django.contrib import messages
 from django.contrib.auth import (
@@ -14,11 +16,26 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.db.models import Count, Q, Sum
-from django.http import HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
+
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.pagesizes import landscape, letter
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import inch
+from reportlab.platypus import (
+    LongTable,
+    PageBreak,
+    Paragraph,
+    SimpleDocTemplate,
+    Spacer,
+    Table,
+    TableStyle,
+)
 
 from analytics.models import ArticleDailyAnalytics
 
@@ -878,6 +895,416 @@ def adviser_dashboard(request):
         "accounts/dashboards/adviser.html",
         context,
     )
+
+
+def draw_adviser_report_page(canvas, document):
+    """Draw a consistent header and footer on analytics report pages."""
+
+    page_width, page_height = landscape(letter)
+
+    canvas.saveState()
+    canvas.setFillColor(colors.HexColor("#173f32"))
+    canvas.rect(
+        0,
+        page_height - 0.46 * inch,
+        page_width,
+        0.46 * inch,
+        fill=1,
+        stroke=0,
+    )
+    canvas.setFillColor(colors.white)
+    canvas.setFont("Helvetica-Bold", 9)
+    canvas.drawString(
+        document.leftMargin,
+        page_height - 0.3 * inch,
+        "THE EQUALIZER — ADVISER ANALYTICS",
+    )
+    canvas.setStrokeColor(colors.HexColor("#d7dfdb"))
+    canvas.line(
+        document.leftMargin,
+        0.48 * inch,
+        page_width - document.rightMargin,
+        0.48 * inch,
+    )
+    canvas.setFillColor(colors.HexColor("#65736d"))
+    canvas.setFont("Helvetica", 8)
+    canvas.drawString(
+        document.leftMargin,
+        0.28 * inch,
+        f"Generated {timezone.localtime().strftime('%B %d, %Y %I:%M %p')}",
+    )
+    canvas.drawRightString(
+        page_width - document.rightMargin,
+        0.28 * inch,
+        f"Page {document.page}",
+    )
+    canvas.restoreState()
+
+
+@role_required(User.Role.ADVISER)
+def download_adviser_analytics_pdf(request):
+    """Download a printable snapshot of the Adviser analytics dashboard."""
+
+    normal_articles = Article.objects.filter(
+        draft_type=Article.DraftType.NORMAL
+    )
+    published_queryset = normal_articles.filter(
+        is_published=True,
+        is_archived=False,
+    )
+
+    total_articles = normal_articles.count()
+    published_articles = published_queryset.count()
+    archived_articles = normal_articles.filter(
+        is_archived=True
+    ).count()
+    draft_articles = (
+        normal_articles
+        .filter(
+            is_published=False,
+            is_archived=False,
+            submissions__isnull=True,
+        )
+        .distinct()
+        .count()
+    )
+
+    reader_totals = published_queryset.aggregate(
+        total_views=Sum("view_count"),
+        total_reactions=Sum("reaction_count"),
+        total_shares=Sum("share_count"),
+    )
+    total_views = reader_totals["total_views"] or 0
+    total_reactions = reader_totals["total_reactions"] or 0
+    total_shares = reader_totals["total_shares"] or 0
+
+    report_end_date = timezone.localdate()
+    report_start_date = report_end_date - timedelta(days=29)
+    thirty_day_totals = (
+        ArticleDailyAnalytics.objects
+        .filter(
+            article__draft_type=Article.DraftType.NORMAL,
+            date__range=(report_start_date, report_end_date),
+        )
+        .aggregate(
+            views=Sum("views"),
+            reactions=Sum("reactions"),
+            shares=Sum("shares"),
+        )
+    )
+
+    submission_counts = {
+        status: Submission.objects.filter(status=status).count()
+        for status in [
+            Submission.Status.PENDING,
+            Submission.Status.APPROVED,
+            Submission.Status.REJECTED,
+            Submission.Status.REVISION,
+        ]
+    }
+    edit_request_counts = {
+        status: EditRequest.objects.filter(status=status).count()
+        for status in [
+            EditRequest.Status.PENDING,
+            EditRequest.Status.APPROVED,
+            EditRequest.Status.REJECTED,
+            EditRequest.Status.COMPLETED,
+        ]
+    }
+    deletion_request_counts = {
+        status: DeletionRequest.objects.filter(status=status).count()
+        for status in [
+            DeletionRequest.Status.PENDING,
+            DeletionRequest.Status.APPROVED,
+            DeletionRequest.Status.REJECTED,
+        ]
+    }
+    content_report_counts = {
+        status: ContentReport.objects.filter(status=status).count()
+        for status in [
+            ContentReport.Status.OPEN,
+            ContentReport.Status.REVISION_REQUIRED,
+            ContentReport.Status.RESOLVED,
+            ContentReport.Status.CANCELLED,
+        ]
+    }
+
+    category_performance = list(
+        published_queryset
+        .values("category__name")
+        .annotate(
+            article_count=Count("id", distinct=True),
+            total_views=Sum("view_count"),
+            total_reactions=Sum("reaction_count"),
+            total_shares=Sum("share_count"),
+        )
+        .order_by("-total_views", "category__name")
+    )
+
+    editors = list(
+        User.objects
+        .filter(role=User.Role.EDITOR)
+        .annotate(
+            article_count=Count(
+                "articles",
+                filter=Q(
+                    articles__draft_type=Article.DraftType.NORMAL
+                ),
+                distinct=True,
+            ),
+            published_count=Count(
+                "articles",
+                filter=Q(
+                    articles__draft_type=Article.DraftType.NORMAL,
+                    articles__is_published=True,
+                    articles__is_archived=False,
+                ),
+                distinct=True,
+            ),
+            approved_count=Count(
+                "submissions",
+                filter=Q(
+                    submissions__status=Submission.Status.APPROVED
+                ),
+                distinct=True,
+            ),
+            revision_count=Count(
+                "submissions",
+                filter=Q(
+                    submissions__status=Submission.Status.REVISION
+                ),
+                distinct=True,
+            ),
+        )
+        .order_by("-published_count", "username")
+    )
+
+    top_articles = list(
+        published_queryset
+        .select_related("category", "author")
+        .order_by("-view_count", "-reaction_count", "-share_count")[:10]
+    )
+
+    pdf_buffer = io.BytesIO()
+    document = SimpleDocTemplate(
+        pdf_buffer,
+        pagesize=landscape(letter),
+        rightMargin=0.55 * inch,
+        leftMargin=0.55 * inch,
+        topMargin=0.66 * inch,
+        bottomMargin=0.65 * inch,
+        title="The Equalizer Adviser Analytics",
+        author=request.user.username,
+        subject="Publication analytics report",
+    )
+
+    sample_styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        "AnalyticsTitle",
+        parent=sample_styles["Title"],
+        fontName="Times-Bold",
+        fontSize=24,
+        leading=28,
+        textColor=colors.HexColor("#0e2a22"),
+        alignment=TA_CENTER,
+        spaceAfter=5,
+    )
+    subtitle_style = ParagraphStyle(
+        "AnalyticsSubtitle",
+        parent=sample_styles["Normal"],
+        fontSize=9,
+        leading=13,
+        textColor=colors.HexColor("#65736d"),
+        alignment=TA_CENTER,
+        spaceAfter=15,
+    )
+    heading_style = ParagraphStyle(
+        "AnalyticsHeading",
+        parent=sample_styles["Heading2"],
+        fontName="Helvetica-Bold",
+        fontSize=13,
+        leading=16,
+        textColor=colors.HexColor("#173f32"),
+        spaceBefore=8,
+        spaceAfter=7,
+    )
+    cell_style = ParagraphStyle(
+        "AnalyticsCell",
+        parent=sample_styles["Normal"],
+        fontSize=7.5,
+        leading=10,
+    )
+
+    table_style = TableStyle(
+        [
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#173f32")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+            ("FONTSIZE", (0, 0), (-1, -1), 8),
+            ("LEADING", (0, 0), (-1, -1), 10),
+            ("GRID", (0, 0), (-1, -1), 0.35, colors.HexColor("#cad5cf")),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f3f7f5")]),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("TOPPADDING", (0, 0), (-1, -1), 5),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+        ]
+    )
+
+    def report_table(rows, widths=None, repeat_rows=1):
+        table_class = LongTable if len(rows) > 12 else Table
+        table = table_class(
+            rows,
+            colWidths=widths,
+            repeatRows=repeat_rows,
+            hAlign="LEFT",
+        )
+        table.setStyle(table_style)
+        return table
+
+    story = [
+        Paragraph("Adviser Analytics Report", title_style),
+        Paragraph(
+            f"Reporting snapshot through {report_end_date.strftime('%B %d, %Y')} "
+            f"(Asia/Manila) · Prepared for {escape(request.user.username)}",
+            subtitle_style,
+        ),
+        Paragraph("Publication and engagement overview", heading_style),
+        report_table(
+            [
+                ["Articles", "Published", "Draft", "Archived", "Views", "Reactions", "Shares"],
+                [
+                    total_articles,
+                    published_articles,
+                    draft_articles,
+                    archived_articles,
+                    total_views,
+                    total_reactions,
+                    total_shares,
+                ],
+            ],
+            [1.15 * inch] * 7,
+        ),
+        Spacer(1, 10),
+        Paragraph("Last 30 days", heading_style),
+        report_table(
+            [
+                ["Date range", "Views", "Reactions", "Shares", "Total engagement"],
+                [
+                    f"{report_start_date:%b %d, %Y} – {report_end_date:%b %d, %Y}",
+                    thirty_day_totals["views"] or 0,
+                    thirty_day_totals["reactions"] or 0,
+                    thirty_day_totals["shares"] or 0,
+                    (thirty_day_totals["views"] or 0)
+                    + (thirty_day_totals["reactions"] or 0)
+                    + (thirty_day_totals["shares"] or 0),
+                ],
+            ],
+            [2.4 * inch, 1.35 * inch, 1.35 * inch, 1.35 * inch, 1.55 * inch],
+        ),
+        Spacer(1, 10),
+        Paragraph("Editorial workflow", heading_style),
+        report_table(
+            [
+                ["Workflow", "Pending/Open", "Approved/Resolved", "Rejected/Cancelled", "Revision/Completed"],
+                [
+                    "Submissions",
+                    submission_counts[Submission.Status.PENDING],
+                    submission_counts[Submission.Status.APPROVED],
+                    submission_counts[Submission.Status.REJECTED],
+                    submission_counts[Submission.Status.REVISION],
+                ],
+                [
+                    "Edit requests",
+                    edit_request_counts[EditRequest.Status.PENDING],
+                    edit_request_counts[EditRequest.Status.APPROVED],
+                    edit_request_counts[EditRequest.Status.REJECTED],
+                    edit_request_counts[EditRequest.Status.COMPLETED],
+                ],
+                [
+                    "Deletion requests",
+                    deletion_request_counts[DeletionRequest.Status.PENDING],
+                    deletion_request_counts[DeletionRequest.Status.APPROVED],
+                    deletion_request_counts[DeletionRequest.Status.REJECTED],
+                    "—",
+                ],
+                [
+                    "Content reports",
+                    content_report_counts[ContentReport.Status.OPEN],
+                    content_report_counts[ContentReport.Status.RESOLVED],
+                    content_report_counts[ContentReport.Status.CANCELLED],
+                    content_report_counts[ContentReport.Status.REVISION_REQUIRED],
+                ],
+            ],
+            [1.55 * inch, 1.55 * inch, 1.75 * inch, 1.75 * inch, 1.75 * inch],
+        ),
+        PageBreak(),
+        Paragraph("Category performance", heading_style),
+        report_table(
+            [["Category", "Published articles", "Views", "Reactions", "Shares"]]
+            + [
+                [
+                    Paragraph(escape(row["category__name"] or "Uncategorized"), cell_style),
+                    row["article_count"],
+                    row["total_views"] or 0,
+                    row["total_reactions"] or 0,
+                    row["total_shares"] or 0,
+                ]
+                for row in category_performance
+            ],
+            [2.7 * inch, 1.45 * inch, 1.2 * inch, 1.2 * inch, 1.2 * inch],
+        ),
+        Spacer(1, 12),
+        Paragraph("Editor performance", heading_style),
+        report_table(
+            [["Editor", "Articles", "Published", "Approved submissions", "Revision submissions"]]
+            + [
+                [
+                    Paragraph(escape(editor.username), cell_style),
+                    editor.article_count,
+                    editor.published_count,
+                    editor.approved_count,
+                    editor.revision_count,
+                ]
+                for editor in editors
+            ],
+            [2.7 * inch, 1.2 * inch, 1.2 * inch, 1.6 * inch, 1.6 * inch],
+        ),
+        PageBreak(),
+        Paragraph("Top published articles", heading_style),
+        report_table(
+            [["Article", "Category", "Author", "Views", "Reactions", "Shares"]]
+            + [
+                [
+                    Paragraph(escape(article.title), cell_style),
+                    Paragraph(escape(article.category.name), cell_style),
+                    Paragraph(escape(article.author.username), cell_style),
+                    article.view_count,
+                    article.reaction_count,
+                    article.share_count,
+                ]
+                for article in top_articles
+            ],
+            [3.2 * inch, 1.45 * inch, 1.35 * inch, 0.8 * inch, 0.9 * inch, 0.8 * inch],
+        ),
+    ]
+
+    document.build(
+        story,
+        onFirstPage=draw_adviser_report_page,
+        onLaterPages=draw_adviser_report_page,
+    )
+
+    response = HttpResponse(
+        pdf_buffer.getvalue(),
+        content_type="application/pdf",
+    )
+    response["Content-Disposition"] = (
+        "attachment; filename=the-equalizer-adviser-analytics-"
+        f"{report_end_date.isoformat()}.pdf"
+    )
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
 
 @role_required(User.Role.EIC)
 def eic_dashboard(request):

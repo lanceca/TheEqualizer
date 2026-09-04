@@ -33,6 +33,12 @@ urlpatterns = [
     ),
 
     path(
+        "dashboard/adviser/report.pdf",
+        views.download_adviser_analytics_pdf,
+        name="download_adviser_analytics_pdf",
+    ),
+
+    path(
         "dashboard/eic/",
         views.eic_dashboard,
         name="eic_dashboard",

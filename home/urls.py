@@ -27,6 +27,12 @@ urlpatterns = [
     ),
 
     path(
+        "articles/<slug:slug>/download-pdf/",
+        views.download_article_pdf,
+        name="download_article_pdf",
+    ),
+
+    path(
         "articles/<slug:slug>/react/",
         views.react_to_article,
         name="react_to_article",

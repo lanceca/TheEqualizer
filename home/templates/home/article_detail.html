@@ -585,6 +585,137 @@ body.reader-lightbox-open {
 
 
 /* ------------------------------
+   PDF DOWNLOAD PROGRESS
+   ------------------------------ */
+
+.reader-pdf-download-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px;
+
+    background: rgba(8, 25, 20, 0.78);
+    backdrop-filter: blur(5px);
+}
+
+.reader-pdf-download-overlay.active {
+    display: flex;
+}
+
+.reader-pdf-download-dialog {
+    width: min(440px, 100%);
+
+    padding: 30px;
+
+    border: 1px solid rgba(201, 162, 39, 0.45);
+    border-radius: 18px;
+
+    background: #ffffff;
+    box-shadow: 0 24px 65px rgba(0, 0, 0, 0.28);
+
+    text-align: center;
+}
+
+.reader-pdf-download-spinner {
+    width: 48px;
+    height: 48px;
+
+    margin: 0 auto 18px;
+
+    border: 5px solid #dfe8e3;
+    border-top-color: var(--article-gold);
+    border-radius: 50%;
+
+    animation: reader-pdf-spin 0.85s linear infinite;
+}
+
+@keyframes reader-pdf-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.reader-pdf-download-dialog h2 {
+    margin: 0;
+
+    color: var(--article-green-dark);
+
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 24px;
+}
+
+.reader-pdf-download-dialog p {
+    margin: 10px 0 18px;
+
+    color: var(--article-muted);
+    line-height: 1.5;
+}
+
+.reader-pdf-download-progress {
+    display: block;
+
+    width: 100%;
+    height: 12px;
+
+    margin: 0 0 11px;
+
+    overflow: hidden;
+
+    border: 0;
+    border-radius: 999px;
+
+    accent-color: var(--article-green);
+}
+
+.reader-pdf-download-percent {
+    min-height: 20px;
+
+    margin: 0 0 18px;
+
+    color: var(--article-green);
+
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.reader-pdf-cancel-button {
+    min-width: 130px;
+
+    padding: 11px 20px;
+
+    border: 1px solid #b33a3a;
+    border-radius: 999px;
+
+    background: #ffffff;
+    color: #992f2f;
+
+    font: inherit;
+    font-weight: 800;
+
+    cursor: pointer;
+}
+
+.reader-pdf-cancel-button:hover {
+    background: #fff1f1;
+}
+
+body.reader-pdf-download-open {
+    overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .reader-pdf-download-spinner {
+        animation-duration: 1.8s;
+    }
+}
+
+
+/* ------------------------------
    RESPONSIVE
    ------------------------------ */
 
@@ -980,6 +1111,14 @@ body.reader-lightbox-open {
 
             <div class="reader-engagement-actions">
 
+                <a
+                    href="{% url 'download_article_pdf' article.slug %}"
+                    class="reader-action-button"
+                    id="article-pdf-download"
+                >
+                    Download PDF
+                </a>
+
                 {% if has_reacted %}
 
                     <button
@@ -1078,6 +1217,60 @@ body.reader-lightbox-open {
                 class="reader-lightbox-image"
                 id="reader-lightbox-image"
             >
+
+        </div>
+
+    </div>
+
+
+    <div
+        class="reader-pdf-download-overlay"
+        id="reader-pdf-download-overlay"
+        aria-hidden="true"
+    >
+
+        <div
+            class="reader-pdf-download-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reader-pdf-download-title"
+            aria-describedby="reader-pdf-download-status"
+        >
+
+            <div
+                class="reader-pdf-download-spinner"
+                aria-hidden="true"
+            ></div>
+
+            <h2 id="reader-pdf-download-title">
+                Preparing your article
+            </h2>
+
+            <p id="reader-pdf-download-status" aria-live="polite">
+                Building the PDF. This may take a moment.
+            </p>
+
+            <progress
+                class="reader-pdf-download-progress"
+                id="reader-pdf-download-progress"
+                aria-label="PDF download progress"
+            ></progress>
+
+            <div
+                class="reader-pdf-download-percent"
+                id="reader-pdf-download-percent"
+                aria-live="polite"
+            >
+                Starting…
+            </div>
+
+            <button
+                type="button"
+                class="reader-pdf-cancel-button"
+                id="reader-pdf-download-cancel"
+            >
+                Cancel Download
+            </button>
 
         </div>
 
@@ -1245,6 +1438,314 @@ document.addEventListener(
                     )
                 ) {
                     closeReaderLightbox();
+                }
+
+            }
+        );
+
+
+        const pdfDownloadLink = document.getElementById(
+            "article-pdf-download"
+        );
+
+        const pdfDownloadOverlay = document.getElementById(
+            "reader-pdf-download-overlay"
+        );
+
+        const pdfDownloadStatus = document.getElementById(
+            "reader-pdf-download-status"
+        );
+
+        const pdfDownloadProgress = document.getElementById(
+            "reader-pdf-download-progress"
+        );
+
+        const pdfDownloadPercent = document.getElementById(
+            "reader-pdf-download-percent"
+        );
+
+        const pdfDownloadCancel = document.getElementById(
+            "reader-pdf-download-cancel"
+        );
+
+        let pdfDownloadController = null;
+
+
+        function showPdfDownloadOverlay() {
+
+            if (!pdfDownloadOverlay) {
+                return;
+            }
+
+            pdfDownloadOverlay.classList.add("active");
+            pdfDownloadOverlay.setAttribute("aria-hidden", "false");
+            document.body.classList.add("reader-pdf-download-open");
+
+            if (pdfDownloadCancel) {
+                pdfDownloadCancel.focus();
+            }
+
+        }
+
+
+        function hidePdfDownloadOverlay() {
+
+            if (!pdfDownloadOverlay) {
+                return;
+            }
+
+            pdfDownloadOverlay.classList.remove("active");
+            pdfDownloadOverlay.setAttribute("aria-hidden", "true");
+            document.body.classList.remove("reader-pdf-download-open");
+
+            if (pdfDownloadLink) {
+                pdfDownloadLink.removeAttribute("aria-busy");
+                pdfDownloadLink.focus();
+            }
+
+        }
+
+
+        function resetPdfDownloadProgress() {
+
+            if (pdfDownloadProgress) {
+                pdfDownloadProgress.removeAttribute("value");
+                pdfDownloadProgress.removeAttribute("max");
+            }
+
+            if (pdfDownloadStatus) {
+                pdfDownloadStatus.textContent = (
+                    "Building the PDF. This may take a moment."
+                );
+            }
+
+            if (pdfDownloadPercent) {
+                pdfDownloadPercent.textContent = "Starting…";
+            }
+
+        }
+
+
+        function getPdfFilename(response) {
+
+            const disposition = response.headers.get(
+                "Content-Disposition"
+            ) || "";
+
+            const filenameMatch = disposition.match(
+                /filename\*?=(?:UTF-8''|["']?)([^"';\n]+)/i
+            );
+
+            if (filenameMatch && filenameMatch[1]) {
+                return decodeURIComponent(
+                    filenameMatch[1].trim()
+                );
+            }
+
+            return "{{ article.slug|escapejs }}.pdf";
+
+        }
+
+
+        async function readPdfResponse(response) {
+
+            const totalBytes = Number(
+                response.headers.get("Content-Length")
+            );
+
+            if (
+                !response.body
+                || !response.body.getReader
+            ) {
+                return response.blob();
+            }
+
+            const reader = response.body.getReader();
+            const chunks = [];
+            let receivedBytes = 0;
+
+            if (pdfDownloadStatus) {
+                pdfDownloadStatus.textContent = "Downloading the PDF…";
+            }
+
+            if (totalBytes > 0 && pdfDownloadProgress) {
+                pdfDownloadProgress.max = totalBytes;
+                pdfDownloadProgress.value = 0;
+            }
+
+            while (true) {
+
+                const result = await reader.read();
+
+                if (result.done) {
+                    break;
+                }
+
+                chunks.push(result.value);
+                receivedBytes += result.value.length;
+
+                if (totalBytes > 0) {
+
+                    const percent = Math.min(
+                        100,
+                        Math.round(
+                            receivedBytes / totalBytes * 100
+                        )
+                    );
+
+                    if (pdfDownloadProgress) {
+                        pdfDownloadProgress.value = receivedBytes;
+                    }
+
+                    if (pdfDownloadPercent) {
+                        pdfDownloadPercent.textContent = `${percent}%`;
+                    }
+
+                } else if (pdfDownloadPercent) {
+                    pdfDownloadPercent.textContent = (
+                        `${Math.ceil(receivedBytes / 1024)} KB received`
+                    );
+                }
+
+            }
+
+            return new Blob(
+                chunks,
+                {
+                    type: response.headers.get("Content-Type")
+                        || "application/pdf",
+                }
+            );
+
+        }
+
+
+        if (
+            pdfDownloadLink
+            && pdfDownloadOverlay
+            && window.fetch
+            && window.AbortController
+        ) {
+
+            pdfDownloadLink.addEventListener(
+                "click",
+                async function (event) {
+
+                    event.preventDefault();
+
+                    if (pdfDownloadController) {
+                        return;
+                    }
+
+                    resetPdfDownloadProgress();
+                    showPdfDownloadOverlay();
+
+                    pdfDownloadLink.setAttribute("aria-busy", "true");
+                    pdfDownloadController = new AbortController();
+
+                    try {
+
+                        const response = await fetch(
+                            pdfDownloadLink.href,
+                            {
+                                method: "GET",
+                                credentials: "same-origin",
+                                signal: pdfDownloadController.signal,
+                            }
+                        );
+
+                        if (!response.ok) {
+                            throw new Error(
+                                `PDF request failed with status ${response.status}.`
+                            );
+                        }
+
+                        const filename = getPdfFilename(response);
+                        const pdfBlob = await readPdfResponse(response);
+
+                        if (pdfDownloadController.signal.aborted) {
+                            return;
+                        }
+
+                        if (pdfDownloadStatus) {
+                            pdfDownloadStatus.textContent = "Download ready.";
+                        }
+
+                        if (pdfDownloadPercent) {
+                            pdfDownloadPercent.textContent = "100%";
+                        }
+
+                        const objectUrl = URL.createObjectURL(pdfBlob);
+                        const temporaryLink = document.createElement("a");
+
+                        temporaryLink.href = objectUrl;
+                        temporaryLink.download = filename;
+                        temporaryLink.hidden = true;
+
+                        document.body.appendChild(temporaryLink);
+                        temporaryLink.click();
+                        temporaryLink.remove();
+
+                        window.setTimeout(
+                            function () {
+                                URL.revokeObjectURL(objectUrl);
+                            },
+                            1000
+                        );
+
+                    } catch (error) {
+
+                        if (error.name !== "AbortError") {
+                            console.error("PDF download failed.", error);
+                            alert(
+                                "The article PDF could not be downloaded. "
+                                + "Please try again."
+                            );
+                        }
+
+                    } finally {
+
+                        pdfDownloadController = null;
+                        hidePdfDownloadOverlay();
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        if (pdfDownloadCancel) {
+
+            pdfDownloadCancel.addEventListener(
+                "click",
+                function () {
+
+                    if (pdfDownloadController) {
+                        pdfDownloadController.abort();
+                    }
+
+                    hidePdfDownloadOverlay();
+
+                }
+            );
+
+        }
+
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (
+                    event.key === "Escape"
+                    && pdfDownloadOverlay
+                    && pdfDownloadOverlay.classList.contains("active")
+                    && pdfDownloadController
+                ) {
+                    pdfDownloadController.abort();
+                    hidePdfDownloadOverlay();
                 }
 
             }
