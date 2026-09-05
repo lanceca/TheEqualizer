@@ -1,6 +1,26 @@
 .venv/
 .env
+.env.*
+!.env.example
+
 __pycache__/
 *.pyc
+*.pyo
+
 db.sqlite3
 media/
+staticfiles/
+
+# Local/editor files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Python tooling
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Frontend dependencies
+frontend/node_modules/

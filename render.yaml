@@ -1,0 +1,48 @@
+services:
+  - type: web
+    name: the-equalizer
+    runtime: python
+    plan: free
+    branch: main
+    autoDeployTrigger: commit
+
+    buildCommand: bash build.sh
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --timeout 120
+
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+
+      - key: DEBUG
+        value: "False"
+
+      - key: SECURE_SSL_REDIRECT
+        value: "True"
+
+      # Use the Supabase Session Pooler connection string.
+      - key: DATABASE_URL
+        sync: false
+
+      # Supabase Storage S3 settings.
+      - key: SUPABASE_S3_ENDPOINT_URL
+        sync: false
+
+      - key: SUPABASE_S3_ACCESS_KEY_ID
+        sync: false
+
+      - key: SUPABASE_S3_SECRET_ACCESS_KEY
+        sync: false
+
+      - key: SUPABASE_S3_BUCKET
+        sync: false
+
+      - key: SUPABASE_S3_REGION
+        sync: false
+
+      # Optional. Render's own hostname is added automatically
+      # by settings.py. Add custom domains here later if needed.
+      - key: ALLOWED_HOSTS
+        value: ""
+
+      - key: CSRF_TRUSTED_ORIGINS
+        value: ""

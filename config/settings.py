@@ -1,5 +1,14 @@
 """
 Django settings for config project.
+
+Local development:
+- Uses the existing MySQL/MariaDB settings when DATABASE_URL is not set.
+- Uses local filesystem media when Supabase S3 variables are not set.
+
+Production:
+- Uses DATABASE_URL for PostgreSQL (Supabase).
+- Uses WhiteNoise for static files.
+- Uses Supabase Storage through its S3-compatible endpoint when configured.
 """
 
 from pathlib import Path
@@ -19,38 +28,146 @@ load_dotenv(
 )
 
 
+def env_bool(name, default=False):
+    value = os.getenv(name)
+
+    if value is None:
+        return default
+
+    return value.strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def env_list(name, default=""):
+    value = os.getenv(name, default)
+
+    return [
+        item.strip()
+        for item in value.split(",")
+        if item.strip()
+    ]
+
+
 # ==========================================================
 # SECURITY
 # ==========================================================
 
-SECRET_KEY = os.getenv(
-    "SECRET_KEY"
+SECRET_KEY = (
+    os.getenv("SECRET_KEY")
+    or os.getenv("DJANGO_SECRET_KEY")
 )
 
 if not SECRET_KEY:
     raise RuntimeError(
         (
             "SECRET_KEY is missing. "
-            "Add SECRET_KEY to the project's .env file."
+            "Add SECRET_KEY to the environment or local .env file."
         )
     )
 
 
-DEBUG = (
-    os.getenv(
-        "DEBUG",
-        "True",
-    ).lower()
-    in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
+DEBUG = env_bool(
+    "DEBUG",
+    env_bool(
+        "DJANGO_DEBUG",
+        True,
+    ),
 )
 
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env_list(
+    "ALLOWED_HOSTS",
+    "127.0.0.1,localhost",
+)
+
+render_hostname = os.getenv(
+    "RENDER_EXTERNAL_HOSTNAME"
+)
+
+if (
+    render_hostname
+    and render_hostname not in ALLOWED_HOSTS
+):
+    ALLOWED_HOSTS.append(
+        render_hostname
+    )
+
+
+CSRF_TRUSTED_ORIGINS = env_list(
+    "CSRF_TRUSTED_ORIGINS"
+)
+
+if render_hostname:
+    render_origin = (
+        f"https://{render_hostname}"
+    )
+
+    if (
+        render_origin
+        not in CSRF_TRUSTED_ORIGINS
+    ):
+        CSRF_TRUSTED_ORIGINS.append(
+            render_origin
+        )
+
+
+SECURE_PROXY_SSL_HEADER = (
+    "HTTP_X_FORWARDED_PROTO",
+    "https",
+)
+
+SESSION_COOKIE_SECURE = not DEBUG
+
+CSRF_COOKIE_SECURE = not DEBUG
+
+SECURE_SSL_REDIRECT = env_bool(
+    "SECURE_SSL_REDIRECT",
+    not DEBUG,
+)
+
+
+# ==========================================================
+# SUPABASE STORAGE ENVIRONMENT
+# ==========================================================
+
+SUPABASE_S3_ENDPOINT_URL = os.getenv(
+    "SUPABASE_S3_ENDPOINT_URL",
+    "",
+)
+
+SUPABASE_S3_ACCESS_KEY_ID = os.getenv(
+    "SUPABASE_S3_ACCESS_KEY_ID",
+    "",
+)
+
+SUPABASE_S3_SECRET_ACCESS_KEY = os.getenv(
+    "SUPABASE_S3_SECRET_ACCESS_KEY",
+    "",
+)
+
+SUPABASE_S3_BUCKET = os.getenv(
+    "SUPABASE_S3_BUCKET",
+    "",
+)
+
+SUPABASE_S3_REGION = os.getenv(
+    "SUPABASE_S3_REGION",
+    "",
+)
+
+USE_SUPABASE_STORAGE = all(
+    [
+        SUPABASE_S3_ENDPOINT_URL,
+        SUPABASE_S3_ACCESS_KEY_ID,
+        SUPABASE_S3_SECRET_ACCESS_KEY,
+        SUPABASE_S3_BUCKET,
+        SUPABASE_S3_REGION,
+    ]
+)
 
 
 # ==========================================================
@@ -75,6 +192,11 @@ INSTALLED_APPS = [
     "workflow",
 ]
 
+if USE_SUPABASE_STORAGE:
+    INSTALLED_APPS.append(
+        "storages"
+    )
+
 
 # ==========================================================
 # MIDDLEWARE
@@ -89,6 +211,12 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+if not DEBUG:
+    MIDDLEWARE.insert(
+        1,
+        "whitenoise.middleware.WhiteNoiseMiddleware",
+    )
 
 
 ROOT_URLCONF = "config.urls"
@@ -138,26 +266,42 @@ WSGI_APPLICATION = "config.wsgi.application"
 # DATABASE
 # ==========================================================
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": os.getenv(
-            "DB_NAME"
-        ),
-        "USER": os.getenv(
-            "DB_USER"
-        ),
-        "PASSWORD": os.getenv(
-            "DB_PASSWORD"
-        ),
-        "HOST": os.getenv(
-            "DB_HOST"
-        ),
-        "PORT": os.getenv(
-            "DB_PORT"
-        ),
+DATABASE_URL = os.getenv(
+    "DATABASE_URL"
+)
+
+if DATABASE_URL:
+    import dj_database_url
+
+    DATABASES = {
+        "default": dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True,
+        )
     }
-}
+
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "NAME": os.getenv(
+                "DB_NAME"
+            ),
+            "USER": os.getenv(
+                "DB_USER"
+            ),
+            "PASSWORD": os.getenv(
+                "DB_PASSWORD"
+            ),
+            "HOST": os.getenv(
+                "DB_HOST"
+            ),
+            "PORT": os.getenv(
+                "DB_PORT"
+            ),
+        }
+    }
 
 
 # ==========================================================
@@ -209,7 +353,7 @@ USE_TZ = True
 # STATIC / MEDIA
 # ==========================================================
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 
 STATICFILES_DIRS = [
     BASE_DIR / "static",
@@ -225,6 +369,80 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = (
     BASE_DIR / "media"
 )
+
+
+STORAGES = {
+    "default": {
+        "BACKEND": (
+            "django.core.files.storage."
+            "FileSystemStorage"
+        ),
+    },
+    "staticfiles": {
+        "BACKEND": (
+            "django.contrib.staticfiles.storage."
+            "StaticFilesStorage"
+        ),
+    },
+}
+
+
+if not DEBUG:
+    STORAGES[
+        "staticfiles"
+    ] = {
+        "BACKEND": (
+            "whitenoise.storage."
+            "CompressedManifestStaticFilesStorage"
+        ),
+    }
+
+
+if USE_SUPABASE_STORAGE:
+    AWS_ACCESS_KEY_ID = (
+        SUPABASE_S3_ACCESS_KEY_ID
+    )
+
+    AWS_SECRET_ACCESS_KEY = (
+        SUPABASE_S3_SECRET_ACCESS_KEY
+    )
+
+    AWS_STORAGE_BUCKET_NAME = (
+        SUPABASE_S3_BUCKET
+    )
+
+    AWS_S3_ENDPOINT_URL = (
+        SUPABASE_S3_ENDPOINT_URL
+    )
+
+    AWS_S3_REGION_NAME = (
+        SUPABASE_S3_REGION
+    )
+
+    AWS_S3_ADDRESSING_STYLE = "path"
+
+    AWS_S3_SIGNATURE_VERSION = "s3v4"
+
+    AWS_DEFAULT_ACL = None
+
+    AWS_S3_FILE_OVERWRITE = False
+
+    # Keep media private while allowing Django to generate
+    # temporary signed URLs for images, videos, and PDFs.
+    AWS_QUERYSTRING_AUTH = True
+
+    # 24-hour signed media URLs. API/page reloads generate
+    # fresh URLs automatically.
+    AWS_QUERYSTRING_EXPIRE = 86400
+
+    STORAGES[
+        "default"
+    ] = {
+        "BACKEND": (
+            "storages.backends.s3."
+            "S3Storage"
+        ),
+    }
 
 
 # ==========================================================
@@ -268,6 +486,7 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = (
 DIGITAL_PUBLICATION_PDF_MAX_SIZE = (
     300 * 1024 * 1024
 )
+
 
 # ==========================================================
 # DJANGO REST FRAMEWORK
