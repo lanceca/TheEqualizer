@@ -150,7 +150,8 @@
                             placeholder="Enter your username"
                             required
                             autofocus
-                        >
+                        
+                value="{% if request.method == 'POST' %}{{ request.POST.username }}{% endif %}">
 
                     </div>
 
@@ -355,6 +356,8 @@
         }
     );
     </script>
+
+{% include "accounts/_preserve_post_form.html" %}
 
 </body>
 

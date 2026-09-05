@@ -156,7 +156,8 @@
                     id="digital-title"
                     type="text"
                     name="title"
-                    maxlength="255"
+                    maxlength="180"
+                    value="{% if request.method == 'POST' %}{{ request.POST.title }}{% endif %}"
                     required
                 >
             </div>
@@ -168,6 +169,7 @@
                     type="text"
                     name="volume"
                     maxlength="50"
+                    value="{% if request.method == 'POST' %}{{ request.POST.volume }}{% endif %}"
                     placeholder="Example: Volume 4"
                 >
             </div>
@@ -179,6 +181,7 @@
                     type="text"
                     name="issue_number"
                     maxlength="50"
+                    value="{% if request.method == 'POST' %}{{ request.POST.issue_number }}{% endif %}"
                     placeholder="Example: Issue 2"
                 >
             </div>
@@ -189,6 +192,7 @@
                     id="digital-date"
                     type="date"
                     name="publication_date"
+                    value="{% if request.method == 'POST' %}{{ request.POST.publication_date }}{% endif %}"
                     required
                 >
             </div>
@@ -198,7 +202,8 @@
                 <textarea
                     id="digital-description"
                     name="description"
-                ></textarea>
+                    maxlength="1500"
+                >{% if request.method == 'POST' %}{{ request.POST.description }}{% endif %}</textarea>
             </div>
 
             <div class="digital-field">
@@ -229,7 +234,7 @@
                     name="status"
                 >
                     {% for value, label in status_choices %}
-                        <option value="{{ value }}">
+                        <option value="{{ value }}" {% if request.method == 'POST' and request.POST.status == value %}selected{% endif %}>
                             {{ label }}
                         </option>
                     {% endfor %}
@@ -243,7 +248,8 @@
                     type="number"
                     name="display_order"
                     min="0"
-                    value="0"
+                    max="9999"
+                    value="{% if request.method == 'POST' %}{{ request.POST.display_order|default:'0' }}{% else %}0{% endif %}"
                 >
             </div>
 
@@ -324,6 +330,8 @@
                             <form
                                 method="POST"
                                 action="{% url 'set_digital_publication_status' publication.id %}"
+                                data-confirm-title="Publish Digital Publication"
+                                data-confirm="Publish '{{ publication.title }}' so readers can access it?"
                             >
                                 {% csrf_token %}
                                 <input
@@ -353,6 +361,8 @@
                             <form
                                 method="POST"
                                 action="{% url 'set_digital_publication_status' publication.id %}"
+                                data-confirm-title="Hide Digital Publication"
+                                data-confirm="Hide '{{ publication.title }}' from the public reader?"
                             >
                                 {% csrf_token %}
                                 <input
@@ -405,5 +415,7 @@
     </section>
 
 </div>
+
+{% include "publications/_preserve_post_form.html" %}
 
 {% endblock %}

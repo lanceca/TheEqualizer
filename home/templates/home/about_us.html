@@ -1,0 +1,102 @@
+{% extends "public_base.html" %}
+{% load static %}
+
+{% block title %}
+About Us | The Equalizer
+{% endblock %}
+
+{% block public_content %}
+
+<link
+    rel="stylesheet"
+    href="{% static 'css/about_us.css' %}?v=20260905-about-us-restore-1"
+>
+
+{% if about_page %}
+
+<main class="about-page">
+
+    <header class="about-page-header">
+
+        <p class="reader-section-kicker">
+            The Equalizer
+        </p>
+
+        <h1>
+            {{ about_page.title }}
+        </h1>
+
+        {% if about_page.subtitle %}
+            <p class="about-page-subtitle">
+                {{ about_page.subtitle }}
+            </p>
+        {% endif %}
+
+    </header>
+
+    {% if about_page.hero_image %}
+        <img
+            src="{{ about_page.hero_image.url }}"
+            alt="{{ about_page.title }}"
+            class="about-hero-image"
+        >
+    {% endif %}
+
+    <div class="about-content-grid">
+
+        <div class="about-main-column">
+
+            <section class="about-section">
+                <h2>About The Equalizer</h2>
+                <div class="about-rich-copy">
+                    {{ about_page.overview|linebreaks }}
+                </div>
+            </section>
+
+            <section class="about-section">
+                <h2>Our History</h2>
+                <div class="about-rich-copy">
+                    {{ about_page.history|linebreaks }}
+                </div>
+            </section>
+
+        </div>
+
+        <aside class="about-side-column">
+
+            {% if about_page.mission %}
+                <section class="about-side-card">
+                    <h2>Mission</h2>
+                    <div class="about-rich-copy">
+                        {{ about_page.mission|linebreaks }}
+                    </div>
+                </section>
+            {% endif %}
+
+            {% if about_page.vision %}
+                <section class="about-side-card">
+                    <h2>Vision</h2>
+                    <div class="about-rich-copy">
+                        {{ about_page.vision|linebreaks }}
+                    </div>
+                </section>
+            {% endif %}
+
+        </aside>
+
+    </div>
+
+</main>
+
+{% else %}
+
+<section class="about-unavailable">
+    <h1>About The Equalizer</h1>
+    <p>
+        This page is currently being prepared by the publication team.
+    </p>
+</section>
+
+{% endif %}
+
+{% endblock %}

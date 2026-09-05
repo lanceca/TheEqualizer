@@ -2,18 +2,23 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
 import DigitalPublicationViewer from './DigitalPublicationViewer.jsx'
+import PeopleAndTeams from './PeopleAndTeams.jsx'
 import './index.css'
 
 const componentRegistry = {
   ReaderTools: App,
   DigitalPublicationViewer,
+  PeopleAndTeams,
 }
 
 function getComponentProps(
   componentName,
   mountPoint,
 ) {
-  if (componentName === 'DigitalPublicationViewer') {
+  if (
+    componentName === 'DigitalPublicationViewer' ||
+    componentName === 'PeopleAndTeams'
+  ) {
     return {
       apiUrl: mountPoint.dataset.apiUrl || '',
     }

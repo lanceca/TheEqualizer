@@ -19,6 +19,7 @@ from django.views.decorators.http import require_POST
 from notifications.models import Notification
 
 from .models import (
+    AboutUsPage,
     Article,
     ArticleAttachment,
     ArticleContributor,
@@ -31,6 +32,8 @@ from .models import (
     DeletionRequest,
     DigitalPublication,
     EditRequest,
+    PeopleProfile,
+    SchoolAdvertisement,
     Submission,
     Tag,
 )
@@ -7121,6 +7124,42 @@ def permanently_delete_archived_article(
 
 
 # ==========================================================
+# PUBLIC CONTENT FORM LIMIT HELPERS
+# ==========================================================
+
+
+def validate_management_text_limit(value, label, max_length):
+    if len(value or "") > max_length:
+        raise ValidationError(
+            f"{label} cannot exceed {max_length} characters."
+        )
+
+
+def digital_publication_management_context():
+    publications = (
+        DigitalPublication.objects
+        .select_related("uploaded_by")
+        .all()
+    )
+    return {
+        "digital_publications": publications,
+        "status_choices": DigitalPublication.Status.choices,
+    }
+
+
+def school_advertisement_management_context():
+    advertisements = (
+        SchoolAdvertisement.objects
+        .select_related("created_by", "updated_by")
+        .all()
+    )
+    return {
+        "advertisements": advertisements,
+        "active_advertisements": advertisements.filter(is_active=True),
+    }
+
+
+# ==========================================================
 # DIGITAL PUBLICATION MANAGEMENT
 # EIC ONLY
 # ==========================================================
@@ -7164,6 +7203,11 @@ def get_digital_publication_form_data(
         "0",
     ).strip()
 
+    validate_management_text_limit(title, "Publication title", 180)
+    validate_management_text_limit(volume, "Volume", 50)
+    validate_management_text_limit(issue_number, "Issue number", 50)
+    validate_management_text_limit(description, "Description", 1500)
+
     if not title:
         raise ValidationError(
             "Please provide a publication title."
@@ -7199,6 +7243,11 @@ def get_digital_publication_form_data(
             "Display order cannot be negative."
         )
 
+    if display_order > 9999:
+        raise ValidationError(
+            "Display order cannot exceed 9999."
+        )
+
     return {
         "title": title,
         "volume": volume,
@@ -7216,30 +7265,11 @@ def get_digital_publication_form_data(
 def digital_publication_management(
     request,
 ):
-    publications = (
-        DigitalPublication.objects
-        .select_related(
-            "uploaded_by"
-        )
-        .all()
-    )
-
     return render(
         request,
-        (
-            "publications/"
-            "digital_publication_management.html"
-        ),
-        {
-            "digital_publications": (
-                publications
-            ),
-            "status_choices": (
-                DigitalPublication.Status.choices
-            ),
-        },
+        "publications/digital_publication_management.html",
+        digital_publication_management_context(),
     )
-
 
 @publication_role_required(
     User.Role.EIC
@@ -7308,8 +7338,10 @@ def create_digital_publication(
             ),
         )
 
-        return redirect(
-            "digital_publication_management"
+        return render(
+            request,
+            "publications/digital_publication_management.html",
+            digital_publication_management_context(),
         )
 
     messages.success(
@@ -7647,3 +7679,891 @@ def delete_digital_publication(
     return redirect(
         "digital_publication_management"
     )
+
+
+# ==========================================================
+# SCHOOL ADVERTISEMENT MANAGEMENT
+# EIC ONLY
+# ==========================================================
+
+
+def get_school_advertisement_form_data(
+    request,
+):
+    title = request.POST.get(
+        "title",
+        "",
+    ).strip()
+
+    summary = request.POST.get(
+        "summary",
+        "",
+    ).strip()
+
+    details = request.POST.get(
+        "details",
+        "",
+    ).strip()
+
+    display_order_raw = request.POST.get(
+        "display_order",
+        "0",
+    ).strip()
+
+    is_active = (
+        request.POST.get(
+            "is_active",
+            "",
+        )
+        == "1"
+    )
+
+    validate_management_text_limit(title, "Advertisement title", 180)
+    validate_management_text_limit(summary, "Short summary", 320)
+    validate_management_text_limit(details, "Full details", 3000)
+
+    if not title:
+        raise ValidationError(
+            "Please provide an advertisement title."
+        )
+
+    if not summary:
+        raise ValidationError(
+            "Please provide a short advertisement summary."
+        )
+
+    if not details:
+        raise ValidationError(
+            "Please provide the full school update details."
+        )
+
+    try:
+        display_order = int(
+            display_order_raw or 0
+        )
+    except ValueError as error:
+        raise ValidationError(
+            "Display order must be a whole number."
+        ) from error
+
+    if display_order < 0:
+        raise ValidationError(
+            "Display order cannot be negative."
+        )
+
+    if display_order > 9999:
+        raise ValidationError(
+            "Display order cannot exceed 9999."
+        )
+
+    return {
+        "title": title,
+        "summary": summary,
+        "details": details,
+        "display_order": display_order,
+        "is_active": is_active,
+    }
+
+
+@publication_role_required(
+    User.Role.EIC
+)
+def school_advertisement_management(
+    request,
+):
+    return render(
+        request,
+        "publications/school_advertisement_management.html",
+        school_advertisement_management_context(),
+    )
+
+@publication_role_required(
+    User.Role.EIC
+)
+@require_POST
+def create_school_advertisement(
+    request,
+):
+    try:
+        form_data = (
+            get_school_advertisement_form_data(
+                request
+            )
+        )
+
+        image = request.FILES.get(
+            "image"
+        )
+
+        if not image:
+            raise ValidationError(
+                "Please upload an advertisement image."
+            )
+
+        validate_article_image(
+            image
+        )
+
+        advertisement = SchoolAdvertisement(
+            created_by=request.user,
+            updated_by=request.user,
+            image=image,
+            **form_data,
+        )
+
+        advertisement.full_clean()
+        advertisement.save()
+
+    except ValidationError as error:
+        messages.error(
+            request,
+            get_validation_error_message(
+                error
+            ),
+        )
+
+        return render(
+            request,
+            "publications/school_advertisement_management.html",
+            school_advertisement_management_context(),
+        )
+
+    messages.success(
+        request,
+        (
+            f'"{advertisement.title}" '
+            "was added to School Updates."
+        ),
+    )
+
+    return redirect(
+        "school_advertisement_management"
+    )
+
+
+@publication_role_required(
+    User.Role.EIC
+)
+def edit_school_advertisement(
+    request,
+    advertisement_id,
+):
+    advertisement = get_object_or_404(
+        SchoolAdvertisement,
+        id=advertisement_id,
+    )
+
+    if request.method == "POST":
+        old_image_name = (
+            advertisement.image.name
+            if advertisement.image
+            else ""
+        )
+
+        replacement_image = None
+
+        try:
+            form_data = (
+                get_school_advertisement_form_data(
+                    request
+                )
+            )
+
+            replacement_image = (
+                request.FILES.get(
+                    "image"
+                )
+            )
+
+            if replacement_image:
+                validate_article_image(
+                    replacement_image
+                )
+
+            advertisement.title = (
+                form_data["title"]
+            )
+            advertisement.summary = (
+                form_data["summary"]
+            )
+            advertisement.details = (
+                form_data["details"]
+            )
+            advertisement.display_order = (
+                form_data["display_order"]
+            )
+            advertisement.is_active = (
+                form_data["is_active"]
+            )
+            advertisement.updated_by = (
+                request.user
+            )
+
+            if replacement_image:
+                advertisement.image = (
+                    replacement_image
+                )
+
+            advertisement.full_clean()
+            advertisement.save()
+
+        except ValidationError as error:
+            messages.error(
+                request,
+                get_validation_error_message(
+                    error
+                ),
+            )
+
+            return render(
+                request,
+                (
+                    "publications/"
+                    "edit_school_advertisement.html"
+                ),
+                {
+                    "advertisement": (
+                        advertisement
+                    ),
+                },
+            )
+
+        if (
+            replacement_image
+            and old_image_name
+            and old_image_name
+            != advertisement.image.name
+            and default_storage.exists(
+                old_image_name
+            )
+        ):
+            default_storage.delete(
+                old_image_name
+            )
+
+        messages.success(
+            request,
+            (
+                f'"{advertisement.title}" '
+                "was updated successfully."
+            ),
+        )
+
+        return redirect(
+            "school_advertisement_management"
+        )
+
+    return render(
+        request,
+        (
+            "publications/"
+            "edit_school_advertisement.html"
+        ),
+        {
+            "advertisement": advertisement,
+        },
+    )
+
+
+@publication_role_required(
+    User.Role.EIC
+)
+@require_POST
+def set_school_advertisement_status(
+    request,
+    advertisement_id,
+):
+    advertisement = get_object_or_404(
+        SchoolAdvertisement,
+        id=advertisement_id,
+    )
+
+    requested_active = (
+        request.POST.get(
+            "is_active",
+            "0",
+        )
+        == "1"
+    )
+
+    advertisement.is_active = (
+        requested_active
+    )
+    advertisement.updated_by = (
+        request.user
+    )
+    advertisement.save(
+        update_fields=[
+            "is_active",
+            "updated_by",
+            "updated_at",
+        ]
+    )
+
+    messages.success(
+        request,
+        (
+            f'"{advertisement.title}" is now '
+            + (
+                "visible on the public site."
+                if requested_active
+                else "hidden from the public site."
+            )
+        ),
+    )
+
+    return redirect(
+        "school_advertisement_management"
+    )
+
+
+@publication_role_required(
+    User.Role.EIC
+)
+@require_POST
+def delete_school_advertisement(
+    request,
+    advertisement_id,
+):
+    advertisement = get_object_or_404(
+        SchoolAdvertisement,
+        id=advertisement_id,
+    )
+
+    title = advertisement.title
+
+    image_name = (
+        advertisement.image.name
+        if advertisement.image
+        else ""
+    )
+
+    advertisement.delete()
+
+    if (
+        image_name
+        and default_storage.exists(
+            image_name
+        )
+    ):
+        default_storage.delete(
+            image_name
+        )
+
+    messages.success(
+        request,
+        (
+            f'"{title}" was permanently deleted '
+            "from School Updates."
+        ),
+    )
+
+    return redirect(
+        "school_advertisement_management"
+    )
+
+
+
+# ==========================================================
+# PEOPLE & TEAMS MANAGEMENT
+# ==========================================================
+
+PEOPLE_SECTIONS = {
+    "developers": {
+        "section": PeopleProfile.Section.DEVELOPERS,
+        "title": "The Developers",
+        "role": User.Role.ADMIN,
+    },
+    "capstone-committee": {
+        "section": PeopleProfile.Section.CAPSTONE_COMMITTEE,
+        "title": "Capstone Committee",
+        "role": User.Role.ADMIN,
+    },
+    "ics-faculty": {
+        "section": PeopleProfile.Section.ICS_FACULTY,
+        "title": "ICS Faculty",
+        "role": User.Role.ADMIN,
+    },
+    "equalizer-team": {
+        "section": PeopleProfile.Section.EQUALIZER_TEAM,
+        "title": "The Equalizer Team",
+        "role": User.Role.EIC,
+    },
+}
+
+
+def get_people_section(section_slug):
+    return PEOPLE_SECTIONS.get(section_slug)
+
+
+def can_manage_people_section(user, config):
+    return bool(config and user.role == config["role"])
+
+
+def read_people_form(request):
+    name = request.POST.get("name", "").strip()
+    role_title = request.POST.get("role_title", "").strip()
+    courses_handled = request.POST.get("courses_handled", "").strip()
+    school_position = request.POST.get("school_position", "").strip()
+    institute_department = request.POST.get("institute_department", "").strip()
+    achievements = request.POST.get("achievements", "").strip()
+    additional_information = request.POST.get("additional_information", "").strip()
+
+    validate_management_text_limit(name, "Name", 40)
+    validate_management_text_limit(role_title, "Primary role / title", 40)
+    validate_management_text_limit(courses_handled, "Courses handled", 180)
+    validate_management_text_limit(school_position, "School position", 60)
+    validate_management_text_limit(institute_department, "Institute / department", 60)
+    validate_management_text_limit(achievements, "Achievements / contributions", 300)
+    validate_management_text_limit(additional_information, "Additional information", 300)
+
+    if not name:
+        raise ValidationError("Please provide the person's name.")
+
+    try:
+        display_order = int(request.POST.get("display_order", "0").strip() or 0)
+    except ValueError as error:
+        raise ValidationError("Display order must be a whole number.") from error
+
+    if display_order < 0:
+        raise ValidationError("Display order cannot be negative.")
+    if display_order > 9999:
+        raise ValidationError("Display order cannot exceed 9999.")
+
+    return {
+        "name": name,
+        "role_title": role_title,
+        "courses_handled": courses_handled,
+        "school_position": school_position,
+        "institute_department": institute_department,
+        "achievements": achievements,
+        "additional_information": additional_information,
+        "display_order": display_order,
+        "is_active": request.POST.get("is_active", "") == "1",
+    }
+
+@publication_role_required(User.Role.ADMIN, User.Role.EIC)
+def people_management(request):
+    sections = []
+
+    for slug, config in PEOPLE_SECTIONS.items():
+        if not can_manage_people_section(request.user, config):
+            continue
+
+        queryset = PeopleProfile.objects.filter(
+            section=config["section"]
+        )
+        sections.append({
+            "slug": slug,
+            "title": config["title"],
+            "count": queryset.count(),
+            "active_count": queryset.filter(is_active=True).count(),
+        })
+
+    return render(
+        request,
+        "publications/people_management.html",
+        {"sections": sections},
+    )
+
+
+@publication_role_required(User.Role.ADMIN, User.Role.EIC)
+def people_group_management(request, section_slug):
+    config = get_people_section(section_slug)
+
+    if not can_manage_people_section(request.user, config):
+        return HttpResponseForbidden(
+            "You do not have permission to manage this section."
+        )
+
+    profiles = (
+        PeopleProfile.objects
+        .filter(section=config["section"])
+        .order_by("display_order", "name")
+    )
+
+    return render(
+        request,
+        "publications/people_group_management.html",
+        {
+            "section_slug": section_slug,
+            "section_title": config["title"],
+            "profiles": profiles,
+        },
+    )
+
+
+@publication_role_required(User.Role.ADMIN, User.Role.EIC)
+@require_POST
+def create_people_profile(request, section_slug):
+    config = get_people_section(section_slug)
+
+    if not can_manage_people_section(request.user, config):
+        return HttpResponseForbidden(
+            "You do not have permission to create profiles here."
+        )
+
+    try:
+        data = read_people_form(request)
+        image = request.FILES.get("image")
+
+        if not image:
+            raise ValidationError("Please upload a profile image.")
+
+        validate_article_image(image)
+
+        profile = PeopleProfile(
+            section=config["section"],
+            image=image,
+            created_by=request.user,
+            updated_by=request.user,
+            **data,
+        )
+        profile.full_clean()
+        profile.save()
+
+        messages.success(
+            request,
+            f'"{profile.name}" was added to {config["title"]}.',
+        )
+
+    except ValidationError as error:
+        messages.error(
+            request,
+            get_validation_error_message(error),
+        )
+        profiles = (
+            PeopleProfile.objects
+            .filter(section=config["section"])
+            .order_by("display_order", "name")
+        )
+        return render(
+            request,
+            "publications/people_group_management.html",
+            {
+                "section_slug": section_slug,
+                "section_title": config["title"],
+                "profiles": profiles,
+            },
+        )
+
+    return redirect(
+        "people_group_management",
+        section_slug=section_slug,
+    )
+
+
+@publication_role_required(User.Role.ADMIN, User.Role.EIC)
+def edit_people_profile(request, section_slug, profile_id):
+    config = get_people_section(section_slug)
+
+    if not can_manage_people_section(request.user, config):
+        return HttpResponseForbidden(
+            "You do not have permission to edit this section."
+        )
+
+    profile = get_object_or_404(
+        PeopleProfile,
+        id=profile_id,
+        section=config["section"],
+    )
+
+    if request.method == "POST":
+        old_image_name = profile.image.name if profile.image else ""
+        replacement_image = request.FILES.get("image")
+
+        try:
+            data = read_people_form(request)
+
+            if replacement_image:
+                validate_article_image(replacement_image)
+
+            for field, value in data.items():
+                setattr(profile, field, value)
+
+            profile.updated_by = request.user
+
+            if replacement_image:
+                profile.image = replacement_image
+
+            profile.full_clean()
+            profile.save()
+
+        except ValidationError as error:
+            messages.error(
+                request,
+                get_validation_error_message(error),
+            )
+        else:
+            if (
+                replacement_image
+                and old_image_name
+                and old_image_name != profile.image.name
+                and default_storage.exists(old_image_name)
+            ):
+                default_storage.delete(old_image_name)
+
+            messages.success(
+                request,
+                f'"{profile.name}" was updated successfully.',
+            )
+
+            return redirect(
+                "people_group_management",
+                section_slug=section_slug,
+            )
+
+    return render(
+        request,
+        "publications/edit_people_profile.html",
+        {
+            "profile": profile,
+            "section_slug": section_slug,
+            "section_title": config["title"],
+        },
+    )
+
+
+@publication_role_required(User.Role.ADMIN, User.Role.EIC)
+@require_POST
+def set_people_profile_status(request, section_slug, profile_id):
+    config = get_people_section(section_slug)
+
+    if not can_manage_people_section(request.user, config):
+        return HttpResponseForbidden(
+            "You do not have permission to update this profile."
+        )
+
+    profile = get_object_or_404(
+        PeopleProfile,
+        id=profile_id,
+        section=config["section"],
+    )
+
+    profile.is_active = request.POST.get("is_active", "0") == "1"
+    profile.updated_by = request.user
+    profile.save(
+        update_fields=["is_active", "updated_by", "updated_at"]
+    )
+
+    return redirect(
+        "people_group_management",
+        section_slug=section_slug,
+    )
+
+
+@publication_role_required(User.Role.ADMIN, User.Role.EIC)
+@require_POST
+def delete_people_profile(request, section_slug, profile_id):
+    config = get_people_section(section_slug)
+
+    if not can_manage_people_section(request.user, config):
+        return HttpResponseForbidden(
+            "You do not have permission to delete this profile."
+        )
+
+    profile = get_object_or_404(
+        PeopleProfile,
+        id=profile_id,
+        section=config["section"],
+    )
+
+    image_name = profile.image.name if profile.image else ""
+    name = profile.name
+    profile.delete()
+
+    if image_name and default_storage.exists(image_name):
+        default_storage.delete(image_name)
+
+    messages.success(
+        request,
+        f'"{name}" was permanently deleted.',
+    )
+
+    return redirect(
+        "people_group_management",
+        section_slug=section_slug,
+    )
+
+
+# ==========================================================
+# ABOUT US PAGE MANAGEMENT
+# EIC ONLY
+# ==========================================================
+
+
+@publication_role_required(
+    User.Role.EIC
+)
+def about_us_management(
+    request,
+):
+    about_page = (
+        AboutUsPage.objects
+        .select_related(
+            "updated_by",
+        )
+        .first()
+    )
+
+    if request.method == "POST":
+        title = request.POST.get(
+            "title",
+            "",
+        ).strip()
+
+        subtitle = request.POST.get(
+            "subtitle",
+            "",
+        ).strip()
+
+        overview = request.POST.get(
+            "overview",
+            "",
+        ).strip()
+
+        history = request.POST.get(
+            "history",
+            "",
+        ).strip()
+
+        mission = request.POST.get(
+            "mission",
+            "",
+        ).strip()
+
+        vision = request.POST.get(
+            "vision",
+            "",
+        ).strip()
+
+        is_published = (
+            request.POST.get(
+                "is_published",
+                "",
+            )
+            == "1"
+        )
+
+        replacement_image = (
+            request.FILES.get(
+                "hero_image"
+            )
+        )
+
+        old_image_name = (
+            about_page.hero_image.name
+            if (
+                about_page
+                and about_page.hero_image
+            )
+            else ""
+        )
+
+        try:
+            validate_management_text_limit(title, "Page title", 180)
+            validate_management_text_limit(subtitle, "Subtitle", 320)
+            validate_management_text_limit(overview, "About overview", 5000)
+            validate_management_text_limit(history, "History", 7000)
+            validate_management_text_limit(mission, "Mission", 2500)
+            validate_management_text_limit(vision, "Vision", 2500)
+
+            if not title:
+                raise ValidationError(
+                    "Please provide an About Us page title."
+                )
+
+            if not overview:
+                raise ValidationError(
+                    "Please provide information about The Equalizer."
+                )
+
+            if not history:
+                raise ValidationError(
+                    "Please provide the publication history."
+                )
+
+            if replacement_image:
+                validate_article_image(
+                    replacement_image
+                )
+
+            if about_page is None:
+                about_page = AboutUsPage()
+
+            about_page.title = title
+            about_page.subtitle = subtitle
+            about_page.overview = overview
+            about_page.history = history
+            about_page.mission = mission
+            about_page.vision = vision
+            about_page.is_published = (
+                is_published
+            )
+            about_page.updated_by = (
+                request.user
+            )
+
+            if replacement_image:
+                about_page.hero_image = (
+                    replacement_image
+                )
+
+            about_page.full_clean()
+            about_page.save()
+
+        except ValidationError as error:
+            messages.error(
+                request,
+                get_validation_error_message(
+                    error
+                ),
+            )
+
+            return render(
+                request,
+                (
+                    "publications/"
+                    "about_us_management.html"
+                ),
+                {
+                    "about_page": about_page,
+                },
+            )
+
+        if (
+            replacement_image
+            and old_image_name
+            and old_image_name
+            != about_page.hero_image.name
+            and default_storage.exists(
+                old_image_name
+            )
+        ):
+            default_storage.delete(
+                old_image_name
+            )
+
+        messages.success(
+            request,
+            (
+                "The public About Us page "
+                "was updated successfully."
+            ),
+        )
+
+        return redirect(
+            "about_us_management"
+        )
+
+    return render(
+        request,
+        (
+            "publications/"
+            "about_us_management.html"
+        ),
+        {
+            "about_page": about_page,
+        },
+    )
+

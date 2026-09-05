@@ -1,0 +1,132 @@
+{% extends "staff_base.html" %}
+{% block staff_content %}
+<style>
+.people-edit-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(290px,.7fr);gap:22px;align-items:start}
+.people-edit-panel{padding:22px;border:1px solid var(--eq-border);border-radius:12px;background:#fff;box-shadow:var(--eq-shadow)}
+.people-edit-field{margin-bottom:14px}.people-edit-field label{display:block;margin-bottom:6px;font-size:13px;font-weight:700}
+.people-edit-field input[type=text],.people-edit-field input[type=number],.people-edit-field textarea{width:100%;padding:10px 12px;border:1px solid var(--eq-border);border-radius:7px;font:inherit}
+.people-edit-field textarea{min-height:92px;resize:vertical}.people-preview{position:sticky;top:0}.people-preview img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px}
+.people-preview h3{margin:14px 0 4px}.people-preview p{white-space:pre-line;color:var(--eq-muted)}
+.people-field-label-row,
+.people-edit-label-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:6px;
+}
+.people-field-label-row label,
+.people-edit-label-row label{
+    margin:0!important;
+}
+.people-character-count{
+    flex-shrink:0;
+    color:var(--eq-muted);
+    font-size:11px;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+}
+.people-character-count.is-near-limit{
+    color:#9a6b00;
+}
+.people-character-count.is-at-limit{
+    color:#8a2d2d;
+}
+@media(max-width:850px){.people-edit-layout{grid-template-columns:1fr}.people-preview{position:static}}
+</style>
+<div class="dashboard-header">
+<div><h1>Edit {{ profile.name }}</h1><p class="dashboard-subtitle">{{ section_title }}</p></div>
+<a href="{% url 'people_group_management' section_slug %}" class="secondary-button">Back</a>
+</div>
+<div class="people-edit-layout">
+<section class="people-edit-panel">
+<form method="POST" enctype="multipart/form-data">{% csrf_token %}
+<div class="people-edit-field"><div class="people-edit-label-row"><label for="pn">Name</label><span class="people-character-count" id="pn-count">0/120</span></div><input id="pn" type="text" name="name" maxlength="120" data-people-counter="pn-count" required value="{% if request.method == 'POST' %}{{ request.POST.name }}{% else %}{{ profile.name }}{% endif %}"></div>
+<div class="people-edit-field"><label>Replace image</label><input id="pi" type="file" name="image" accept="image/*"></div>
+<div class="people-edit-field"><div class="people-edit-label-row"><label for="pr">Primary role / title</label><span class="people-character-count" id="pr-count">0/100</span></div><input id="pr" type="text" name="role_title" maxlength="100" data-people-counter="pr-count" value="{% if request.method == 'POST' %}{{ request.POST.role_title }}{% else %}{{ profile.role_title }}{% endif %}"></div>
+<div class="people-edit-field"><div class="people-edit-label-row"><label for="pp">School position</label><span class="people-character-count" id="pp-count">0/140</span></div><input id="pp" type="text" name="school_position" maxlength="140" data-people-counter="pp-count" value="{% if request.method == 'POST' %}{{ request.POST.school_position }}{% else %}{{ profile.school_position }}{% endif %}"></div>
+<div class="people-edit-field"><div class="people-edit-label-row"><label for="pd">Institute / department</label><span class="people-character-count" id="pd-count">0/140</span></div><input id="pd" type="text" name="institute_department" maxlength="140" data-people-counter="pd-count" value="{% if request.method == 'POST' %}{{ request.POST.institute_department }}{% else %}{{ profile.institute_department }}{% endif %}"></div>
+<div class="people-edit-field"><div class="people-edit-label-row"><label for="pc">Courses handled</label><span class="people-character-count" id="pc-count">0/600</span></div><textarea id="pc" name="courses_handled" maxlength="600" data-people-counter="pc-count">{% if request.method == 'POST' %}{{ request.POST.courses_handled }}{% else %}{{ profile.courses_handled }}{% endif %}</textarea></div>
+<div class="people-edit-field"><div class="people-edit-label-row"><label for="pa">Achievements / contributions</label><span class="people-character-count" id="pa-count">0/1200</span></div><textarea id="pa" name="achievements" maxlength="1200" data-people-counter="pa-count">{% if request.method == 'POST' %}{{ request.POST.achievements }}{% else %}{{ profile.achievements }}{% endif %}</textarea></div>
+<div class="people-edit-field"><div class="people-edit-label-row"><label for="padditional">Additional information</label><span class="people-character-count" id="padditional-count">0/1200</span></div><textarea id="padditional" name="additional_information" maxlength="1200" data-people-counter="padditional-count">{% if request.method == 'POST' %}{{ request.POST.additional_information }}{% else %}{{ profile.additional_information }}{% endif %}</textarea></div>
+<div class="people-edit-field"><label>Display order</label><input type="number" name="display_order" min="0" max="9999" value="{% if request.method == 'POST' %}{{ request.POST.display_order }}{% else %}{{ profile.display_order }}{% endif %}"></div>
+<label style="display:flex;gap:8px;margin:16px 0"><input type="checkbox" name="is_active" value="1" {% if request.method == 'POST' %}{% if request.POST.is_active == '1' %}checked{% endif %}{% elif profile.is_active %}checked{% endif %}>Visible on public page</label>
+<button class="primary-button" type="submit">Save Changes</button>
+</form>
+</section>
+
+<aside class="people-edit-panel people-preview">
+<h2>Live Preview</h2>
+<img id="preview-img" src="{{ profile.image.url }}" alt="{{ profile.name }}">
+<h3 id="preview-name">{{ profile.name }}</h3>
+<p id="preview-role">{{ profile.role_title }}</p>
+<p id="preview-position">{{ profile.school_position }}</p>
+<p id="preview-dept">{{ profile.institute_department }}</p>
+<p id="preview-courses">{{ profile.courses_handled }}</p>
+<p id="preview-ach">{{ profile.achievements }}</p>
+</aside>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded",function(){
+function initializePeopleCharacterCounters() {
+    document.querySelectorAll(
+        "[data-people-counter]"
+    ).forEach(function (field) {
+        const counter =
+            document.getElementById(
+                field.getAttribute(
+                    "data-people-counter"
+                )
+            );
+
+        if (!counter) {
+            return;
+        }
+
+        const maximum =
+            Number(
+                field.getAttribute(
+                    "maxlength"
+                )
+            ) || 0;
+
+        function updateCounter() {
+            const current =
+                field.value.length;
+
+            counter.textContent =
+                current + "/" + maximum;
+
+            counter.classList.toggle(
+                "is-near-limit",
+                maximum > 0
+                && current >= maximum * 0.9
+                && current < maximum
+            );
+
+            counter.classList.toggle(
+                "is-at-limit",
+                maximum > 0
+                && current >= maximum
+            );
+        }
+
+        field.addEventListener(
+            "input",
+            updateCounter
+        );
+
+        updateCounter();
+    });
+}
+initializePeopleCharacterCounters();
+[["pn","preview-name"],["pr","preview-role"],["pp","preview-position"],["pd","preview-dept"],["pc","preview-courses"],["pa","preview-ach"]].forEach(function(x){
+const a=document.getElementById(x[0]),b=document.getElementById(x[1]);if(a&&b)a.addEventListener("input",function(){b.textContent=a.value;});
+});
+const input=document.getElementById("pi"),img=document.getElementById("preview-img");
+if(input&&img)input.addEventListener("change",function(){const f=input.files&&input.files[0];if(!f)return;const r=new FileReader();r.onload=function(){img.src=r.result;};r.readAsDataURL(f);});
+});
+</script>
+{% include "publications/_preserve_post_form.html" %}
+
+{% endblock %}

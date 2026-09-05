@@ -16,6 +16,45 @@ urlpatterns = [
     ),
 
 
+
+
+    # ======================================================
+    # PEOPLE & TEAMS
+    # ======================================================
+
+    path(
+        "people/",
+        views.people_and_teams,
+        name="people_and_teams",
+    ),
+
+    path(
+        "api/people/",
+        views.people_and_teams_api,
+        name="people_and_teams_api",
+    ),
+
+    # ======================================================
+    # ABOUT US
+    # ======================================================
+
+    path(
+        "about-us/",
+        views.about_us,
+        name="about_us",
+    ),
+
+
+    # ======================================================
+    # ARTICLE CATEGORIES
+    # ======================================================
+
+    path(
+        "category/<slug:category_slug>/",
+        views.category_articles,
+        name="category_articles",
+    ),
+
     # ======================================================
     # PUBLIC ARTICLES
     # ======================================================
@@ -45,6 +84,24 @@ urlpatterns = [
     ),
 
 
+
+
+
+    # ======================================================
+    # SCHOOL UPDATES
+    # ======================================================
+
+    path(
+        "school-updates/",
+        views.school_updates,
+        name="school_updates",
+    ),
+
+    path(
+        "school-updates/<slug:slug>/",
+        views.school_advertisement_detail,
+        name="school_advertisement_detail",
+    ),
 
     # ======================================================
     # DIGITAL PUBLICATIONS

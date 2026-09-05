@@ -5391,3 +5391,237 @@ body.saved-article-preview-open {
 
 }
 
+
+/* ==========================================================
+   GLOBAL ACTION CONFIRMATION DIALOG
+   ========================================================== */
+
+body.equalizer-confirm-open {
+    overflow: hidden;
+}
+
+.equalizer-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 12000;
+
+    display: grid;
+    place-items: center;
+
+    padding: 22px;
+
+    visibility: hidden;
+    opacity: 0;
+
+    background: rgba(10, 25, 19, 0.48);
+
+    backdrop-filter: blur(5px);
+
+    transition:
+        opacity 0.18s ease,
+        visibility 0.18s ease;
+}
+
+.equalizer-confirm-overlay.is-open {
+    visibility: visible;
+    opacity: 1;
+}
+
+.equalizer-confirm-dialog {
+    display: grid;
+    grid-template-columns: 54px minmax(0, 1fr);
+    gap: 16px 18px;
+
+    width: min(520px, 100%);
+
+    padding: 24px;
+
+    border: 1px solid var(--eq-border);
+    border-radius: 16px;
+
+    background: var(--eq-white);
+
+    box-shadow:
+        0 24px 70px rgba(10, 30, 22, 0.26);
+
+    transform:
+        translateY(10px)
+        scale(0.985);
+
+    transition:
+        transform 0.18s ease;
+}
+
+.equalizer-confirm-overlay.is-open
+.equalizer-confirm-dialog {
+    transform:
+        translateY(0)
+        scale(1);
+}
+
+.equalizer-confirm-icon {
+    display: grid;
+    place-items: center;
+
+    width: 54px;
+    height: 54px;
+
+    border: 1px solid #cfdfd6;
+    border-radius: 14px;
+
+    background: #edf5f0;
+    color: var(--eq-green-dark);
+
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 28px;
+    font-weight: 800;
+}
+
+.equalizer-confirm-copy {
+    min-width: 0;
+}
+
+.equalizer-confirm-kicker {
+    margin: 0 0 3px;
+
+    color: var(--eq-gold);
+
+    font-size: 11px;
+    font-weight: 800;
+
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+.equalizer-confirm-copy h2 {
+    margin: 0;
+
+    color: var(--eq-green-deep);
+
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 25px;
+    line-height: 1.15;
+}
+
+.equalizer-confirm-copy > p:last-child {
+    margin: 9px 0 0;
+
+    color: #526159;
+
+    font-size: 14px;
+    line-height: 1.6;
+
+    overflow-wrap: anywhere;
+}
+
+.equalizer-confirm-actions {
+    grid-column: 1 / -1;
+
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+
+    gap: 9px;
+
+    padding-top: 4px;
+}
+
+.equalizer-confirm-actions button {
+    min-width: 104px;
+}
+
+.equalizer-confirm-proceed {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 40px;
+
+    padding: 9px 16px;
+
+    border: 1px solid var(--eq-green-dark);
+    border-radius: 7px;
+
+    background: var(--eq-green-dark);
+    color: var(--eq-white);
+
+    font: inherit;
+    font-size: 14px;
+    font-weight: 800;
+
+    cursor: pointer;
+}
+
+.equalizer-confirm-proceed:hover,
+.equalizer-confirm-proceed:focus-visible {
+    background: var(--eq-green-deep);
+    color: var(--eq-white);
+}
+
+.equalizer-confirm-overlay.is-dangerous
+.equalizer-confirm-icon {
+    border-color: #e5c6c6;
+
+    background: #fff2f2;
+    color: var(--eq-danger);
+}
+
+.equalizer-confirm-overlay.is-dangerous
+.equalizer-confirm-proceed {
+    border-color: var(--eq-danger);
+
+    background: var(--eq-danger);
+}
+
+.equalizer-confirm-overlay.is-dangerous
+.equalizer-confirm-proceed:hover,
+.equalizer-confirm-overlay.is-dangerous
+.equalizer-confirm-proceed:focus-visible {
+    border-color: var(--eq-danger-dark);
+
+    background: var(--eq-danger-dark);
+}
+
+@media (max-width: 560px) {
+    .equalizer-confirm-overlay {
+        padding: 14px;
+    }
+
+    .equalizer-confirm-dialog {
+        grid-template-columns: 44px minmax(0, 1fr);
+
+        padding: 19px;
+
+        border-radius: 13px;
+    }
+
+    .equalizer-confirm-icon {
+        width: 44px;
+        height: 44px;
+
+        border-radius: 11px;
+
+        font-size: 23px;
+    }
+
+    .equalizer-confirm-copy h2 {
+        font-size: 22px;
+    }
+
+    .equalizer-confirm-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .equalizer-confirm-actions button {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .equalizer-confirm-overlay,
+    .equalizer-confirm-dialog {
+        transition: none;
+    }
+}

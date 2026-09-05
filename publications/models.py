@@ -1557,3 +1557,234 @@ class DigitalPublication(models.Model):
 
     def __str__(self):
         return self.title
+
+
+# ==========================================================
+# SCHOOL ADVERTISEMENTS
+# EIC-MANAGED PUBLIC CONTENT
+# ==========================================================
+
+
+class SchoolAdvertisement(models.Model):
+    title = models.CharField(
+        max_length=180,
+    )
+
+    slug = models.SlugField(
+        max_length=220,
+        unique=True,
+        blank=True,
+    )
+
+    summary = models.CharField(
+        max_length=320,
+    )
+
+    details = models.TextField()
+
+    image = models.ImageField(
+        upload_to="school_advertisements/",
+        validators=[
+            validate_article_image,
+        ],
+    )
+
+    is_active = models.BooleanField(
+        default=False,
+    )
+
+    display_order = models.PositiveIntegerField(
+        default=0,
+    )
+
+    created_by = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.PROTECT,
+        related_name="school_advertisements_created",
+    )
+
+    updated_by = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.PROTECT,
+        related_name="school_advertisements_updated",
+        blank=True,
+        null=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = [
+            "display_order",
+            "-updated_at",
+            "-created_at",
+        ]
+
+    def generate_unique_slug(self):
+        base_slug = (
+            slugify(self.title)
+            or "school-update"
+        )
+
+        slug = base_slug
+        counter = 1
+
+        queryset = (
+            SchoolAdvertisement.objects
+            .all()
+        )
+
+        if self.pk:
+            queryset = queryset.exclude(
+                pk=self.pk
+            )
+
+        while queryset.filter(
+            slug=slug
+        ).exists():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+
+        return slug
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = self.generate_unique_slug()
+
+        super().save(
+            *args,
+            **kwargs,
+        )
+
+    def __str__(self):
+        return self.title
+
+# ==========================================================
+# ABOUT US PAGE
+# EIC-MANAGED PUBLIC CONTENT
+# ==========================================================
+
+
+class AboutUsPage(models.Model):
+    title = models.CharField(
+        max_length=180,
+        default="About The Equalizer",
+    )
+
+    subtitle = models.CharField(
+        max_length=320,
+        blank=True,
+    )
+
+    overview = models.TextField()
+
+    history = models.TextField()
+
+    mission = models.TextField(
+        blank=True,
+    )
+
+    vision = models.TextField(
+        blank=True,
+    )
+
+    hero_image = models.ImageField(
+        upload_to="about_us/",
+        validators=[
+            validate_article_image,
+        ],
+        blank=True,
+        null=True,
+    )
+
+    is_published = models.BooleanField(
+        default=False,
+    )
+
+    updated_by = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.PROTECT,
+        related_name="about_us_updates",
+        blank=True,
+        null=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        verbose_name = "About Us Page"
+        verbose_name_plural = "About Us Page"
+
+    def save(self, *args, **kwargs):
+        if not self.pk and AboutUsPage.objects.exists():
+            existing = AboutUsPage.objects.first()
+
+            self.pk = existing.pk
+
+        super().save(
+            *args,
+            **kwargs,
+        )
+
+    def __str__(self):
+        return self.title
+
+
+
+# ==========================================================
+# PEOPLE & TEAMS
+# ==========================================================
+
+class PeopleProfile(models.Model):
+    class Section(models.TextChoices):
+        DEVELOPERS = "DEVELOPERS", "The Developers"
+        CAPSTONE_COMMITTEE = "CAPSTONE_COMMITTEE", "Capstone Committee"
+        ICS_FACULTY = "ICS_FACULTY", "ICS Faculty"
+        EQUALIZER_TEAM = "EQUALIZER_TEAM", "The Equalizer Team"
+
+    section = models.CharField(max_length=30, choices=Section.choices)
+    name = models.CharField(max_length=180)
+    image = models.ImageField(
+        upload_to="people_profiles/",
+        validators=[validate_article_image],
+    )
+    role_title = models.CharField(max_length=180, blank=True)
+    courses_handled = models.TextField(blank=True)
+    school_position = models.CharField(max_length=220, blank=True)
+    institute_department = models.CharField(max_length=220, blank=True)
+    achievements = models.TextField(blank=True)
+    additional_information = models.TextField(blank=True)
+    display_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.PROTECT,
+        related_name="people_profiles_created",
+    )
+    updated_by = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.PROTECT,
+        related_name="people_profiles_updated",
+        blank=True,
+        null=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["section", "display_order", "name"]
+
+    def __str__(self):
+        return f"{self.name} — {self.get_section_display()}"

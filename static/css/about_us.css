@@ -1,0 +1,160 @@
+/* ==========================================================
+   ABOUT US PAGE
+   Dedicated stylesheet so later global reader CSS updates
+   cannot accidentally remove the About Us layout again.
+   ========================================================== */
+
+.about-page {
+    width: min(1120px, 100%);
+    margin: 0 auto;
+    padding: 42px 0 64px;
+}
+
+.about-page-header {
+    max-width: 820px;
+    margin-bottom: 30px;
+}
+
+.about-page-header h1 {
+    margin: 5px 0 12px;
+    color: var(--reader-green-dark);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(36px, 5vw, 58px);
+    line-height: 1.06;
+}
+
+.about-page-subtitle {
+    margin: 0;
+    color: var(--reader-muted);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(18px, 2vw, 24px);
+    line-height: 1.55;
+}
+
+.about-hero-image {
+    display: block;
+    width: 100%;
+    max-height: 520px;
+    margin: 0 0 34px;
+    object-fit: cover;
+    border: 1px solid var(--reader-line);
+    border-radius: 14px;
+    background: var(--reader-soft);
+    box-shadow: 0 8px 26px rgba(16, 44, 35, 0.08);
+}
+
+.about-content-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+    gap: 34px;
+    align-items: start;
+}
+
+.about-main-column,
+.about-side-column {
+    min-width: 0;
+}
+
+.about-section {
+    margin-bottom: 34px;
+}
+
+.about-section h2 {
+    margin: 0 0 12px;
+    padding-bottom: 9px;
+    border-bottom: 2px solid var(--reader-green);
+    color: var(--reader-green-dark);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 28px;
+}
+
+.about-rich-copy {
+    color: var(--reader-ink);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 17px;
+    line-height: 1.8;
+}
+
+.about-rich-copy p {
+    margin: 0 0 1.15em;
+}
+
+.about-side-card {
+    margin-bottom: 18px;
+    padding: 22px;
+    border: 1px solid var(--reader-line);
+    border-top: 4px solid var(--reader-gold);
+    border-radius: 12px;
+    background: var(--reader-soft);
+}
+
+.about-side-card h2 {
+    margin: 0 0 10px;
+    color: var(--reader-green-dark);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 22px;
+}
+
+.about-side-card .about-rich-copy {
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+.about-unavailable {
+    max-width: 720px;
+    margin: 70px auto;
+    padding: 32px;
+    border: 1px solid var(--reader-line);
+    border-radius: 14px;
+    background: var(--reader-soft);
+    text-align: center;
+}
+
+.about-unavailable h1 {
+    margin: 0 0 10px;
+    color: var(--reader-green-dark);
+    font-family: Georgia, "Times New Roman", serif;
+}
+
+@media (max-width: 820px) {
+    .about-content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .about-page {
+        padding-top: 30px;
+    }
+
+    .about-hero-image {
+        max-height: 380px;
+    }
+}
+
+@media (max-width: 560px) {
+    .about-page {
+        padding:
+            24px
+            0
+            40px;
+    }
+
+    .about-page-header {
+        margin-bottom: 22px;
+    }
+
+    .about-content-grid {
+        gap: 12px;
+    }
+
+    .about-section h2 {
+        font-size: 25px;
+    }
+
+    .about-rich-copy {
+        font-size: 16px;
+    }
+
+    .about-side-card {
+        padding: 18px;
+    }
+}

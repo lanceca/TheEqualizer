@@ -1,0 +1,72 @@
+{% extends "public_base.html" %}
+
+{% block title %}
+School Updates | The Equalizer
+{% endblock %}
+
+{% block public_content %}
+
+<main class="school-updates-page">
+
+    <header class="school-updates-intro">
+        <p class="reader-section-kicker">
+            Campus Notices
+        </p>
+        <h1>
+            School Updates
+        </h1>
+        <p>
+            School-related announcements, programs, opportunities, events,
+            and other public information curated by The Equalizer.
+        </p>
+    </header>
+
+    {% if advertisements %}
+
+        <div class="school-updates-grid">
+
+            {% for advertisement in advertisements %}
+
+                <a
+                    href="{% url 'school_advertisement_detail' advertisement.slug %}"
+                    class="school-update-list-card"
+                >
+                    <img
+                        src="{{ advertisement.image.url }}"
+                        alt="{{ advertisement.title }}"
+                    >
+
+                    <div class="school-update-list-copy">
+                        <p class="reader-section-kicker">
+                            School Update
+                        </p>
+                        <h2>
+                            {{ advertisement.title }}
+                        </h2>
+                        <p>
+                            {{ advertisement.summary }}
+                        </p>
+                    </div>
+                </a>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <div class="reader-empty-state">
+            <h2>
+                No school updates are currently posted
+            </h2>
+            <p>
+                New school-related announcements will appear here when they
+                are published by The Equalizer.
+            </p>
+        </div>
+
+    {% endif %}
+
+</main>
+
+{% endblock %}

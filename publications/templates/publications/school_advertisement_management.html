@@ -1,0 +1,674 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<style>
+    .ad-management-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 22px;
+        margin-bottom: 24px;
+    }
+
+    .ad-management-header h1 {
+        margin-bottom: 8px;
+    }
+
+    .ad-management-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+        gap: 24px;
+        align-items: start;
+    }
+
+    .ad-management-card {
+        padding: 22px;
+        border: 1px solid var(--eq-border);
+        border-radius: var(--eq-radius);
+        background: var(--eq-white);
+        box-shadow: var(--eq-shadow);
+    }
+
+    .ad-management-card h2 {
+        margin: 0 0 8px;
+        padding: 0 0 10px;
+        border-bottom: 2px solid var(--eq-green-soft);
+        font-size: 20px;
+    }
+
+    .ad-management-card > p {
+        margin-top: 0;
+        color: var(--eq-muted);
+    }
+
+    .ad-form-field {
+        margin-bottom: 16px;
+    }
+
+    .ad-form-field label {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--eq-green-dark);
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .ad-form-field input[type="text"],
+    .ad-form-field input[type="number"],
+    .ad-form-field input[type="file"],
+    .ad-form-field textarea {
+        width: 100%;
+        padding: 11px 12px;
+        border: 1px solid var(--eq-border);
+        border-radius: 7px;
+        background: var(--eq-white);
+        color: var(--eq-charcoal);
+        font: inherit;
+    }
+
+    .ad-form-field textarea {
+        resize: vertical;
+        min-height: 110px;
+    }
+
+    .ad-form-help {
+        margin-top: 6px;
+        color: var(--eq-muted);
+        font-size: 12px;
+    }
+
+    .ad-checkbox-row {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 12px;
+        margin-bottom: 16px;
+        border: 1px solid var(--eq-border);
+        border-radius: 8px;
+        background: #f7faf8;
+    }
+
+    .ad-checkbox-row label {
+        font-weight: 700;
+    }
+
+    .ad-preview-shell {
+        position: sticky;
+        top: 16px;
+    }
+
+    .ad-preview-card {
+        overflow: hidden;
+        border: 1px solid var(--eq-border);
+        border-radius: 12px;
+        background: var(--eq-white);
+        box-shadow: var(--eq-shadow);
+    }
+
+    .ad-preview-label {
+        display: block;
+        padding: 8px 12px;
+        background: var(--eq-green-dark);
+        color: var(--eq-white);
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+    .ad-preview-media {
+        display: grid;
+        place-items: center;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+        background: #eef3f0;
+        color: var(--eq-muted);
+        font-size: 13px;
+    }
+
+    .ad-preview-media img {
+        display: none;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .ad-preview-copy {
+        padding: 16px;
+    }
+
+    .ad-preview-copy h3 {
+        margin: 0 0 8px;
+        color: var(--eq-green-dark);
+        font-size: 20px;
+    }
+
+    .ad-preview-copy p {
+        margin: 0 0 10px;
+        color: var(--eq-muted);
+        line-height: 1.55;
+    }
+
+    .ad-preview-copy span {
+        color: var(--eq-green-dark);
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .ad-list-section {
+        margin-top: 28px;
+    }
+
+    .ad-list-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+        margin-top: 16px;
+    }
+
+    .ad-list-card {
+        overflow: hidden;
+        border: 1px solid var(--eq-border);
+        border-radius: 10px;
+        background: var(--eq-white);
+        box-shadow: var(--eq-shadow);
+    }
+
+    .ad-list-card img {
+        width: 100%;
+        aspect-ratio: 16 / 8;
+        object-fit: cover;
+    }
+
+    .ad-list-body {
+        padding: 16px;
+    }
+
+    .ad-list-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .ad-status-badge,
+    .ad-order-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .ad-status-badge.active {
+        background: #e9f5ec;
+        color: var(--eq-green-dark);
+    }
+
+    .ad-status-badge.hidden {
+        background: #f0f1f0;
+        color: var(--eq-muted);
+    }
+
+    .ad-order-badge {
+        background: #fff8df;
+        color: #80630b;
+    }
+
+    .ad-list-body h3 {
+        margin: 0 0 8px;
+        font-size: 19px;
+    }
+
+    .ad-list-body p {
+        margin: 0;
+        color: var(--eq-muted);
+        line-height: 1.55;
+    }
+
+    .ad-list-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+    }
+
+    .ad-list-actions form {
+        margin: 0;
+    }
+
+    @media (max-width: 980px) {
+        .ad-management-layout,
+        .ad-list-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ad-preview-shell {
+            position: static;
+        }
+    }
+</style>
+
+<div class="ad-management-header">
+
+    <div>
+        <p class="workflow-eyebrow">
+            Public Content
+        </p>
+
+        <h1>
+            Homepage Advertisements
+        </h1>
+
+        <p class="section-description">
+            Create school-related promotional cards for the public homepage.
+            Active advertisements appear in the homepage side panel and open
+            a dedicated School Updates detail page when selected.
+        </p>
+    </div>
+
+    <a
+        href="{% url 'school_updates' %}"
+        class="secondary-button"
+        target="_blank"
+        rel="noopener"
+    >
+        Open Public School Updates
+    </a>
+
+</div>
+
+
+<div class="ad-management-layout">
+
+    <section class="ad-management-card">
+
+        <h2>
+            Create Advertisement
+        </h2>
+
+        <p>
+            Fill in the public card information and use the preview to check
+            the visual presentation before making it active.
+        </p>
+
+        <form
+            method="POST"
+            action="{% url 'create_school_advertisement' %}"
+            enctype="multipart/form-data"
+        >
+
+            {% csrf_token %}
+
+            <div class="ad-form-field">
+                <label for="advertisement-title">
+                    Title
+                </label>
+                <input
+                    type="text"
+                    id="advertisement-title"
+                    name="title"
+                    maxlength="180"
+                    value="{% if request.method == 'POST' %}{{ request.POST.title }}{% endif %}"
+                    required
+                >
+            </div>
+
+            <div class="ad-form-field">
+                <label for="advertisement-summary">
+                    Short Summary
+                </label>
+                <textarea
+                    id="advertisement-summary"
+                    name="summary"
+                    maxlength="320"
+                    rows="4"
+                    required
+                >{% if request.method == 'POST' %}{{ request.POST.summary }}{% endif %}</textarea>
+                <p class="ad-form-help">
+                    This text appears on the homepage advertisement card.
+                </p>
+            </div>
+
+            <div class="ad-form-field">
+                <label for="advertisement-details">
+                    Full Details
+                </label>
+                <textarea
+                    id="advertisement-details"
+                    name="details"
+                    maxlength="3000"
+                    rows="10"
+                    required
+                >{% if request.method == 'POST' %}{{ request.POST.details }}{% endif %}</textarea>
+                <p class="ad-form-help">
+                    Readers will see this on the School Updates detail page.
+                </p>
+            </div>
+
+            <div class="ad-form-field">
+                <label for="advertisement-image">
+                    Advertisement Image
+                </label>
+                <input
+                    type="file"
+                    id="advertisement-image"
+                    name="image"
+                    accept="image/jpeg,image/png,image/webp"
+                    required
+                >
+            </div>
+
+            <div class="ad-form-field">
+                <label for="advertisement-order">
+                    Display Order
+                </label>
+                <input
+                    type="number"
+                    id="advertisement-order"
+                    name="display_order"
+                    min="0"
+                    max="9999"
+                    value="{% if request.method == 'POST' %}{{ request.POST.display_order|default:'0' }}{% else %}0{% endif %}"
+                    required
+                >
+                <p class="ad-form-help">
+                    Lower numbers are shown first on the homepage.
+                </p>
+            </div>
+
+            <div class="ad-checkbox-row">
+                <input
+                    type="checkbox"
+                    id="advertisement-active"
+                    name="is_active"
+                    value="1"
+                 {% if request.method == 'POST' and request.POST.is_active == '1' %}checked{% endif %}>
+                <div>
+                    <label for="advertisement-active">
+                        Publish immediately
+                    </label>
+                    <div class="ad-form-help">
+                        Leave unchecked to save it as hidden while you review it.
+                    </div>
+                </div>
+            </div>
+
+            <button
+                type="submit"
+                class="primary-button"
+                data-confirm-title="Create Homepage Advertisement"
+                data-confirm="Create this school advertisement with the current information?"
+            >
+                Create Advertisement
+            </button>
+
+        </form>
+
+    </section>
+
+
+    <aside class="ad-management-card ad-preview-shell">
+
+        <h2>
+            Homepage Preview
+        </h2>
+
+        <p>
+            Preview of the advertisement card used in the homepage side panel.
+        </p>
+
+        <div class="ad-preview-card">
+
+            <span class="ad-preview-label">
+                School Update
+            </span>
+
+            <div class="ad-preview-media">
+                <span id="ad-preview-placeholder">
+                    Upload an image to preview it here.
+                </span>
+                <img
+                    id="ad-preview-image"
+                    src=""
+                    alt="Advertisement preview"
+                >
+            </div>
+
+            <div class="ad-preview-copy">
+                <h3 id="ad-preview-title">
+                    Advertisement title
+                </h3>
+                <p id="ad-preview-summary">
+                    Your short summary will appear here.
+                </p>
+                <span>
+                    View full details
+                </span>
+            </div>
+
+        </div>
+
+    </aside>
+
+</div>
+
+
+<section class="ad-list-section">
+
+    <div class="account-workspace-header">
+        <div>
+            <p class="workflow-eyebrow">
+                Existing Content
+            </p>
+            <h2>
+                School Advertisements
+            </h2>
+            <p class="section-description">
+                Active cards are publicly visible. Hidden cards remain saved
+                so the EIC can edit and publish them later.
+            </p>
+        </div>
+    </div>
+
+    {% if advertisements %}
+
+        <div class="ad-list-grid">
+
+            {% for advertisement in advertisements %}
+
+                <article class="ad-list-card">
+
+                    <img
+                        src="{{ advertisement.image.url }}"
+                        alt="{{ advertisement.title }}"
+                    >
+
+                    <div class="ad-list-body">
+
+                        <div class="ad-list-meta">
+                            <span class="ad-status-badge {% if advertisement.is_active %}active{% else %}hidden{% endif %}">
+                                {% if advertisement.is_active %}
+                                    Active
+                                {% else %}
+                                    Hidden
+                                {% endif %}
+                            </span>
+                            <span class="ad-order-badge">
+                                Order {{ advertisement.display_order }}
+                            </span>
+                        </div>
+
+                        <h3>
+                            {{ advertisement.title }}
+                        </h3>
+
+                        <p>
+                            {{ advertisement.summary }}
+                        </p>
+
+                        <div class="ad-list-actions">
+
+                            <a
+                                href="{% url 'edit_school_advertisement' advertisement.id %}"
+                                class="secondary-button"
+                            >
+                                Edit / Preview
+                            </a>
+
+                            {% if advertisement.is_active %}
+
+                                <a
+                                    href="{% url 'school_advertisement_detail' advertisement.slug %}"
+                                    class="secondary-button"
+                                    target="_blank"
+                                    rel="noopener"
+                                >
+                                    Public Page
+                                </a>
+
+                                <form
+                                    method="POST"
+                                    action="{% url 'set_school_advertisement_status' advertisement.id %}"
+                                >
+                                    {% csrf_token %}
+                                    <input
+                                        type="hidden"
+                                        name="is_active"
+                                        value="0"
+                                    >
+                                    <button
+                                        type="submit"
+                                        class="secondary-button"
+                                        data-confirm-title="Hide Advertisement"
+                                        data-confirm="Hide this advertisement from the public homepage and School Updates page?"
+                                    >
+                                        Hide
+                                    </button>
+                                </form>
+
+                            {% else %}
+
+                                <form
+                                    method="POST"
+                                    action="{% url 'set_school_advertisement_status' advertisement.id %}"
+                                >
+                                    {% csrf_token %}
+                                    <input
+                                        type="hidden"
+                                        name="is_active"
+                                        value="1"
+                                    >
+                                    <button
+                                        type="submit"
+                                        class="approve-button"
+                                        data-confirm-title="Publish Advertisement"
+                                        data-confirm="Publish this advertisement on the public homepage and School Updates page?"
+                                    >
+                                        Publish
+                                    </button>
+                                </form>
+
+                            {% endif %}
+
+                            <form
+                                method="POST"
+                                action="{% url 'delete_school_advertisement' advertisement.id %}"
+                            >
+                                {% csrf_token %}
+                                <button
+                                    type="submit"
+                                    class="danger-button"
+                                    data-confirm-title="Delete Advertisement"
+                                    data-confirm="Permanently delete this advertisement and its uploaded image? This cannot be undone."
+                                >
+                                    Delete
+                                </button>
+                            </form>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <div class="content-panel">
+            <p class="empty-message">
+                No school advertisements have been created yet.
+            </p>
+        </div>
+
+    {% endif %}
+
+</section>
+
+
+<script>
+(function () {
+    const titleInput = document.getElementById("advertisement-title");
+    const summaryInput = document.getElementById("advertisement-summary");
+    const imageInput = document.getElementById("advertisement-image");
+
+    const previewTitle = document.getElementById("ad-preview-title");
+    const previewSummary = document.getElementById("ad-preview-summary");
+    const previewImage = document.getElementById("ad-preview-image");
+    const previewPlaceholder = document.getElementById("ad-preview-placeholder");
+
+    let previewObjectUrl = null;
+
+    function updateTextPreview() {
+        previewTitle.textContent = (
+            titleInput.value.trim()
+            || "Advertisement title"
+        );
+
+        previewSummary.textContent = (
+            summaryInput.value.trim()
+            || "Your short summary will appear here."
+        );
+    }
+
+    function updateImagePreview() {
+        const file = imageInput.files && imageInput.files[0];
+
+        if (previewObjectUrl) {
+            URL.revokeObjectURL(previewObjectUrl);
+            previewObjectUrl = null;
+        }
+
+        if (!file) {
+            previewImage.removeAttribute("src");
+            previewImage.style.display = "none";
+            previewPlaceholder.style.display = "block";
+            return;
+        }
+
+        previewObjectUrl = URL.createObjectURL(file);
+        previewImage.src = previewObjectUrl;
+        previewImage.style.display = "block";
+        previewPlaceholder.style.display = "none";
+    }
+
+    titleInput.addEventListener("input", updateTextPreview);
+    summaryInput.addEventListener("input", updateTextPreview);
+    imageInput.addEventListener("change", updateImagePreview);
+
+    window.addEventListener("beforeunload", function () {
+        if (previewObjectUrl) {
+            URL.revokeObjectURL(previewObjectUrl);
+        }
+    });
+})();
+</script>
+
+{% include "publications/_preserve_post_form.html" %}
+
+{% endblock %}

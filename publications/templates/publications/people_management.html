@@ -1,0 +1,29 @@
+{% extends "staff_base.html" %}
+{% block staff_content %}
+<style>
+.people-mgmt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
+.people-mgmt-tile{display:block;padding:22px;border:1px solid var(--eq-border);border-top:4px solid var(--eq-gold);border-radius:12px;background:#fff;text-decoration:none;box-shadow:var(--eq-shadow)}
+.people-mgmt-tile h2{margin:0 0 10px;padding:0;border:0}.people-mgmt-tile p{color:var(--eq-muted)}
+.people-mgmt-counts{display:flex;gap:8px;margin-top:16px}.people-mgmt-counts span{padding:5px 9px;border-radius:999px;background:#eef4f0;font-size:12px;font-weight:700}
+</style>
+<div class="dashboard-header">
+    <h1>People &amp; Teams</h1>
+    <p class="dashboard-subtitle">Manage the public profile groups available to your role.</p>
+</div>
+<div class="people-mgmt-grid">
+{% for section in sections %}
+<a class="people-mgmt-tile" href="{% url 'people_group_management' section.slug %}">
+    <h2>{{ section.title }}</h2>
+    {% if request.user.role == "ADMIN" %}
+        <p>Manage public academic/project profiles in this group.</p>
+    {% else %}
+        <p>Manage public Equalizer Team profiles.</p>
+    {% endif %}
+    <div class="people-mgmt-counts">
+        <span>{{ section.count }} profile{{ section.count|pluralize }}</span>
+        <span>{{ section.active_count }} visible</span>
+    </div>
+</a>
+{% endfor %}
+</div>
+{% endblock %}

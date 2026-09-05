@@ -53,7 +53,8 @@
             
                 maxlength="255"
                 data-char-limit="255"
-                data-char-counter-field="title">
+                data-char-counter-field="title"
+                value="{% if request.method == 'POST' %}{{ request.POST.title }}{% endif %}">
 
         </div>
 
@@ -71,7 +72,8 @@
                 maxlength="300"
             
                 data-char-limit="300"
-                data-char-counter-field="subtitle">
+                data-char-counter-field="subtitle"
+                value="{% if request.method == 'POST' %}{{ request.POST.subtitle }}{% endif %}">
 
             <p class="form-help">
                 Optional secondary headline displayed below the main title.
@@ -93,7 +95,7 @@
             
                 maxlength="600"
                 data-char-limit="600"
-                data-char-counter-field="excerpt"></textarea>
+                data-char-counter-field="excerpt">{% if request.method == 'POST' %}{{ request.POST.excerpt }}{% endif %}</textarea>
 
             <p class="form-help">
                 Optional short summary for article previews and search results.
@@ -369,7 +371,7 @@
             
                 maxlength="30000"
                 data-char-limit="30000"
-                data-char-counter-field="content"></textarea>
+                data-char-counter-field="content">{% if request.method == 'POST' %}{{ request.POST.content }}{% endif %}</textarea>
 
         </div>
 
@@ -407,7 +409,8 @@
                 maxlength="255"
             
                 data-char-limit="255"
-                data-char-counter-field="featured_image_caption">
+                data-char-counter-field="featured_image_caption"
+                value="{% if request.method == 'POST' %}{{ request.POST.featured_image_caption }}{% endif %}">
 
             <p class="form-help">
                 Optional caption describing the featured image.
@@ -429,7 +432,8 @@
                 maxlength="255"
             
                 data-char-limit="255"
-                data-char-counter-field="featured_image_credit">
+                data-char-counter-field="featured_image_credit"
+                value="{% if request.method == 'POST' %}{{ request.POST.featured_image_credit }}{% endif %}">
 
             <p class="form-help">
                 Example: Photo by Juan Dela Cruz / The Equalizer.
@@ -602,17 +606,44 @@
 }
 
 .media-type-button {
-    border: 1px solid transparent;
+    border: 1px solid var(--eq-border);
     border-radius: 7px;
     padding: 9px 14px;
-    background: transparent;
+    background: #ffffff;
+    color: var(--eq-green-dark) !important;
     cursor: pointer;
     font-weight: 700;
+    transition:
+        background 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease,
+        box-shadow 0.18s ease;
 }
 
-.media-type-button.is-active {
-    border-color: var(--eq-border);
-    background: #ffffff;
+.media-type-button:hover {
+    border-color: var(--eq-green-dark);
+    background: #edf5f0;
+    color: var(--eq-green-deep) !important;
+}
+
+.media-type-button:focus-visible {
+    outline: none;
+    border-color: var(--eq-green-dark);
+    box-shadow: 0 0 0 3px rgba(24, 69, 54, 0.16);
+}
+
+.media-type-button.is-active,
+.media-type-button[aria-pressed="true"] {
+    border-color: var(--eq-green-dark);
+    background: var(--eq-green-dark);
+    color: #ffffff !important;
+}
+
+.media-type-button.is-active:hover,
+.media-type-button[aria-pressed="true"]:hover {
+    border-color: var(--eq-green-deep);
+    background: var(--eq-green-deep);
+    color: #ffffff !important;
 }
 
 .video-attachment-grid {
@@ -1004,5 +1035,7 @@ document.addEventListener(
     }
 );
 </script>
+
+{% include "publications/_preserve_post_form.html" %}
 
 {% endblock %}

@@ -9,37 +9,125 @@
     -->
     <link
         rel="stylesheet"
-        href="{% static 'css/style.css' %}?v=20260902-reader-home-2"
+        href="{% static 'css/style.css' %}?v=20260904-people-teams-1"
     >
 
     <div class="public-layout">
         
              
-        <nav class="public-navigation">
+        <nav class="public-navigation" aria-label="Primary publication navigation">
 
-            <a href="{% url 'home' %}">Home</a>
+            <div class="public-navigation-inner">
 
-            <a href="{% url 'digital_publications' %}">Digital Publications</a>
+                <div class="public-navigation-main">
 
-            <a href="#">News</a>
+                    <a href="{% url 'home' %}" class="public-nav-link">
+                        Home
+                    </a>
 
-            <a href="#">Editorials</a>
+                    <a href="{% url 'digital_publications' %}" class="public-nav-link">
+                        Digital Publications
+                    </a>
 
-            <a href="#">Features</a>
+                    <a href="{% url 'school_updates' %}" class="public-nav-link">
+                        School Updates
+                    </a>
 
-            <a href="#">Cartoonings</a>
+                    <a href="{% url 'about_us' %}" class="public-nav-link">
+                        About Us
+                    </a>
 
-            <a href="#">Videos</a>
+                    <a href="{% url 'people_and_teams' %}" class="public-nav-link">
+                        People &amp; Teams
+                    </a>
 
-            <a href="#">Special Showcase</a>
+                    <div class="public-category-dropdown">
 
-            <a href="#">Sports</a>
+                        <button
+                            type="button"
+                            class="public-category-toggle"
+                            id="public-category-toggle"
+                            aria-expanded="false"
+                            aria-controls="public-category-menu"
+                        >
+                            <span>Article Categories</span>
+                            <span
+                                class="public-category-toggle-icon"
+                                aria-hidden="true"
+                            >
+                                ▾
+                            </span>
+                        </button>
 
-            <a href="#">Campus Life</a>
+                        <div
+                            class="public-category-menu"
+                            id="public-category-menu"
+                            role="menu"
+                            hidden
+                        >
 
-            <a href="#">Opinion</a>
+                            <a href="{% url 'category_articles' 'news' %}" role="menuitem">News</a>
+                            <a href="{% url 'category_articles' 'editorials' %}" role="menuitem">Editorials</a>
+                            <a href="{% url 'category_articles' 'features' %}" role="menuitem">Features</a>
+                            <a href="{% url 'category_articles' 'cartoonings' %}" role="menuitem">Cartoonings</a>
+                            <a href="{% url 'category_articles' 'videos' %}" role="menuitem">Videos</a>
+                            <a href="{% url 'category_articles' 'special-showcase' %}" role="menuitem">Special Showcase</a>
+                            <a href="{% url 'category_articles' 'sports' %}" role="menuitem">Sports</a>
+                            <a href="{% url 'category_articles' 'campus-life' %}" role="menuitem">Campus Life</a>
+                            <a href="{% url 'category_articles' 'opinion' %}" role="menuitem">Opinion</a>
 
-            <a href="#">Search</a>
+                        </div>
+
+                    </div>
+
+                    {% if category %}
+                        <form
+                            method="GET"
+                            action="{% url 'category_articles' category.slug %}"
+                            class="public-category-search"
+                            id="public-category-search"
+                            role="search"
+                        >
+                            <div
+                                class="public-category-search-field"
+                                id="public-category-search-field"
+                                {% if not category_search_query %}hidden{% endif %}
+                            >
+                                <label
+                                    for="public-category-search-input"
+                                    class="sr-only"
+                                >
+                                    Search {{ category.name }} articles
+                                </label>
+
+                                <input
+                                    type="search"
+                                    name="q"
+                                    id="public-category-search-input"
+                                    value="{{ category_search_query|default:'' }}"
+                                    placeholder="Search {{ category.name }}"
+                                    maxlength="100"
+                                    autocomplete="off"
+                                >
+                            </div>
+
+                            <button
+                                type="button"
+                                class="public-nav-search"
+                                id="public-category-search-toggle"
+                                aria-label="Search {{ category.name }} articles"
+                                aria-expanded="{% if category_search_query %}true{% else %}false{% endif %}"
+                                aria-controls="public-category-search-field"
+                            >
+                                <span aria-hidden="true">⌕</span>
+                                <span>Search</span>
+                            </button>
+                        </form>
+                    {% endif %}
+
+                </div>
+
+            </div>
 
         </nav>
         
@@ -50,5 +138,358 @@
         </section>
 
     </div>
+
+
+
+<style>
+.public-category-search {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    margin: 0;
+}
+
+.public-category-search-field {
+    width: min(260px, 30vw);
+}
+
+.public-category-search-field[hidden] {
+    display: none;
+}
+
+.public-category-search-field input {
+    width: 100%;
+    min-height: 42px;
+    padding: 9px 13px;
+    border: 1px solid #b9ccc3;
+    border-radius: 999px;
+    outline: none;
+    background: #ffffff;
+    color: #173f32;
+    font: inherit;
+    font-size: 13px;
+}
+
+.public-category-search-field input:focus {
+    border-color: #184536;
+    box-shadow: 0 0 0 3px rgba(24, 69, 54, 0.12);
+}
+
+.public-category-search .public-nav-search {
+    flex: 0 0 auto;
+    border: 0;
+    cursor: pointer;
+}
+
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+@media (max-width: 760px) {
+    .public-category-search {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .public-category-search-field {
+        flex: 1 1 auto;
+        width: auto;
+    }
+}
+</style>
+
+<script>
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const toggle = document.getElementById(
+            "public-category-toggle"
+        );
+
+        const menu = document.getElementById(
+            "public-category-menu"
+        );
+
+        if (!toggle || !menu) {
+            return;
+        }
+
+        const MENU_GAP = 5;
+        const VIEWPORT_PADDING = 12;
+
+        function positionCategoryMenu() {
+
+            if (menu.hidden) {
+                return;
+            }
+
+            const toggleRect = (
+                toggle.getBoundingClientRect()
+            );
+
+            const menuRect = (
+                menu.getBoundingClientRect()
+            );
+
+            const viewportWidth = (
+                document.documentElement.clientWidth
+            );
+
+            const viewportHeight = (
+                document.documentElement.clientHeight
+            );
+
+            const roomBelow = (
+                viewportHeight
+                - toggleRect.bottom
+                - VIEWPORT_PADDING
+            );
+
+            const roomAbove = (
+                toggleRect.top
+                - VIEWPORT_PADDING
+            );
+
+            const shouldOpenUpward = (
+                roomBelow < menuRect.height
+                && roomAbove > roomBelow
+            );
+
+            let top;
+
+            if (shouldOpenUpward) {
+                top = (
+                    toggleRect.top
+                    - menuRect.height
+                    - MENU_GAP
+                );
+            } else {
+                top = (
+                    toggleRect.bottom
+                    + MENU_GAP
+                );
+            }
+
+            top = Math.max(
+                VIEWPORT_PADDING,
+                Math.min(
+                    top,
+                    viewportHeight
+                    - menuRect.height
+                    - VIEWPORT_PADDING
+                )
+            );
+
+            let left = (
+                toggleRect.left
+                + (
+                    toggleRect.width
+                    - menuRect.width
+                ) / 2
+            );
+
+            left = Math.max(
+                VIEWPORT_PADDING,
+                Math.min(
+                    left,
+                    viewportWidth
+                    - menuRect.width
+                    - VIEWPORT_PADDING
+                )
+            );
+
+            menu.style.top = `${top}px`;
+            menu.style.left = `${left}px`;
+        }
+
+        function closeCategoryMenu() {
+
+            menu.hidden = true;
+
+            menu.style.removeProperty("top");
+            menu.style.removeProperty("left");
+
+            toggle.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+        }
+
+        function openCategoryMenu() {
+
+            menu.hidden = false;
+
+            toggle.setAttribute(
+                "aria-expanded",
+                "true"
+            );
+
+            requestAnimationFrame(
+                positionCategoryMenu
+            );
+        }
+
+        toggle.addEventListener(
+            "click",
+            function (event) {
+
+                event.stopPropagation();
+
+                if (menu.hidden) {
+                    openCategoryMenu();
+                } else {
+                    closeCategoryMenu();
+                }
+            }
+        );
+
+        menu.addEventListener(
+            "click",
+            function (event) {
+                event.stopPropagation();
+            }
+        );
+
+        document.addEventListener(
+            "click",
+            function (event) {
+
+                const dropdown = toggle.closest(
+                    ".public-category-dropdown"
+                );
+
+                if (
+                    dropdown
+                    && !dropdown.contains(event.target)
+                    && !menu.contains(event.target)
+                ) {
+                    closeCategoryMenu();
+                }
+            }
+        );
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (
+                    event.key === "Escape"
+                    && !menu.hidden
+                ) {
+                    closeCategoryMenu();
+                    toggle.focus();
+                }
+            }
+        );
+
+        window.addEventListener(
+            "resize",
+            positionCategoryMenu
+        );
+
+        window.addEventListener(
+            "scroll",
+            positionCategoryMenu,
+            true
+        );
+
+
+        // ==========================================
+        // CATEGORY-ONLY SEARCH
+        // ==========================================
+
+        const categorySearchForm =
+            document.getElementById(
+                "public-category-search"
+            );
+
+        const categorySearchToggle =
+            document.getElementById(
+                "public-category-search-toggle"
+            );
+
+        const categorySearchField =
+            document.getElementById(
+                "public-category-search-field"
+            );
+
+        const categorySearchInput =
+            document.getElementById(
+                "public-category-search-input"
+            );
+
+        if (
+            categorySearchForm
+            && categorySearchToggle
+            && categorySearchField
+            && categorySearchInput
+        ) {
+            categorySearchToggle.addEventListener(
+                "click",
+                function () {
+                    if (categorySearchField.hidden) {
+                        categorySearchField.hidden = false;
+
+                        categorySearchToggle.setAttribute(
+                            "aria-expanded",
+                            "true"
+                        );
+
+                        requestAnimationFrame(
+                            function () {
+                                categorySearchInput.focus();
+                            }
+                        );
+
+                        return;
+                    }
+
+                    if (categorySearchInput.value.trim()) {
+                        categorySearchForm.requestSubmit();
+                        return;
+                    }
+
+                    categorySearchField.hidden = true;
+
+                    categorySearchToggle.setAttribute(
+                        "aria-expanded",
+                        "false"
+                    );
+                }
+            );
+
+            categorySearchInput.addEventListener(
+                "keydown",
+                function (event) {
+                    if (
+                        event.key === "Escape"
+                        && !categorySearchInput.value
+                    ) {
+                        categorySearchField.hidden = true;
+
+                        categorySearchToggle.setAttribute(
+                            "aria-expanded",
+                            "false"
+                        );
+
+                        categorySearchToggle.focus();
+                    }
+                }
+            );
+        }
+
+    }
+);
+</script>
 
 {% endblock %}

@@ -1,0 +1,202 @@
+{% extends "public_base.html" %}
+
+{% block title %}
+{{ advertisement.title }} | School Updates | The Equalizer
+{% endblock %}
+
+{% block public_content %}
+
+<main class="school-update-detail-page">
+
+    <header class="school-update-detail-header">
+        <p class="reader-section-kicker">
+            School Updates
+        </p>
+        <h1>
+            {{ advertisement.title }}
+        </h1>
+        <p>
+            School-related information published through The Equalizer.
+        </p>
+    </header>
+
+    <article class="school-update-detail-card">
+
+        <figure class="school-update-image-preview">
+            <img
+                src="{{ advertisement.image.url }}"
+                alt="{{ advertisement.title }}"
+                class="school-update-detail-image reader-lightbox-trigger"
+                tabindex="0"
+                role="button"
+                data-reader-lightbox-image
+                aria-label="Enlarge advertisement image"
+            >
+        </figure>
+
+        <div class="school-update-detail-body">
+
+            <p class="school-update-summary">
+                {{ advertisement.summary }}
+            </p>
+
+            <div class="school-update-details">
+                {{ advertisement.details }}
+            </div>
+
+            <a
+                href="{% url 'school_updates' %}"
+                class="school-update-back-link"
+            >
+                &larr; Back to School Updates
+            </a>
+
+        </div>
+
+    </article>
+
+    <div
+        class="reader-lightbox-overlay"
+        id="reader-image-lightbox"
+        aria-hidden="true"
+    >
+
+        <div
+            class="reader-lightbox-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Enlarged advertisement image"
+        >
+
+            <button
+                type="button"
+                class="reader-lightbox-close"
+                id="reader-lightbox-close"
+                aria-label="Close enlarged image"
+            >
+                &times;
+            </button>
+
+            <img
+                src=""
+                alt=""
+                class="reader-lightbox-image"
+                id="reader-lightbox-image"
+            >
+
+        </div>
+
+    </div>
+
+</main>
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const lightbox = document.getElementById(
+            "reader-image-lightbox"
+        );
+
+        const lightboxImage = document.getElementById(
+            "reader-lightbox-image"
+        );
+
+        const lightboxClose = document.getElementById(
+            "reader-lightbox-close"
+        );
+
+        const lightboxTriggers = document.querySelectorAll(
+            "[data-reader-lightbox-image]"
+        );
+
+        function openReaderLightbox(image) {
+
+            if (!lightbox || !lightboxImage) {
+                return;
+            }
+
+            lightboxImage.src = image.src;
+            lightboxImage.alt = image.alt || "Advertisement image";
+
+            lightbox.classList.add("active");
+            lightbox.setAttribute("aria-hidden", "false");
+            document.body.classList.add("reader-lightbox-open");
+
+            if (lightboxClose) {
+                lightboxClose.focus();
+            }
+        }
+
+        function closeReaderLightbox() {
+
+            if (!lightbox || !lightboxImage) {
+                return;
+            }
+
+            lightbox.classList.remove("active");
+            lightbox.setAttribute("aria-hidden", "true");
+            lightboxImage.src = "";
+            lightboxImage.alt = "";
+            document.body.classList.remove("reader-lightbox-open");
+        }
+
+        lightboxTriggers.forEach(
+            function (image) {
+                image.addEventListener(
+                    "click",
+                    function () {
+                        openReaderLightbox(image);
+                    }
+                );
+
+                image.addEventListener(
+                    "keydown",
+                    function (event) {
+                        if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            openReaderLightbox(image);
+                        }
+                    }
+                );
+            }
+        );
+
+        if (lightboxClose) {
+            lightboxClose.addEventListener(
+                "click",
+                closeReaderLightbox
+            );
+        }
+
+        if (lightbox) {
+            lightbox.addEventListener(
+                "click",
+                function (event) {
+                    if (event.target === lightbox) {
+                        closeReaderLightbox();
+                    }
+                }
+            );
+        }
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+                if (
+                    event.key === "Escape"
+                    && lightbox
+                    && lightbox.classList.contains("active")
+                ) {
+                    closeReaderLightbox();
+                }
+            }
+        );
+    }
+);
+
+</script>
+
+{% endblock %}

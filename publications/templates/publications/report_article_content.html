@@ -163,7 +163,7 @@
                     data-char-counter-field="description"
                     placeholder="Example: The second paragraph lists an incorrect event date. Please verify the date against the source before the article remains published."
                     required
-                ></textarea>
+                >{% if request.method == 'POST' %}{{ request.POST.description }}{% endif %}</textarea>
 
                 <p class="form-help">
                     Maximum 2,000 characters. Include enough context for
@@ -637,5 +637,7 @@ document.addEventListener(
     }
 );
 </script>
+
+{% include "publications/_preserve_post_form.html" %}
 
 {% endblock %}

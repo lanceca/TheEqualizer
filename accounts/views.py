@@ -1,5 +1,5 @@
 import io
-from datetime import timedelta
+from datetime import date, timedelta
 from functools import wraps
 from html import escape
 
@@ -168,8 +168,259 @@ def admin_dashboard(request):
 # ==========================================================
 
 
-@role_required(User.Role.ADVISER)
-def adviser_dashboard(request):
+ADVISER_ANALYTICS_DEFAULT_RANGE = "30"
+ADVISER_ANALYTICS_SCHOOL_YEAR_START_MONTH = 6
+
+
+def get_adviser_analytics_period(request):
+    """
+    Resolve the Adviser reporting period from GET parameters.
+
+    Supported range values:
+    all, 7, 30, month, school_year, custom.
+    """
+
+    today = timezone.localdate()
+
+    selected_range = (
+        request.GET.get(
+            "range",
+            ADVISER_ANALYTICS_DEFAULT_RANGE,
+        )
+        .strip()
+        .lower()
+    )
+
+    valid_ranges = {
+        "all",
+        "7",
+        "30",
+        "month",
+        "school_year",
+        "custom",
+    }
+
+    filter_error = ""
+
+    if selected_range not in valid_ranges:
+        selected_range = (
+            ADVISER_ANALYTICS_DEFAULT_RANGE
+        )
+
+    start_date = None
+    end_date = today
+
+    if selected_range == "7":
+        start_date = today - timedelta(days=6)
+        period_label = "Last 7 Days"
+
+    elif selected_range == "30":
+        start_date = today - timedelta(days=29)
+        period_label = "Last 30 Days"
+
+    elif selected_range == "month":
+        start_date = today.replace(day=1)
+        period_label = "This Month"
+
+    elif selected_range == "school_year":
+
+        school_year_start_year = (
+            today.year
+            if today.month
+            >= ADVISER_ANALYTICS_SCHOOL_YEAR_START_MONTH
+            else today.year - 1
+        )
+
+        start_date = date(
+            school_year_start_year,
+            ADVISER_ANALYTICS_SCHOOL_YEAR_START_MONTH,
+            1,
+        )
+
+        period_label = (
+            f"School Year "
+            f"{school_year_start_year}–"
+            f"{school_year_start_year + 1}"
+        )
+
+    elif selected_range == "custom":
+
+        custom_start = (
+            request.GET.get(
+                "start",
+                "",
+            )
+            .strip()
+        )
+
+        custom_end = (
+            request.GET.get(
+                "end",
+                "",
+            )
+            .strip()
+        )
+
+        try:
+            start_date = date.fromisoformat(
+                custom_start
+            )
+            end_date = date.fromisoformat(
+                custom_end
+            )
+        except ValueError:
+            filter_error = (
+                "Choose valid start and end dates. "
+                "The Last 30 Days range is being shown instead."
+            )
+            selected_range = (
+                ADVISER_ANALYTICS_DEFAULT_RANGE
+            )
+            start_date = (
+                today - timedelta(days=29)
+            )
+            end_date = today
+            period_label = "Last 30 Days"
+        else:
+
+            if end_date > today:
+                end_date = today
+
+            if start_date > end_date:
+                filter_error = (
+                    "The start date cannot be later than the end date. "
+                    "The Last 30 Days range is being shown instead."
+                )
+                selected_range = (
+                    ADVISER_ANALYTICS_DEFAULT_RANGE
+                )
+                start_date = (
+                    today - timedelta(days=29)
+                )
+                end_date = today
+                period_label = "Last 30 Days"
+            else:
+                period_label = (
+                    f"{start_date.strftime('%b %d, %Y')} "
+                    f"to {end_date.strftime('%b %d, %Y')}"
+                )
+
+    else:
+        period_label = "All Tracked History"
+
+    return {
+        "selected_range": selected_range,
+        "start_date": start_date,
+        "end_date": end_date,
+        "period_label": period_label,
+        "filter_error": filter_error,
+    }
+
+
+def filter_datetime_queryset_by_period(
+    queryset,
+    field_name,
+    start_date,
+    end_date,
+):
+    """
+    Filter a queryset by the calendar date portion of a DateTimeField.
+    """
+
+    filters = {
+        f"{field_name}__date__lte": end_date,
+    }
+
+    if start_date is not None:
+        filters[
+            f"{field_name}__date__gte"
+        ] = start_date
+
+    return queryset.filter(
+        **filters
+    )
+
+
+def build_datetime_period_q(
+    field_name,
+    start_date,
+    end_date,
+):
+    """
+    Build a Q object for a DateTimeField restricted to the selected period.
+    """
+
+    period_q = Q(
+        **{
+            f"{field_name}__date__lte": (
+                end_date
+            )
+        }
+    )
+
+    if start_date is not None:
+        period_q &= Q(
+            **{
+                f"{field_name}__date__gte": (
+                    start_date
+                )
+            }
+        )
+
+    return period_q
+
+
+def build_daily_analytics_period_q(
+    relation_prefix,
+    start_date,
+    end_date,
+):
+    """
+    Build a Q object for the DateField used by ArticleDailyAnalytics.
+    """
+
+    period_q = Q(
+        **{
+            f"{relation_prefix}__date__lte": (
+                end_date
+            )
+        }
+    )
+
+    if start_date is not None:
+        period_q &= Q(
+            **{
+                f"{relation_prefix}__date__gte": (
+                    start_date
+                )
+            }
+        )
+
+    return period_q
+
+
+def get_adviser_analytics_data(request):
+    """
+    Build the Adviser analytics data shared by the dashboard and PDF export.
+
+    Publication status and workflow-health cards remain current snapshots.
+    Historical engagement, submission analytics, content performance, and
+    editor performance follow the selected reporting period.
+    """
+
+    period = get_adviser_analytics_period(
+        request
+    )
+
+    analytics_range = period[
+        "selected_range"
+    ]
+    analytics_start_date = period[
+        "start_date"
+    ]
+    analytics_end_date = period[
+        "end_date"
+    ]
 
     # ======================================================
     # BASE QUERYSETS
@@ -179,29 +430,37 @@ def adviser_dashboard(request):
         draft_type=Article.DraftType.NORMAL
     )
 
-    published_queryset = normal_articles.filter(
-        is_published=True,
-        is_archived=False,
+    published_queryset = (
+        normal_articles
+        .filter(
+            is_published=True,
+            is_archived=False,
+        )
     )
 
     # ======================================================
-    # ARTICLE / PUBLICATION TOTALS
+    # CURRENT PUBLICATION SNAPSHOT
     # ======================================================
 
-    total_articles = normal_articles.count()
+    total_articles = (
+        normal_articles.count()
+    )
 
     published_articles = (
         published_queryset.count()
     )
 
     archived_articles = (
-        normal_articles.filter(
+        normal_articles
+        .filter(
             is_archived=True,
-        ).count()
+        )
+        .count()
     )
 
     draft_articles = (
-        normal_articles.filter(
+        normal_articles
+        .filter(
             is_published=False,
             is_archived=False,
             submissions__isnull=True,
@@ -211,113 +470,146 @@ def adviser_dashboard(request):
     )
 
     # ======================================================
-    # SUBMISSION TOTALS
+    # SUBMISSION ANALYTICS - SELECTED PERIOD
     # ======================================================
 
+    period_submissions = (
+        filter_datetime_queryset_by_period(
+            Submission.objects.all(),
+            "submitted_at",
+            analytics_start_date,
+            analytics_end_date,
+        )
+    )
+
     total_submissions = (
-        Submission.objects.count()
+        period_submissions.count()
     )
 
     pending_submissions = (
-        Submission.objects.filter(
+        period_submissions
+        .filter(
             status=Submission.Status.PENDING
-        ).count()
+        )
+        .count()
     )
 
     approved_submissions = (
-        Submission.objects.filter(
+        period_submissions
+        .filter(
             status=Submission.Status.APPROVED
-        ).count()
+        )
+        .count()
     )
 
     rejected_submissions = (
-        Submission.objects.filter(
+        period_submissions
+        .filter(
             status=Submission.Status.REJECTED
-        ).count()
+        )
+        .count()
     )
 
     revision_submissions = (
-        Submission.objects.filter(
+        period_submissions
+        .filter(
             status=Submission.Status.REVISION
-        ).count()
+        )
+        .count()
     )
 
     # ======================================================
-    # EDIT REQUEST ANALYTICS
+    # CURRENT WORKFLOW HEALTH
     # ======================================================
 
     pending_edit_requests = (
-        EditRequest.objects.filter(
+        EditRequest.objects
+        .filter(
             status=EditRequest.Status.PENDING
-        ).count()
+        )
+        .count()
     )
 
     approved_edit_requests = (
-        EditRequest.objects.filter(
+        EditRequest.objects
+        .filter(
             status=EditRequest.Status.APPROVED
-        ).count()
+        )
+        .count()
     )
 
     rejected_edit_requests = (
-        EditRequest.objects.filter(
+        EditRequest.objects
+        .filter(
             status=EditRequest.Status.REJECTED
-        ).count()
+        )
+        .count()
     )
 
     completed_edit_requests = (
-        EditRequest.objects.filter(
+        EditRequest.objects
+        .filter(
             status=EditRequest.Status.COMPLETED
-        ).count()
+        )
+        .count()
     )
 
-    # ======================================================
-    # DELETION REQUEST ANALYTICS
-    # ======================================================
-
     pending_deletion_requests = (
-        DeletionRequest.objects.filter(
+        DeletionRequest.objects
+        .filter(
             status=DeletionRequest.Status.PENDING
-        ).count()
+        )
+        .count()
     )
 
     approved_deletion_requests = (
-        DeletionRequest.objects.filter(
+        DeletionRequest.objects
+        .filter(
             status=DeletionRequest.Status.APPROVED
-        ).count()
+        )
+        .count()
     )
 
     rejected_deletion_requests = (
-        DeletionRequest.objects.filter(
+        DeletionRequest.objects
+        .filter(
             status=DeletionRequest.Status.REJECTED
-        ).count()
+        )
+        .count()
     )
 
-    # ======================================================
-    # CONTENT REPORT ANALYTICS
-    # ======================================================
-
     open_content_reports = (
-        ContentReport.objects.filter(
+        ContentReport.objects
+        .filter(
             status=ContentReport.Status.OPEN
-        ).count()
+        )
+        .count()
     )
 
     revision_required_reports = (
-        ContentReport.objects.filter(
-            status=ContentReport.Status.REVISION_REQUIRED
-        ).count()
+        ContentReport.objects
+        .filter(
+            status=(
+                ContentReport.Status.REVISION_REQUIRED
+            )
+        )
+        .count()
     )
 
     cancelled_content_reports = (
-        ContentReport.objects.filter(
+        ContentReport.objects
+        .filter(
             status=ContentReport.Status.CANCELLED
-        ).count()
+        )
+        .count()
     )
 
     resolved_content_reports = (
-        ContentReport.objects.filter(
+        ContentReport.objects
+        .filter(
             status=ContentReport.Status.RESOLVED
-        ).count()
+        )
+        .count()
     )
 
     active_content_reports = (
@@ -330,20 +622,33 @@ def adviser_dashboard(request):
     )
 
     # ======================================================
-    # READER ENGAGEMENT TOTALS
+    # READER ENGAGEMENT - SELECTED PERIOD
     # ======================================================
 
+    daily_analytics = (
+        ArticleDailyAnalytics.objects
+        .filter(
+            article__draft_type=(
+                Article.DraftType.NORMAL
+            ),
+            date__lte=analytics_end_date,
+        )
+    )
+
+    if analytics_start_date is not None:
+        daily_analytics = (
+            daily_analytics.filter(
+                date__gte=analytics_start_date
+            )
+        )
+
     reader_totals = (
-        published_queryset.aggregate(
-            total_views=Sum(
-                "view_count"
-            ),
+        daily_analytics.aggregate(
+            total_views=Sum("views"),
             total_reactions=Sum(
-                "reaction_count"
+                "reactions"
             ),
-            total_shares=Sum(
-                "share_count"
-            ),
+            total_shares=Sum("shares"),
         )
     )
 
@@ -368,25 +673,8 @@ def adviser_dashboard(request):
         + total_shares
     )
 
-    # ======================================================
-    # HISTORICAL READER ENGAGEMENT - LAST 30 MANILA DAYS
-    # ======================================================
-
-    analytics_end_date = timezone.localdate()
-    analytics_start_date = (
-        analytics_end_date
-        - timedelta(days=29)
-    )
-
     daily_engagement_rows = (
-        ArticleDailyAnalytics.objects
-        .filter(
-            article__draft_type=Article.DraftType.NORMAL,
-            date__range=(
-                analytics_start_date,
-                analytics_end_date,
-            ),
-        )
+        daily_analytics
         .values("date")
         .annotate(
             views=Sum("views"),
@@ -399,11 +687,30 @@ def adviser_dashboard(request):
     daily_engagement_by_date = {
         row["date"]: {
             "views": row["views"] or 0,
-            "reactions": row["reactions"] or 0,
+            "reactions": (
+                row["reactions"]
+                or 0
+            ),
             "shares": row["shares"] or 0,
         }
         for row in daily_engagement_rows
     }
+
+    chart_start_date = (
+        analytics_start_date
+    )
+
+    if chart_start_date is None:
+        chart_start_date = (
+            daily_analytics
+            .order_by("date")
+            .values_list(
+                "date",
+                flat=True,
+            )
+            .first()
+            or analytics_end_date
+        )
 
     historical_engagement_labels = []
     historical_engagement_full_dates = []
@@ -411,11 +718,20 @@ def adviser_dashboard(request):
     historical_reactions = []
     historical_shares = []
 
-    for day_offset in range(30):
+    chart_day_count = (
+        analytics_end_date
+        - chart_start_date
+    ).days + 1
+
+    for day_offset in range(
+        max(chart_day_count, 1)
+    ):
 
         current_date = (
-            analytics_start_date
-            + timedelta(days=day_offset)
+            chart_start_date
+            + timedelta(
+                days=day_offset
+            )
         )
 
         current_values = (
@@ -430,7 +746,9 @@ def adviser_dashboard(request):
         )
 
         historical_engagement_labels.append(
-            current_date.strftime("%b %d")
+            current_date.strftime(
+                "%b %d"
+            )
         )
 
         historical_engagement_full_dates.append(
@@ -449,27 +767,38 @@ def adviser_dashboard(request):
             current_values["shares"]
         )
 
-    thirty_day_views = sum(
-        historical_views
-    )
-
-    thirty_day_reactions = sum(
-        historical_reactions
-    )
-
-    thirty_day_shares = sum(
-        historical_shares
-    )
-
-    thirty_day_engagement = (
-        thirty_day_views
-        + thirty_day_reactions
-        + thirty_day_shares
-    )
-
     # ======================================================
-    # EDITOR PERFORMANCE
+    # EDITOR PERFORMANCE - SELECTED PERIOD
     # ======================================================
+
+    editor_article_filter = Q(
+        articles__draft_type=(
+            Article.DraftType.NORMAL
+        )
+    ) & build_datetime_period_q(
+        "articles__created_at",
+        analytics_start_date,
+        analytics_end_date,
+    )
+
+    editor_published_filter = Q(
+        articles__draft_type=(
+            Article.DraftType.NORMAL
+        ),
+        articles__published_at__isnull=False,
+    ) & build_datetime_period_q(
+        "articles__published_at",
+        analytics_start_date,
+        analytics_end_date,
+    )
+
+    editor_submission_filter = (
+        build_datetime_period_q(
+            "submissions__submitted_at",
+            analytics_start_date,
+            analytics_end_date,
+        )
+    )
 
     editors = (
         User.objects
@@ -479,77 +808,63 @@ def adviser_dashboard(request):
         .annotate(
             article_count=Count(
                 "articles",
-                filter=Q(
-                    articles__draft_type=(
-                        Article.DraftType.NORMAL
-                    )
-                ),
+                filter=editor_article_filter,
                 distinct=True,
             ),
-
             published_count=Count(
                 "articles",
-                filter=Q(
-                    articles__draft_type=(
-                        Article.DraftType.NORMAL
-                    ),
-                    articles__is_published=True,
-                    articles__is_archived=False,
-                ),
+                filter=editor_published_filter,
                 distinct=True,
             ),
-
-            archived_count=Count(
-                "articles",
-                filter=Q(
-                    articles__draft_type=(
-                        Article.DraftType.NORMAL
-                    ),
-                    articles__is_archived=True,
-                ),
-                distinct=True,
-            ),
-
             submission_count=Count(
                 "submissions",
+                filter=editor_submission_filter,
                 distinct=True,
             ),
-
             pending_count=Count(
                 "submissions",
-                filter=Q(
-                    submissions__status=(
-                        Submission.Status.PENDING
+                filter=(
+                    editor_submission_filter
+                    & Q(
+                        submissions__status=(
+                            Submission.Status.PENDING
+                        )
                     )
                 ),
                 distinct=True,
             ),
-
             approved_count=Count(
                 "submissions",
-                filter=Q(
-                    submissions__status=(
-                        Submission.Status.APPROVED
+                filter=(
+                    editor_submission_filter
+                    & Q(
+                        submissions__status=(
+                            Submission.Status.APPROVED
+                        )
                     )
                 ),
                 distinct=True,
             ),
-
             rejected_count=Count(
                 "submissions",
-                filter=Q(
-                    submissions__status=(
-                        Submission.Status.REJECTED
+                filter=(
+                    editor_submission_filter
+                    & Q(
+                        submissions__status=(
+                            Submission.Status.REJECTED
+                        )
                     )
                 ),
                 distinct=True,
             ),
-
             revision_count=Count(
                 "submissions",
-                filter=Q(
-                    submissions__status=(
-                        Submission.Status.REVISION
+                filter=(
+                    editor_submission_filter
+                    & Q(
+                        submissions__status=(
+                            Submission.Status.REVISION
+                        )
                     )
                 ),
                 distinct=True,
@@ -563,8 +878,16 @@ def adviser_dashboard(request):
     )
 
     # ======================================================
-    # CATEGORY PERFORMANCE
+    # CONTENT PERFORMANCE - SELECTED PERIOD
     # ======================================================
+
+    daily_relation_filter = (
+        build_daily_analytics_period_q(
+            "daily_analytics",
+            analytics_start_date,
+            analytics_end_date,
+        )
+    )
 
     category_performance = (
         published_queryset
@@ -577,13 +900,22 @@ def adviser_dashboard(request):
                 distinct=True,
             ),
             total_views=Sum(
-                "view_count"
+                "daily_analytics__views",
+                filter=(
+                    daily_relation_filter
+                ),
             ),
             total_reactions=Sum(
-                "reaction_count"
+                "daily_analytics__reactions",
+                filter=(
+                    daily_relation_filter
+                ),
             ),
             total_shares=Sum(
-                "share_count"
+                "daily_analytics__shares",
+                filter=(
+                    daily_relation_filter
+                ),
             ),
         )
         .order_by(
@@ -593,42 +925,54 @@ def adviser_dashboard(request):
         )
     )
 
-    # ======================================================
-    # TOP ARTICLES
-    # ======================================================
-
-    top_viewed_articles = (
+    period_article_queryset = (
         published_queryset
         .select_related(
             "category",
             "author",
         )
+        .annotate(
+            period_views=Sum(
+                "daily_analytics__views",
+                filter=(
+                    daily_relation_filter
+                ),
+            ),
+            period_reactions=Sum(
+                "daily_analytics__reactions",
+                filter=(
+                    daily_relation_filter
+                ),
+            ),
+            period_shares=Sum(
+                "daily_analytics__shares",
+                filter=(
+                    daily_relation_filter
+                ),
+            ),
+        )
+    )
+
+    top_viewed_articles = (
+        period_article_queryset
         .order_by(
-            "-view_count",
+            "-period_views",
             "-published_at",
         )[:5]
     )
 
     top_reacted_articles = (
-        published_queryset
-        .select_related(
-            "category",
-            "author",
-        )
+        period_article_queryset
         .order_by(
-            "-reaction_count",
+            "-period_reactions",
             "-published_at",
         )[:5]
     )
 
     top_shared_articles = (
-        published_queryset
-        .select_related(
-            "category",
-            "author",
-        )
+        period_article_queryset
         .order_by(
-            "-share_count",
+            "-period_shares",
             "-published_at",
         )[:5]
     )
@@ -742,7 +1086,9 @@ def adviser_dashboard(request):
     category_chart_data = [
         {
             "label": (
-                category["category__name"]
+                category[
+                    "category__name"
+                ]
             ),
             "articles": (
                 category["article_count"]
@@ -752,7 +1098,9 @@ def adviser_dashboard(request):
                 or 0
             ),
             "reactions": (
-                category["total_reactions"]
+                category[
+                    "total_reactions"
+                ]
                 or 0
             ),
             "shares": (
@@ -768,7 +1116,6 @@ def adviser_dashboard(request):
             "username": editor.username,
             "articles": editor.article_count,
             "published": editor.published_count,
-            "archived": editor.archived_count,
             "submissions": editor.submission_count,
             "pending": editor.pending_count,
             "approved": editor.approved_count,
@@ -778,11 +1125,37 @@ def adviser_dashboard(request):
         for editor in editors
     ]
 
-    # ======================================================
-    # CONTEXT
-    # ======================================================
+    return {
+        "analytics_range": analytics_range,
+        "analytics_period_label": (
+            period["period_label"]
+        ),
+        "analytics_filter_error": (
+            period["filter_error"]
+        ),
+        "analytics_start_date": (
+            analytics_start_date
+            or chart_start_date
+        ),
+        "analytics_end_date": (
+            analytics_end_date
+        ),
+        "analytics_custom_start_value": (
+            (
+                analytics_start_date
+                or chart_start_date
+            ).isoformat()
+        ),
+        "analytics_custom_end_value": (
+            analytics_end_date.isoformat()
+        ),
+        "analytics_is_all_time": (
+            analytics_range == "all"
+        ),
+        "school_year_start_month": (
+            ADVISER_ANALYTICS_SCHOOL_YEAR_START_MONTH
+        ),
 
-    context = {
         "total_articles": total_articles,
         "published_articles": published_articles,
         "archived_articles": archived_articles,
@@ -833,12 +1206,6 @@ def adviser_dashboard(request):
         "total_shares": total_shares,
         "total_engagement": total_engagement,
 
-        "analytics_start_date": analytics_start_date,
-        "analytics_end_date": analytics_end_date,
-        "thirty_day_views": thirty_day_views,
-        "thirty_day_reactions": thirty_day_reactions,
-        "thirty_day_shares": thirty_day_shares,
-        "thirty_day_engagement": thirty_day_engagement,
         "historical_engagement_labels": (
             historical_engagement_labels
         ),
@@ -846,7 +1213,9 @@ def adviser_dashboard(request):
             historical_engagement_full_dates
         ),
         "historical_views": historical_views,
-        "historical_reactions": historical_reactions,
+        "historical_reactions": (
+            historical_reactions
+        ),
         "historical_shares": historical_shares,
 
         "editors": editors,
@@ -890,6 +1259,14 @@ def adviser_dashboard(request):
         ),
     }
 
+
+@role_required(User.Role.ADVISER)
+def adviser_dashboard(request):
+
+    context = get_adviser_analytics_data(
+        request
+    )
+
     return render(
         request,
         "accounts/dashboards/adviser.html",
@@ -919,19 +1296,28 @@ def draw_adviser_report_page(canvas, document):
         page_height - 0.3 * inch,
         "THE EQUALIZER — ADVISER ANALYTICS",
     )
-    canvas.setStrokeColor(colors.HexColor("#d7dfdb"))
+    canvas.setStrokeColor(
+        colors.HexColor("#d7dfdb")
+    )
     canvas.line(
         document.leftMargin,
         0.48 * inch,
         page_width - document.rightMargin,
         0.48 * inch,
     )
-    canvas.setFillColor(colors.HexColor("#65736d"))
+    canvas.setFillColor(
+        colors.HexColor("#65736d")
+    )
     canvas.setFont("Helvetica", 8)
     canvas.drawString(
         document.leftMargin,
         0.28 * inch,
-        f"Generated {timezone.localtime().strftime('%B %d, %Y %I:%M %p')}",
+        (
+            "Generated "
+            + timezone.localtime().strftime(
+                "%B %d, %Y %I:%M %p"
+            )
+        ),
     )
     canvas.drawRightString(
         page_width - document.rightMargin,
@@ -943,58 +1329,88 @@ def draw_adviser_report_page(canvas, document):
 
 @role_required(User.Role.ADVISER)
 def download_adviser_analytics_pdf(request):
-    """Download a printable snapshot of the Adviser analytics dashboard."""
+    """
+    Download an Adviser analytics PDF that follows the same
+    reporting period selected on the dashboard.
+    """
 
-    normal_articles = Article.objects.filter(
-        draft_type=Article.DraftType.NORMAL
-    )
-    published_queryset = normal_articles.filter(
-        is_published=True,
-        is_archived=False,
+    analytics = get_adviser_analytics_data(
+        request
     )
 
-    total_articles = normal_articles.count()
-    published_articles = published_queryset.count()
-    archived_articles = normal_articles.filter(
-        is_archived=True
-    ).count()
-    draft_articles = (
-        normal_articles
-        .filter(
-            is_published=False,
-            is_archived=False,
-            submissions__isnull=True,
+    analytics_start_date = analytics[
+        "analytics_start_date"
+    ]
+    analytics_end_date = analytics[
+        "analytics_end_date"
+    ]
+    analytics_period_label = analytics[
+        "analytics_period_label"
+    ]
+
+    period_edit_requests = (
+        filter_datetime_queryset_by_period(
+            EditRequest.objects.all(),
+            "created_at",
+            (
+                None
+                if analytics[
+                    "analytics_is_all_time"
+                ]
+                else analytics_start_date
+            ),
+            analytics_end_date,
         )
-        .distinct()
-        .count()
     )
 
-    reader_totals = published_queryset.aggregate(
-        total_views=Sum("view_count"),
-        total_reactions=Sum("reaction_count"),
-        total_shares=Sum("share_count"),
-    )
-    total_views = reader_totals["total_views"] or 0
-    total_reactions = reader_totals["total_reactions"] or 0
-    total_shares = reader_totals["total_shares"] or 0
-
-    report_end_date = timezone.localdate()
-    report_start_date = report_end_date - timedelta(days=29)
-    thirty_day_totals = (
-        ArticleDailyAnalytics.objects
-        .filter(
-            article__draft_type=Article.DraftType.NORMAL,
-            date__range=(report_start_date, report_end_date),
+    period_deletion_requests = (
+        filter_datetime_queryset_by_period(
+            DeletionRequest.objects.all(),
+            "created_at",
+            (
+                None
+                if analytics[
+                    "analytics_is_all_time"
+                ]
+                else analytics_start_date
+            ),
+            analytics_end_date,
         )
-        .aggregate(
-            views=Sum("views"),
-            reactions=Sum("reactions"),
-            shares=Sum("shares"),
+    )
+
+    period_content_reports = (
+        filter_datetime_queryset_by_period(
+            ContentReport.objects.all(),
+            "created_at",
+            (
+                None
+                if analytics[
+                    "analytics_is_all_time"
+                ]
+                else analytics_start_date
+            ),
+            analytics_end_date,
         )
     )
 
     submission_counts = {
-        status: Submission.objects.filter(status=status).count()
+        status: (
+            filter_datetime_queryset_by_period(
+                Submission.objects.filter(
+                    status=status
+                ),
+                "submitted_at",
+                (
+                    None
+                    if analytics[
+                        "analytics_is_all_time"
+                    ]
+                    else analytics_start_date
+                ),
+                analytics_end_date,
+            )
+            .count()
+        )
         for status in [
             Submission.Status.PENDING,
             Submission.Status.APPROVED,
@@ -1002,8 +1418,13 @@ def download_adviser_analytics_pdf(request):
             Submission.Status.REVISION,
         ]
     }
+
     edit_request_counts = {
-        status: EditRequest.objects.filter(status=status).count()
+        status: (
+            period_edit_requests
+            .filter(status=status)
+            .count()
+        )
         for status in [
             EditRequest.Status.PENDING,
             EditRequest.Status.APPROVED,
@@ -1011,16 +1432,26 @@ def download_adviser_analytics_pdf(request):
             EditRequest.Status.COMPLETED,
         ]
     }
+
     deletion_request_counts = {
-        status: DeletionRequest.objects.filter(status=status).count()
+        status: (
+            period_deletion_requests
+            .filter(status=status)
+            .count()
+        )
         for status in [
             DeletionRequest.Status.PENDING,
             DeletionRequest.Status.APPROVED,
             DeletionRequest.Status.REJECTED,
         ]
     }
+
     content_report_counts = {
-        status: ContentReport.objects.filter(status=status).count()
+        status: (
+            period_content_reports
+            .filter(status=status)
+            .count()
+        )
         for status in [
             ContentReport.Status.OPEN,
             ContentReport.Status.REVISION_REQUIRED,
@@ -1030,62 +1461,23 @@ def download_adviser_analytics_pdf(request):
     }
 
     category_performance = list(
-        published_queryset
-        .values("category__name")
-        .annotate(
-            article_count=Count("id", distinct=True),
-            total_views=Sum("view_count"),
-            total_reactions=Sum("reaction_count"),
-            total_shares=Sum("share_count"),
-        )
-        .order_by("-total_views", "category__name")
+        analytics[
+            "category_performance"
+        ]
     )
 
     editors = list(
-        User.objects
-        .filter(role=User.Role.EDITOR)
-        .annotate(
-            article_count=Count(
-                "articles",
-                filter=Q(
-                    articles__draft_type=Article.DraftType.NORMAL
-                ),
-                distinct=True,
-            ),
-            published_count=Count(
-                "articles",
-                filter=Q(
-                    articles__draft_type=Article.DraftType.NORMAL,
-                    articles__is_published=True,
-                    articles__is_archived=False,
-                ),
-                distinct=True,
-            ),
-            approved_count=Count(
-                "submissions",
-                filter=Q(
-                    submissions__status=Submission.Status.APPROVED
-                ),
-                distinct=True,
-            ),
-            revision_count=Count(
-                "submissions",
-                filter=Q(
-                    submissions__status=Submission.Status.REVISION
-                ),
-                distinct=True,
-            ),
-        )
-        .order_by("-published_count", "username")
+        analytics["editors"]
     )
 
     top_articles = list(
-        published_queryset
-        .select_related("category", "author")
-        .order_by("-view_count", "-reaction_count", "-share_count")[:10]
+        analytics[
+            "top_viewed_articles"
+        ]
     )
 
     pdf_buffer = io.BytesIO()
+
     document = SimpleDocTemplate(
         pdf_buffer,
         pagesize=landscape(letter),
@@ -1099,35 +1491,45 @@ def download_adviser_analytics_pdf(request):
     )
 
     sample_styles = getSampleStyleSheet()
+
     title_style = ParagraphStyle(
         "AnalyticsTitle",
         parent=sample_styles["Title"],
         fontName="Times-Bold",
         fontSize=24,
         leading=28,
-        textColor=colors.HexColor("#0e2a22"),
+        textColor=colors.HexColor(
+            "#0e2a22"
+        ),
         alignment=TA_CENTER,
         spaceAfter=5,
     )
+
     subtitle_style = ParagraphStyle(
         "AnalyticsSubtitle",
         parent=sample_styles["Normal"],
         fontSize=9,
         leading=13,
-        textColor=colors.HexColor("#65736d"),
+        textColor=colors.HexColor(
+            "#65736d"
+        ),
         alignment=TA_CENTER,
         spaceAfter=15,
     )
+
     heading_style = ParagraphStyle(
         "AnalyticsHeading",
         parent=sample_styles["Heading2"],
         fontName="Helvetica-Bold",
         fontSize=13,
         leading=16,
-        textColor=colors.HexColor("#173f32"),
+        textColor=colors.HexColor(
+            "#173f32"
+        ),
         spaceBefore=8,
         spaceAfter=7,
     )
+
     cell_style = ParagraphStyle(
         "AnalyticsCell",
         parent=sample_styles["Normal"],
@@ -1137,155 +1539,432 @@ def download_adviser_analytics_pdf(request):
 
     table_style = TableStyle(
         [
-            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#173f32")),
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-            ("FONTSIZE", (0, 0), (-1, -1), 8),
-            ("LEADING", (0, 0), (-1, -1), 10),
-            ("GRID", (0, 0), (-1, -1), 0.35, colors.HexColor("#cad5cf")),
-            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f3f7f5")]),
-            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-            ("TOPPADDING", (0, 0), (-1, -1), 5),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+            (
+                "BACKGROUND",
+                (0, 0),
+                (-1, 0),
+                colors.HexColor("#173f32"),
+            ),
+            (
+                "TEXTCOLOR",
+                (0, 0),
+                (-1, 0),
+                colors.white,
+            ),
+            (
+                "FONTNAME",
+                (0, 0),
+                (-1, 0),
+                "Helvetica-Bold",
+            ),
+            (
+                "FONTNAME",
+                (0, 1),
+                (-1, -1),
+                "Helvetica",
+            ),
+            (
+                "FONTSIZE",
+                (0, 0),
+                (-1, -1),
+                8,
+            ),
+            (
+                "LEADING",
+                (0, 0),
+                (-1, -1),
+                10,
+            ),
+            (
+                "GRID",
+                (0, 0),
+                (-1, -1),
+                0.35,
+                colors.HexColor("#cad5cf"),
+            ),
+            (
+                "ROWBACKGROUNDS",
+                (0, 1),
+                (-1, -1),
+                [
+                    colors.white,
+                    colors.HexColor(
+                        "#f3f7f5"
+                    ),
+                ],
+            ),
+            (
+                "VALIGN",
+                (0, 0),
+                (-1, -1),
+                "MIDDLE",
+            ),
+            (
+                "TOPPADDING",
+                (0, 0),
+                (-1, -1),
+                5,
+            ),
+            (
+                "BOTTOMPADDING",
+                (0, 0),
+                (-1, -1),
+                5,
+            ),
         ]
     )
 
-    def report_table(rows, widths=None, repeat_rows=1):
-        table_class = LongTable if len(rows) > 12 else Table
+    def report_table(
+        rows,
+        widths=None,
+        repeat_rows=1,
+    ):
+        table_class = (
+            LongTable
+            if len(rows) > 12
+            else Table
+        )
+
         table = table_class(
             rows,
             colWidths=widths,
             repeatRows=repeat_rows,
             hAlign="LEFT",
         )
-        table.setStyle(table_style)
+
+        table.setStyle(
+            table_style
+        )
+
         return table
 
+    period_start_text = (
+        "Tracking start"
+        if analytics["analytics_is_all_time"]
+        else analytics_start_date.strftime(
+            "%b %d, %Y"
+        )
+    )
+
     story = [
-        Paragraph("Adviser Analytics Report", title_style),
         Paragraph(
-            f"Reporting snapshot through {report_end_date.strftime('%B %d, %Y')} "
-            f"(Asia/Manila) · Prepared for {escape(request.user.username)}",
+            "Adviser Analytics Report",
+            title_style,
+        ),
+        Paragraph(
+            (
+                f"{escape(analytics_period_label)} "
+                f"· Through "
+                f"{analytics_end_date.strftime('%B %d, %Y')} "
+                f"(Asia/Manila) · Prepared for "
+                f"{escape(request.user.username)}"
+            ),
             subtitle_style,
         ),
-        Paragraph("Publication and engagement overview", heading_style),
+        Paragraph(
+            "Current publication snapshot",
+            heading_style,
+        ),
         report_table(
             [
-                ["Articles", "Published", "Draft", "Archived", "Views", "Reactions", "Shares"],
                 [
-                    total_articles,
-                    published_articles,
-                    draft_articles,
-                    archived_articles,
-                    total_views,
-                    total_reactions,
-                    total_shares,
+                    "Articles",
+                    "Published",
+                    "Draft",
+                    "Archived",
+                ],
+                [
+                    analytics[
+                        "total_articles"
+                    ],
+                    analytics[
+                        "published_articles"
+                    ],
+                    analytics[
+                        "draft_articles"
+                    ],
+                    analytics[
+                        "archived_articles"
+                    ],
                 ],
             ],
-            [1.15 * inch] * 7,
+            [
+                1.8 * inch,
+                1.8 * inch,
+                1.8 * inch,
+                1.8 * inch,
+            ],
         ),
         Spacer(1, 10),
-        Paragraph("Last 30 days", heading_style),
+        Paragraph(
+            "Reader engagement for selected period",
+            heading_style,
+        ),
         report_table(
             [
-                ["Date range", "Views", "Reactions", "Shares", "Total engagement"],
                 [
-                    f"{report_start_date:%b %d, %Y} – {report_end_date:%b %d, %Y}",
-                    thirty_day_totals["views"] or 0,
-                    thirty_day_totals["reactions"] or 0,
-                    thirty_day_totals["shares"] or 0,
-                    (thirty_day_totals["views"] or 0)
-                    + (thirty_day_totals["reactions"] or 0)
-                    + (thirty_day_totals["shares"] or 0),
+                    "Date range",
+                    "Views",
+                    "Reactions",
+                    "Shares",
+                    "Total engagement",
+                ],
+                [
+                    (
+                        f"{period_start_text} – "
+                        f"{analytics_end_date:%b %d, %Y}"
+                    ),
+                    analytics[
+                        "total_views"
+                    ],
+                    analytics[
+                        "total_reactions"
+                    ],
+                    analytics[
+                        "total_shares"
+                    ],
+                    analytics[
+                        "total_engagement"
+                    ],
                 ],
             ],
-            [2.4 * inch, 1.35 * inch, 1.35 * inch, 1.35 * inch, 1.55 * inch],
+            [
+                2.4 * inch,
+                1.35 * inch,
+                1.35 * inch,
+                1.35 * inch,
+                1.55 * inch,
+            ],
         ),
         Spacer(1, 10),
-        Paragraph("Editorial workflow", heading_style),
+        Paragraph(
+            "Editorial workflow created in selected period",
+            heading_style,
+        ),
         report_table(
             [
-                ["Workflow", "Pending/Open", "Approved/Resolved", "Rejected/Cancelled", "Revision/Completed"],
+                [
+                    "Workflow",
+                    "Pending/Open",
+                    "Approved/Resolved",
+                    "Rejected/Cancelled",
+                    "Revision/Completed",
+                ],
                 [
                     "Submissions",
-                    submission_counts[Submission.Status.PENDING],
-                    submission_counts[Submission.Status.APPROVED],
-                    submission_counts[Submission.Status.REJECTED],
-                    submission_counts[Submission.Status.REVISION],
+                    submission_counts[
+                        Submission.Status.PENDING
+                    ],
+                    submission_counts[
+                        Submission.Status.APPROVED
+                    ],
+                    submission_counts[
+                        Submission.Status.REJECTED
+                    ],
+                    submission_counts[
+                        Submission.Status.REVISION
+                    ],
                 ],
                 [
                     "Edit requests",
-                    edit_request_counts[EditRequest.Status.PENDING],
-                    edit_request_counts[EditRequest.Status.APPROVED],
-                    edit_request_counts[EditRequest.Status.REJECTED],
-                    edit_request_counts[EditRequest.Status.COMPLETED],
+                    edit_request_counts[
+                        EditRequest.Status.PENDING
+                    ],
+                    edit_request_counts[
+                        EditRequest.Status.APPROVED
+                    ],
+                    edit_request_counts[
+                        EditRequest.Status.REJECTED
+                    ],
+                    edit_request_counts[
+                        EditRequest.Status.COMPLETED
+                    ],
                 ],
                 [
                     "Deletion requests",
-                    deletion_request_counts[DeletionRequest.Status.PENDING],
-                    deletion_request_counts[DeletionRequest.Status.APPROVED],
-                    deletion_request_counts[DeletionRequest.Status.REJECTED],
+                    deletion_request_counts[
+                        DeletionRequest.Status.PENDING
+                    ],
+                    deletion_request_counts[
+                        DeletionRequest.Status.APPROVED
+                    ],
+                    deletion_request_counts[
+                        DeletionRequest.Status.REJECTED
+                    ],
                     "—",
                 ],
                 [
                     "Content reports",
-                    content_report_counts[ContentReport.Status.OPEN],
-                    content_report_counts[ContentReport.Status.RESOLVED],
-                    content_report_counts[ContentReport.Status.CANCELLED],
-                    content_report_counts[ContentReport.Status.REVISION_REQUIRED],
+                    content_report_counts[
+                        ContentReport.Status.OPEN
+                    ],
+                    content_report_counts[
+                        ContentReport.Status.RESOLVED
+                    ],
+                    content_report_counts[
+                        ContentReport.Status.CANCELLED
+                    ],
+                    content_report_counts[
+                        ContentReport.Status.REVISION_REQUIRED
+                    ],
                 ],
             ],
-            [1.55 * inch, 1.55 * inch, 1.75 * inch, 1.75 * inch, 1.75 * inch],
+            [
+                1.55 * inch,
+                1.55 * inch,
+                1.75 * inch,
+                1.75 * inch,
+                1.75 * inch,
+            ],
         ),
         PageBreak(),
-        Paragraph("Category performance", heading_style),
+        Paragraph(
+            "Category performance",
+            heading_style,
+        ),
         report_table(
-            [["Category", "Published articles", "Views", "Reactions", "Shares"]]
+            [
+                [
+                    "Category",
+                    "Current published articles",
+                    "Views",
+                    "Reactions",
+                    "Shares",
+                ]
+            ]
             + [
                 [
-                    Paragraph(escape(row["category__name"] or "Uncategorized"), cell_style),
+                    Paragraph(
+                        escape(
+                            row[
+                                "category__name"
+                            ]
+                            or "Uncategorized"
+                        ),
+                        cell_style,
+                    ),
                     row["article_count"],
-                    row["total_views"] or 0,
-                    row["total_reactions"] or 0,
-                    row["total_shares"] or 0,
+                    row[
+                        "total_views"
+                    ]
+                    or 0,
+                    row[
+                        "total_reactions"
+                    ]
+                    or 0,
+                    row[
+                        "total_shares"
+                    ]
+                    or 0,
                 ]
                 for row in category_performance
             ],
-            [2.7 * inch, 1.45 * inch, 1.2 * inch, 1.2 * inch, 1.2 * inch],
+            [
+                2.7 * inch,
+                1.65 * inch,
+                1.1 * inch,
+                1.1 * inch,
+                1.1 * inch,
+            ],
         ),
         Spacer(1, 12),
-        Paragraph("Editor performance", heading_style),
+        Paragraph(
+            "Editor performance",
+            heading_style,
+        ),
         report_table(
-            [["Editor", "Articles", "Published", "Approved submissions", "Revision submissions"]]
+            [
+                [
+                    "Editor",
+                    "Articles created",
+                    "Published",
+                    "Submissions",
+                    "Approved",
+                    "Revision",
+                ]
+            ]
             + [
                 [
-                    Paragraph(escape(editor.username), cell_style),
+                    Paragraph(
+                        escape(
+                            editor.username
+                        ),
+                        cell_style,
+                    ),
                     editor.article_count,
                     editor.published_count,
+                    editor.submission_count,
                     editor.approved_count,
                     editor.revision_count,
                 ]
                 for editor in editors
             ],
-            [2.7 * inch, 1.2 * inch, 1.2 * inch, 1.6 * inch, 1.6 * inch],
+            [
+                2.2 * inch,
+                1.25 * inch,
+                1.1 * inch,
+                1.2 * inch,
+                1.1 * inch,
+                1.1 * inch,
+            ],
         ),
         PageBreak(),
-        Paragraph("Top published articles", heading_style),
+        Paragraph(
+            "Top published articles",
+            heading_style,
+        ),
         report_table(
-            [["Article", "Category", "Author", "Views", "Reactions", "Shares"]]
+            [
+                [
+                    "Article",
+                    "Category",
+                    "Author",
+                    "Views",
+                    "Reactions",
+                    "Shares",
+                ]
+            ]
             + [
                 [
-                    Paragraph(escape(article.title), cell_style),
-                    Paragraph(escape(article.category.name), cell_style),
-                    Paragraph(escape(article.author.username), cell_style),
-                    article.view_count,
-                    article.reaction_count,
-                    article.share_count,
+                    Paragraph(
+                        escape(article.title),
+                        cell_style,
+                    ),
+                    Paragraph(
+                        escape(
+                            article.category.name
+                        ),
+                        cell_style,
+                    ),
+                    Paragraph(
+                        escape(
+                            article.author.username
+                        ),
+                        cell_style,
+                    ),
+                    (
+                        article.period_views
+                        or 0
+                    ),
+                    (
+                        article.period_reactions
+                        or 0
+                    ),
+                    (
+                        article.period_shares
+                        or 0
+                    ),
                 ]
                 for article in top_articles
             ],
-            [3.2 * inch, 1.45 * inch, 1.35 * inch, 0.8 * inch, 0.9 * inch, 0.8 * inch],
+            [
+                3.2 * inch,
+                1.45 * inch,
+                1.35 * inch,
+                0.8 * inch,
+                0.9 * inch,
+                0.8 * inch,
+            ],
         ),
     ]
 
@@ -1299,12 +1978,30 @@ def download_adviser_analytics_pdf(request):
         pdf_buffer.getvalue(),
         content_type="application/pdf",
     )
+
+    if analytics[
+        "analytics_is_all_time"
+    ]:
+        period_filename = "all-time"
+    else:
+        period_filename = (
+            f"{analytics_start_date.isoformat()}"
+            f"-to-"
+            f"{analytics_end_date.isoformat()}"
+        )
+
     response["Content-Disposition"] = (
-        "attachment; filename=the-equalizer-adviser-analytics-"
-        f"{report_end_date.isoformat()}.pdf"
+        "attachment; filename="
+        "the-equalizer-adviser-analytics-"
+        f"{period_filename}.pdf"
     )
-    response["X-Content-Type-Options"] = "nosniff"
+
+    response[
+        "X-Content-Type-Options"
+    ] = "nosniff"
+
     return response
+
 
 @role_required(User.Role.EIC)
 def eic_dashboard(request):
@@ -1663,6 +2360,7 @@ def staff_directory(request):
     )
 
     directory_roles = [
+        User.Role.ADVISER,
         User.Role.EIC,
         User.Role.EDITOR,
         User.Role.STAFF,
@@ -1704,9 +2402,10 @@ def staff_directory(request):
         )
 
     role_order = {
-        User.Role.EIC: 0,
-        User.Role.EDITOR: 1,
-        User.Role.STAFF: 2,
+        User.Role.ADVISER: 0,
+        User.Role.EIC: 1,
+        User.Role.EDITOR: 2,
+        User.Role.STAFF: 3,
     }
 
     staff_accounts = sorted(
@@ -1730,6 +2429,10 @@ def staff_directory(request):
             "search_query": search_query,
             "selected_role": selected_role,
             "role_choices": [
+                (
+                    User.Role.ADVISER,
+                    User.Role.ADVISER.label,
+                ),
                 (
                     User.Role.EIC,
                     User.Role.EIC.label,

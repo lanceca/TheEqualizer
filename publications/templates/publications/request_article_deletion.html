@@ -163,7 +163,7 @@
                         rows="10"
                         placeholder="Explain why this published article should be removed from the active publication..."
                         required
-                    ></textarea>
+                    >{% if request.method == 'POST' %}{{ request.POST.reason }}{% endif %}</textarea>
 
                     <p class="form-help">
                         Give the EIC a clear editorial, factual, policy, or
@@ -415,5 +415,7 @@
 
 </template>
 
+
+{% include "publications/_preserve_post_form.html" %}
 
 {% endblock %}

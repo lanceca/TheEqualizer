@@ -9,21 +9,6 @@ The Equalizer
 {% block public_content %}
 
 <!-- ======================================================
-     EQUALIZER PUBLICATION BANNER
-     ====================================================== -->
-
-<section class="reader-banner-shell">
-
-    <img
-        src="{% static 'images/equalizer-cover.jpg' %}"
-        alt="The Equalizer student publication cover"
-        class="reader-banner-image"
-    >
-
-</section>
-
-
-<!-- ======================================================
      TOP STORIES
      ====================================================== -->
 
@@ -54,6 +39,10 @@ The Equalizer
 
     </div>
 
+
+    <div class="reader-home-content-grid">
+
+        <div class="reader-home-main">
 
     {% if lead_article %}
 
@@ -368,6 +357,85 @@ The Equalizer
         </div>
 
     {% endif %}
+
+        </div>
+
+
+        <aside class="reader-ad-sidebar" aria-label="School updates">
+
+            <div class="reader-ad-sidebar-heading">
+                <p class="reader-section-kicker">
+                    Campus Notices
+                </p>
+                <h2>
+                    School Updates
+                </h2>
+                <p>
+                    Announcements, programs, opportunities, and other
+                    school-related information selected by The Equalizer.
+                </p>
+            </div>
+
+            {% if homepage_advertisements %}
+
+                <div class="reader-ad-stack">
+
+                    {% for advertisement in homepage_advertisements %}
+
+                        <a
+                            href="{% url 'school_advertisement_detail' advertisement.slug %}"
+                            class="reader-ad-card"
+                        >
+
+                            <span class="reader-ad-label">
+                                School Update
+                            </span>
+
+                            <div class="reader-ad-media">
+                                <img
+                                    src="{{ advertisement.image.url }}"
+                                    alt="{{ advertisement.title }}"
+                                >
+                            </div>
+
+                            <div class="reader-ad-copy">
+                                <h3>
+                                    {{ advertisement.title }}
+                                </h3>
+
+                                <p>
+                                    {{ advertisement.summary|truncatewords:24 }}
+                                </p>
+
+                                <span class="reader-ad-read-more">
+                                    View full details
+                                </span>
+                            </div>
+
+                        </a>
+
+                    {% endfor %}
+
+                </div>
+
+                <a
+                    href="{% url 'school_updates' %}"
+                    class="reader-ad-all-link"
+                >
+                    View all school updates
+                </a>
+
+            {% else %}
+
+                <div class="reader-ad-empty">
+                    No school updates are currently posted.
+                </div>
+
+            {% endif %}
+
+        </aside>
+
+    </div>
 
 </section>
 

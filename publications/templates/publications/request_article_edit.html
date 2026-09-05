@@ -158,7 +158,7 @@
                         rows="10"
                         placeholder="Example: The article needs updated statistics and two paragraphs should be revised to reflect the latest event results."
                         required
-                    ></textarea>
+                    >{% if request.method == 'POST' %}{{ request.POST.reason }}{% endif %}</textarea>
 
                     <p class="form-help">
                         Explain the specific parts you expect to revise and why
@@ -408,5 +408,7 @@
 
 </template>
 
+
+{% include "publications/_preserve_post_form.html" %}
 
 {% endblock %}

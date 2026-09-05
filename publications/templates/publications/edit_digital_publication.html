@@ -32,8 +32,8 @@
                 <input
                     type="text"
                     name="title"
-                    value="{{ publication.title }}"
-                    maxlength="255"
+                    maxlength="180"
+                    value="{% if request.method == 'POST' %}{{ request.POST.title }}{% else %}{{ publication.title }}{% endif %}"
                     required
                     style="width:100%;box-sizing:border-box;padding:10px;"
                 >
@@ -46,8 +46,8 @@
                 <input
                     type="text"
                     name="volume"
-                    value="{{ publication.volume }}"
                     maxlength="50"
+                    value="{% if request.method == 'POST' %}{{ request.POST.volume }}{% else %}{{ publication.volume }}{% endif %}"
                     style="width:100%;box-sizing:border-box;padding:10px;"
                 >
             </label>
@@ -59,8 +59,8 @@
                 <input
                     type="text"
                     name="issue_number"
-                    value="{{ publication.issue_number }}"
                     maxlength="50"
+                    value="{% if request.method == 'POST' %}{{ request.POST.issue_number }}{% else %}{{ publication.issue_number }}{% endif %}"
                     style="width:100%;box-sizing:border-box;padding:10px;"
                 >
             </label>
@@ -72,7 +72,7 @@
                 <input
                     type="date"
                     name="publication_date"
-                    value="{{ publication.publication_date|date:'Y-m-d' }}"
+                    value="{% if request.method == 'POST' %}{{ request.POST.publication_date }}{% else %}{{ publication.publication_date|date:'Y-m-d' }}{% endif %}"
                     required
                     style="width:100%;box-sizing:border-box;padding:10px;"
                 >
@@ -84,9 +84,10 @@
                 <strong>Description</strong><br>
                 <textarea
                     name="description"
+                    maxlength="1500"
                     rows="6"
                     style="width:100%;box-sizing:border-box;padding:10px;"
-                >{{ publication.description }}</textarea>
+                >{% if request.method == 'POST' %}{{ request.POST.description }}{% else %}{{ publication.description }}{% endif %}</textarea>
             </label>
         </p>
 
@@ -156,7 +157,7 @@
                     {% for value, label in status_choices %}
                         <option
                             value="{{ value }}"
-                            {% if publication.status == value %}selected{% endif %}
+                            {% if request.method == 'POST' %}{% if request.POST.status == value %}selected{% endif %}{% elif publication.status == value %}selected{% endif %}
                         >
                             {{ label }}
                         </option>
@@ -171,8 +172,9 @@
                 <input
                     type="number"
                     name="display_order"
-                    value="{{ publication.display_order }}"
+                    value="{% if request.method == 'POST' %}{{ request.POST.display_order }}{% else %}{{ publication.display_order }}{% endif %}"
                     min="0"
+                    max="9999"
                     style="width:100%;box-sizing:border-box;padding:10px;"
                 >
             </label>
@@ -197,5 +199,7 @@
     </form>
 
 </section>
+
+{% include "publications/_preserve_post_form.html" %}
 
 {% endblock %}

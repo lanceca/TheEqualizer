@@ -1,0 +1,409 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<style>
+    .about-admin-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 0.75fr);
+        gap: 22px;
+        align-items: start;
+    }
+
+    .about-admin-panel {
+        padding: 22px;
+        border: 1px solid var(--eq-border);
+        border-radius: var(--eq-radius);
+        background: var(--eq-white);
+        box-shadow: var(--eq-shadow);
+    }
+
+    .about-admin-panel h2 {
+        margin-top: 0;
+    }
+
+    .about-form-group {
+        margin-bottom: 17px;
+    }
+
+    .about-form-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 700;
+    }
+
+    .about-form-group input[type="text"],
+    .about-form-group textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--eq-border);
+        border-radius: 7px;
+        font: inherit;
+    }
+
+    .about-form-group textarea {
+        min-height: 130px;
+        resize: vertical;
+    }
+
+    .about-form-group textarea.about-large {
+        min-height: 190px;
+    }
+
+    .about-help {
+        display: block;
+        margin-top: 5px;
+        color: var(--eq-muted);
+        font-size: 12px;
+    }
+
+    .about-publish-row {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin: 18px 0;
+    }
+
+    .about-preview {
+        position: sticky;
+        top: 0;
+    }
+
+    .about-preview-card {
+        overflow: hidden;
+        border: 1px solid var(--eq-border);
+        border-radius: 12px;
+        background: #ffffff;
+    }
+
+    .about-preview-image {
+        display: none;
+        width: 100%;
+        height: 220px;
+        object-fit: cover;
+        background: #eef2ef;
+    }
+
+    .about-preview-image.visible {
+        display: block;
+    }
+
+    .about-preview-body {
+        padding: 20px;
+    }
+
+    .about-preview-kicker {
+        margin: 0 0 7px;
+        color: var(--eq-gold);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 1.1px;
+        text-transform: uppercase;
+    }
+
+    .about-preview-title {
+        margin: 0 0 7px;
+        color: var(--eq-green-deep);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 27px;
+    }
+
+    .about-preview-subtitle {
+        margin: 0 0 18px;
+        color: var(--eq-muted);
+    }
+
+    .about-preview-section {
+        margin-top: 18px;
+        padding-top: 14px;
+        border-top: 1px solid var(--eq-border);
+    }
+
+    .about-preview-section strong {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--eq-green-dark);
+    }
+
+    .about-preview-section p {
+        margin: 0;
+        white-space: pre-line;
+    }
+
+    @media (max-width: 980px) {
+        .about-admin-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .about-preview {
+            position: static;
+        }
+    }
+</style>
+
+<div class="dashboard-header">
+    <div>
+        <h1>About Us Page</h1>
+        <p class="dashboard-subtitle">
+            Edit the public information and history of The Equalizer.
+        </p>
+    </div>
+
+    <a
+        href="{% url 'about_us' %}"
+        class="secondary-button"
+        target="_blank"
+        rel="noopener"
+    >
+        Open Public Page
+    </a>
+</div>
+
+<div class="about-admin-grid">
+
+    <section class="about-admin-panel">
+
+        <h2>Page Content</h2>
+
+        <form
+            method="POST"
+            enctype="multipart/form-data"
+            id="about-us-form"
+        >
+            {% csrf_token %}
+
+            <div class="about-form-group">
+                <label for="about-title">Page title</label>
+                <input
+                    type="text"
+                    id="about-title"
+                    name="title"
+                    maxlength="180"
+                    required
+                    value="{% if request.method == 'POST' %}{{ request.POST.title }}{% elif about_page %}{{ about_page.title }}{% else %}About The Equalizer{% endif %}"
+                >
+            </div>
+
+            <div class="about-form-group">
+                <label for="about-subtitle">Subtitle</label>
+                <input
+                    type="text"
+                    id="about-subtitle"
+                    name="subtitle"
+                    maxlength="320"
+                    value="{% if request.method == 'POST' %}{{ request.POST.subtitle }}{% elif about_page %}{{ about_page.subtitle }}{% endif %}"
+                >
+            </div>
+
+            <div class="about-form-group">
+                <label for="about-overview">About The Equalizer</label>
+                <textarea
+                    id="about-overview"
+                    name="overview"
+                    maxlength="5000"
+                    class="about-large"
+                    required
+                >{% if request.method == 'POST' %}{{ request.POST.overview }}{% elif about_page %}{{ about_page.overview }}{% endif %}</textarea>
+            </div>
+
+            <div class="about-form-group">
+                <label for="about-history">History</label>
+                <textarea
+                    id="about-history"
+                    name="history"
+                    maxlength="7000"
+                    class="about-large"
+                    required
+                >{% if request.method == 'POST' %}{{ request.POST.history }}{% elif about_page %}{{ about_page.history }}{% endif %}</textarea>
+            </div>
+
+            <div class="about-form-group">
+                <label for="about-mission">Mission</label>
+                <textarea
+                    id="about-mission"
+                    name="mission"
+                    maxlength="2500"
+                >{% if request.method == 'POST' %}{{ request.POST.mission }}{% elif about_page %}{{ about_page.mission }}{% endif %}</textarea>
+            </div>
+
+            <div class="about-form-group">
+                <label for="about-vision">Vision</label>
+                <textarea
+                    id="about-vision"
+                    name="vision"
+                    maxlength="2500"
+                >{% if request.method == 'POST' %}{{ request.POST.vision }}{% elif about_page %}{{ about_page.vision }}{% endif %}</textarea>
+            </div>
+
+            <div class="about-form-group">
+                <label for="about-hero-image">Hero image</label>
+                <input
+                    type="file"
+                    id="about-hero-image"
+                    name="hero_image"
+                    accept="image/*"
+                >
+                <span class="about-help">
+                    Optional. Uploading a new image replaces the current image.
+                </span>
+            </div>
+
+            <label class="about-publish-row">
+                <input
+                    type="checkbox"
+                    name="is_published"
+                    value="1"
+                    {% if request.method == 'POST' %}{% if request.POST.is_published == '1' %}checked{% endif %}{% elif about_page and about_page.is_published %}checked{% endif %}
+                >
+                <span>Publish this page on the public website</span>
+            </label>
+
+            <button
+                type="submit"
+                class="primary-button"
+            >
+                Save About Us Page
+            </button>
+        </form>
+
+    </section>
+
+
+    <aside class="about-admin-panel about-preview">
+
+        <h2>Live Preview</h2>
+
+        <div class="about-preview-card">
+
+            <img
+                id="about-preview-image"
+                class="about-preview-image{% if about_page and about_page.hero_image %} visible{% endif %}"
+                {% if about_page and about_page.hero_image %}
+                    src="{{ about_page.hero_image.url }}"
+                {% endif %}
+                alt="About Us preview"
+            >
+
+            <div class="about-preview-body">
+
+                <p class="about-preview-kicker">
+                    The Equalizer
+                </p>
+
+                <h3
+                    class="about-preview-title"
+                    id="about-preview-title"
+                >
+                    {% if about_page %}{{ about_page.title }}{% else %}About The Equalizer{% endif %}
+                </h3>
+
+                <p
+                    class="about-preview-subtitle"
+                    id="about-preview-subtitle"
+                >
+                    {% if about_page %}{{ about_page.subtitle }}{% endif %}
+                </p>
+
+                <div class="about-preview-section">
+                    <strong>About</strong>
+                    <p id="about-preview-overview">{% if about_page %}{{ about_page.overview }}{% endif %}</p>
+                </div>
+
+                <div class="about-preview-section">
+                    <strong>History</strong>
+                    <p id="about-preview-history">{% if about_page %}{{ about_page.history }}{% endif %}</p>
+                </div>
+
+                <div class="about-preview-section">
+                    <strong>Mission</strong>
+                    <p id="about-preview-mission">{% if about_page %}{{ about_page.mission }}{% endif %}</p>
+                </div>
+
+                <div class="about-preview-section">
+                    <strong>Vision</strong>
+                    <p id="about-preview-vision">{% if about_page %}{{ about_page.vision }}{% endif %}</p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+</div>
+
+<script>
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+        const bindings = [
+            ["about-title", "about-preview-title"],
+            ["about-subtitle", "about-preview-subtitle"],
+            ["about-overview", "about-preview-overview"],
+            ["about-history", "about-preview-history"],
+            ["about-mission", "about-preview-mission"],
+            ["about-vision", "about-preview-vision"],
+        ];
+
+        bindings.forEach(
+            function (pair) {
+                const input = document.getElementById(pair[0]);
+                const preview = document.getElementById(pair[1]);
+
+                if (!input || !preview) {
+                    return;
+                }
+
+                input.addEventListener(
+                    "input",
+                    function () {
+                        preview.textContent = input.value;
+                    }
+                );
+            }
+        );
+
+        const imageInput = document.getElementById(
+            "about-hero-image"
+        );
+
+        const imagePreview = document.getElementById(
+            "about-preview-image"
+        );
+
+        if (imageInput && imagePreview) {
+            imageInput.addEventListener(
+                "change",
+                function () {
+                    const file = (
+                        imageInput.files
+                        && imageInput.files[0]
+                    );
+
+                    if (!file) {
+                        return;
+                    }
+
+                    const reader = new FileReader();
+
+                    reader.addEventListener(
+                        "load",
+                        function () {
+                            imagePreview.src = reader.result;
+                            imagePreview.classList.add(
+                                "visible"
+                            );
+                        }
+                    );
+
+                    reader.readAsDataURL(file);
+                }
+            );
+        }
+    }
+);
+</script>
+
+{% include "publications/_preserve_post_form.html" %}
+
+{% endblock %}

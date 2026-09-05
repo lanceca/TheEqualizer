@@ -1,0 +1,29 @@
+{% extends "public_base.html" %}
+{% load static %}
+
+{% block title %}People & Teams | The Equalizer{% endblock %}
+
+{% block public_content %}
+
+<div
+    id="people-and-teams-react-root"
+    data-react-component="PeopleAndTeams"
+    data-api-url="{% url 'people_and_teams_api' %}"
+>
+    <div class="people-react-fallback">
+        <p class="reader-section-kicker">The People Behind The Work</p>
+        <h1>People &amp; Teams</h1>
+        <p>Loading the people behind The Equalizer...</p>
+    </div>
+</div>
+
+<link
+    rel="stylesheet"
+    href="{% static 'react-dist/assets/equalizer-react.css' %}?v=20260905-people-react-modal-scroll-3"
+>
+<script
+    type="module"
+    src="{% static 'react-dist/assets/equalizer-react.js' %}?v=20260905-people-react-modal-scroll-3"
+></script>
+
+{% endblock %}

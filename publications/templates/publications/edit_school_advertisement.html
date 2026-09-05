@@ -1,0 +1,418 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<style>
+    .ad-edit-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 20px;
+        margin-bottom: 24px;
+    }
+
+    .ad-edit-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+        gap: 24px;
+        align-items: start;
+    }
+
+    .ad-edit-card {
+        padding: 22px;
+        border: 1px solid var(--eq-border);
+        border-radius: var(--eq-radius);
+        background: var(--eq-white);
+        box-shadow: var(--eq-shadow);
+    }
+
+    .ad-edit-card h2 {
+        margin: 0 0 12px;
+        padding-bottom: 9px;
+        border-bottom: 2px solid var(--eq-green-soft);
+        font-size: 20px;
+    }
+
+    .ad-edit-field {
+        margin-bottom: 16px;
+    }
+
+    .ad-edit-field label {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--eq-green-dark);
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .ad-edit-field input[type="text"],
+    .ad-edit-field input[type="number"],
+    .ad-edit-field input[type="file"],
+    .ad-edit-field textarea {
+        width: 100%;
+        padding: 11px 12px;
+        border: 1px solid var(--eq-border);
+        border-radius: 7px;
+        background: var(--eq-white);
+        color: var(--eq-charcoal);
+        font: inherit;
+    }
+
+    .ad-edit-field textarea {
+        resize: vertical;
+    }
+
+    .ad-edit-help {
+        margin-top: 6px;
+        color: var(--eq-muted);
+        font-size: 12px;
+    }
+
+    .ad-edit-checkbox {
+        display: flex;
+        gap: 10px;
+        padding: 12px;
+        margin-bottom: 18px;
+        border: 1px solid var(--eq-border);
+        border-radius: 8px;
+        background: #f7faf8;
+    }
+
+    .ad-edit-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .ad-edit-preview {
+        position: sticky;
+        top: 16px;
+    }
+
+    .ad-preview-card {
+        overflow: hidden;
+        border: 1px solid var(--eq-border);
+        border-radius: 12px;
+        background: var(--eq-white);
+        box-shadow: var(--eq-shadow);
+    }
+
+    .ad-preview-label {
+        display: block;
+        padding: 8px 12px;
+        background: var(--eq-green-dark);
+        color: var(--eq-white);
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+    .ad-preview-media {
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+        background: #eef3f0;
+    }
+
+    .ad-preview-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .ad-preview-copy {
+        padding: 16px;
+    }
+
+    .ad-preview-copy h3 {
+        margin: 0 0 8px;
+        color: var(--eq-green-dark);
+        font-size: 20px;
+    }
+
+    .ad-preview-copy p {
+        margin: 0 0 10px;
+        color: var(--eq-muted);
+        line-height: 1.55;
+    }
+
+    .ad-preview-copy span {
+        color: var(--eq-green-dark);
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    @media (max-width: 980px) {
+        .ad-edit-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .ad-edit-preview {
+            position: static;
+        }
+    }
+</style>
+
+<div class="ad-edit-header">
+
+    <div>
+        <p class="workflow-eyebrow">
+            Public Content
+        </p>
+
+        <h1>
+            Edit Homepage Advertisement
+        </h1>
+
+        <p class="section-description">
+            Update the content, public visibility, and homepage ordering for
+            this School Updates advertisement.
+        </p>
+    </div>
+
+    <a
+        href="{% url 'school_advertisement_management' %}"
+        class="secondary-button"
+    >
+        Back to Advertisements
+    </a>
+
+</div>
+
+
+<div class="ad-edit-layout">
+
+    <section class="ad-edit-card">
+
+        <h2>
+            Advertisement Details
+        </h2>
+
+        <form
+            method="POST"
+            enctype="multipart/form-data"
+        >
+
+            {% csrf_token %}
+
+            <div class="ad-edit-field">
+                <label for="advertisement-title">
+                    Title
+                </label>
+                <input
+                    type="text"
+                    id="advertisement-title"
+                    name="title"
+                    maxlength="180"
+                    value="{% if request.method == 'POST' %}{{ request.POST.title }}{% else %}{{ advertisement.title }}{% endif %}"
+                    required
+                >
+            </div>
+
+            <div class="ad-edit-field">
+                <label for="advertisement-summary">
+                    Short Summary
+                </label>
+                <textarea
+                    id="advertisement-summary"
+                    name="summary"
+                    maxlength="320"
+                    rows="4"
+                    required
+                >{% if request.method == 'POST' %}{{ request.POST.summary }}{% else %}{{ advertisement.summary }}{% endif %}</textarea>
+            </div>
+
+            <div class="ad-edit-field">
+                <label for="advertisement-details">
+                    Full Details
+                </label>
+                <textarea
+                    id="advertisement-details"
+                    name="details"
+                    maxlength="3000"
+                    rows="12"
+                    required
+                >{% if request.method == 'POST' %}{{ request.POST.details }}{% else %}{{ advertisement.details }}{% endif %}</textarea>
+            </div>
+
+            <div class="ad-edit-field">
+                <label for="advertisement-image">
+                    Replace Image
+                </label>
+                <input
+                    type="file"
+                    id="advertisement-image"
+                    name="image"
+                    accept="image/jpeg,image/png,image/webp"
+                >
+                <p class="ad-edit-help">
+                    Leave empty to keep the current image.
+                </p>
+            </div>
+
+            <div class="ad-edit-field">
+                <label for="advertisement-order">
+                    Display Order
+                </label>
+                <input
+                    type="number"
+                    id="advertisement-order"
+                    name="display_order"
+                    min="0"
+                    max="9999"
+                    value="{% if request.method == 'POST' %}{{ request.POST.display_order }}{% else %}{{ advertisement.display_order }}{% endif %}"
+                    required
+                >
+            </div>
+
+            <div class="ad-edit-checkbox">
+                <input
+                    type="checkbox"
+                    id="advertisement-active"
+                    name="is_active"
+                    value="1"
+                    {% if request.method == 'POST' %}{% if request.POST.is_active == '1' %}checked{% endif %}{% elif advertisement.is_active %}checked{% endif %}
+                >
+                <div>
+                    <label for="advertisement-active">
+                        Publicly visible
+                    </label>
+                    <div class="ad-edit-help">
+                        Active advertisements appear on the homepage and the
+                        School Updates page.
+                    </div>
+                </div>
+            </div>
+
+            <div class="ad-edit-actions">
+                <a
+                    href="{% url 'school_advertisement_management' %}"
+                    class="secondary-button"
+                >
+                    Cancel
+                </a>
+
+                <button
+                    type="submit"
+                    class="approve-button"
+                    data-confirm-title="Save Advertisement"
+                    data-confirm="Save these changes to the school advertisement?"
+                >
+                    Save Changes
+                </button>
+            </div>
+
+        </form>
+
+    </section>
+
+
+    <aside class="ad-edit-card ad-edit-preview">
+
+        <h2>
+            Homepage Preview
+        </h2>
+
+        <div class="ad-preview-card">
+
+            <span class="ad-preview-label">
+                School Update
+            </span>
+
+            <div class="ad-preview-media">
+                <img
+                    id="ad-preview-image"
+                    src="{{ advertisement.image.url }}"
+                    alt="{{ advertisement.title }} preview"
+                >
+            </div>
+
+            <div class="ad-preview-copy">
+                <h3 id="ad-preview-title">
+                    {{ advertisement.title }}
+                </h3>
+                <p id="ad-preview-summary">
+                    {{ advertisement.summary }}
+                </p>
+                <span>
+                    View full details
+                </span>
+            </div>
+
+        </div>
+
+        {% if advertisement.is_active %}
+            <div style="margin-top: 14px;">
+                <a
+                    href="{% url 'school_advertisement_detail' advertisement.slug %}"
+                    class="secondary-button"
+                    target="_blank"
+                    rel="noopener"
+                >
+                    Open Current Public Page
+                </a>
+            </div>
+        {% endif %}
+
+    </aside>
+
+</div>
+
+
+<script>
+(function () {
+    const titleInput = document.getElementById("advertisement-title");
+    const summaryInput = document.getElementById("advertisement-summary");
+    const imageInput = document.getElementById("advertisement-image");
+
+    const previewTitle = document.getElementById("ad-preview-title");
+    const previewSummary = document.getElementById("ad-preview-summary");
+    const previewImage = document.getElementById("ad-preview-image");
+
+    const originalImageUrl = previewImage.src;
+    let previewObjectUrl = null;
+
+    function updateTextPreview() {
+        previewTitle.textContent = (
+            titleInput.value.trim()
+            || "Advertisement title"
+        );
+
+        previewSummary.textContent = (
+            summaryInput.value.trim()
+            || "Your short summary will appear here."
+        );
+    }
+
+    function updateImagePreview() {
+        const file = imageInput.files && imageInput.files[0];
+
+        if (previewObjectUrl) {
+            URL.revokeObjectURL(previewObjectUrl);
+            previewObjectUrl = null;
+        }
+
+        if (!file) {
+            previewImage.src = originalImageUrl;
+            return;
+        }
+
+        previewObjectUrl = URL.createObjectURL(file);
+        previewImage.src = previewObjectUrl;
+    }
+
+    titleInput.addEventListener("input", updateTextPreview);
+    summaryInput.addEventListener("input", updateTextPreview);
+    imageInput.addEventListener("change", updateImagePreview);
+
+    window.addEventListener("beforeunload", function () {
+        if (previewObjectUrl) {
+            URL.revokeObjectURL(previewObjectUrl);
+        }
+    });
+})();
+</script>
+
+{% include "publications/_preserve_post_form.html" %}
+
+{% endblock %}

@@ -1,0 +1,319 @@
+<script>
+(function () {
+    const STORAGE_PREFIX =
+        "equalizer:preserve-post-form:v1:";
+
+    const ERROR_SELECTOR = [
+        ".message-popup.error",
+        ".errorlist",
+        "[data-form-error]",
+        ".form-error",
+        ".field-error",
+        ".error-message"
+    ].join(",");
+
+    function postForms() {
+        return Array.from(
+            document.querySelectorAll("form")
+        ).filter(function (form) {
+            return (
+                (form.method || "get")
+                .toLowerCase()
+                === "post"
+            );
+        });
+    }
+
+    function formKey(form) {
+        const forms = postForms();
+
+        const peers = forms.filter(
+            function (candidate) {
+                return (
+                    candidate.action === form.action
+                    && candidate.method === form.method
+                );
+            }
+        );
+
+        const peerIndex = Math.max(
+            0,
+            peers.indexOf(form)
+        );
+
+        return (
+            STORAGE_PREFIX
+            + encodeURIComponent(
+                form.action || window.location.href
+            )
+            + ":"
+            + (form.method || "post").toLowerCase()
+            + ":"
+            + peerIndex
+        );
+    }
+
+    function shouldSkip(control) {
+        if (!control.name) {
+            return true;
+        }
+
+        const type = (
+            control.type || ""
+        ).toLowerCase();
+
+        return [
+            "file",
+            "password",
+            "submit",
+            "button",
+            "reset",
+            "image"
+        ].includes(type)
+        || control.name === "csrfmiddlewaretoken";
+    }
+
+    function captureForm(form) {
+        const controls = Array.from(
+            form.elements
+        ).filter(function (control) {
+            return !shouldSkip(control);
+        });
+
+        const state = controls.map(
+            function (control) {
+                const type = (
+                    control.type || ""
+                ).toLowerCase();
+
+                const tag = (
+                    control.tagName || ""
+                ).toLowerCase();
+
+                const entry = {
+                    name: control.name,
+                    type: type,
+                    tag: tag
+                };
+
+                if (
+                    type === "checkbox"
+                    || type === "radio"
+                ) {
+                    entry.checked = control.checked;
+                    entry.value = control.value;
+                } else if (
+                    tag === "select"
+                    && control.multiple
+                ) {
+                    entry.values = Array.from(
+                        control.selectedOptions
+                    ).map(function (option) {
+                        return option.value;
+                    });
+                } else {
+                    entry.value = control.value;
+                }
+
+                return entry;
+            }
+        );
+
+        try {
+            sessionStorage.setItem(
+                formKey(form),
+                JSON.stringify(state)
+            );
+        } catch (error) {
+            /* Storage can be unavailable in hardened browsers. */
+        }
+    }
+
+    function restoreForm(form) {
+        let state;
+
+        try {
+            state = JSON.parse(
+                sessionStorage.getItem(
+                    formKey(form)
+                ) || "null"
+            );
+        } catch (error) {
+            state = null;
+        }
+
+        if (!Array.isArray(state)) {
+            return;
+        }
+
+        const controls = Array.from(
+            form.elements
+        ).filter(function (control) {
+            return !shouldSkip(control);
+        });
+
+        const seen = {};
+
+        controls.forEach(
+            function (control) {
+                const type = (
+                    control.type || ""
+                ).toLowerCase();
+
+                const tag = (
+                    control.tagName || ""
+                ).toLowerCase();
+
+                const signature = [
+                    control.name,
+                    type,
+                    tag
+                ].join("|");
+
+                const occurrence =
+                    seen[signature] || 0;
+
+                seen[signature] =
+                    occurrence + 1;
+
+                const matches = state.filter(
+                    function (entry) {
+                        return (
+                            entry.name === control.name
+                            && entry.type === type
+                            && entry.tag === tag
+                        );
+                    }
+                );
+
+                const entry =
+                    matches[occurrence];
+
+                if (!entry) {
+                    return;
+                }
+
+                if (
+                    type === "checkbox"
+                    || type === "radio"
+                ) {
+                    control.checked =
+                        Boolean(entry.checked);
+                } else if (
+                    tag === "select"
+                    && control.multiple
+                ) {
+                    const values =
+                        Array.isArray(entry.values)
+                            ? entry.values
+                            : [];
+
+                    Array.from(
+                        control.options
+                    ).forEach(
+                        function (option) {
+                            option.selected =
+                                values.includes(
+                                    option.value
+                                );
+                        }
+                    );
+                } else if (
+                    typeof entry.value
+                    === "string"
+                ) {
+                    control.value = entry.value;
+                }
+
+                control.dispatchEvent(
+                    new Event(
+                        "input",
+                        { bubbles: true }
+                    )
+                );
+
+                control.dispatchEvent(
+                    new Event(
+                        "change",
+                        { bubbles: true }
+                    )
+                );
+            }
+        );
+    }
+
+    function clearForm(form) {
+        try {
+            sessionStorage.removeItem(
+                formKey(form)
+            );
+        } catch (error) {
+            /* Nothing to clear. */
+        }
+    }
+
+    const forms = postForms();
+
+    if (!forms.length) {
+        return;
+    }
+
+    const hasValidationError =
+        Boolean(
+            document.querySelector(
+                ERROR_SELECTOR
+            )
+        );
+
+    forms.forEach(
+        function (form) {
+            if (hasValidationError) {
+                restoreForm(form);
+            } else {
+                clearForm(form);
+            }
+
+            form.addEventListener(
+                "submit",
+                function () {
+                    captureForm(form);
+                },
+                true
+            );
+
+            form.addEventListener(
+                "invalid",
+                function () {
+                    captureForm(form);
+                },
+                true
+            );
+        }
+    );
+
+    document.addEventListener(
+        "click",
+        function (event) {
+            const submitter =
+                event.target.closest(
+                    'button[type="submit"],'
+                    + 'input[type="submit"]'
+                );
+
+            if (
+                submitter
+                && submitter.form
+                && (
+                    submitter.form.method
+                    || "get"
+                ).toLowerCase() === "post"
+            ) {
+                captureForm(
+                    submitter.form
+                );
+            }
+        },
+        true
+    );
+})();
+</script>

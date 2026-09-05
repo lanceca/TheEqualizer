@@ -1,0 +1,213 @@
+{% extends "staff_base.html" %}
+{% block staff_content %}
+<style>
+.people-group-layout{display:grid;grid-template-columns:minmax(330px,.75fr) minmax(0,1.25fr);gap:22px;align-items:start}.people-panel{padding:22px;border:1px solid var(--eq-border);border-radius:12px;background:#fff;box-shadow:var(--eq-shadow)}
+.people-field{margin-bottom:14px}.people-field label{display:block;margin-bottom:6px;font-size:13px;font-weight:700}.people-field input[type=text],.people-field input[type=number],.people-field input[type=file],.people-field textarea{width:100%;padding:10px 12px;border:1px solid var(--eq-border);border-radius:7px;background:#fff;color:var(--eq-charcoal);font:inherit}.people-field textarea{min-height:88px;resize:vertical}.people-field-help{display:block;margin-top:5px;color:var(--eq-muted);font-size:11px}
+.people-list{
+    display:grid;
+    gap:13px;
+    min-width:0;
+}
+.people-panel{
+    min-width:0;
+    overflow:hidden;
+}
+.people-row{
+    display:grid;
+    grid-template-columns:84px minmax(0,1fr);
+    gap:14px;
+    align-items:center;
+    min-width:0;
+    width:100%;
+    padding:13px;
+    overflow:hidden;
+    border:1px solid var(--eq-border);
+    border-radius:10px;
+}
+.people-row img{
+    width:84px;
+    height:84px;
+    object-fit:cover;
+    border-radius:9px;
+}
+.people-row>div:nth-child(2){
+    min-width:0;
+    max-width:100%;
+    overflow:hidden;
+}
+.people-row h3,
+.people-row p{
+    max-width:100%;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+}
+.people-row h3{
+    margin:0 0 4px;
+    line-height:1.2;
+}
+.people-row p{
+    margin:2px 0;
+    color:var(--eq-muted);
+    font-size:12px;
+    line-height:1.35;
+}
+.people-actions{
+    grid-column:1 / -1;
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:8px;
+    min-width:0;
+    width:100%;
+    padding-top:10px;
+    border-top:1px solid var(--eq-border);
+}
+.people-actions form{
+    margin:0;
+    flex:0 0 auto;
+}
+.people-actions a,
+.people-actions button{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:auto;
+    min-width:88px;
+    min-height:34px;
+    padding:7px 12px;
+    border:1px solid var(--eq-border);
+    border-radius:7px;
+    background:#fff;
+    color:var(--eq-green-dark)!important;
+    font:inherit;
+    font-size:12px;
+    font-weight:800;
+    text-decoration:none;
+    cursor:pointer;
+}
+.people-actions a:hover,
+.people-actions button:hover{
+    border-color:var(--eq-green);
+    background:#f1f6f3;
+}
+.people-actions .people-delete-button{
+    color:#8a2d2d!important;
+    border-color:#e1caca;
+}
+.people-actions .people-delete-button:hover{
+    background:#fff3f3;
+    border-color:#c98e8e;
+}
+.people-submit-button{display:inline-flex!important;align-items:center;justify-content:center;min-height:42px;padding:10px 17px!important;border:1px solid var(--eq-green-dark)!important;border-radius:8px!important;background:var(--eq-green-dark)!important;color:#fff!important;font-weight:800!important;cursor:pointer}.people-submit-button:hover{background:var(--eq-green)!important;color:#fff!important}
+.people-field-label-row,
+.people-edit-label-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:6px;
+}
+.people-field-label-row label,
+.people-edit-label-row label{
+    margin:0!important;
+}
+.people-character-count{
+    flex-shrink:0;
+    color:var(--eq-muted);
+    font-size:11px;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+}
+.people-character-count.is-near-limit{
+    color:#9a6b00;
+}
+.people-character-count.is-at-limit{
+    color:#8a2d2d;
+}
+@media(max-width:900px){
+    .people-group-layout{grid-template-columns:1fr}
+}
+@media(max-width:620px){
+    .people-row{grid-template-columns:70px minmax(0,1fr)}
+    .people-row img{width:70px;height:70px}
+    .people-actions{justify-content:stretch}
+    .people-actions a,
+    .people-actions form{flex:1 1 0}
+    .people-actions button{width:100%;min-width:0}
+}
+</style>
+<div class="dashboard-header"><div><h1>{{ section_title }}</h1><p class="dashboard-subtitle">Create, edit, order, show, or hide profiles.</p></div><a href="{% url 'people_management' %}" class="secondary-button">Back</a></div>
+<div class="people-group-layout"><section class="people-panel"><h2>Add Profile</h2>
+<form method="POST" enctype="multipart/form-data" action="{% url 'create_people_profile' section_slug %}">{% csrf_token %}
+<div class="people-field"><div class="people-field-label-row"><label for="people-name">Name</label><span class="people-character-count" id="people-name-count">0/40</span></div><input id="people-name" type="text" name="name" maxlength="40" data-people-counter="people-name-count" required value="{% if request.method == 'POST' %}{{ request.POST.name }}{% endif %}"></div>
+<div class="people-field"><label>Profile image</label><input type="file" name="image" accept="image/*" required><span class="people-field-help">A file must be reselected after a failed submission because browsers do not restore file inputs.</span></div>
+<div class="people-field"><div class="people-field-label-row"><label for="people-role">Primary role / title</label><span class="people-character-count" id="people-role-count">0/40</span></div><input id="people-role" type="text" name="role_title" maxlength="40" data-people-counter="people-role-count" value="{% if request.method == 'POST' %}{{ request.POST.role_title }}{% endif %}"></div>
+<div class="people-field"><div class="people-field-label-row"><label for="people-position">School position</label><span class="people-character-count" id="people-position-count">0/60</span></div><input id="people-position" type="text" name="school_position" maxlength="60" data-people-counter="people-position-count" value="{% if request.method == 'POST' %}{{ request.POST.school_position }}{% endif %}"></div>
+<div class="people-field"><div class="people-field-label-row"><label for="people-department">Institute / department</label><span class="people-character-count" id="people-department-count">0/60</span></div><input id="people-department" type="text" name="institute_department" maxlength="60" data-people-counter="people-department-count" value="{% if request.method == 'POST' %}{{ request.POST.institute_department }}{% endif %}"></div>
+<div class="people-field"><div class="people-field-label-row"><label for="people-courses">Courses handled</label><span class="people-character-count" id="people-courses-count">0/180</span></div><textarea id="people-courses" name="courses_handled" maxlength="180" data-people-counter="people-courses-count">{% if request.method == 'POST' %}{{ request.POST.courses_handled }}{% endif %}</textarea></div>
+<div class="people-field"><div class="people-field-label-row"><label for="people-achievements">Achievements / contributions</label><span class="people-character-count" id="people-achievements-count">0/300</span></div><textarea id="people-achievements" name="achievements" maxlength="300" data-people-counter="people-achievements-count">{% if request.method == 'POST' %}{{ request.POST.achievements }}{% endif %}</textarea></div>
+<div class="people-field"><div class="people-field-label-row"><label for="people-additional">Additional information</label><span class="people-character-count" id="people-additional-count">0/300</span></div><textarea id="people-additional" name="additional_information" maxlength="300" data-people-counter="people-additional-count">{% if request.method == 'POST' %}{{ request.POST.additional_information }}{% endif %}</textarea></div>
+<div class="people-field"><label>Display order</label><input type="number" name="display_order" min="0" max="9999" value="{% if request.method == 'POST' %}{{ request.POST.display_order|default:'0' }}{% else %}0{% endif %}"></div>
+<label style="display:flex;gap:8px;align-items:center;margin:16px 0"><input type="checkbox" name="is_active" value="1" {% if request.method != 'POST' or request.POST.is_active == '1' %}checked{% endif %}>Visible on public page</label>
+<button class="people-submit-button" type="submit">Add Profile</button></form></section>
+<section class="people-panel"><h2>Current Profiles</h2><div class="people-list">{% for profile in profiles %}<article class="people-row"><img src="{{ profile.image.url }}" alt="{{ profile.name }}"><div><h3>{{ profile.name }}</h3>{% if profile.role_title %}<p>{{ profile.role_title }}</p>{% endif %}{% if profile.school_position %}<p>{{ profile.school_position }}</p>{% endif %}<p>Order: {{ profile.display_order }} · {% if profile.is_active %}Visible{% else %}Hidden{% endif %}</p></div><div class="people-actions"><a href="{% url 'edit_people_profile' section_slug profile.id %}">Edit</a><form method="POST" action="{% url 'set_people_profile_status' section_slug profile.id %}" data-confirm-title="{% if profile.is_active %}Hide Profile{% else %}Show Profile{% endif %}" data-confirm="{% if profile.is_active %}Hide '{{ profile.name }}' from the public People & Teams page?{% else %}Show '{{ profile.name }}' on the public People & Teams page?{% endif %}">{% csrf_token %}<input type="hidden" name="is_active" value="{% if profile.is_active %}0{% else %}1{% endif %}"><button type="submit">{% if profile.is_active %}Hide{% else %}Show{% endif %}</button></form><form method="POST" action="{% url 'delete_people_profile' section_slug profile.id %}" data-confirm-title="Delete Profile" data-confirm="Permanently delete '{{ profile.name }}'? This cannot be undone.">{% csrf_token %}<button type="submit" class="people-delete-button">Delete</button></form></div></article>{% empty %}<p>No profiles have been added yet.</p>{% endfor %}</div></section></div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+function initializePeopleCharacterCounters() {
+    document.querySelectorAll(
+        "[data-people-counter]"
+    ).forEach(function (field) {
+        const counter =
+            document.getElementById(
+                field.getAttribute(
+                    "data-people-counter"
+                )
+            );
+
+        if (!counter) {
+            return;
+        }
+
+        const maximum =
+            Number(
+                field.getAttribute(
+                    "maxlength"
+                )
+            ) || 0;
+
+        function updateCounter() {
+            const current =
+                field.value.length;
+
+            counter.textContent =
+                current + "/" + maximum;
+
+            counter.classList.toggle(
+                "is-near-limit",
+                maximum > 0
+                && current >= maximum * 0.9
+                && current < maximum
+            );
+
+            counter.classList.toggle(
+                "is-at-limit",
+                maximum > 0
+                && current >= maximum
+            );
+        }
+
+        field.addEventListener(
+            "input",
+            updateCounter
+        );
+
+        updateCounter();
+    });
+}
+
+    initializePeopleCharacterCounters();
+});
+</script>
+{% include "publications/_preserve_post_form.html" %}
+
+{% endblock %}

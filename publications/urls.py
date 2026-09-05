@@ -262,4 +262,94 @@ urlpatterns = [
         name="delete_digital_publication",
     ),
 
+
+
+    # =========================
+    # SCHOOL ADVERTISEMENTS
+    # EIC MANAGEMENT
+    # =========================
+
+    path(
+        "school-advertisements/",
+        views.school_advertisement_management,
+        name="school_advertisement_management",
+    ),
+
+    path(
+        "school-advertisements/create/",
+        views.create_school_advertisement,
+        name="create_school_advertisement",
+    ),
+
+    path(
+        "school-advertisements/<int:advertisement_id>/edit/",
+        views.edit_school_advertisement,
+        name="edit_school_advertisement",
+    ),
+
+    path(
+        "school-advertisements/<int:advertisement_id>/status/",
+        views.set_school_advertisement_status,
+        name="set_school_advertisement_status",
+    ),
+
+    path(
+        "school-advertisements/<int:advertisement_id>/delete/",
+        views.delete_school_advertisement,
+        name="delete_school_advertisement",
+    ),
+
+
+
+    # =========================
+    # PEOPLE & TEAMS
+    # =========================
+
+    path(
+        "people/",
+        views.people_management,
+        name="people_management",
+    ),
+
+    path(
+        "people/<slug:section_slug>/",
+        views.people_group_management,
+        name="people_group_management",
+    ),
+
+    path(
+        "people/<slug:section_slug>/create/",
+        views.create_people_profile,
+        name="create_people_profile",
+    ),
+
+    path(
+        "people/<slug:section_slug>/<int:profile_id>/edit/",
+        views.edit_people_profile,
+        name="edit_people_profile",
+    ),
+
+    path(
+        "people/<slug:section_slug>/<int:profile_id>/status/",
+        views.set_people_profile_status,
+        name="set_people_profile_status",
+    ),
+
+    path(
+        "people/<slug:section_slug>/<int:profile_id>/delete/",
+        views.delete_people_profile,
+        name="delete_people_profile",
+    ),
+
+    # =========================
+    # ABOUT US PAGE
+    # EIC MANAGEMENT
+    # =========================
+
+    path(
+        "about-us/",
+        views.about_us_management,
+        name="about_us_management",
+    ),
+
 ]

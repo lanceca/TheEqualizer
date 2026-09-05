@@ -8,82 +8,163 @@ Digital Publications | The Equalizer
 
 <style>
     .digital-reader-page {
-        width: min(1180px, calc(100% - 32px));
+        width: min(1320px, calc(100% - 32px));
         margin: 0 auto;
         padding: 38px 0 70px;
     }
 
     .digital-reader-header {
-        margin-bottom: 26px;
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 28px;
+        margin-bottom: 28px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid #dce4df;
+    }
+
+    .digital-reader-header-copy {
+        max-width: 760px;
+    }
+
+    .digital-reader-kicker {
+        margin: 0 0 7px;
+        color: #c9a227;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 1.25px;
+        text-transform: uppercase;
     }
 
     .digital-reader-header h1 {
-        margin-bottom: 8px;
+        margin: 0 0 9px;
         color: #173f32;
         font-family: Georgia, "Times New Roman", serif;
         font-size: clamp(34px, 5vw, 56px);
+        line-height: 1.04;
     }
 
-    .digital-reader-header p {
+    .digital-reader-header-description {
+        margin: 0;
         max-width: 720px;
         color: #68756f;
         line-height: 1.65;
     }
 
+    .digital-reader-count {
+        flex-shrink: 0;
+        margin: 0 0 4px;
+        color: #68756f;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    /* Two compact publication cards per row on desktop. */
     .digital-reader-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 24px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+        align-items: stretch;
     }
 
     .digital-reader-card {
+        display: grid;
+        grid-template-columns: 150px minmax(0, 1fr);
+        min-height: 220px;
         overflow: hidden;
         border: 1px solid #dce4df;
-        border-radius: 12px;
-        background: #fff;
-        box-shadow: 0 10px 28px rgba(16, 49, 39, 0.08);
+        border-radius: 14px;
+        background: #ffffff;
+        box-shadow: 0 8px 24px rgba(16, 49, 39, 0.07);
+        transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease,
+            border-color 0.2s ease;
+    }
+
+    .digital-reader-card:hover {
+        transform: translateY(-3px);
+        border-color: #c6d3cc;
+        box-shadow: 0 14px 32px rgba(16, 49, 39, 0.12);
+    }
+
+    /* Fixed cover preview area — no longer expands with the card width. */
+    .digital-reader-cover-link {
+        display: block;
+        width: 150px;
+        height: 220px;
+        overflow: hidden;
+        background: #edf1ee;
     }
 
     .digital-reader-cover {
         display: block;
-        width: 100%;
-        aspect-ratio: 3 / 4;
+        width: 150px;
+        height: 220px;
         object-fit: cover;
+        object-position: center;
         background: #edf1ee;
+        transition: transform 0.25s ease;
+    }
+
+    .digital-reader-card:hover .digital-reader-cover {
+        transform: scale(1.025);
     }
 
     .digital-reader-placeholder {
         display: grid;
         place-items: center;
-        padding: 20px;
+        padding: 16px;
         color: #68756f;
+        font-family: Georgia, "Times New Roman", serif;
+        font-weight: 700;
         text-align: center;
     }
 
     .digital-reader-card-body {
-        padding: 18px;
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        padding: 19px 20px 18px;
     }
 
     .digital-reader-card h2 {
         margin: 0 0 8px;
         color: #0e2a22;
         font-family: Georgia, "Times New Roman", serif;
-        font-size: 23px;
+        font-size: clamp(20px, 2vw, 25px);
+        line-height: 1.15;
     }
 
     .digital-reader-meta {
         display: flex;
         flex-wrap: wrap;
-        gap: 5px 12px;
-        margin-bottom: 14px;
+        gap: 5px 11px;
+        margin-bottom: 11px;
         color: #68756f;
         font-size: 12px;
     }
 
+    .digital-reader-description {
+        display: -webkit-box;
+        margin: 0;
+        overflow: hidden;
+        color: #46534d;
+        font-size: 14px;
+        line-height: 1.55;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+    }
+
     .digital-reader-open {
         display: inline-flex;
-        margin-top: 10px;
+        align-items: center;
+        width: fit-content;
+        gap: 7px;
+        margin-top: auto;
+        padding-top: 14px;
         color: #173f32;
+        font-size: 13px;
         font-weight: 800;
         text-decoration: none;
     }
@@ -91,22 +172,108 @@ Digital Publications | The Equalizer
     .digital-reader-open:hover {
         color: #c9a227;
     }
+
+    .digital-reader-empty {
+        grid-column: 1 / -1;
+        margin: 0;
+        padding: 46px 22px;
+        border: 1px solid #dce4df;
+        border-radius: 12px;
+        background: #f4f7f5;
+        color: #68756f;
+        text-align: center;
+    }
+
+    @media (max-width: 980px) {
+        .digital-reader-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 620px) {
+        .digital-reader-page {
+            width: min(100% - 20px, 1320px);
+            padding-top: 28px;
+        }
+
+        .digital-reader-header {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .digital-reader-card {
+            grid-template-columns: 112px minmax(0, 1fr);
+            min-height: 168px;
+        }
+
+        .digital-reader-cover-link,
+        .digital-reader-cover {
+            width: 112px;
+            height: 168px;
+        }
+
+        .digital-reader-card-body {
+            padding: 14px 15px;
+        }
+
+        .digital-reader-card h2 {
+            font-size: 19px;
+        }
+
+        .digital-reader-description {
+            -webkit-line-clamp: 2;
+        }
+    }
+
+    @media (max-width: 420px) {
+        .digital-reader-card {
+            grid-template-columns: 96px minmax(0, 1fr);
+            min-height: 144px;
+        }
+
+        .digital-reader-cover-link,
+        .digital-reader-cover {
+            width: 96px;
+            height: 144px;
+        }
+
+        .digital-reader-card-body {
+            padding: 12px;
+        }
+
+        .digital-reader-meta {
+            margin-bottom: 7px;
+        }
+
+        .digital-reader-description {
+            display: none;
+        }
+    }
 </style>
 
 
 <main class="digital-reader-page">
 
     <header class="digital-reader-header">
-        <p style="color:#c9a227;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;">
-            The Equalizer
+
+        <div class="digital-reader-header-copy">
+            <p class="digital-reader-kicker">
+                The Equalizer
+            </p>
+
+            <h1>Digital Publications</h1>
+
+            <p class="digital-reader-header-description">
+                Browse complete PDF issues of The Equalizer student publication
+                and open any issue in the interactive page-flipping reader.
+            </p>
+        </div>
+
+        <p class="digital-reader-count">
+            {{ digital_publications|length }} publication{{ digital_publications|length|pluralize }}
         </p>
 
-        <h1>Digital Publications</h1>
-
-        <p>
-            Browse complete PDF issues of The Equalizer student publication.
-            The interactive page-flipping reader will be connected in the next React step.
-        </p>
     </header>
 
 
@@ -116,7 +283,11 @@ Digital Publications | The Equalizer
 
             <article class="digital-reader-card">
 
-                <a href="{% url 'digital_publication_detail' publication.slug %}">
+                <a
+                    href="{% url 'digital_publication_detail' publication.slug %}"
+                    class="digital-reader-cover-link"
+                    aria-label="Open {{ publication.title }}"
+                >
 
                     {% if publication.cover_image %}
 
@@ -162,8 +333,8 @@ Digital Publications | The Equalizer
                     </div>
 
                     {% if publication.description %}
-                        <p>
-                            {{ publication.description|truncatewords:28 }}
+                        <p class="digital-reader-description">
+                            {{ publication.description|truncatewords:24 }}
                         </p>
                     {% endif %}
 
@@ -171,7 +342,7 @@ Digital Publications | The Equalizer
                         href="{% url 'digital_publication_detail' publication.slug %}"
                         class="digital-reader-open"
                     >
-                        Open publication →
+                        Open publication <span aria-hidden="true">→</span>
                     </a>
 
                 </div>
@@ -180,7 +351,7 @@ Digital Publications | The Equalizer
 
         {% empty %}
 
-            <p>
+            <p class="digital-reader-empty">
                 No Digital Publications have been published yet.
             </p>
 

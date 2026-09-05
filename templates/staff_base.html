@@ -131,6 +131,10 @@
                         Manage Staff Accounts
                     </a>
 
+                    <a href="{% url 'people_management' %}">
+                        People &amp; Teams
+                    </a>
+
                 </div>
 
 
@@ -291,6 +295,17 @@
                         Digital Publications
                     </a>
 
+                    <a href="{% url 'school_advertisement_management' %}">
+                        Homepage Advertisements
+                    </a>
+
+                    <a href="{% url 'about_us_management' %}">
+                        About Us Page
+                    </a>
+
+                    <a href="{% url 'people_management' %}">
+                        People &amp; Teams
+                    </a>
 
                     <a href="{% url 'staff_directory' %}">
                         Staff Directory
@@ -744,6 +759,62 @@ document.addEventListener("DOMContentLoaded", function () {
     </section>
 
 </div>
+
+<!-- ======================================================
+     GLOBAL ACTION CONFIRMATION DIALOG
+     Replaces native browser confirm() popups on staff pages.
+     ====================================================== -->
+
+<div
+    class="equalizer-confirm-overlay"
+    id="equalizer-confirm-overlay"
+    aria-hidden="true"
+>
+    <section
+        class="equalizer-confirm-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="equalizer-confirm-title"
+        aria-describedby="equalizer-confirm-message"
+    >
+        <div class="equalizer-confirm-icon" aria-hidden="true">
+            !
+        </div>
+
+        <div class="equalizer-confirm-copy">
+            <p class="equalizer-confirm-kicker">
+                Please confirm
+            </p>
+
+            <h2 id="equalizer-confirm-title">
+                Confirm Action
+            </h2>
+
+            <p id="equalizer-confirm-message">
+                Are you sure you want to continue?
+            </p>
+        </div>
+
+        <div class="equalizer-confirm-actions">
+            <button
+                type="button"
+                class="secondary-button"
+                id="equalizer-confirm-cancel"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                class="equalizer-confirm-proceed"
+                id="equalizer-confirm-proceed"
+            >
+                Confirm
+            </button>
+        </div>
+    </section>
+</div>
+
 
 <!-- ======================================================
      GLOBAL EQUALIZER LOADING OVERLAY
@@ -1994,6 +2065,683 @@ document.addEventListener(
 
     }
 );
+</script>
+
+
+<script>
+(function () {
+    let pendingForm = null;
+    let pendingSubmitter = null;
+    let pendingSource = null;
+
+    function normalizeText(value) {
+        return String(value || "")
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+
+    function getConfirmationSource(form, submitter) {
+        if (
+            submitter
+            && submitter.dataset
+            && submitter.dataset.confirm
+        ) {
+            return submitter;
+        }
+
+        if (
+            form
+            && form.dataset
+            && form.dataset.confirm
+        ) {
+            return form;
+        }
+
+        return null;
+    }
+
+    function getSubmitterFromTarget(target) {
+        if (!target || !target.closest) {
+            return null;
+        }
+
+        const button = target.closest(
+            'button[type="submit"], input[type="submit"]'
+        );
+
+        return button && button.form
+            ? button
+            : null;
+    }
+
+    function isDangerousConfirmation(title, message, submitter) {
+        const label = normalizeText(
+            submitter
+                ? (
+                    submitter.textContent
+                    || submitter.value
+                )
+                : ""
+        );
+
+        const text = (
+            normalizeText(title)
+            + " "
+            + normalizeText(message)
+            + " "
+            + label
+        ).toLowerCase();
+
+        return [
+            "delete",
+            "remove",
+            "reject",
+            "deactivate",
+            "archive",
+            "hide",
+            "cancel",
+            "permanent",
+        ].some(function (word) {
+            return text.includes(word);
+        });
+    }
+
+    function openConfirmation(form, submitter, source) {
+        const overlay =
+            document.getElementById(
+                "equalizer-confirm-overlay"
+            );
+
+        const titleElement =
+            document.getElementById(
+                "equalizer-confirm-title"
+            );
+
+        const messageElement =
+            document.getElementById(
+                "equalizer-confirm-message"
+            );
+
+        const proceedButton =
+            document.getElementById(
+                "equalizer-confirm-proceed"
+            );
+
+        if (
+            !overlay
+            || !titleElement
+            || !messageElement
+            || !proceedButton
+        ) {
+            return false;
+        }
+
+        pendingForm = form;
+        pendingSubmitter = submitter;
+        pendingSource = source;
+
+        const title =
+            source.dataset.confirmTitle
+            || "Confirm Action";
+
+        const message =
+            source.dataset.confirm
+            || "Are you sure you want to continue?";
+
+        const submitterLabel =
+            normalizeText(
+                submitter
+                    ? (
+                        submitter.textContent
+                        || submitter.value
+                    )
+                    : ""
+            );
+
+        titleElement.textContent = title;
+        messageElement.textContent = message;
+
+        proceedButton.textContent =
+            source.dataset.confirmButton
+            || submitterLabel
+            || "Confirm";
+
+        const isDangerous =
+            isDangerousConfirmation(
+                title,
+                message,
+                submitter
+            );
+
+        overlay.classList.toggle(
+            "is-dangerous",
+            isDangerous
+        );
+
+        overlay.classList.add("is-open");
+
+        overlay.setAttribute(
+            "aria-hidden",
+            "false"
+        );
+
+        document.body.classList.add(
+            "equalizer-confirm-open"
+        );
+
+        window.setTimeout(
+            function () {
+                proceedButton.focus();
+            },
+            0
+        );
+
+        return true;
+    }
+
+    function closeConfirmation() {
+        const overlay =
+            document.getElementById(
+                "equalizer-confirm-overlay"
+            );
+
+        if (overlay) {
+            overlay.classList.remove(
+                "is-open"
+            );
+
+            overlay.classList.remove(
+                "is-dangerous"
+            );
+
+            overlay.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+        }
+
+        document.body.classList.remove(
+            "equalizer-confirm-open"
+        );
+
+        pendingForm = null;
+        pendingSubmitter = null;
+        pendingSource = null;
+    }
+
+    function showLoadingBeforeSubmit(form, submitter) {
+        const loadingOverlay =
+            document.getElementById(
+                "equalizer-loading-overlay"
+            );
+
+        if (!loadingOverlay) {
+            return;
+        }
+
+        const loadingTitle =
+            document.getElementById(
+                "equalizer-loading-title"
+            );
+
+        const loadingMessage =
+            document.getElementById(
+                "equalizer-loading-message"
+            );
+
+        if (loadingTitle) {
+            loadingTitle.textContent =
+                (
+                    submitter
+                    && submitter.dataset.loadingTitle
+                )
+                || form.dataset.loadingTitle
+                || "Processing";
+        }
+
+        if (loadingMessage) {
+            loadingMessage.textContent =
+                (
+                    submitter
+                    && submitter.dataset.loadingMessage
+                )
+                || form.dataset.loadingMessage
+                || (
+                    "Please wait while The Equalizer "
+                    + "completes your request."
+                );
+        }
+
+        loadingOverlay.classList.add(
+            "is-visible"
+        );
+
+        loadingOverlay.setAttribute(
+            "aria-hidden",
+            "false"
+        );
+    }
+
+    function performConfirmedSubmit() {
+        if (!pendingForm) {
+            closeConfirmation();
+            return;
+        }
+
+        const form = pendingForm;
+        const submitter = pendingSubmitter;
+
+        /*
+         * Preserve submit-button behavior when bypassing the normal
+         * submit event. This matters for workflow buttons that send
+         * name="action" values such as approve/reject/publish.
+         */
+        if (
+            submitter
+            && submitter.name
+        ) {
+            const hidden =
+                document.createElement(
+                    "input"
+                );
+
+            hidden.type = "hidden";
+            hidden.name = submitter.name;
+            hidden.value = submitter.value;
+
+            form.appendChild(hidden);
+        }
+
+        if (
+            submitter
+            && submitter.hasAttribute(
+                "formaction"
+            )
+        ) {
+            form.action = submitter.formAction;
+        }
+
+        if (
+            submitter
+            && submitter.hasAttribute(
+                "formmethod"
+            )
+        ) {
+            form.method = submitter.formMethod;
+        }
+
+        if (
+            submitter
+            && submitter.hasAttribute(
+                "formenctype"
+            )
+        ) {
+            form.enctype = submitter.formEnctype;
+        }
+
+        /*
+         * Remove any old inline confirm() so a legacy browser popup
+         * can never appear after the custom dialog is accepted.
+         */
+        const inlineSubmit =
+            form.getAttribute("onsubmit");
+
+        if (
+            inlineSubmit
+            && inlineSubmit.includes(
+                "confirm("
+            )
+        ) {
+            form.removeAttribute(
+                "onsubmit"
+            );
+        }
+
+        showLoadingBeforeSubmit(
+            form,
+            submitter
+        );
+
+        closeConfirmation();
+
+        HTMLFormElement.prototype.submit.call(
+            form
+        );
+    }
+
+    /*
+     * Capture click BEFORE base.html or inline confirmation handlers.
+     * This prevents the browser's native "... says" confirmation box.
+     */
+    window.addEventListener(
+        "click",
+        function (event) {
+            const submitter =
+                getSubmitterFromTarget(
+                    event.target
+                );
+
+            if (!submitter) {
+                return;
+            }
+
+            const form = submitter.form;
+
+            const source =
+                getConfirmationSource(
+                    form,
+                    submitter
+                );
+
+            if (!source) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopImmediatePropagation();
+
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            openConfirmation(
+                form,
+                submitter,
+                source
+            );
+        },
+        true
+    );
+
+    /*
+     * Keyboard submissions (for example pressing Enter) do not always
+     * create a click event, so protect the submit event as well.
+     */
+    window.addEventListener(
+        "submit",
+        function (event) {
+            const form = event.target;
+
+            if (
+                !form
+                || form.tagName !== "FORM"
+            ) {
+                return;
+            }
+
+            const submitter =
+                event.submitter || null;
+
+            const source =
+                getConfirmationSource(
+                    form,
+                    submitter
+                );
+
+            if (!source) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopImmediatePropagation();
+
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            openConfirmation(
+                form,
+                submitter,
+                source
+            );
+        },
+        true
+    );
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+            const overlay =
+                document.getElementById(
+                    "equalizer-confirm-overlay"
+                );
+
+            const cancelButton =
+                document.getElementById(
+                    "equalizer-confirm-cancel"
+                );
+
+            const proceedButton =
+                document.getElementById(
+                    "equalizer-confirm-proceed"
+                );
+
+            if (
+                !overlay
+                || !cancelButton
+                || !proceedButton
+            ) {
+                return;
+            }
+
+            cancelButton.addEventListener(
+                "click",
+                closeConfirmation
+            );
+
+            proceedButton.addEventListener(
+                "click",
+                performConfirmedSubmit
+            );
+
+            overlay.addEventListener(
+                "click",
+                function (event) {
+                    if (event.target === overlay) {
+                        closeConfirmation();
+                    }
+                }
+            );
+
+            document.addEventListener(
+                "keydown",
+                function (event) {
+                    if (
+                        event.key === "Escape"
+                        && overlay.classList.contains(
+                            "is-open"
+                        )
+                    ) {
+                        event.preventDefault();
+                        closeConfirmation();
+                    }
+                }
+            );
+        }
+    );
+})();
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const sidebar = document.querySelector(".staff-sidebar");
+    const nav = document.querySelector(".staff-nav");
+
+    if (!sidebar || !nav) {
+        return;
+    }
+
+    const baseKey =
+        "equalizerStaffSidebarState:{{ request.user.role }}";
+
+    const keys = {
+        pending: baseKey + ":pending",
+        windowY: baseKey + ":windowY",
+        sidebarTop: baseKey + ":sidebarTop",
+        navTop: baseKey + ":navTop",
+    };
+
+    function storeNumber(key, value) {
+        sessionStorage.setItem(
+            key,
+            String(Number(value) || 0)
+        );
+    }
+
+    function readNumber(key) {
+        const value = Number(
+            sessionStorage.getItem(key)
+        );
+
+        return Number.isFinite(value)
+            ? value
+            : 0;
+    }
+
+    function saveSidebarState(markPending) {
+        storeNumber(
+            keys.windowY,
+            window.scrollY || window.pageYOffset || 0
+        );
+
+        storeNumber(
+            keys.sidebarTop,
+            sidebar.scrollTop
+        );
+
+        storeNumber(
+            keys.navTop,
+            nav.scrollTop
+        );
+
+        if (markPending) {
+            sessionStorage.setItem(
+                keys.pending,
+                "1"
+            );
+        }
+    }
+
+    function restoreSidebarState() {
+        sidebar.scrollTop =
+            readNumber(keys.sidebarTop);
+
+        nav.scrollTop =
+            readNumber(keys.navTop);
+
+        window.scrollTo({
+            top: readNumber(keys.windowY),
+            left: 0,
+            behavior: "auto",
+        });
+    }
+
+    const shouldRestore =
+        sessionStorage.getItem(
+            keys.pending
+        ) === "1";
+
+    if (shouldRestore) {
+        if ("scrollRestoration" in history) {
+            history.scrollRestoration = "manual";
+        }
+
+        restoreSidebarState();
+
+        requestAnimationFrame(function () {
+            restoreSidebarState();
+
+            requestAnimationFrame(function () {
+                restoreSidebarState();
+            });
+        });
+
+        window.addEventListener(
+            "load",
+            function () {
+                restoreSidebarState();
+
+                window.setTimeout(
+                    restoreSidebarState,
+                    75
+                );
+
+                window.setTimeout(
+                    function () {
+                        restoreSidebarState();
+
+                        sessionStorage.removeItem(
+                            keys.pending
+                        );
+                    },
+                    220
+                );
+            },
+            { once: true }
+        );
+    }
+
+    sidebar.addEventListener(
+        "scroll",
+        function () {
+            saveSidebarState(false);
+        },
+        { passive: true }
+    );
+
+    nav.addEventListener(
+        "scroll",
+        function () {
+            saveSidebarState(false);
+        },
+        { passive: true }
+    );
+
+    window.addEventListener(
+        "scroll",
+        function () {
+            saveSidebarState(false);
+        },
+        { passive: true }
+    );
+
+    nav.querySelectorAll("a[href]").forEach(
+        function (link) {
+            link.addEventListener(
+                "click",
+                function () {
+                    saveSidebarState(true);
+                }
+            );
+        }
+    );
+
+    nav.querySelectorAll("form").forEach(
+        function (form) {
+            form.addEventListener(
+                "submit",
+                function () {
+                    saveSidebarState(true);
+                }
+            );
+        }
+    );
+
+    window.addEventListener(
+        "pagehide",
+        function () {
+            const pending =
+                sessionStorage.getItem(
+                    keys.pending
+                ) === "1";
+
+            saveSidebarState(pending);
+        }
+    );
+});
 </script>
 
 {% endblock %}

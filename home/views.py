@@ -4,7 +4,7 @@ from html import escape, unescape
 
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Q
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import (
     get_object_or_404,
@@ -37,8 +37,12 @@ from rest_framework.response import Response
 
 from analytics.models import ArticleDailyAnalytics
 from publications.models import (
+    AboutUsPage,
     Article,
+    Category,
     DigitalPublication,
+    PeopleProfile,
+    SchoolAdvertisement,
 )
 
 
@@ -246,6 +250,17 @@ def home(request):
         else []
     )
 
+    homepage_advertisements = list(
+        SchoolAdvertisement.objects
+        .filter(
+            is_active=True,
+        )
+        .order_by(
+            "display_order",
+            "-updated_at",
+        )[:4]
+    )
+
     return render(
         request,
         "home/home.html",
@@ -261,6 +276,124 @@ def home(request):
             ),
             "more_articles": (
                 more_articles
+            ),
+            "homepage_advertisements": (
+                homepage_advertisements
+            ),
+        },
+    )
+
+
+
+
+# ==========================================================
+# PUBLIC CATEGORY ARTICLES
+# ==========================================================
+
+
+def category_articles(
+    request,
+    category_slug,
+):
+    category = get_object_or_404(
+        Category,
+        slug=category_slug,
+    )
+
+    category_search_query = (
+        request.GET.get("q", "").strip()[:100]
+    )
+
+    articles = (
+        Article.objects
+        .filter(
+            category=category,
+            draft_type=Article.DraftType.NORMAL,
+            is_published=True,
+            is_archived=False,
+        )
+        .select_related(
+            "category",
+            "author",
+        )
+        .prefetch_related(
+            "tags",
+            "attachments",
+            "video_attachments",
+            "contributors",
+            "contributors__user",
+        )
+    )
+
+    if category_search_query:
+        articles = (
+            articles
+            .filter(
+                Q(
+                    title__icontains=(
+                        category_search_query
+                    )
+                )
+                | Q(
+                    subtitle__icontains=(
+                        category_search_query
+                    )
+                )
+                | Q(
+                    excerpt__icontains=(
+                        category_search_query
+                    )
+                )
+                | Q(
+                    content__icontains=(
+                        category_search_query
+                    )
+                )
+                | Q(
+                    author__username__icontains=(
+                        category_search_query
+                    )
+                )
+                | Q(
+                    tags__name__icontains=(
+                        category_search_query
+                    )
+                )
+            )
+            .distinct()
+        )
+
+    articles = list(
+        articles.order_by(
+            "-published_at",
+            "-created_at",
+        )
+    )
+
+    lead_article = (
+        articles[0]
+        if articles
+        else None
+    )
+
+    remaining_articles = (
+        articles[1:]
+        if articles
+        else []
+    )
+
+    return render(
+        request,
+        "home/category_articles.html",
+        {
+            "category": category,
+            "category_search_query": (
+                category_search_query
+            ),
+            "articles": articles,
+            "lead_article": lead_article,
+            "remaining_articles": (
+                remaining_articles
             ),
         },
     )
@@ -929,3 +1062,176 @@ def digital_publication_api(
             ),
         }
     )
+
+
+
+
+
+
+# ==========================================================
+# PEOPLE & TEAMS
+# ==========================================================
+
+PEOPLE_GROUP_DEFINITIONS = [
+    (
+        "developers",
+        PeopleProfile.Section.DEVELOPERS,
+        "The Developers",
+        "Meet the developers behind The Equalizer CMS project.",
+        "Build",
+    ),
+    (
+        "capstone-committee",
+        PeopleProfile.Section.CAPSTONE_COMMITTEE,
+        "Capstone Committee",
+        "Meet the Capstone Committee supporting the project.",
+        "Guide",
+    ),
+    (
+        "ics-faculty",
+        PeopleProfile.Section.ICS_FACULTY,
+        "ICS Faculty",
+        "Meet the Institute of Computing Studies faculty.",
+        "Teach",
+    ),
+    (
+        "equalizer-team",
+        PeopleProfile.Section.EQUALIZER_TEAM,
+        "The Equalizer Team",
+        "Meet the student publication team behind The Equalizer.",
+        "Publish",
+    ),
+]
+
+
+def people_and_teams(request):
+    return render(
+        request,
+        "home/people_and_teams.html",
+    )
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def people_and_teams_api(request):
+    groups = []
+
+    for (
+        slug,
+        section,
+        title,
+        description,
+        eyebrow,
+    ) in PEOPLE_GROUP_DEFINITIONS:
+        profiles = (
+            PeopleProfile.objects
+            .filter(
+                section=section,
+                is_active=True,
+            )
+            .order_by(
+                "display_order",
+                "name",
+            )
+        )
+
+        groups.append({
+            "slug": slug,
+            "title": title,
+            "description": description,
+            "eyebrow": eyebrow,
+            "profiles": [
+                {
+                    "id": profile.id,
+                    "name": profile.name,
+                    "image_url": (
+                        request.build_absolute_uri(
+                            profile.image.url
+                        )
+                        if profile.image
+                        else ""
+                    ),
+                    "role_title": profile.role_title,
+                    "school_position": profile.school_position,
+                    "institute_department": profile.institute_department,
+                    "courses_handled": profile.courses_handled,
+                    "achievements": profile.achievements,
+                    "additional_information": profile.additional_information,
+                }
+                for profile in profiles
+            ],
+        })
+
+    return Response({"groups": groups})
+
+
+# ==========================================================
+# ABOUT US
+# ==========================================================
+
+
+def about_us(request):
+    about_page = (
+        AboutUsPage.objects
+        .filter(
+            is_published=True,
+        )
+        .select_related(
+            "updated_by",
+        )
+        .first()
+    )
+
+    return render(
+        request,
+        "home/about_us.html",
+        {
+            "about_page": about_page,
+        },
+    )
+
+
+# ==========================================================
+# SCHOOL UPDATES / PUBLIC ADVERTISEMENT DETAILS
+# ==========================================================
+
+
+def school_updates(request):
+    advertisements = (
+        SchoolAdvertisement.objects
+        .filter(
+            is_active=True,
+        )
+        .order_by(
+            "display_order",
+            "-updated_at",
+        )
+    )
+
+    return render(
+        request,
+        "home/school_updates.html",
+        {
+            "advertisements": advertisements,
+        },
+    )
+
+
+def school_advertisement_detail(
+    request,
+    slug,
+):
+    advertisement = get_object_or_404(
+        SchoolAdvertisement,
+        slug=slug,
+        is_active=True,
+    )
+
+    return render(
+        request,
+        "home/school_advertisement_detail.html",
+        {
+            "advertisement": advertisement,
+        },
+    )
+

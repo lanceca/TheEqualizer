@@ -44,7 +44,7 @@
                 type="text"
                 id="title"
                 name="title"
-                value="{{ article.title }}"
+                value="{% if request.method == 'POST' %}{{ request.POST.title }}{% else %}{{ article.title }}{% endif %}"
                 required
             
                 maxlength="255"
@@ -64,7 +64,7 @@
                 type="text"
                 id="subtitle"
                 name="subtitle"
-                value="{{ article.subtitle }}"
+                value="{% if request.method == 'POST' %}{{ request.POST.subtitle }}{% else %}{{ article.subtitle }}{% endif %}"
                 maxlength="300"
                 data-char-limit="300"
                 data-char-counter-field="subtitle"
@@ -90,7 +90,7 @@
                 maxlength="600"
                 data-char-limit="600"
                 data-char-counter-field="excerpt"
-            >{{ article.excerpt }}</textarea>
+            >{% if request.method == 'POST' %}{{ request.POST.excerpt }}{% else %}{{ article.excerpt }}{% endif %}</textarea>
 
             <p class="form-help">
                 Optional short summary used in article previews and search results.
@@ -186,7 +186,7 @@
                 type="text"
                 id="featured_image_caption"
                 name="featured_image_caption"
-                value="{{ article.featured_image_caption }}"
+                value="{% if request.method == 'POST' %}{{ request.POST.featured_image_caption }}{% else %}{{ article.featured_image_caption }}{% endif %}"
                 maxlength="255"
                 data-char-limit="255"
                 data-char-counter-field="featured_image_caption"
@@ -209,7 +209,7 @@
                 type="text"
                 id="featured_image_credit"
                 name="featured_image_credit"
-                value="{{ article.featured_image_credit }}"
+                value="{% if request.method == 'POST' %}{{ request.POST.featured_image_credit }}{% else %}{{ article.featured_image_credit }}{% endif %}"
                 maxlength="255"
                 data-char-limit="255"
                 data-char-counter-field="featured_image_credit"
@@ -728,7 +728,7 @@
             
                 maxlength="30000"
                 data-char-limit="30000"
-                data-char-counter-field="content">{{ article.content }}</textarea>
+                data-char-counter-field="content">{% if request.method == 'POST' %}{{ request.POST.content }}{% else %}{{ article.content }}{% endif %}</textarea>
 
         </div>
 
@@ -780,17 +780,44 @@
 }
 
 .media-type-button {
-    border: 1px solid transparent;
+    border: 1px solid var(--eq-border);
     border-radius: 7px;
     padding: 9px 14px;
-    background: transparent;
+    background: #ffffff;
+    color: var(--eq-green-dark) !important;
     cursor: pointer;
     font-weight: 700;
+    transition:
+        background 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease,
+        box-shadow 0.18s ease;
 }
 
-.media-type-button.is-active {
-    border-color: var(--eq-border);
-    background: #ffffff;
+.media-type-button:hover {
+    border-color: var(--eq-green-dark);
+    background: #edf5f0;
+    color: var(--eq-green-deep) !important;
+}
+
+.media-type-button:focus-visible {
+    outline: none;
+    border-color: var(--eq-green-dark);
+    box-shadow: 0 0 0 3px rgba(24, 69, 54, 0.16);
+}
+
+.media-type-button.is-active,
+.media-type-button[aria-pressed="true"] {
+    border-color: var(--eq-green-dark);
+    background: var(--eq-green-dark);
+    color: #ffffff !important;
+}
+
+.media-type-button.is-active:hover,
+.media-type-button[aria-pressed="true"]:hover {
+    border-color: var(--eq-green-deep);
+    background: var(--eq-green-deep);
+    color: #ffffff !important;
 }
 
 .video-attachment-grid {
@@ -961,5 +988,7 @@ document.addEventListener(
     }
 );
 </script>
+
+{% include "publications/_preserve_post_form.html" %}
 
 {% endblock %}
