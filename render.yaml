@@ -2,6 +2,7 @@ services:
   - type: web
     name: the-equalizer
     runtime: python
+    region: singapore
     plan: free
     branch: main
     autoDeployTrigger: commit
