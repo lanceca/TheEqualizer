@@ -30,6 +30,16 @@ urlpatterns = [
         name="mobile_article_detail",
     ),
     path(
+        "articles/<slug:slug>/react/",
+        mobile_api.mobile_article_react,
+        name="mobile_article_react",
+    ),
+    path(
+        "articles/<slug:slug>/share/",
+        mobile_api.mobile_article_share,
+        name="mobile_article_share",
+    ),
+    path(
         "school-updates/",
         mobile_api.mobile_school_updates,
         name="mobile_school_updates",

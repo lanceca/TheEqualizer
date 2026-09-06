@@ -1,9 +1,13 @@
-from django.db.models import Count, Q
+from django.db import transaction
+from django.db.models import Count, F, Q
+from django.utils import timezone
 from django.shortcuts import get_object_or_404
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+
+from analytics.models import ArticleDailyAnalytics
 
 from publications.models import (
     AboutUsPage,
@@ -13,6 +17,60 @@ from publications.models import (
     PeopleProfile,
     SchoolAdvertisement,
 )
+
+
+
+def _increment_daily_article_analytics(
+    article,
+    *,
+    views=0,
+    reactions=0,
+    shares=0,
+):
+    """Keep mobile engagement in the same daily analytics table as the website."""
+    today = timezone.localdate()
+
+    with transaction.atomic():
+        daily_analytics, _ = (
+            ArticleDailyAnalytics.objects
+            .select_for_update()
+            .get_or_create(
+                article=article,
+                date=today,
+            )
+        )
+
+        updates = {}
+
+        if views:
+            updates["views"] = F("views") + views
+
+        if reactions:
+            updates["reactions"] = F("reactions") + reactions
+
+        if shares:
+            updates["shares"] = F("shares") + shares
+
+        if updates:
+            ArticleDailyAnalytics.objects.filter(
+                id=daily_analytics.id
+            ).update(**updates)
+
+
+def _mobile_engagement_state(request, article):
+    reacted_articles = request.session.get(
+        "mobile_reacted_articles",
+        [],
+    )
+    shared_articles = request.session.get(
+        "mobile_shared_articles",
+        [],
+    )
+
+    return {
+        "has_reacted": article.id in reacted_articles,
+        "has_shared": article.id in shared_articles,
+    }
 
 
 def _absolute_file_url(request, file_field):
@@ -352,9 +410,155 @@ def mobile_article_detail(request, slug):
         slug=slug,
     )
 
+    # Match the website's reader behavior: one view per article
+    # for the current anonymous session.
+    viewed_articles = request.session.get(
+        "mobile_viewed_articles",
+        [],
+    )
+
+    if article.id not in viewed_articles:
+        with transaction.atomic():
+            Article.objects.filter(
+                id=article.id
+            ).update(
+                view_count=F("view_count") + 1
+            )
+
+            _increment_daily_article_analytics(
+                article,
+                views=1,
+            )
+
+        viewed_articles.append(article.id)
+        request.session["mobile_viewed_articles"] = viewed_articles
+
+        article.refresh_from_db(
+            fields=["view_count"]
+        )
+
+    state = _mobile_engagement_state(
+        request,
+        article,
+    )
+
     return Response(
         {
-            "article": _article_detail_payload(request, article),
+            "article": _article_detail_payload(
+                request,
+                article,
+            ),
+            **state,
+        }
+    )
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def mobile_article_react(request, slug):
+    article = get_object_or_404(
+        Article,
+        slug=slug,
+        draft_type=Article.DraftType.NORMAL,
+        is_published=True,
+        is_archived=False,
+    )
+
+    reacted_articles = request.session.get(
+        "mobile_reacted_articles",
+        [],
+    )
+
+    already_reacted = article.id in reacted_articles
+
+    if not already_reacted:
+        with transaction.atomic():
+            Article.objects.filter(
+                id=article.id
+            ).update(
+                reaction_count=F("reaction_count") + 1
+            )
+
+            _increment_daily_article_analytics(
+                article,
+                reactions=1,
+            )
+
+        reacted_articles.append(article.id)
+        request.session["mobile_reacted_articles"] = reacted_articles
+
+    article.refresh_from_db(
+        fields=[
+            "view_count",
+            "reaction_count",
+            "share_count",
+        ]
+    )
+
+    return Response(
+        {
+            "recorded": not already_reacted,
+            "has_reacted": True,
+            "engagement": {
+                "views": article.view_count,
+                "reactions": article.reaction_count,
+                "shares": article.share_count,
+            },
+        }
+    )
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def mobile_article_share(request, slug):
+    article = get_object_or_404(
+        Article,
+        slug=slug,
+        draft_type=Article.DraftType.NORMAL,
+        is_published=True,
+        is_archived=False,
+    )
+
+    shared_articles = request.session.get(
+        "mobile_shared_articles",
+        [],
+    )
+
+    already_shared = article.id in shared_articles
+
+    if not already_shared:
+        with transaction.atomic():
+            Article.objects.filter(
+                id=article.id
+            ).update(
+                share_count=F("share_count") + 1
+            )
+
+            _increment_daily_article_analytics(
+                article,
+                shares=1,
+            )
+
+        shared_articles.append(article.id)
+        request.session["mobile_shared_articles"] = shared_articles
+
+    article.refresh_from_db(
+        fields=[
+            "view_count",
+            "reaction_count",
+            "share_count",
+        ]
+    )
+
+    return Response(
+        {
+            "recorded": not already_shared,
+            "has_shared": True,
+            "engagement": {
+                "views": article.view_count,
+                "reactions": article.reaction_count,
+                "shares": article.share_count,
+            },
         }
     )
 
