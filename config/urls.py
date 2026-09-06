@@ -10,6 +10,15 @@ urlpatterns = [
         admin.site.urls,
     ),
 
+    # ======================================================
+    # PUBLIC MOBILE API
+    # ======================================================
+
+    path(
+        "api/mobile/",
+        include("home.mobile_api_urls"),
+    ),
+
     path(
         "",
         include("home.urls"),

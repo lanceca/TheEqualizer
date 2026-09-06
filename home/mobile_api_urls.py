@@ -1,0 +1,62 @@
+from django.urls import path
+
+from . import mobile_api
+
+
+urlpatterns = [
+    path(
+        "health/",
+        mobile_api.mobile_api_health,
+        name="mobile_api_health",
+    ),
+    path(
+        "home/",
+        mobile_api.mobile_home,
+        name="mobile_home",
+    ),
+    path(
+        "categories/",
+        mobile_api.mobile_categories,
+        name="mobile_categories",
+    ),
+    path(
+        "articles/",
+        mobile_api.mobile_articles,
+        name="mobile_articles",
+    ),
+    path(
+        "articles/<slug:slug>/",
+        mobile_api.mobile_article_detail,
+        name="mobile_article_detail",
+    ),
+    path(
+        "school-updates/",
+        mobile_api.mobile_school_updates,
+        name="mobile_school_updates",
+    ),
+    path(
+        "school-updates/<slug:slug>/",
+        mobile_api.mobile_school_update_detail,
+        name="mobile_school_update_detail",
+    ),
+    path(
+        "digital-publications/",
+        mobile_api.mobile_digital_publications,
+        name="mobile_digital_publications",
+    ),
+    path(
+        "digital-publications/<slug:slug>/",
+        mobile_api.mobile_digital_publication_detail,
+        name="mobile_digital_publication_detail",
+    ),
+    path(
+        "about-us/",
+        mobile_api.mobile_about_us,
+        name="mobile_about_us",
+    ),
+    path(
+        "people/",
+        mobile_api.mobile_people,
+        name="mobile_people",
+    ),
+]
