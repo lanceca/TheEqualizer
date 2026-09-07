@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 
 import App from './App.jsx'
 import DigitalPublicationViewer from './DigitalPublicationViewer.jsx'
+import FormErrorEnhancer from './FormErrorEnhancer.jsx'
 import HeaderActions from './HeaderActions.jsx'
 import PeopleAndTeams from './PeopleAndTeams.jsx'
 import StaffSidebarToggle from './StaffSidebarToggle.jsx'
@@ -12,6 +13,7 @@ import './index.css'
 const componentRegistry = {
   ReaderTools: App,
   DigitalPublicationViewer,
+  FormErrorEnhancer,
   HeaderActions,
   PeopleAndTeams,
   StaffSidebarToggle,

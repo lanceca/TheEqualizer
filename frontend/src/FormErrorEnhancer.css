@@ -1,0 +1,342 @@
+:root {
+    --eq-error-red: #b42318;
+    --eq-error-red-deep: #8f1d14;
+    --eq-error-border: #e7a8a2;
+    --eq-error-bg: #fff4f3;
+    --eq-error-bg-strong: #fde8e6;
+    --eq-error-ring: rgba(
+        180,
+        35,
+        24,
+        0.14
+    );
+}
+
+
+/* ==========================================================
+   SERVER-SIDE DJANGO FORM ERRORS
+   ========================================================== */
+
+.equalizer-server-error,
+.form-errors,
+.errorlist {
+    position: relative;
+
+    display: grid;
+
+    gap: 5px;
+
+    width: 100%;
+
+    margin: 8px 0 0;
+    padding: 10px 12px 10px 38px;
+
+    border: 1px solid
+        var(--eq-error-border);
+
+    border-left:
+        4px solid
+        var(--eq-error-red);
+
+    border-radius: 8px;
+
+    background:
+        var(--eq-error-bg);
+
+    color:
+        var(--eq-error-red-deep);
+
+    font-size: 12px;
+    font-weight: 650;
+    line-height: 1.45;
+
+    list-style: none;
+
+    box-shadow:
+        0 3px 10px
+        rgba(180, 35, 24, 0.05);
+}
+
+.equalizer-server-error::before,
+.form-errors::before,
+.errorlist::before {
+    content: "!";
+
+    position: absolute;
+
+    top: 10px;
+    left: 12px;
+
+    display: grid;
+    place-items: center;
+
+    width: 18px;
+    height: 18px;
+
+    border-radius: 50%;
+
+    background:
+        var(--eq-error-red);
+
+    color: #ffffff;
+
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.form-errors p,
+.errorlist li {
+    margin: 0;
+
+    color:
+        var(--eq-error-red-deep);
+}
+
+.errorlist li + li {
+    margin-top: 3px;
+}
+
+
+/* ==========================================================
+   NON-FIELD / FORM-WIDE ERRORS
+   ========================================================== */
+
+.equalizer-non-field-error,
+.errorlist.nonfield {
+    margin:
+        0
+        0
+        16px;
+
+    padding:
+        13px
+        14px
+        13px
+        42px;
+
+    background:
+        var(--eq-error-bg-strong);
+
+    border-color:
+        #dd918a;
+
+    font-size: 13px;
+}
+
+
+/* ==========================================================
+   INVALID FIELD VISUAL STATE
+   ========================================================== */
+
+.equalizer-field-has-error
+    input:not([type="hidden"]),
+.equalizer-field-has-error
+    select,
+.equalizer-field-has-error
+    textarea,
+.equalizer-field-invalid,
+.equalizer-client-invalid {
+    border-color:
+        var(--eq-error-red)
+        !important;
+
+    background:
+        #fffafa
+        !important;
+
+    box-shadow:
+        0 0 0 3px
+        var(--eq-error-ring)
+        !important;
+}
+
+.equalizer-field-has-error
+    input:not([type="hidden"]):focus,
+.equalizer-field-has-error
+    select:focus,
+.equalizer-field-has-error
+    textarea:focus,
+.equalizer-field-invalid:focus,
+.equalizer-client-invalid:focus {
+    outline: none;
+
+    border-color:
+        var(--eq-error-red-deep)
+        !important;
+
+    box-shadow:
+        0 0 0 4px
+        rgba(
+            180,
+            35,
+            24,
+            0.18
+        )
+        !important;
+}
+
+
+/* ==========================================================
+   CLIENT-SIDE BROWSER VALIDATION ERRORS
+   ========================================================== */
+
+.equalizer-client-error {
+    position: relative;
+
+    display: flex;
+    align-items: flex-start;
+
+    gap: 8px;
+
+    width: 100%;
+
+    margin-top: 8px;
+    padding: 9px 11px;
+
+    border:
+        1px solid
+        var(--eq-error-border);
+
+    border-radius: 8px;
+
+    background:
+        var(--eq-error-bg);
+
+    color:
+        var(--eq-error-red-deep);
+
+    font-size: 12px;
+    font-weight: 650;
+    line-height: 1.4;
+
+    animation:
+        equalizerErrorIn
+        0.2s ease-out;
+}
+
+.equalizer-field-error-icon {
+    display: grid;
+    place-items: center;
+
+    flex: 0 0 18px;
+
+    width: 18px;
+    height: 18px;
+
+    margin-top: 1px;
+
+    border-radius: 50%;
+
+    background:
+        var(--eq-error-red);
+
+    color: #ffffff;
+
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.equalizer-field-error-text {
+    min-width: 0;
+}
+
+
+/* ==========================================================
+   LOGIN / SECURITY ERROR BOXES
+   Existing pages can use the same visual language even before
+   their templates are converted to shared React mounts.
+   ========================================================== */
+
+.login-error-message {
+    position: relative;
+
+    margin: 0 0 15px;
+    padding:
+        12px
+        14px
+        12px
+        42px;
+
+    border:
+        1px solid
+        var(--eq-error-border);
+
+    border-left:
+        4px solid
+        var(--eq-error-red);
+
+    border-radius: 9px;
+
+    background:
+        var(--eq-error-bg);
+
+    color:
+        var(--eq-error-red-deep);
+
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.login-error-message::before {
+    content: "!";
+
+    position: absolute;
+
+    top: 12px;
+    left: 13px;
+
+    display: grid;
+    place-items: center;
+
+    width: 19px;
+    height: 19px;
+
+    border-radius: 50%;
+
+    background:
+        var(--eq-error-red);
+
+    color: #ffffff;
+
+    font-size: 11px;
+    font-weight: 900;
+}
+
+
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
+
+@media (max-width: 620px) {
+    .equalizer-server-error,
+    .form-errors,
+    .errorlist,
+    .equalizer-client-error {
+        font-size: 11px;
+    }
+}
+
+
+@keyframes equalizerErrorIn {
+    from {
+        opacity: 0;
+        transform:
+            translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            translateY(0);
+    }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+    .equalizer-client-error {
+        animation: none;
+    }
+}

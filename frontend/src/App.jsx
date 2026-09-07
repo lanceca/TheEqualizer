@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import ArticleMediaEnhancer from './ArticleMediaEnhancer.jsx'
 import './App.css'
 
 function App() {
@@ -69,6 +70,8 @@ function App() {
 
   return (
     <>
+      <ArticleMediaEnhancer />
+
       <div
         className="react-reading-progress"
         aria-hidden="true"

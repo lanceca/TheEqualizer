@@ -401,7 +401,7 @@
     <!-- React/Vite progressive enhancement -->
     <link
         rel="stylesheet"
-        href="{% static 'react-dist/assets/equalizer-react.css' %}?v=20260907-header-actions-1"
+        href="{% static 'react-dist/assets/equalizer-react.css' %}?v=20260907-form-errors-1"
     >
 
 </head>
@@ -586,6 +586,11 @@
 
 
     <!-- React mounts here without replacing the Django page -->
+    <div
+        data-react-component="FormErrorEnhancer"
+        aria-hidden="true"
+    ></div>
+
     <div
         data-react-component="ReaderTools"
     ></div>
@@ -1031,7 +1036,7 @@
     <!-- React/Vite production/watch bundle -->
     <script
         type="module"
-        src="{% static 'react-dist/assets/equalizer-react.js' %}?v=20260907-header-actions-1"
+        src="{% static 'react-dist/assets/equalizer-react.js' %}?v=20260907-form-errors-1"
     ></script>
 
 </body>

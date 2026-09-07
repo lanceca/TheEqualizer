@@ -1,0 +1,473 @@
+:root {
+    --react-media-green: #173f32;
+    --react-media-green-dark: #0e2a22;
+    --react-media-gold: #c9a227;
+    --react-media-muted: #68756f;
+    --react-media-border: #dce4df;
+    --react-media-soft: #f5f8f6;
+    --react-media-white: #ffffff;
+}
+
+
+/* ==========================================================
+   ARTICLE ATTACHMENT SECTIONS
+   ========================================================== */
+
+.reader-article-page
+.react-article-media-section {
+    width: min(860px, 100%);
+
+    margin-top: 52px;
+    padding-top: 28px;
+
+    border-top:
+        1px solid
+        var(--react-media-border);
+}
+
+.reader-article-page
+.react-article-media-section
+.reader-article-section-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    margin-bottom: 18px;
+}
+
+.reader-article-page
+.react-article-media-section
+.reader-article-section-heading p {
+    margin: 0 0 5px;
+
+    color:
+        var(--react-media-gold);
+
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 1.4px;
+
+    text-transform: uppercase;
+}
+
+.reader-article-page
+.react-article-media-section
+.reader-article-section-heading h2 {
+    margin: 0;
+
+    color:
+        var(--react-media-green-dark);
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size:
+        clamp(
+            25px,
+            3vw,
+            32px
+        );
+
+    line-height: 1.1;
+}
+
+
+/* ==========================================================
+   UNIFIED GRID
+   ========================================================== */
+
+.reader-article-page
+.react-article-media-section
+.reader-article-gallery,
+.reader-article-page
+.react-article-media-section
+.reader-video-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(260px, 1fr)
+        );
+
+    gap: 20px;
+
+    align-items: stretch;
+}
+
+
+/* ==========================================================
+   UNIFIED MEDIA CARD
+   ========================================================== */
+
+.reader-article-page
+.react-article-media-card {
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+
+    min-width: 0;
+
+    margin: 0;
+
+    overflow: hidden;
+
+    border:
+        1px solid
+        var(--react-media-border);
+
+    border-radius: 14px;
+
+    background:
+        var(--react-media-white);
+
+    box-shadow:
+        0 7px 24px
+        rgba(14, 42, 34, 0.07);
+
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.reader-article-page
+.react-article-media-card:hover {
+    transform: translateY(-2px);
+
+    border-color:
+        rgba(23, 63, 50, 0.34);
+
+    box-shadow:
+        0 14px 32px
+        rgba(14, 42, 34, 0.11);
+}
+
+
+/* ==========================================================
+   MEDIA TYPE / POSITION BADGE
+   ========================================================== */
+
+.reader-article-page
+.react-article-media-card::before {
+    content:
+        attr(data-media-label);
+
+    position: absolute;
+
+    top: 11px;
+    left: 11px;
+    z-index: 4;
+
+    display: inline-flex;
+    align-items: center;
+
+    min-height: 26px;
+
+    padding: 5px 9px;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.28);
+
+    border-radius: 999px;
+
+    background:
+        rgba(10, 28, 22, 0.78);
+
+    color: #ffffff;
+
+    font-size: 9px;
+    font-weight: 850;
+    letter-spacing: 0.5px;
+    line-height: 1;
+
+    text-transform: uppercase;
+
+    pointer-events: none;
+
+    backdrop-filter: blur(8px);
+}
+
+
+/* ==========================================================
+   IMAGE PRESENTATION
+   Preserve the entire uploaded image instead of cropping it.
+   ========================================================== */
+
+.reader-article-page
+.react-article-media-card--image
+.reader-lightbox-trigger,
+.reader-article-page
+.react-article-media-image {
+    display: block;
+
+    width: 100%;
+
+    height: auto !important;
+    min-height: 260px;
+
+    aspect-ratio: 4 / 3;
+
+    padding: 12px;
+
+    object-fit: contain !important;
+    object-position: center;
+
+    border: 0 !important;
+    border-radius: 0 !important;
+
+    background:
+        linear-gradient(
+            145deg,
+            #f8faf9,
+            #edf3ef
+        ) !important;
+
+    box-sizing: border-box;
+}
+
+.reader-article-page
+.react-article-media-card--image.is-portrait
+.reader-lightbox-trigger {
+    object-fit: contain !important;
+}
+
+.reader-article-page
+.react-article-media-card--image.is-landscape
+.reader-lightbox-trigger {
+    object-fit: contain !important;
+}
+
+
+/* ==========================================================
+   VIDEO PRESENTATION
+   ========================================================== */
+
+.reader-article-page
+.react-article-media-card--video
+video,
+.reader-article-page
+.react-article-media-video {
+    display: block;
+
+    width: 100%;
+
+    height: auto !important;
+    max-height: none !important;
+
+    aspect-ratio: 16 / 9;
+
+    object-fit: contain;
+
+    border: 0;
+    border-radius: 0 !important;
+
+    background: #08100d;
+}
+
+
+/* ==========================================================
+   CAPTIONS / CREDITS
+   ========================================================== */
+
+.reader-article-page
+.react-article-media-card
+figcaption {
+    display: grid !important;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        auto;
+
+    gap: 8px 14px;
+
+    min-height: 52px;
+
+    margin: 0 !important;
+    padding: 12px 14px 13px;
+
+    border-top:
+        1px solid
+        var(--react-media-border);
+
+    background: #ffffff;
+
+    color:
+        var(--react-media-muted);
+
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.reader-article-page
+.react-article-media-card
+figcaption > span:first-child {
+    min-width: 0;
+
+    color: #3f4d47;
+
+    overflow-wrap: anywhere;
+}
+
+.reader-article-page
+.react-article-media-card
+.reader-media-credit {
+    align-self: start;
+
+    color:
+        var(--react-media-green);
+
+    font-size: 10px;
+    font-weight: 750;
+    font-style: normal;
+
+    text-align: right;
+
+    overflow-wrap: anywhere;
+}
+
+
+/* Empty-caption cards still keep a clean lower edge. */
+.reader-article-page
+.react-article-media-card:not(:has(figcaption)) {
+    padding-bottom: 0;
+}
+
+
+/* ==========================================================
+   IMAGE INTERACTION
+   ========================================================== */
+
+.reader-article-page
+.react-article-media-card--image
+.reader-lightbox-trigger {
+    cursor: zoom-in;
+
+    transition:
+        filter 0.18s ease,
+        transform 0.18s ease;
+}
+
+.reader-article-page
+.react-article-media-card--image
+.reader-lightbox-trigger:hover {
+    filter:
+        saturate(1.03)
+        contrast(1.01);
+}
+
+.reader-article-page
+.react-article-media-card--image
+.reader-lightbox-trigger:focus-visible {
+    position: relative;
+    z-index: 3;
+
+    outline:
+        3px solid
+        var(--react-media-gold);
+
+    outline-offset: -6px;
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media (max-width: 720px) {
+    .reader-article-page
+    .react-article-media-section {
+        margin-top: 42px;
+        padding-top: 22px;
+    }
+
+    .reader-article-page
+    .react-article-media-section
+    .reader-article-section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+
+        gap: 4px;
+
+        margin-bottom: 15px;
+    }
+
+    .reader-article-page
+    .react-article-media-section
+    .reader-article-gallery,
+    .reader-article-page
+    .react-article-media-section
+    .reader-video-grid {
+        grid-template-columns: 1fr;
+
+        gap: 16px;
+    }
+
+    .reader-article-page
+    .react-article-media-card--image
+    .reader-lightbox-trigger,
+    .reader-article-page
+    .react-article-media-image {
+        min-height: 220px;
+
+        aspect-ratio: 4 / 3;
+
+        padding: 9px;
+    }
+
+    .reader-article-page
+    .react-article-media-card
+    figcaption {
+        grid-template-columns: 1fr;
+
+        min-height: 0;
+
+        padding: 11px 12px 12px;
+    }
+
+    .reader-article-page
+    .react-article-media-card
+    .reader-media-credit {
+        text-align: left;
+    }
+}
+
+
+@media (max-width: 430px) {
+    .reader-article-page
+    .react-article-media-card--image
+    .reader-lightbox-trigger,
+    .reader-article-page
+    .react-article-media-image {
+        min-height: 190px;
+    }
+
+    .reader-article-page
+    .react-article-media-card::before {
+        top: 9px;
+        left: 9px;
+
+        min-height: 24px;
+
+        padding: 4px 8px;
+
+        font-size: 8px;
+    }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+    .reader-article-page
+    .react-article-media-card,
+    .reader-article-page
+    .react-article-media-card--image
+    .reader-lightbox-trigger {
+        transition: none;
+    }
+}
