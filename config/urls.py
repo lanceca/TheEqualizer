@@ -38,6 +38,15 @@ urlpatterns = [
         "notifications/",
         include("notifications.urls"),
     ),
+
+    # ======================================================
+    # ACTION / AUDIT LOG
+    # ======================================================
+
+    path(
+        "activity/",
+        include("audit.urls"),
+    ),
 ]
 
 

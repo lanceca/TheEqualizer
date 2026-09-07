@@ -192,6 +192,7 @@ INSTALLED_APPS = [
     "publications",
     "notifications",
     "workflow",
+    "audit.apps.AuditConfig",
 ]
 
 if USE_SUPABASE_STORAGE:
@@ -210,6 +211,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "audit.middleware.AuditRequestMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "accounts.middleware.VerifiedEmailRequiredMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",

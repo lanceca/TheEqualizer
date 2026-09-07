@@ -1,0 +1,447 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<div class="dashboard-header">
+
+    <div>
+        <p class="workflow-eyebrow">
+            Activity
+        </p>
+
+        <h1>
+            Action Log
+        </h1>
+
+        <p class="dashboard-subtitle">
+            Searchable history of meaningful CMS, workflow,
+            management, account, and security actions.
+        </p>
+    </div>
+
+</div>
+
+
+<section class="content-panel audit-filter-panel">
+
+    <form
+        method="GET"
+        action="{% url 'audit:action_log' %}"
+        class="audit-filter-form"
+    >
+
+        <div class="audit-filter-field audit-filter-search">
+            <label for="audit-search">
+                Search
+            </label>
+
+            <input
+                type="search"
+                id="audit-search"
+                name="q"
+                value="{{ audit_filters.q }}"
+                placeholder="Username, article, action..."
+            >
+        </div>
+
+
+        <div class="audit-filter-field">
+            <label for="audit-role">
+                Role
+            </label>
+
+            <select
+                id="audit-role"
+                name="role"
+            >
+                <option value="">
+                    All roles
+                </option>
+
+                {% for option in audit_filter_options.roles %}
+                    <option
+                        value="{{ option }}"
+                        {% if audit_filters.role == option %}selected{% endif %}
+                    >
+                        {{ option }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+
+        <div class="audit-filter-field">
+            <label for="audit-module">
+                Module
+            </label>
+
+            <select
+                id="audit-module"
+                name="module"
+            >
+                <option value="">
+                    All modules
+                </option>
+
+                {% for option in audit_filter_options.modules %}
+                    <option
+                        value="{{ option }}"
+                        {% if audit_filters.module == option %}selected{% endif %}
+                    >
+                        {{ option }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+
+        <div class="audit-filter-field">
+            <label for="audit-action">
+                Action
+            </label>
+
+            <select
+                id="audit-action"
+                name="action"
+            >
+                <option value="">
+                    All actions
+                </option>
+
+                {% for option in audit_filter_options.actions %}
+                    <option
+                        value="{{ option }}"
+                        {% if audit_filters.action == option %}selected{% endif %}
+                    >
+                        {{ option }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+
+        <div class="audit-filter-field">
+            <label for="audit-from">
+                From
+            </label>
+
+            <input
+                type="date"
+                id="audit-from"
+                name="date_from"
+                value="{{ audit_filters.date_from }}"
+            >
+        </div>
+
+
+        <div class="audit-filter-field">
+            <label for="audit-to">
+                To
+            </label>
+
+            <input
+                type="date"
+                id="audit-to"
+                name="date_to"
+                value="{{ audit_filters.date_to }}"
+            >
+        </div>
+
+
+        <div class="audit-filter-actions">
+
+            <button
+                type="submit"
+                class="primary-button"
+            >
+                Apply Filters
+            </button>
+
+            <a
+                href="{% url 'audit:action_log' %}"
+                class="secondary-button"
+            >
+                Clear
+            </a>
+
+        </div>
+
+    </form>
+
+</section>
+
+
+<section class="content-panel audit-table-panel">
+
+    <div class="audit-table-heading">
+
+        <div>
+            <h2>
+                Activity History
+            </h2>
+
+            <p>
+                {{ audit_page.paginator.count }}
+                matching action{{ audit_page.paginator.count|pluralize }}.
+            </p>
+        </div>
+
+
+        {% if not audit_full_visibility %}
+            <span class="audit-redaction-badge">
+                Sensitive details redacted
+            </span>
+        {% endif %}
+
+    </div>
+
+
+    {% if audit_rows %}
+
+        <div class="analytics-table-wrapper">
+
+            <table class="audit-table">
+
+                <thead>
+                    <tr>
+                        <th>Date &amp; Time</th>
+                        <th>Actor</th>
+                        <th>Role</th>
+                        <th>Module</th>
+                        <th>Action</th>
+                        <th>Target</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for row in audit_rows %}
+
+                        <tr>
+                            <td>
+                                {{ row.created_at_display }}
+                            </td>
+
+                            <td>
+                                {{ row.actor }}
+                            </td>
+
+                            <td>
+                                {{ row.actor_role }}
+                            </td>
+
+                            <td>
+                                {{ row.module }}
+                            </td>
+
+                            <td>
+                                <code>
+                                    {{ row.action }}
+                                </code>
+                            </td>
+
+                            <td>
+                                {{ row.target_label|default:"—" }}
+                            </td>
+
+                            <td>
+                                {{ row.description|default:"—" }}
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        {% if audit_page.paginator.num_pages > 1 %}
+
+            <nav
+                class="audit-pagination"
+                aria-label="Action log pages"
+            >
+
+                {% if audit_page.has_previous %}
+                    <a
+                        class="secondary-button"
+                        href="?page={{ audit_page.previous_page_number }}&q={{ audit_filters.q|urlencode }}&role={{ audit_filters.role|urlencode }}&module={{ audit_filters.module|urlencode }}&action={{ audit_filters.action|urlencode }}&date_from={{ audit_filters.date_from|urlencode }}&date_to={{ audit_filters.date_to|urlencode }}"
+                    >
+                        Previous
+                    </a>
+                {% endif %}
+
+
+                <span>
+                    Page {{ audit_page.number }}
+                    of {{ audit_page.paginator.num_pages }}
+                </span>
+
+
+                {% if audit_page.has_next %}
+                    <a
+                        class="secondary-button"
+                        href="?page={{ audit_page.next_page_number }}&q={{ audit_filters.q|urlencode }}&role={{ audit_filters.role|urlencode }}&module={{ audit_filters.module|urlencode }}&action={{ audit_filters.action|urlencode }}&date_from={{ audit_filters.date_from|urlencode }}&date_to={{ audit_filters.date_to|urlencode }}"
+                    >
+                        Next
+                    </a>
+                {% endif %}
+
+            </nav>
+
+        {% endif %}
+
+
+    {% else %}
+
+        <p class="empty-message">
+            No action-log entries match the current filters.
+        </p>
+
+    {% endif %}
+
+</section>
+
+
+<style>
+
+.audit-filter-panel,
+.audit-table-panel {
+    margin-bottom: 24px;
+}
+
+.audit-filter-form {
+    display: grid;
+    grid-template-columns:
+        minmax(220px, 1.5fr)
+        repeat(
+            3,
+            minmax(150px, 0.8fr)
+        );
+    gap: 14px;
+    align-items: end;
+}
+
+.audit-filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.audit-filter-field label {
+    color: #33463e;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.audit-filter-field input,
+.audit-filter-field select {
+    min-height: 42px;
+    padding: 8px 10px;
+    border: 1px solid #cbd5d0;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.audit-filter-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    grid-column: 1 / -1;
+}
+
+.audit-table-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.audit-table-heading h2 {
+    margin: 0 0 4px;
+}
+
+.audit-table-heading p {
+    margin: 0;
+    color: #6f7a74;
+    font-size: 12px;
+}
+
+.audit-redaction-badge {
+    padding: 5px 9px;
+    border: 1px solid #e4cf8a;
+    border-radius: 999px;
+    background: #fff9df;
+    color: #7a6117;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.audit-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.audit-table th,
+.audit-table td {
+    padding: 12px 13px;
+    vertical-align: top;
+    text-align: left;
+}
+
+.audit-table th {
+    white-space: nowrap;
+}
+
+.audit-table code {
+    color: #184536;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.audit-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.audit-pagination span {
+    color: #6f7a74;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+@media (max-width: 1100px) {
+    .audit-filter-form {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+}
+
+@media (max-width: 620px) {
+    .audit-filter-form {
+        grid-template-columns: 1fr;
+    }
+
+    .audit-table-heading {
+        flex-direction: column;
+    }
+
+    .audit-pagination {
+        flex-wrap: wrap;
+    }
+}
+
+</style>
+
+{% endblock %}
