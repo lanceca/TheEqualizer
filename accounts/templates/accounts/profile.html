@@ -143,6 +143,30 @@
 
                     <div>
                         <span>
+                            Email
+                        </span>
+
+                        <strong>
+                            {{ request.user.email|default:"No email set" }}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>
+                            Email Status
+                        </span>
+
+                        <strong>
+                            {% if request.user.email_verified %}
+                                Verified
+                            {% else %}
+                                Unverified
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>
                             Role
                         </span>
 
@@ -185,6 +209,13 @@
                         class="secondary-button"
                     >
                         Back to Dashboard
+                    </a>
+
+                    <a
+                        href="{% url 'change_email' %}"
+                        class="secondary-button"
+                    >
+                        Change Email
                     </a>
 
                     <a

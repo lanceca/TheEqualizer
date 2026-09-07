@@ -18,13 +18,14 @@
 
     <link
         rel="stylesheet"
-        href="{% static 'css/equalizer.css' %}?v=20260903-access-ux"
+        href="{% static 'css/equalizer.css' %}?v=20260906-email-security"
     >
 
 
     <style>
 
-        .login-reader-return {
+        .login-reader-return,
+        .login-account-help {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -43,7 +44,12 @@
             text-align: center;
         }
 
-        .login-reader-return a {
+        .login-account-help {
+            gap: 8px 14px;
+        }
+
+        .login-reader-return a,
+        .login-account-help a {
             color: var(--eq-green-dark);
 
             font-weight: 800;
@@ -51,7 +57,8 @@
             text-decoration: none;
         }
 
-        .login-reader-return a:hover {
+        .login-reader-return a:hover,
+        .login-account-help a:hover {
             color: var(--eq-green);
 
             text-decoration: underline;
@@ -115,6 +122,18 @@
                 </div>
 
 
+                {% if messages %}
+                    {% for message in messages %}
+                        <div
+                            class="login-error-message"
+                            role="status"
+                        >
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+
                 {% if error %}
 
                     <div
@@ -150,8 +169,8 @@
                             placeholder="Enter your username"
                             required
                             autofocus
-                        
-                value="{% if request.method == 'POST' %}{{ request.POST.username }}{% endif %}">
+                            value="{% if request.method == 'POST' %}{{ request.POST.username }}{% endif %}"
+                        >
 
                     </div>
 
@@ -197,8 +216,19 @@
                 </form>
 
 
+                <div class="login-account-help">
+                    <a href="{% url 'password_reset' %}">
+                        Forgot password?
+                    </a>
+
+                    <a href="{% url 'resend_verification' %}">
+                        Resend verification email
+                    </a>
+                </div>
+
+
                 <p class="login-security-note">
-                    Authorized publication members only.
+                    New accounts must verify their email before signing in.
                 </p>
 
 

@@ -17,10 +17,11 @@ class ProfileForm(forms.ModelForm):
     class Meta:
         model = User
 
+        # Email is intentionally excluded. Verified addresses are
+        # changed only through the password-protected Change Email flow.
         fields = [
             "first_name",
             "last_name",
-            "email",
         ]
 
         widgets = {
@@ -35,41 +36,7 @@ class ProfileForm(forms.ModelForm):
                     "placeholder": "Last name",
                 }
             ),
-
-            "email": forms.EmailInput(
-                attrs={
-                    "placeholder": "Email address",
-                }
-            ),
         }
-
-    def clean_email(self):
-
-        email = self.cleaned_data.get(
-            "email",
-            "",
-        ).strip()
-
-        if email:
-
-            existing_user = (
-                User.objects
-                .filter(
-                    email__iexact=email
-                )
-                .exclude(
-                    id=self.instance.id
-                )
-                .exists()
-            )
-
-            if existing_user:
-
-                raise forms.ValidationError(
-                    "Another account is already using this email address."
-                )
-
-        return email
 
 
 # ==========================================================
@@ -120,9 +87,14 @@ class AdminAccountCreationForm(forms.ModelForm):
         email = self.cleaned_data.get(
             "email",
             "",
-        ).strip()
+        ).strip().lower()
 
-        if email and User.objects.filter(
+        if not email:
+            raise forms.ValidationError(
+                "Email address is required."
+            )
+
+        if User.objects.filter(
             email__iexact=email
         ).exists():
 
@@ -286,9 +258,14 @@ class StaffAccountCreationForm(forms.ModelForm):
         email = self.cleaned_data.get(
             "email",
             "",
-        ).strip()
+        ).strip().lower()
 
-        if email and User.objects.filter(
+        if not email:
+            raise forms.ValidationError(
+                "Email address is required."
+            )
+
+        if User.objects.filter(
             email__iexact=email
         ).exists():
 
@@ -412,26 +389,29 @@ class AdminAccountEditForm(forms.ModelForm):
         email = self.cleaned_data.get(
             "email",
             "",
-        ).strip()
+        ).strip().lower()
 
-        if email:
-
-            existing_user = (
-                User.objects
-                .filter(
-                    email__iexact=email
-                )
-                .exclude(
-                    id=self.instance.id
-                )
-                .exists()
+        if not email:
+            raise forms.ValidationError(
+                "Email address is required."
             )
 
-            if existing_user:
+        existing_user = (
+            User.objects
+            .filter(
+                email__iexact=email
+            )
+            .exclude(
+                id=self.instance.id
+            )
+            .exists()
+        )
 
-                raise forms.ValidationError(
-                    "Another account is already using this email address."
-                )
+        if existing_user:
+
+            raise forms.ValidationError(
+                "Another account is already using this email address."
+            )
 
         return email
 
@@ -487,26 +467,29 @@ class StaffAccountEditForm(forms.ModelForm):
         email = self.cleaned_data.get(
             "email",
             "",
-        ).strip()
+        ).strip().lower()
 
-        if email:
-
-            existing_user = (
-                User.objects
-                .filter(
-                    email__iexact=email
-                )
-                .exclude(
-                    id=self.instance.id
-                )
-                .exists()
+        if not email:
+            raise forms.ValidationError(
+                "Email address is required."
             )
 
-            if existing_user:
+        existing_user = (
+            User.objects
+            .filter(
+                email__iexact=email
+            )
+            .exclude(
+                id=self.instance.id
+            )
+            .exists()
+        )
 
-                raise forms.ValidationError(
-                    "Another account is already using this email address."
-                )
+        if existing_user:
+
+            raise forms.ValidationError(
+                "Another account is already using this email address."
+            )
 
         return email
 
@@ -523,6 +506,7 @@ class StaffAccountEditForm(forms.ModelForm):
             )
 
         return role
+
 
 # ==========================================================
 # SELF-SERVICE USERNAME CHANGE
@@ -639,4 +623,3 @@ class UsernameChangeForm(forms.Form):
         )
 
         return self.user
-

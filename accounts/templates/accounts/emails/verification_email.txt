@@ -1,0 +1,14 @@
+Hello {{ user.get_full_name|default:user.username }},
+
+A staff account for The Equalizer is using this email address.
+
+Verify that this email belongs to you by opening the secure link below:
+
+{{ verification_url }}
+
+Until the email is verified, the staff account cannot sign in.
+
+If you did not expect this account, you can ignore this message.
+
+The Equalizer
+Official Student News Publication of Mabalacat City College

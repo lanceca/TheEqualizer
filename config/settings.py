@@ -4,11 +4,13 @@ Django settings for config project.
 Local development:
 - Uses the existing MySQL/MariaDB settings when DATABASE_URL is not set.
 - Uses local filesystem media when Supabase S3 variables are not set.
+- Uses console email unless EMAIL_BACKEND is configured.
 
 Production:
 - Uses DATABASE_URL for PostgreSQL (Supabase).
 - Uses WhiteNoise for static files.
 - Uses Supabase Storage through its S3-compatible endpoint when configured.
+- Uses environment-based SMTP settings for verification/password reset mail.
 """
 
 from pathlib import Path
@@ -184,7 +186,7 @@ INSTALLED_APPS = [
 
     "rest_framework",
 
-    "accounts",
+    "accounts.apps.AccountsConfig",
     "home",
     "analytics",
     "publications",
@@ -209,6 +211,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "accounts.middleware.VerifiedEmailRequiredMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
@@ -427,12 +430,8 @@ if USE_SUPABASE_STORAGE:
 
     AWS_S3_FILE_OVERWRITE = False
 
-    # Keep media private while allowing Django to generate
-    # temporary signed URLs for images, videos, and PDFs.
     AWS_QUERYSTRING_AUTH = True
 
-    # 24-hour signed media URLs. API/page reloads generate
-    # fresh URLs automatically.
     AWS_QUERYSTRING_EXPIRE = 86400
 
     STORAGES[
@@ -476,9 +475,6 @@ ARTICLE_ALLOWED_IMAGE_FORMATS = [
 ARTICLE_MAX_ATTACHMENTS = 15
 
 
-# Files above 2 MB are written to a
-# temporary file rather than being kept
-# entirely in memory during upload.
 FILE_UPLOAD_MAX_MEMORY_SIZE = (
     2 * 1024 * 1024
 )
@@ -509,24 +505,81 @@ REST_FRAMEWORK = {
 
 
 # ==========================================================
-# CUSTOM USER
+# CUSTOM USER / AUTHENTICATION
 # ==========================================================
 
 AUTH_USER_MODEL = "accounts.User"
 
+AUTHENTICATION_BACKENDS = [
+    "accounts.backends."
+    "VerifiedEmailModelBackend",
+]
+
 
 # ==========================================================
-# EMAIL
+# EMAIL / ACCOUNT SECURITY
 # ==========================================================
 
-MAILERS = {
-    "default": {
-        "BACKEND": (
-            "django.core.mail.backends.console."
-            "EmailBackend"
-        ),
-    },
-}
+SITE_URL = os.getenv(
+    "SITE_URL",
+    "http://127.0.0.1:8000",
+).rstrip("/")
+
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND",
+    (
+        "django.core.mail.backends."
+        "console.EmailBackend"
+    ),
+)
+
+EMAIL_HOST = os.getenv(
+    "EMAIL_HOST",
+    "",
+)
+
+EMAIL_PORT = int(
+    os.getenv(
+        "EMAIL_PORT",
+        "587",
+    )
+)
+
+EMAIL_HOST_USER = os.getenv(
+    "EMAIL_HOST_USER",
+    "",
+)
+
+EMAIL_HOST_PASSWORD = os.getenv(
+    "EMAIL_HOST_PASSWORD",
+    "",
+)
+
+EMAIL_USE_TLS = env_bool(
+    "EMAIL_USE_TLS",
+    True,
+)
+
+EMAIL_USE_SSL = env_bool(
+    "EMAIL_USE_SSL",
+    False,
+)
+
+DEFAULT_FROM_EMAIL = os.getenv(
+    "DEFAULT_FROM_EMAIL",
+    (
+        "The Equalizer "
+        "<noreply@localhost>"
+    ),
+)
+
+# One hour for password-reset links.
+PASSWORD_RESET_TIMEOUT = int(
+    os.getenv(
+        "PASSWORD_RESET_TIMEOUT",
+        "3600",
+    )
+)
 
 
 # ==========================================================

@@ -146,11 +146,24 @@ class User(AbstractUser):
         EDITOR = "EDITOR", "Editor"
         STAFF = "STAFF", "Staff"
 
+    # NULL is allowed only so legacy accounts with no email can be
+    # migrated safely. All account-facing forms require a real email.
+    # Non-NULL values are unique at the database level.
+    email = models.EmailField(
+        "email address",
+        unique=True,
+        null=True,
+        blank=False,
+    )
+
+    email_verified = models.BooleanField(
+        default=False,
+    )
+
     role = models.CharField(
         max_length=20,
         choices=Role.choices,
     )
-
 
     profile_picture = models.ImageField(
         upload_to="profile_pictures/",
@@ -160,6 +173,79 @@ class User(AbstractUser):
         blank=True,
         null=True,
     )
+
+    REQUIRED_FIELDS = [
+        "email",
+    ]
+
+    def save(self, *args, **kwargs):
+        """
+        Normalize account email and automatically invalidate verification
+        whenever the stored address changes.
+        """
+
+        normalized_email = (
+            self.email.strip().lower()
+            if self.email
+            else None
+        )
+
+        email_changed = False
+
+        if self.pk:
+            previous_email = (
+                type(self).objects
+                .filter(pk=self.pk)
+                .values_list(
+                    "email",
+                    flat=True,
+                )
+                .first()
+            )
+
+            previous_normalized = (
+                previous_email.strip().lower()
+                if previous_email
+                else None
+            )
+
+            email_changed = (
+                previous_normalized
+                != normalized_email
+            )
+
+        else:
+            email_changed = bool(
+                normalized_email
+            )
+
+        self.email = normalized_email
+
+        if email_changed:
+            self.email_verified = False
+
+            update_fields = kwargs.get(
+                "update_fields"
+            )
+
+            if update_fields is not None:
+                kwargs["update_fields"] = set(
+                    update_fields
+                ) | {
+                    "email",
+                    "email_verified",
+                }
+
+        # Read by the post_save signal so verification mail is sent
+        # only for creation/email changes, not every profile save.
+        self._email_changed_for_verification = (
+            email_changed
+        )
+
+        super().save(
+            *args,
+            **kwargs,
+        )
 
     def __str__(self):
         return self.username
