@@ -13,7 +13,10 @@
 
 <div class="staff-layout">
 
-    <aside class="staff-sidebar">
+    <aside
+        class="staff-sidebar"
+        id="staff-sidebar"
+    >
 
         <div class="staff-identity">
 
@@ -520,6 +523,12 @@
 
 
     <main class="staff-content">
+
+        <div
+            data-react-component="StaffSidebarToggle"
+            data-username="{{ request.user.username }}"
+            data-role="{{ request.user.get_role_display }}"
+        ></div>
 
         <div class="page-container">
 
