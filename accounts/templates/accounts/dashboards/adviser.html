@@ -2,9 +2,13 @@
 
 {% block staff_content %}
 
-<div class="dashboard-header">
+<div class="dashboard-header adviser-react-page-header">
 
     <div>
+        <p class="workflow-eyebrow">
+            Adviser Oversight
+        </p>
+
         <h1>
             Adviser Analytics
         </h1>
@@ -25,7 +29,7 @@
 </div>
 
 
-<section class="analytics-filter-panel">
+<section class="analytics-filter-panel adviser-react-filter-panel">
 
     <div class="analytics-filter-heading">
 
@@ -195,7 +199,7 @@
 </section>
 
 
-<div class="dashboard-profile-strip">
+<div class="dashboard-profile-strip adviser-react-profile-strip">
 
     <div class="dashboard-profile-avatar">
 
@@ -244,467 +248,56 @@
 </div>
 
 
-
-<!-- ==========================================
-     1. PUBLICATION OVERVIEW
-     ========================================== -->
-
-<section class="analytics-section">
-
-    <h2>
-        Publication Overview
-    </h2>
-
-    <p class="section-description">
-        Current publication-state snapshot. These cards are intentionally
-        not changed by the reporting-period filter.
-    </p>
-
-    <div class="dashboard-grid">
-
-        <div class="dashboard-card">
-            <h3>Published Articles</h3>
-            <strong>{{ published_articles }}</strong>
-        </div>
-
-        <div class="dashboard-card">
-            <h3>Draft Articles</h3>
-            <strong>{{ draft_articles }}</strong>
-        </div>
-
-        <div class="dashboard-card">
-            <h3>Archived Articles</h3>
-            <strong>{{ archived_articles }}</strong>
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ==========================================
-     2. READER ENGAGEMENT
-     ========================================== -->
-
-<section class="analytics-section">
-
-    <h2>
-        Reader Engagement
-    </h2>
-
-    <p class="section-description">
-        Tracked reader engagement for {{ analytics_period_label }}.
-        Historical totals use daily analytics records rather than
-        lifetime counters stored on the article.
-    </p>
-
-    <div class="dashboard-grid">
-
-        <div class="dashboard-card accent-gold">
-            <h3>Period Views</h3>
-            <strong>{{ total_views }}</strong>
-        </div>
-
-        <div class="dashboard-card accent-gold">
-            <h3>Period Reactions</h3>
-            <strong>{{ total_reactions }}</strong>
-        </div>
-
-        <div class="dashboard-card accent-gold">
-            <h3>Period Shares</h3>
-            <strong>{{ total_shares }}</strong>
-        </div>
-
-    </div>
-
-
-    <div class="analytics-chart-panel analytics-history-panel">
-
-        <div class="analytics-chart-heading">
-
-            <div>
-                <h3>Engagement Trend</h3>
-
-                <p>
-                    Daily public views, reactions, and shares for
-                    {{ analytics_period_label }}:
-                    {{ analytics_start_date|date:"M d, Y" }} through
-                    {{ analytics_end_date|date:"M d, Y" }}.
-                </p>
-            </div>
-
-            <span class="analytics-timezone-badge">
-                Asia/Manila
-            </span>
-
-        </div>
-
-        <div class="analytics-chart-canvas-wrapper">
-            <canvas
-                id="historical-engagement-chart"
-                aria-label="Reader engagement trend for selected reporting period"
-                role="img"
-            ></canvas>
-        </div>
-
-        <p class="analytics-history-note">
-            Historical tracking begins from the date daily analytics
-            was enabled. Earlier lifetime engagement is not fabricated
-            or backfilled into individual days, so All Tracked History
-            reflects tracked history rather than legacy lifetime totals.
-        </p>
-
-    </div>
-
-
-    {{ historical_engagement_labels|json_script:"historical-engagement-labels" }}
-    {{ historical_engagement_full_dates|json_script:"historical-engagement-full-dates" }}
-    {{ historical_views|json_script:"historical-engagement-views" }}
-    {{ historical_reactions|json_script:"historical-engagement-reactions" }}
-    {{ historical_shares|json_script:"historical-engagement-shares" }}
-
-</section>
-
-
-<!-- ==========================================
-     3. SUBMISSION ANALYTICS
-     ========================================== -->
-
-<section class="analytics-section">
-
-    <div class="analytics-chart-panel submission-tracker-panel">
-
-        <div class="submission-tracker-heading">
-
-            <div>
-                <h2>
-                    Submission Analytics
-                </h2>
-
-                <p class="section-description">
-                    Submission workflow distribution for
-                    {{ analytics_period_label }}.
-                </p>
-            </div>
-
-            <div class="submission-total">
-
-                <span>
-                    Total Submissions
-                </span>
-
-                <strong>
-                    {{ total_submissions }}
-                </strong>
-
-            </div>
-
-        </div>
-
-
-        <div class="analytics-bar-list submission-tracker-list">
-
-            {% for item in submission_chart_data %}
-
-                <div class="analytics-bar-row">
-
-                    <span class="analytics-bar-label">
-
-                        {% if item.label == "Revision" %}
-                            Sent Back for Revision
-                        {% else %}
-                            {{ item.label }}
-                        {% endif %}
-
-                    </span>
-
-                    <div class="analytics-progress-wrapper">
-
-                        <progress
-                            class="analytics-progress"
-                            value="{{ item.value }}"
-                            max="{{ total_submissions|default:1 }}"
-                        >
-                            {{ item.value }}
-                        </progress>
-
-                    </div>
-
-                    <span class="analytics-bar-value">
-                        {{ item.value }}
-                    </span>
-
-                </div>
-
-            {% endfor %}
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ==========================================
-     4. WORKFLOW HEALTH
-     ========================================== -->
-
-<section class="analytics-section">
-
-    <h2>
-        Workflow Health
-    </h2>
-
-    <p class="section-description">
-        Current workflow items that may require editorial attention.
-        These cards remain live snapshots and are not filtered by date.
-    </p>
-
-    <div class="dashboard-grid">
-
-        <div class="dashboard-card">
-            <h3>Pending Edit Requests</h3>
-            <strong>{{ pending_edit_requests }}</strong>
-        </div>
-
-        <div class="dashboard-card">
-            <h3>Pending Deletion Requests</h3>
-            <strong>{{ pending_deletion_requests }}</strong>
-        </div>
-
-        <div class="dashboard-card">
-            <h3>Active Content Reports</h3>
-            <strong>{{ active_content_reports }}</strong>
-        </div>
-
-        <div class="dashboard-card">
-            <h3>Revision Required Reports</h3>
-            <strong>{{ revision_required_reports }}</strong>
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ==========================================
-     5. CONTENT PERFORMANCE
-     ========================================== -->
-
-<section class="analytics-section">
-
-    <h2>
-        Content Performance
-    </h2>
-
-    <p class="section-description">
-        Compare reader response during {{ analytics_period_label }}
-        across currently published content.
-    </p>
-
-
-    <div class="performance-stack">
-
-        <div class="analytics-chart-panel performance-panel">
-
-            <div class="performance-panel-heading">
-
-                <div>
-                    <h3>
-                        Category Performance
-                    </h3>
-
-                    <p>
-                        Current published articles grouped by category,
-                        with engagement limited to the selected period.
-                    </p>
-                </div>
-
-            </div>
-
-            {% if category_performance %}
-
-                <div class="analytics-table-wrapper performance-table-wrapper">
-
-                    <table class="performance-table">
-
-                        <thead>
-                            <tr>
-                                <th>Category</th>
-                                <th>Published Articles</th>
-                                <th>Views</th>
-                                <th>Reactions</th>
-                                <th>Shares</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-
-                            {% for category in category_performance %}
-
-                                <tr>
-                                    <td>{{ category.category__name }}</td>
-                                    <td>{{ category.article_count }}</td>
-                                    <td>{{ category.total_views|default:0 }}</td>
-                                    <td>{{ category.total_reactions|default:0 }}</td>
-                                    <td>{{ category.total_shares|default:0 }}</td>
-                                </tr>
-
-                            {% endfor %}
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            {% else %}
-
-                <p class="empty-message">
-                    No published category data is currently available.
-                </p>
-
-            {% endif %}
-
-        </div>
-
-
-        <div class="analytics-chart-panel performance-panel">
-
-            <div class="performance-panel-heading">
-
-                <div>
-                    <h3>
-                        Top Performing Articles
-                    </h3>
-
-                    <p>
-                        Top currently published articles ranked by
-                        views during {{ analytics_period_label }}.
-                    </p>
-                </div>
-
-            </div>
-
-            {% if top_viewed_articles %}
-
-                <div class="analytics-table-wrapper performance-table-wrapper">
-
-                    <table class="performance-table">
-
-                        <thead>
-                            <tr>
-                                <th>Article</th>
-                                <th>Category</th>
-                                <th>Views</th>
-                                <th>Reactions</th>
-                                <th>Shares</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-
-                            {% for article in top_viewed_articles %}
-
-                                <tr>
-                                    <td>{{ article.title }}</td>
-                                    <td>{{ article.category.name }}</td>
-                                    <td>{{ article.period_views|default:0 }}</td>
-                                    <td>{{ article.period_reactions|default:0 }}</td>
-                                    <td>{{ article.period_shares|default:0 }}</td>
-                                </tr>
-
-                            {% endfor %}
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            {% else %}
-
-                <p class="empty-message">
-                    No published articles are currently available.
-                </p>
-
-            {% endif %}
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ==========================================
-     6. EDITOR PERFORMANCE
-     ========================================== -->
-
-<section class="analytics-section">
-
-    <h2>
-        Editor Performance
-    </h2>
-
-    <p class="section-description">
-        High-level publication and submission activity for each Editor
-        during {{ analytics_period_label }}.
-    </p>
-
-    {% if editors %}
-
-        <div class="content-panel analytics-table-wrapper">
-
-            <table>
-
-                <thead>
-                    <tr>
-                        <th>Editor</th>
-                        <th>Published</th>
-                        <th>Submissions</th>
-                        <th>Approved</th>
-                        <th>Rejected</th>
-                        <th>Revision</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-
-                    {% for editor in editors %}
-
-                        <tr>
-                            <td>{{ editor.username }}</td>
-                            <td>{{ editor.published_count }}</td>
-                            <td>{{ editor.submission_count }}</td>
-                            <td>{{ editor.approved_count }}</td>
-                            <td>{{ editor.rejected_count }}</td>
-                            <td>{{ editor.revision_count }}</td>
-                        </tr>
-
-                    {% endfor %}
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    {% else %}
-
-        <p class="empty-message">
-            No Editor accounts are currently available.
-        </p>
-
-    {% endif %}
-
-</section>
+<div
+    id="adviser-analytics-react-root"
+    data-period-label="{{ analytics_period_label }}"
+    data-start-date="{{ analytics_start_date|date:'Y-m-d' }}"
+    data-end-date="{{ analytics_end_date|date:'Y-m-d' }}"
+    data-timezone="Asia/Manila"
+></div>
+
+
+{{ article_status_chart_data|json_script:"adviser-article-status-data" }}
+{{ submission_chart_data|json_script:"adviser-submission-data" }}
+{{ edit_request_chart_data|json_script:"adviser-edit-request-data" }}
+{{ deletion_request_chart_data|json_script:"adviser-deletion-request-data" }}
+{{ content_report_chart_data|json_script:"adviser-content-report-data" }}
+{{ reader_engagement_chart_data|json_script:"adviser-reader-engagement-data" }}
+{{ category_chart_data|json_script:"adviser-category-data" }}
+{{ editor_chart_data|json_script:"adviser-editor-data" }}
+{{ historical_engagement_labels|json_script:"adviser-history-labels" }}
+{{ historical_engagement_full_dates|json_script:"adviser-history-full-dates" }}
+{{ historical_views|json_script:"adviser-history-views" }}
+{{ historical_reactions|json_script:"adviser-history-reactions" }}
+{{ historical_shares|json_script:"adviser-history-shares" }}
+
+
+<div id="adviser-top-articles-data" hidden>
+
+    {% for article in top_viewed_articles %}
+
+        <span
+            data-top-article
+            data-title="{{ article.title }}"
+            data-category="{{ article.category.name }}"
+            data-views="{{ article.period_views|default:0 }}"
+            data-reactions="{{ article.period_reactions|default:0 }}"
+            data-shares="{{ article.period_shares|default:0 }}"
+        ></span>
+
+    {% endfor %}
+
+</div>
 
 
 <style>
 
-.analytics-filter-panel {
-    margin-bottom: 28px;
+.adviser-react-page-header {
+    margin-bottom: 22px;
+}
+
+.adviser-react-filter-panel {
+    margin-bottom: 22px;
     padding: 20px;
     border: 1px solid #d8e2dd;
     border-radius: 12px;
@@ -793,184 +386,8 @@
     margin-bottom: 16px;
 }
 
-.analytics-section {
-    margin-bottom: 42px;
-}
-
-
-.analytics-note {
-    margin-top: 20px;
-}
-
-
-.analytics-note p {
-    margin-bottom: 0;
-}
-
-
-.analytics-chart-panel {
-    margin-top: 20px;
-
-    padding: 20px;
-
-    border: 1px solid #d8d8d8;
-    border-radius: 10px;
-}
-
-
-.analytics-chart-panel h3 {
-    margin-top: 0;
-}
-
-
-.analytics-bar-row {
-    display: grid;
-
-    grid-template-columns:
-        minmax(120px, 180px)
-        1fr
-        50px;
-
-    gap: 12px;
-
-    align-items: center;
-
-    margin-top: 12px;
-}
-
-
-.analytics-bar-label {
-    font-weight: 600;
-}
-
-
-.analytics-bar-track {
-    width: 100%;
-    height: 14px;
-
-    overflow: hidden;
-
-    background: #e4e4e4;
-
-    border-radius: 999px;
-}
-
-
-.analytics-progress {
-    display: block;
-
-    width: 100%;
-    height: 14px;
-
-    border: none;
-    border-radius: 999px;
-
-    overflow: hidden;
-
-    appearance: none;
-}
-
-
-.analytics-progress::-webkit-progress-bar {
-    background: #e4e4e4;
-
-    border-radius: 999px;
-}
-
-
-.analytics-progress::-webkit-progress-value {
-    background: #555;
-
-    border-radius: 999px;
-}
-
-
-.analytics-progress::-moz-progress-bar {
-    background: #555;
-
-    border-radius: 999px;
-}
-
-
-.analytics-table-wrapper {
-    overflow-x: auto;
-}
-
-
-.analytics-ranking-item {
-    display: flex;
-    flex-direction: column;
-
-    gap: 4px;
-
-    padding: 12px 0;
-
-    border-bottom: 1px solid #dddddd;
-}
-
-
-.analytics-ranking-item:last-child {
-    border-bottom: none;
-}
-
-
-.analytics-ranking-item span {
-    font-weight: 600;
-}
-
-
-.analytics-ranking-item small {
-    opacity: 0.75;
-}
-
-
-.analytics-history-summary {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 14px;
-    margin-top: 20px;
-}
-
-.analytics-mini-card {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 16px;
-    border: 1px solid #d8d8d8;
-    border-radius: 10px;
-    background: #ffffff;
-}
-
-.analytics-mini-card span {
-    color: #6f7a74;
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.analytics-mini-card strong {
-    color: #184536;
-    font-size: 24px;
-}
-
-.analytics-history-panel {
-    background: #ffffff;
-}
-
-.analytics-chart-heading {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 16px;
-    margin-bottom: 18px;
-}
-
-.analytics-chart-heading h3 {
-    margin-bottom: 5px;
-}
-
-.analytics-chart-heading p {
-    margin: 0;
-    color: #6f7a74;
+.adviser-react-profile-strip {
+    margin-bottom: 24px;
 }
 
 .analytics-timezone-badge {
@@ -983,171 +400,6 @@
     font-size: 12px;
     font-weight: 700;
 }
-
-.analytics-chart-canvas-wrapper {
-    position: relative;
-    width: 100%;
-    height: 360px;
-}
-
-.analytics-history-note {
-    margin: 16px 0 0;
-    color: #6f7a74;
-    font-size: 13px;
-}
-
-.analytics-progress-wrapper {
-    width: 100%;
-    min-width: 0;
-}
-
-.analytics-bar-value {
-    font-weight: 700;
-    text-align: right;
-}
-
-
-
-.submission-tracker-panel {
-    margin-top: 0;
-}
-
-.submission-tracker-heading {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 24px;
-    margin-bottom: 22px;
-}
-
-.submission-tracker-heading h2 {
-    margin: 0 0 6px;
-}
-
-.submission-tracker-heading .section-description {
-    margin: 0;
-    color: #6f7a74;
-}
-
-.submission-total {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 2px;
-    flex-shrink: 0;
-}
-
-.submission-total span {
-    color: #6f7a74;
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.submission-total strong {
-    color: #184536;
-    font-size: 30px;
-    line-height: 1;
-}
-
-.submission-tracker-list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.submission-tracker-list .analytics-bar-row {
-    margin-top: 0;
-}
-
-
-.analytics-subsection {
-    margin-top: 24px;
-}
-
-.analytics-subsection > h3 {
-    margin-bottom: 10px;
-}
-
-.analytics-subsection .section-description {
-    margin-top: -2px;
-    margin-bottom: 14px;
-}
-
-
-.performance-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    margin-top: 20px;
-}
-
-.performance-panel {
-    margin-top: 0;
-    padding: 0;
-    overflow: hidden;
-    background: #ffffff;
-}
-
-.performance-panel-heading {
-    padding: 20px 20px 16px;
-    border-bottom: 1px solid #e1e5e3;
-}
-
-.performance-panel-heading h3 {
-    margin: 0 0 5px;
-}
-
-.performance-panel-heading p {
-    margin: 0;
-    color: #6f7a74;
-    font-size: 13px;
-}
-
-.performance-table-wrapper {
-    width: 100%;
-    overflow-x: auto;
-}
-
-.performance-table {
-    width: 100%;
-    margin: 0;
-    border-collapse: collapse;
-    table-layout: fixed;
-}
-
-.performance-table th,
-.performance-table td {
-    padding: 14px 16px;
-    vertical-align: middle;
-    text-align: left;
-}
-
-.performance-table th {
-    white-space: nowrap;
-}
-
-.performance-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-.performance-table th:first-child,
-.performance-table td:first-child {
-    width: 28%;
-}
-
-.performance-table th:not(:first-child),
-.performance-table td:not(:first-child) {
-    text-align: center;
-}
-
-@media (max-width: 900px) {
-
-    .analytics-history-summary {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-}
-
 
 @media (max-width: 720px) {
 
@@ -1166,182 +418,50 @@
         width: 100%;
     }
 
-    .submission-tracker-heading {
-        flex-direction: column;
-    }
-
-    .submission-total {
-        align-items: flex-start;
-    }
-
-
-
-    .analytics-bar-row {
-        grid-template-columns:
-            minmax(100px, 140px)
-            1fr
-            40px;
-    }
-
-    .analytics-chart-heading {
-        flex-direction: column;
-    }
-
-    .analytics-chart-canvas-wrapper {
-        height: 300px;
-    }
-
-}
-
-
-@media (max-width: 520px) {
-
-    .analytics-history-summary {
-        grid-template-columns: 1fr;
-    }
-
 }
 
 </style>
 
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const rangeSelect = document.getElementById("analytics-range-select");
-    const customRange = document.getElementById("analytics-custom-range");
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
 
-    function syncCustomRangeVisibility() {
-        if (!rangeSelect || !customRange) {
-            return;
+        const rangeSelect =
+            document.getElementById(
+                "analytics-range-select"
+            );
+
+        const customRange =
+            document.getElementById(
+                "analytics-custom-range"
+            );
+
+        function syncCustomRangeVisibility() {
+
+            if (!rangeSelect || !customRange) {
+                return;
+            }
+
+            customRange.classList.toggle(
+                "is-hidden",
+                rangeSelect.value !== "custom"
+            );
+
         }
 
-        customRange.classList.toggle(
-            "is-hidden",
-            rangeSelect.value !== "custom"
-        );
+        if (rangeSelect) {
+            rangeSelect.addEventListener(
+                "change",
+                syncCustomRangeVisibility
+            );
+        }
+
+        syncCustomRangeVisibility();
+
     }
-
-    if (rangeSelect) {
-        rangeSelect.addEventListener(
-            "change",
-            syncCustomRangeVisibility
-        );
-    }
-
-    syncCustomRangeVisibility();
-
-    const canvas = document.getElementById("historical-engagement-chart");
-
-    if (!canvas || typeof Chart === "undefined") {
-        return;
-    }
-
-    const labelsElement = document.getElementById("historical-engagement-labels");
-    const fullDatesElement = document.getElementById("historical-engagement-full-dates");
-    const viewsElement = document.getElementById("historical-engagement-views");
-    const reactionsElement = document.getElementById("historical-engagement-reactions");
-    const sharesElement = document.getElementById("historical-engagement-shares");
-
-    if (!labelsElement || !fullDatesElement || !viewsElement || !reactionsElement || !sharesElement) {
-        return;
-    }
-
-    const labels = JSON.parse(labelsElement.textContent);
-    const fullDates = JSON.parse(fullDatesElement.textContent);
-    const views = JSON.parse(viewsElement.textContent);
-    const reactions = JSON.parse(reactionsElement.textContent);
-    const shares = JSON.parse(sharesElement.textContent);
-
-    new Chart(canvas, {
-        type: "line",
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: "Views",
-                    data: views,
-                    borderColor: "#184536",
-                    backgroundColor: "rgba(24, 69, 54, 0.10)",
-                    borderWidth: 3,
-                    pointRadius: 3,
-                    pointHoverRadius: 5,
-                    tension: 0.25,
-                    fill: false,
-                },
-                {
-                    label: "Reactions",
-                    data: reactions,
-                    borderColor: "#b88a2b",
-                    backgroundColor: "rgba(184, 138, 43, 0.10)",
-                    borderWidth: 3,
-                    pointRadius: 3,
-                    pointHoverRadius: 5,
-                    tension: 0.25,
-                    fill: false,
-                },
-                {
-                    label: "Shares",
-                    data: shares,
-                    borderColor: "#546e7a",
-                    backgroundColor: "rgba(84, 110, 122, 0.10)",
-                    borderWidth: 3,
-                    pointRadius: 3,
-                    pointHoverRadius: 5,
-                    tension: 0.25,
-                    fill: false,
-                },
-            ],
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                mode: "index",
-                intersect: false,
-            },
-            plugins: {
-                legend: {
-                    position: "top",
-                },
-                tooltip: {
-                    callbacks: {
-                        title: function (items) {
-                            if (!items.length) {
-                                return "";
-                            }
-
-                            return fullDates[items[0].dataIndex] || items[0].label;
-                        },
-                    },
-                },
-            },
-            scales: {
-                x: {
-                    grid: {
-                        display: false,
-                    },
-                    ticks: {
-                        maxRotation: 0,
-                        autoSkip: true,
-                        maxTicksLimit: 10,
-                    },
-                },
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        precision: 0,
-                    },
-                    title: {
-                        display: true,
-                        text: "Interactions",
-                    },
-                },
-            },
-        },
-    });
-});
+);
 </script>
 
 {% endblock %}

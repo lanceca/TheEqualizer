@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import AdviserAnalytics from './AdviserAnalytics.jsx'
 import ArticleMediaEnhancer from './ArticleMediaEnhancer.jsx'
 import './App.css'
 
@@ -70,6 +71,7 @@ function App() {
 
   return (
     <>
+      <AdviserAnalytics />
       <ArticleMediaEnhancer />
 
       <div
