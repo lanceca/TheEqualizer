@@ -254,6 +254,20 @@ a {
     color: var(--reader-green-dark) !important;
 }
 
+.public-category-menu a.is-active,
+.public-category-menu a.is-active:visited {
+    border-color: var(--reader-green);
+    background: var(--reader-green);
+    color: var(--reader-white) !important;
+}
+
+.public-category-menu a.is-active:hover,
+.public-category-menu a.is-active:focus-visible {
+    border-color: var(--reader-green-dark);
+    background: var(--reader-green-dark);
+    color: var(--reader-white) !important;
+}
+
 .public-nav-search {
     gap: 6px;
 

@@ -557,42 +557,24 @@ function AuditLogPanel({
 
   return (
     <section className="audit-react-shell">
-      <header className="audit-react-hero">
+      <div className="profile-page-header">
         <div>
-          <span className="audit-react-kicker">
-            Transparency & Accountability
-          </span>
+          <p className="workflow-eyebrow">
+            Activity Center
+          </p>
 
           <h1>
             Action Log
           </h1>
 
-          <p>
+          <p className="section-description">
             Search and review meaningful CMS,
             workflow, management, account,
             and security activity across
             The Equalizer.
           </p>
         </div>
-
-        <div className="audit-react-hero-stat">
-          <span>
-            Matching activity
-          </span>
-
-          <strong>
-            {loading
-              ? '—'
-              : pagination.count}
-          </strong>
-
-          <small>
-            {data.full_visibility
-              ? 'Full safe audit visibility'
-              : 'Sensitive details are protected'}
-          </small>
-        </div>
-      </header>
+      </div>
 
       <form
         className="audit-react-filter-panel"

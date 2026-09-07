@@ -9,7 +9,7 @@
     -->
     <link
         rel="stylesheet"
-        href="{% static 'css/style.css' %}?v=20260904-people-teams-1"
+        href="{% static 'css/style.css' %}?v=20260908-category-active-1"
     >
 
     <div class="public-layout">
@@ -20,10 +20,6 @@
             <div class="public-navigation-inner">
 
                 <div class="public-navigation-main">
-
-                    <a href="{% url 'home' %}" class="public-nav-link">
-                        Home
-                    </a>
 
                     <a href="{% url 'digital_publications' %}" class="public-nav-link">
                         Digital Publications
@@ -66,15 +62,86 @@
                             hidden
                         >
 
-                            <a href="{% url 'category_articles' 'news' %}" role="menuitem">News</a>
-                            <a href="{% url 'category_articles' 'editorials' %}" role="menuitem">Editorials</a>
-                            <a href="{% url 'category_articles' 'features' %}" role="menuitem">Features</a>
-                            <a href="{% url 'category_articles' 'cartoonings' %}" role="menuitem">Cartoonings</a>
-                            <a href="{% url 'category_articles' 'videos' %}" role="menuitem">Videos</a>
-                            <a href="{% url 'category_articles' 'special-showcase' %}" role="menuitem">Special Showcase</a>
-                            <a href="{% url 'category_articles' 'sports' %}" role="menuitem">Sports</a>
-                            <a href="{% url 'category_articles' 'campus-life' %}" role="menuitem">Campus Life</a>
-                            <a href="{% url 'category_articles' 'opinion' %}" role="menuitem">Opinion</a>
+                            <a
+                                href="{% url 'category_articles' 'news' %}"
+                                role="menuitem"
+                                class="{% if category and category.slug == 'news' %}is-active{% endif %}"
+                                {% if category and category.slug == 'news' %}aria-current="page"{% endif %}
+                            >
+                                News
+                            </a>
+
+                            <a
+                                href="{% url 'category_articles' 'editorials' %}"
+                                role="menuitem"
+                                class="{% if category and category.slug == 'editorials' %}is-active{% endif %}"
+                                {% if category and category.slug == 'editorials' %}aria-current="page"{% endif %}
+                            >
+                                Editorials
+                            </a>
+
+                            <a
+                                href="{% url 'category_articles' 'features' %}"
+                                role="menuitem"
+                                class="{% if category and category.slug == 'features' %}is-active{% endif %}"
+                                {% if category and category.slug == 'features' %}aria-current="page"{% endif %}
+                            >
+                                Features
+                            </a>
+
+                            <a
+                                href="{% url 'category_articles' 'cartoonings' %}"
+                                role="menuitem"
+                                class="{% if category and category.slug == 'cartoonings' %}is-active{% endif %}"
+                                {% if category and category.slug == 'cartoonings' %}aria-current="page"{% endif %}
+                            >
+                                Cartoonings
+                            </a>
+
+                            <a
+                                href="{% url 'category_articles' 'videos' %}"
+                                role="menuitem"
+                                class="{% if category and category.slug == 'videos' %}is-active{% endif %}"
+                                {% if category and category.slug == 'videos' %}aria-current="page"{% endif %}
+                            >
+                                Videos
+                            </a>
+
+                            <a
+                                href="{% url 'category_articles' 'special-showcase' %}"
+                                role="menuitem"
+                                class="{% if category and category.slug == 'special-showcase' %}is-active{% endif %}"
+                                {% if category and category.slug == 'special-showcase' %}aria-current="page"{% endif %}
+                            >
+                                Special Showcase
+                            </a>
+
+                            <a
+                                href="{% url 'category_articles' 'sports' %}"
+                                role="menuitem"
+                                class="{% if category and category.slug == 'sports' %}is-active{% endif %}"
+                                {% if category and category.slug == 'sports' %}aria-current="page"{% endif %}
+                            >
+                                Sports
+                            </a>
+
+                            <a
+                                href="{% url 'category_articles' 'campus-life' %}"
+                                role="menuitem"
+                                class="{% if category and category.slug == 'campus-life' %}is-active{% endif %}"
+                                {% if category and category.slug == 'campus-life' %}aria-current="page"{% endif %}
+                            >
+                                Campus Life
+                            </a>
+
+                            <a
+                                href="{% url 'category_articles' 'opinion' %}"
+                                role="menuitem"
+                                class="{% if category and category.slug == 'opinion' %}is-active{% endif %}"
+                                {% if category and category.slug == 'opinion' %}aria-current="page"{% endif %}
+                            >
+                                Opinion
+                            </a>
 
                         </div>
 
