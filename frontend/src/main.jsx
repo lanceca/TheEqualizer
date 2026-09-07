@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 
 import App from './App.jsx'
 import DigitalPublicationViewer from './DigitalPublicationViewer.jsx'
+import HeaderActions from './HeaderActions.jsx'
 import PeopleAndTeams from './PeopleAndTeams.jsx'
 import StaffSidebarToggle from './StaffSidebarToggle.jsx'
 
@@ -11,6 +12,7 @@ import './index.css'
 const componentRegistry = {
   ReaderTools: App,
   DigitalPublicationViewer,
+  HeaderActions,
   PeopleAndTeams,
   StaffSidebarToggle,
 }
@@ -30,8 +32,7 @@ function getComponentProps(
   }
 
   if (
-    componentName
-    === 'StaffSidebarToggle'
+    componentName === 'StaffSidebarToggle'
   ) {
     return {
       username:
@@ -39,6 +40,19 @@ function getComponentProps(
         || '',
       role:
         mountPoint.dataset.role
+        || '',
+    }
+  }
+
+  if (
+    componentName === 'HeaderActions'
+  ) {
+    return {
+      facebookUrl:
+        mountPoint.dataset.facebookUrl
+        || '',
+      installUrl:
+        mountPoint.dataset.installUrl
         || '',
     }
   }

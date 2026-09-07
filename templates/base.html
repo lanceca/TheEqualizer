@@ -220,6 +220,8 @@
             .site-nav {
                 width: 100%;
                 margin-left: 0;
+
+                flex-wrap: wrap;
             }
 
             .site-nav-link {
@@ -238,24 +240,35 @@
             top: 20px;
             right: 20px;
             z-index: 9999;
+
             display: flex;
             flex-direction: column;
+
             gap: 10px;
+
             width: min(420px, calc(100vw - 40px));
         }
 
         .message-popup {
-            background: #ffffff;
-            border: 1px solid #dcdcdc;
-            border-left: 5px solid #555555;
-            border-radius: 8px;
-            padding: 14px 16px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
+
             gap: 15px;
-            animation: messageSlideIn 0.25s ease;
+
+            padding: 14px 16px;
+
+            background: #ffffff;
+
+            border: 1px solid #dcdcdc;
+            border-left: 5px solid #555555;
+            border-radius: 8px;
+
+            box-shadow:
+                0 8px 24px rgba(0, 0, 0, 0.18);
+
+            animation:
+                messageSlideIn 0.25s ease;
         }
 
         .message-popup.success {
@@ -280,12 +293,16 @@
         }
 
         .message-popup-close {
+            padding: 0;
+
             border: none;
+
             background: transparent;
+
             font-size: 20px;
             line-height: 1;
+
             cursor: pointer;
-            padding: 0;
         }
 
 
@@ -296,12 +313,16 @@
         .confirmation-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.55);
             z-index: 10000;
+
             display: none;
             align-items: center;
             justify-content: center;
+
             padding: 20px;
+
+            background:
+                rgba(0, 0, 0, 0.55);
         }
 
         .confirmation-overlay.active {
@@ -310,10 +331,16 @@
 
         .confirmation-modal {
             width: min(460px, 100%);
-            background: #ffffff;
-            border-radius: 10px;
+
             padding: 24px;
-            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.28);
+
+            background: #ffffff;
+
+            border-radius: 10px;
+
+            box-shadow:
+                0 12px 35px
+                rgba(0, 0, 0, 0.28);
         }
 
         .confirmation-modal h2 {
@@ -322,21 +349,26 @@
 
         .confirmation-modal p {
             margin-bottom: 24px;
+
             line-height: 1.5;
         }
 
         .confirmation-actions {
             display: flex;
             justify-content: flex-end;
+
             gap: 10px;
         }
 
         .confirmation-button {
+            padding: 10px 16px;
+
             border: none;
             border-radius: 6px;
-            padding: 10px 16px;
-            cursor: pointer;
+
             font: inherit;
+
+            cursor: pointer;
         }
 
         .confirmation-cancel {
@@ -369,7 +401,7 @@
     <!-- React/Vite progressive enhancement -->
     <link
         rel="stylesheet"
-        href="{% static 'react-dist/assets/equalizer-react.css' %}?v=20260904-flipbook-2"
+        href="{% static 'react-dist/assets/equalizer-react.css' %}?v=20260907-header-actions-1"
     >
 
 </head>
@@ -441,6 +473,14 @@
                     </a>
 
                 {% endif %}
+
+
+                <div
+                    class="site-header-react-actions"
+                    data-react-component="HeaderActions"
+                    data-facebook-url="https://www.facebook.com/mcctheequalizer"
+                    data-install-url=""
+                ></div>
 
             </nav>
 
@@ -544,11 +584,11 @@
 
     </main>
 
+
     <!-- React mounts here without replacing the Django page -->
     <div
         data-react-component="ReaderTools"
     ></div>
-
 
 
 
@@ -563,17 +603,19 @@
                 // MESSAGE POPUPS
                 // ==========================================
 
-                const messagePopups = document.querySelectorAll(
-                    "[data-message-popup]"
-                );
+                const messagePopups =
+                    document.querySelectorAll(
+                        "[data-message-popup]"
+                    );
 
 
                 messagePopups.forEach(
                     function (popup) {
 
-                        const closeButton = popup.querySelector(
-                            "[data-message-close]"
-                        );
+                        const closeButton =
+                            popup.querySelector(
+                                "[data-message-close]"
+                            );
 
 
                         if (closeButton) {
@@ -612,31 +654,47 @@
                 // CONFIRMATION MODAL ELEMENTS
                 // ==========================================
 
-                const overlay = document.getElementById(
-                    "confirmation-overlay"
-                );
+                const overlay =
+                    document.getElementById(
+                        "confirmation-overlay"
+                    );
 
-                const titleElement = document.getElementById(
-                    "confirmation-title"
-                );
+                const titleElement =
+                    document.getElementById(
+                        "confirmation-title"
+                    );
 
-                const messageElement = document.getElementById(
-                    "confirmation-message"
-                );
+                const messageElement =
+                    document.getElementById(
+                        "confirmation-message"
+                    );
 
-                const cancelButton = document.getElementById(
-                    "confirmation-cancel"
-                );
+                const cancelButton =
+                    document.getElementById(
+                        "confirmation-cancel"
+                    );
 
-                const confirmButton = document.getElementById(
-                    "confirmation-confirm"
-                );
+                const confirmButton =
+                    document.getElementById(
+                        "confirmation-confirm"
+                    );
 
 
                 let pendingForm = null;
                 let pendingSubmitButton = null;
                 let pendingLink = null;
 
+
+
+                if (
+                    !overlay
+                    || !titleElement
+                    || !messageElement
+                    || !cancelButton
+                    || !confirmButton
+                ) {
+                    return;
+                }
 
 
                 // ==========================================
@@ -653,7 +711,8 @@
 
 
                     messageElement.textContent =
-                        message || "Are you sure you want to continue?";
+                        message
+                        || "Are you sure you want to continue?";
 
 
                     overlay.classList.add(
@@ -698,7 +757,8 @@
 
 
                                 if (
-                                    form.dataset.confirmed === "true"
+                                    form.dataset.confirmed
+                                    === "true"
                                 ) {
 
                                     delete form.dataset.confirmed;
@@ -709,11 +769,12 @@
 
 
                                 const submitter =
-                                    event.submitter || null;
+                                    event.submitter
+                                    || null;
 
 
-                                let confirmationSource = null;
-
+                                let confirmationSource =
+                                    null;
 
 
                                 if (
@@ -741,7 +802,6 @@
                                 }
 
 
-
                                 if (!confirmationSource) {
 
                                     return;
@@ -749,9 +809,7 @@
                                 }
 
 
-
                                 event.preventDefault();
-
 
 
                                 pendingForm =
@@ -766,10 +824,13 @@
                                     null;
 
 
-
                                 openConfirmation(
-                                    confirmationSource.dataset.confirmTitle,
-                                    confirmationSource.dataset.confirm
+                                    confirmationSource
+                                        .dataset
+                                        .confirmTitle,
+                                    confirmationSource
+                                        .dataset
+                                        .confirm
                                 );
 
                             }
@@ -808,10 +869,11 @@
                                     null;
 
 
-
                                 openConfirmation(
-                                    link.dataset.confirmTitle,
-                                    link.dataset.confirm
+                                    link.dataset
+                                        .confirmTitle,
+                                    link.dataset
+                                        .confirm
                                 );
 
                             }
@@ -846,7 +908,8 @@
                     function (event) {
 
                         if (
-                            event.target === overlay
+                            event.target
+                            === overlay
                         ) {
 
                             closeConfirmation();
@@ -868,9 +931,10 @@
 
                         if (
                             event.key === "Escape"
-                            && overlay.classList.contains(
-                                "active"
-                            )
+                            && overlay.classList
+                                .contains(
+                                    "active"
+                                )
                         ) {
 
                             closeConfirmation();
@@ -909,7 +973,6 @@
                         }
 
 
-
                         if (pendingForm) {
 
                             const form =
@@ -920,16 +983,13 @@
                                 pendingSubmitButton;
 
 
-
                             form.dataset.confirmed =
                                 "true";
-
 
 
                             overlay.classList.remove(
                                 "active"
                             );
-
 
 
                             pendingForm =
@@ -942,7 +1002,6 @@
 
                             pendingLink =
                                 null;
-
 
 
                             if (submitButton) {
@@ -969,11 +1028,10 @@
 
 
 
-
     <!-- React/Vite production/watch bundle -->
     <script
         type="module"
-        src="{% static 'react-dist/assets/equalizer-react.js' %}?v=20260904-flipbook-2"
+        src="{% static 'react-dist/assets/equalizer-react.js' %}?v=20260907-header-actions-1"
     ></script>
 
 </body>
