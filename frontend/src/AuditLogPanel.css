@@ -1,0 +1,998 @@
+.audit-react-shell {
+    --audit-green: #184536;
+    --audit-green-dark: #0e2d24;
+    --audit-gold: #d2aa32;
+    --audit-ink: #1d2924;
+    --audit-muted: #6e7a74;
+    --audit-border: #dbe4df;
+    --audit-soft: #f5f8f6;
+    --audit-white: #ffffff;
+
+    width: 100%;
+    margin: 0 0 42px;
+    color: var(--audit-ink);
+}
+
+.audit-react-shell * {
+    box-sizing: border-box;
+}
+
+.audit-react-hero {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 28px;
+
+    padding: clamp(24px, 3.6vw, 38px);
+
+    border-radius: 22px;
+
+    background:
+        radial-gradient(
+            circle at 86% 12%,
+            rgba(210, 170, 50, 0.24),
+            transparent 30%
+        ),
+        linear-gradient(
+            135deg,
+            #0d2a21,
+            #184536
+        );
+
+    color: #ffffff;
+
+    box-shadow:
+        0 18px 46px
+        rgba(14, 45, 36, 0.14);
+}
+
+.audit-react-hero > div:first-child {
+    max-width: 760px;
+}
+
+.audit-react-kicker {
+    display: block;
+    margin-bottom: 8px;
+
+    color: #e7ca6c;
+
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.audit-react-hero h1 {
+    margin: 0;
+
+    color: #ffffff;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size:
+        clamp(34px, 5vw, 58px);
+
+    font-weight: 600;
+    line-height: 1;
+}
+
+.audit-react-hero p {
+    max-width: 680px;
+
+    margin: 14px 0 0;
+
+    color:
+        rgba(255, 255, 255, 0.76);
+
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+.audit-react-hero-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    flex: 0 0 min(270px, 34%);
+
+    padding: 17px 18px;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.18);
+
+    border-radius: 14px;
+
+    background:
+        rgba(255, 255, 255, 0.08);
+
+    backdrop-filter: blur(10px);
+}
+
+.audit-react-hero-stat span {
+    color:
+        rgba(255, 255, 255, 0.62);
+
+    font-size: 9px;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.audit-react-hero-stat strong {
+    color: #ffffff;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 32px;
+    line-height: 1;
+}
+
+.audit-react-hero-stat small {
+    color:
+        rgba(255, 255, 255, 0.66);
+
+    font-size: 10px;
+    line-height: 1.4;
+}
+
+.audit-react-filter-panel {
+    display: grid;
+    grid-template-columns:
+        minmax(250px, 1.6fr)
+        repeat(
+            3,
+            minmax(150px, 0.8fr)
+        );
+
+    gap: 14px;
+
+    margin-top: 18px;
+    padding: 18px;
+
+    border:
+        1px solid
+        var(--audit-border);
+
+    border-radius: 16px;
+
+    background: var(--audit-white);
+
+    box-shadow:
+        0 8px 26px
+        rgba(14, 45, 36, 0.05);
+}
+
+.audit-react-filter-panel > div {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.audit-react-filter-panel label {
+    color: #415048;
+
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.audit-react-filter-panel input,
+.audit-react-filter-panel select {
+    width: 100%;
+    min-height: 43px;
+
+    padding: 9px 11px;
+
+    border:
+        1px solid
+        #cdd8d2;
+
+    border-radius: 9px;
+
+    background: #ffffff;
+    color: var(--audit-ink);
+
+    font: inherit;
+    font-size: 12px;
+}
+
+.audit-react-filter-panel input:focus,
+.audit-react-filter-panel select:focus {
+    outline: none;
+
+    border-color:
+        var(--audit-green);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(24, 69, 54, 0.11);
+}
+
+.audit-react-search-box {
+    position: relative;
+}
+
+.audit-react-search-box > span {
+    position: absolute;
+    top: 50%;
+    left: 11px;
+
+    transform:
+        translateY(-50%);
+
+    color: #829089;
+
+    font-size: 18px;
+
+    pointer-events: none;
+}
+
+.audit-react-search-box input {
+    padding-left: 36px;
+}
+
+.audit-react-filter-actions {
+    grid-column: 1 / -1;
+
+    flex-direction: row !important;
+    flex-wrap: wrap;
+}
+
+.audit-react-primary-button,
+.audit-react-secondary-button {
+    min-height: 40px;
+
+    padding: 8px 16px;
+
+    border-radius: 999px;
+
+    cursor: pointer;
+
+    font: inherit;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.audit-react-primary-button {
+    border:
+        1px solid
+        var(--audit-green);
+
+    background:
+        var(--audit-green);
+
+    color: #ffffff;
+}
+
+.audit-react-secondary-button {
+    border:
+        1px solid
+        #cdd8d2;
+
+    background: #ffffff;
+
+    color:
+        var(--audit-green);
+}
+
+.audit-react-primary-button:hover {
+    background:
+        var(--audit-green-dark);
+}
+
+.audit-react-secondary-button:hover {
+    border-color:
+        var(--audit-green);
+}
+
+.audit-react-privacy-note {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    margin-top: 14px;
+    padding: 12px 14px;
+
+    border:
+        1px solid
+        #ead696;
+
+    border-radius: 12px;
+
+    background: #fff9e4;
+
+    color: #735b17;
+}
+
+.audit-react-privacy-note strong {
+    flex: 0 0 auto;
+
+    font-size: 11px;
+}
+
+.audit-react-privacy-note span {
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.audit-react-list-panel {
+    margin-top: 18px;
+    padding: 20px;
+
+    border:
+        1px solid
+        var(--audit-border);
+
+    border-radius: 18px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 10px 30px
+        rgba(14, 45, 36, 0.06);
+}
+
+.audit-react-list-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+
+    gap: 18px;
+
+    margin-bottom: 16px;
+}
+
+.audit-react-list-heading > div > span {
+    display: block;
+
+    margin-bottom: 4px;
+
+    color: #927019;
+
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.audit-react-list-heading h2 {
+    margin: 0;
+
+    color:
+        var(--audit-green-dark);
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 26px;
+    font-weight: 600;
+}
+
+.audit-react-list-heading small {
+    color: var(--audit-muted);
+
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.audit-react-log-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.audit-react-log-card {
+    overflow: hidden;
+
+    border:
+        1px solid
+        var(--audit-border);
+
+    border-radius: 13px;
+
+    background: #ffffff;
+
+    transition:
+        border-color 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.audit-react-log-card:hover,
+.audit-react-log-card.is-expanded {
+    border-color:
+        rgba(24, 69, 54, 0.34);
+
+    box-shadow:
+        0 8px 24px
+        rgba(14, 45, 36, 0.07);
+}
+
+.audit-react-log-summary {
+    display: grid;
+    grid-template-columns:
+        minmax(120px, 0.8fr)
+        minmax(160px, 1fr)
+        minmax(170px, 1.1fr)
+        minmax(170px, 1.2fr)
+        auto;
+
+    align-items: center;
+
+    gap: 14px;
+
+    width: 100%;
+
+    padding: 13px 14px;
+
+    border: 0;
+
+    background: transparent;
+    color: inherit;
+
+    cursor: pointer;
+
+    font: inherit;
+    text-align: left;
+}
+
+.audit-react-log-time,
+.audit-react-log-actor,
+.audit-react-log-action,
+.audit-react-log-target {
+    min-width: 0;
+}
+
+.audit-react-log-time {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.audit-react-log-time span {
+    color: #435149;
+
+    font-size: 10px;
+    font-weight: 750;
+    line-height: 1.4;
+}
+
+.audit-react-log-time small {
+    color: #8b9791;
+
+    font-size: 9px;
+}
+
+.audit-react-log-actor {
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+}
+
+.audit-react-avatar {
+    display: grid;
+    place-items: center;
+
+    flex: 0 0 34px;
+
+    width: 34px;
+    height: 34px;
+
+    border-radius: 50%;
+
+    background: #e9f2ed;
+    color: var(--audit-green);
+
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.audit-react-log-actor > div {
+    min-width: 0;
+}
+
+.audit-react-log-actor strong {
+    display: block;
+
+    margin-bottom: 3px;
+
+    color:
+        var(--audit-green-dark);
+
+    font-size: 11px;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.audit-react-role-badge,
+.audit-react-module-badge,
+.audit-react-action-badge {
+    display: inline-flex;
+    align-items: center;
+
+    width: fit-content;
+
+    border-radius: 999px;
+
+    font-size: 8px;
+    font-weight: 850;
+    line-height: 1.2;
+}
+
+.audit-react-role-badge {
+    padding: 3px 6px;
+
+    background: #eef3f0;
+    color: #66746d;
+}
+
+.audit-react-log-action {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+    gap: 5px;
+}
+
+.audit-react-action-badge {
+    max-width: 100%;
+
+    padding: 5px 8px;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.audit-react-action-badge.is-neutral {
+    background: #eef3f0;
+    color: #48574f;
+}
+
+.audit-react-action-badge.is-positive {
+    background: #e7f4eb;
+    color: #23613d;
+}
+
+.audit-react-action-badge.is-negative {
+    background: #fbe9e7;
+    color: #9f3328;
+}
+
+.audit-react-action-badge.is-warning {
+    background: #fff5d6;
+    color: #7c6111;
+}
+
+.audit-react-module-badge {
+    padding: 2px 0;
+
+    color: #8a6b18;
+}
+
+.audit-react-log-target strong {
+    display: block;
+
+    color: #37443e;
+
+    font-size: 10px;
+    line-height: 1.35;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.audit-react-log-target small {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #85918b;
+
+    font-size: 9px;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.audit-react-expand-icon {
+    display: grid;
+    place-items: center;
+
+    width: 30px;
+    height: 30px;
+
+    border:
+        1px solid
+        var(--audit-border);
+
+    border-radius: 50%;
+
+    background: #f8faf9;
+
+    color:
+        var(--audit-green);
+
+    font-size: 17px;
+    font-weight: 500;
+}
+
+.audit-react-log-detail {
+    padding: 16px 18px 18px;
+
+    border-top:
+        1px solid
+        var(--audit-border);
+
+    background: #fafcfb;
+}
+
+.audit-react-detail-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            4,
+            minmax(0, 1fr)
+        );
+
+    gap: 12px;
+}
+
+.audit-react-detail-grid > div {
+    min-width: 0;
+}
+
+.audit-react-detail-grid span,
+.audit-react-metadata h4 {
+    display: block;
+
+    margin: 0 0 5px;
+
+    color: #87928d;
+
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.audit-react-detail-grid p {
+    margin: 0;
+
+    color: #35433c;
+
+    font-size: 10px;
+    line-height: 1.5;
+
+    overflow-wrap: anywhere;
+}
+
+.audit-react-detail-grid code {
+    color:
+        var(--audit-green);
+
+    font-size: 9px;
+    font-weight: 800;
+}
+
+.audit-react-metadata {
+    margin-top: 15px;
+    padding-top: 14px;
+
+    border-top:
+        1px solid
+        var(--audit-border);
+}
+
+.audit-react-metadata dl {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(160px, 1fr)
+        );
+
+    gap: 9px;
+
+    margin: 0;
+}
+
+.audit-react-metadata dl > div {
+    padding: 9px 10px;
+
+    border-radius: 9px;
+
+    background: #ffffff;
+}
+
+.audit-react-metadata dt {
+    color: #89958f;
+
+    font-size: 8px;
+    font-weight: 850;
+    text-transform: uppercase;
+}
+
+.audit-react-metadata dd {
+    margin: 3px 0 0;
+
+    color: #3a4841;
+
+    font-size: 10px;
+    line-height: 1.4;
+
+    overflow-wrap: anywhere;
+}
+
+.audit-react-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+
+    gap: 9px;
+
+    min-height: 180px;
+
+    border:
+        1px dashed
+        var(--audit-border);
+
+    border-radius: 13px;
+
+    background: #fafcfb;
+
+    color:
+        var(--audit-muted);
+
+    text-align: center;
+}
+
+.audit-react-state strong {
+    color:
+        var(--audit-green-dark);
+
+    font-size: 12px;
+}
+
+.audit-react-state span {
+    font-size: 10px;
+}
+
+.audit-react-state.is-error {
+    border-color: #e9bbb5;
+
+    background: #fff7f6;
+}
+
+.audit-react-state.is-error button {
+    padding: 7px 12px;
+
+    border:
+        1px solid
+        #c55b4f;
+
+    border-radius: 999px;
+
+    background: #ffffff;
+    color: #9f3328;
+
+    cursor: pointer;
+
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.audit-react-spinner {
+    width: 28px;
+    height: 28px;
+
+    border:
+        3px solid
+        #dce6e1;
+
+    border-top-color:
+        var(--audit-green);
+
+    border-radius: 50%;
+
+    animation:
+        audit-react-spin
+        0.75s linear infinite;
+}
+
+.audit-react-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 13px;
+
+    margin-top: 18px;
+}
+
+.audit-react-pagination button {
+    min-height: 36px;
+
+    padding: 7px 13px;
+
+    border:
+        1px solid
+        var(--audit-border);
+
+    border-radius: 999px;
+
+    background: #ffffff;
+    color:
+        var(--audit-green);
+
+    cursor: pointer;
+
+    font: inherit;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.audit-react-pagination button:hover:not(:disabled) {
+    border-color:
+        var(--audit-green);
+}
+
+.audit-react-pagination button:disabled {
+    opacity: 0.42;
+    cursor: default;
+}
+
+.audit-react-pagination span {
+    color: var(--audit-muted);
+
+    font-size: 10px;
+    font-weight: 750;
+}
+
+@keyframes audit-react-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 1100px) {
+    .audit-react-filter-panel {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+    .audit-react-search-field {
+        grid-column: 1 / -1;
+    }
+
+    .audit-react-detail-grid {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+}
+
+@media (max-width: 820px) {
+    .audit-react-hero {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .audit-react-hero-stat {
+        flex-basis: auto;
+        width: 100%;
+    }
+
+    .audit-react-log-summary {
+        grid-template-columns:
+            minmax(0, 1fr)
+            auto;
+
+        align-items: start;
+    }
+
+    .audit-react-log-time,
+    .audit-react-log-actor,
+    .audit-react-log-action,
+    .audit-react-log-target {
+        grid-column: 1;
+    }
+
+    .audit-react-expand-icon {
+        grid-column: 2;
+        grid-row: 1 / span 4;
+        align-self: center;
+    }
+
+    .audit-react-log-action {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .audit-react-log-target strong,
+    .audit-react-log-target small {
+        white-space: normal;
+    }
+}
+
+@media (max-width: 620px) {
+    .audit-react-hero {
+        padding: 21px;
+        border-radius: 17px;
+    }
+
+    .audit-react-filter-panel {
+        grid-template-columns: 1fr;
+        padding: 14px;
+    }
+
+    .audit-react-search-field,
+    .audit-react-filter-actions {
+        grid-column: 1;
+    }
+
+    .audit-react-filter-actions {
+        flex-direction: column !important;
+    }
+
+    .audit-react-primary-button,
+    .audit-react-secondary-button {
+        width: 100%;
+    }
+
+    .audit-react-privacy-note {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .audit-react-list-panel {
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    .audit-react-list-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .audit-react-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .audit-react-pagination {
+        flex-wrap: wrap;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .audit-react-spinner {
+        animation-duration: 1.5s;
+    }
+
+    .audit-react-log-card {
+        transition: none;
+    }
+}

@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import App from './App.jsx'
+import AuditLogPanel from './AuditLogPanel.jsx'
 import DigitalPublicationViewer from './DigitalPublicationViewer.jsx'
 import FormErrorEnhancer from './FormErrorEnhancer.jsx'
 import HeaderActions from './HeaderActions.jsx'
@@ -12,6 +13,7 @@ import './index.css'
 
 const componentRegistry = {
   ReaderTools: App,
+  AuditLogPanel,
   DigitalPublicationViewer,
   FormErrorEnhancer,
   HeaderActions,
@@ -30,6 +32,19 @@ function getComponentProps(
     return {
       apiUrl:
         mountPoint.dataset.apiUrl || '',
+    }
+  }
+
+  if (
+    componentName === 'AuditLogPanel'
+  ) {
+    return {
+      apiUrl:
+        mountPoint.dataset.apiUrl
+        || '',
+      pageUrl:
+        mountPoint.dataset.pageUrl
+        || '',
     }
   }
 
