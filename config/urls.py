@@ -1,10 +1,27 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.templatetags.static import static as static_asset
 from django.urls import include, path
+from django.views.generic.base import RedirectView
 
 
 urlpatterns = [
+    # ======================================================
+    # GLOBAL BROWSER ICON FALLBACK
+    # ======================================================
+
+    path(
+        "favicon.ico",
+        RedirectView.as_view(
+            url=static_asset(
+                "images/favicon.ico"
+            ),
+            permanent=False,
+        ),
+        name="favicon",
+    ),
+
     path(
         "admin/",
         admin.site.urls,

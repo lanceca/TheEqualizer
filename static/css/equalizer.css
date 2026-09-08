@@ -5703,3 +5703,195 @@ body.equalizer-confirm-open {
         transition: none;
     }
 }
+
+/* ==========================================================
+   STAFF ACTION BUTTON CONSISTENCY
+   EIC / EDITOR / STAFF ARTICLE & WORKFLOW ACTIONS
+   ========================================================== */
+
+/*
+ * Keep the existing semantic colors (primary, secondary, danger),
+ * but make article/workflow buttons use one consistent shape,
+ * height, typography, spacing, and interaction style.
+ */
+.staff-shell-body .button,
+.staff-shell-body .primary-button,
+.staff-shell-body .search-button,
+.staff-shell-body .draft-action,
+.staff-shell-body .approve-button,
+.staff-shell-body .secondary-button,
+.staff-shell-body .secondary-action-button,
+.staff-shell-body .danger-button,
+.staff-shell-body .danger-link,
+.staff-shell-body .edit-link,
+.staff-shell-body .clear-search,
+.staff-shell-body .cancel-link,
+.staff-shell-body .article-actions a,
+.staff-shell-body .article-actions button,
+.staff-shell-body .draft-actions a,
+.staff-shell-body .draft-actions button,
+.staff-shell-body .submission-actions a,
+.staff-shell-body .submission-actions button,
+.staff-shell-body .request-actions a,
+.staff-shell-body .request-actions button,
+.staff-shell-body .form-actions a,
+.staff-shell-body .form-actions button,
+.staff-shell-body .editorial-item-actions > a,
+.staff-shell-body .editorial-item-actions > button,
+.staff-shell-body .editorial-item-actions > form > button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 40px;
+
+    padding: 9px 15px;
+
+    border-radius: 7px;
+
+    font: inherit;
+    font-size: 13px;
+    font-weight: 750;
+    line-height: 1.2;
+
+    text-align: center;
+    text-decoration: none;
+
+    cursor: pointer;
+
+    transition:
+        background 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease,
+        box-shadow 0.18s ease,
+        transform 0.18s ease;
+}
+
+/* Primary / confirm actions */
+.staff-shell-body .button,
+.staff-shell-body .primary-button,
+.staff-shell-body .search-button,
+.staff-shell-body .draft-action,
+.staff-shell-body .approve-button {
+    border: 1px solid var(--eq-green-dark);
+
+    background: var(--eq-green-dark);
+    color: var(--eq-white);
+}
+
+.staff-shell-body .button:hover,
+.staff-shell-body .primary-button:hover,
+.staff-shell-body .search-button:hover,
+.staff-shell-body .draft-action:hover,
+.staff-shell-body .approve-button:hover {
+    border-color: var(--eq-green-deep);
+
+    background: var(--eq-green-deep);
+    color: var(--eq-white);
+}
+
+/* Secondary / neutral actions */
+.staff-shell-body .secondary-button,
+.staff-shell-body .secondary-action-button,
+.staff-shell-body .edit-link,
+.staff-shell-body .clear-search,
+.staff-shell-body .cancel-link {
+    border: 1px solid var(--eq-green-dark);
+
+    background: var(--eq-white);
+    color: var(--eq-green-dark);
+}
+
+.staff-shell-body .secondary-button:hover,
+.staff-shell-body .secondary-action-button:hover,
+.staff-shell-body .edit-link:hover,
+.staff-shell-body .clear-search:hover,
+.staff-shell-body .cancel-link:hover {
+    border-color: var(--eq-green-dark);
+
+    background: #edf5f0;
+    color: var(--eq-green-deep);
+}
+
+/* Destructive actions */
+.staff-shell-body .danger-button,
+.staff-shell-body .danger-link {
+    border: 1px solid var(--eq-danger);
+
+    background: var(--eq-danger);
+    color: var(--eq-white);
+}
+
+.staff-shell-body .danger-button:hover,
+.staff-shell-body .danger-link:hover {
+    border-color: var(--eq-danger-dark);
+
+    background: var(--eq-danger-dark);
+    color: var(--eq-white);
+}
+
+/* Shared keyboard focus treatment */
+.staff-shell-body .button:focus-visible,
+.staff-shell-body .primary-button:focus-visible,
+.staff-shell-body .search-button:focus-visible,
+.staff-shell-body .draft-action:focus-visible,
+.staff-shell-body .approve-button:focus-visible,
+.staff-shell-body .secondary-button:focus-visible,
+.staff-shell-body .secondary-action-button:focus-visible,
+.staff-shell-body .danger-button:focus-visible,
+.staff-shell-body .danger-link:focus-visible,
+.staff-shell-body .edit-link:focus-visible,
+.staff-shell-body .clear-search:focus-visible,
+.staff-shell-body .cancel-link:focus-visible,
+.staff-shell-body .article-actions a:focus-visible,
+.staff-shell-body .article-actions button:focus-visible,
+.staff-shell-body .draft-actions a:focus-visible,
+.staff-shell-body .draft-actions button:focus-visible,
+.staff-shell-body .submission-actions a:focus-visible,
+.staff-shell-body .submission-actions button:focus-visible,
+.staff-shell-body .request-actions a:focus-visible,
+.staff-shell-body .request-actions button:focus-visible,
+.staff-shell-body .form-actions a:focus-visible,
+.staff-shell-body .form-actions button:focus-visible,
+.staff-shell-body .editorial-item-actions a:focus-visible,
+.staff-shell-body .editorial-item-actions button:focus-visible {
+    outline: none;
+
+    box-shadow:
+        0 0 0 3px rgba(24, 69, 54, 0.18);
+}
+
+/*
+ * Forms used only as action wrappers should not make their button a
+ * different size from neighboring links/buttons.
+ */
+.staff-shell-body .article-actions form,
+.staff-shell-body .draft-actions form,
+.staff-shell-body .submission-actions form,
+.staff-shell-body .request-actions form,
+.staff-shell-body .form-actions form,
+.staff-shell-body .editorial-item-actions form {
+    margin: 0;
+}
+
+/* Keep mobile article/workflow actions uniformly full-width. */
+@media (max-width: 700px) {
+
+    .staff-shell-body .article-actions a,
+    .staff-shell-body .article-actions button,
+    .staff-shell-body .draft-actions a,
+    .staff-shell-body .draft-actions button,
+    .staff-shell-body .submission-actions a,
+    .staff-shell-body .submission-actions button,
+    .staff-shell-body .request-actions a,
+    .staff-shell-body .request-actions button,
+    .staff-shell-body .form-actions a,
+    .staff-shell-body .form-actions button,
+    .staff-shell-body .editorial-item-actions > a,
+    .staff-shell-body .editorial-item-actions > button,
+    .staff-shell-body .editorial-item-actions > form,
+    .staff-shell-body .editorial-item-actions > form > button {
+        width: 100%;
+    }
+
+}
