@@ -1,4 +1,6 @@
 from functools import wraps
+import sys
+import traceback
 
 from django.conf import settings
 from django.contrib import messages
@@ -48,6 +50,61 @@ from .validators import (
 
 
 User = get_user_model()
+
+
+# ==========================================================
+# PRODUCTION WORKFLOW ERROR SAFETY
+# ==========================================================
+
+
+def workflow_error_guard(view_func):
+    """
+    Keep workflow POST failures from exposing a raw 500 page while still
+    printing the complete traceback to Render/Gunicorn stderr for diagnosis.
+
+    The wrapped transaction is allowed to unwind first, so failed workflow
+    changes remain rolled back safely.
+    """
+
+    @wraps(view_func)
+    def wrapped_view(request, *args, **kwargs):
+
+        try:
+            return view_func(
+                request,
+                *args,
+                **kwargs,
+            )
+
+        except Exception:
+
+            print(
+                (
+                    "\n[THE EQUALIZER WORKFLOW ERROR] "
+                    f"{request.method} {request.path}"
+                ),
+                file=sys.stderr,
+                flush=True,
+            )
+
+            traceback.print_exc(
+                file=sys.stderr
+            )
+
+            messages.error(
+                request,
+                (
+                    "The submission review could not be completed. "
+                    "No workflow changes were saved. "
+                    "The error has been logged for diagnosis."
+                ),
+            )
+
+            return redirect(
+                "pending_submissions"
+            )
+
+    return wrapped_view
 
 
 # ==========================================================
@@ -1862,6 +1919,7 @@ def pending_submissions(request):
 @publication_role_required(
     User.Role.EIC
 )
+@workflow_error_guard
 @require_POST
 def review_submission(
     request,
