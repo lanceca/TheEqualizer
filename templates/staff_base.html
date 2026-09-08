@@ -7,7 +7,7 @@
 
 <link
     rel="stylesheet"
-    href="{% static 'css/equalizer.css' %}?v=20260903-editorial-lists-2"
+    href="{% static 'css/equalizer.css' %}?v=20260908-navigation-tags-auth-1"
 >
 
 
@@ -1132,7 +1132,7 @@ document.addEventListener(
                 'input[name="tags"]:checked'
             );
 
-            return Array.from(
+            const tags = Array.from(
                 checked
             ).map(
                 function (input) {
@@ -1147,6 +1147,44 @@ document.addEventListener(
 
                 }
             ).filter(Boolean);
+
+            const customTagField =
+                form.querySelector(
+                    '[name="custom_tags"]'
+                );
+
+            if (customTagField) {
+                const customTags = customTagField.value
+                    .replace(/\r\n?/g, "\n")
+                    .split(/[\n,]+/)
+                    .map(
+                        function (tag) {
+                            return tag
+                                .trim()
+                                .replace(/\s+/g, " ");
+                        }
+                    )
+                    .filter(Boolean);
+
+                customTags.forEach(
+                    function (tag) {
+                        const alreadyIncluded = tags.some(
+                            function (existingTag) {
+                                return (
+                                    existingTag.toLocaleLowerCase()
+                                    === tag.toLocaleLowerCase()
+                                );
+                            }
+                        );
+
+                        if (!alreadyIncluded) {
+                            tags.push(tag);
+                        }
+                    }
+                );
+            }
+
+            return tags;
 
         }
 
@@ -2594,6 +2632,127 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (!sidebar || !nav) {
         return;
+    }
+
+    const currentView =
+        "{{ request.resolver_match.view_name|default:''|escapejs }}";
+
+    const navLinks = Array.from(
+        nav.querySelectorAll("a[href]")
+    );
+
+    function normalizePath(pathname) {
+        if (!pathname) {
+            return "/";
+        }
+
+        const normalized = pathname.replace(/\/+$/, "");
+        return normalized || "/";
+    }
+
+    function linkPath(link) {
+        try {
+            return normalizePath(
+                new URL(
+                    link.href,
+                    window.location.origin
+                ).pathname
+            );
+        } catch (error) {
+            return "";
+        }
+    }
+
+    let activeLink = navLinks.find(
+        function (link) {
+            return (
+                linkPath(link)
+                === normalizePath(window.location.pathname)
+            );
+        }
+    );
+
+    if (!activeLink) {
+        const parentHrefByView = {
+            "super_admin_dashboard": "{% url 'dashboard' %}",
+            "admin_dashboard": "{% url 'dashboard' %}",
+            "adviser_dashboard": "{% url 'dashboard' %}",
+            "eic_dashboard": "{% url 'dashboard' %}",
+            "editor_dashboard": "{% url 'dashboard' %}",
+            "staff_dashboard": "{% url 'dashboard' %}",
+
+            "create_admin_account": "{% url 'manage_admin_accounts' %}",
+            "edit_admin_account": "{% url 'manage_admin_accounts' %}",
+            "toggle_admin_account_status": "{% url 'manage_admin_accounts' %}",
+
+            "create_staff_account": "{% url 'manage_staff_accounts' %}",
+            "edit_staff_account": "{% url 'manage_staff_accounts' %}",
+            "toggle_staff_account_status": "{% url 'manage_staff_accounts' %}",
+
+            "change_email": "{% url 'profile' %}",
+            "change_username": "{% url 'profile' %}",
+            "change_password": "{% url 'profile' %}",
+
+            "review_submission": "{% url 'pending_submissions' %}",
+            "revise_submission": "{% url 'my_submissions' %}",
+            "edit_draft": "{% url 'my_drafts' %}",
+            "delete_draft": "{% url 'my_drafts' %}",
+
+            "article_version_history": "{% url 'published_articles' %}",
+            "article_version_detail": "{% url 'published_articles' %}",
+            "edit_published_article": "{% url 'published_articles' %}",
+            "archive_own_published_article": "{% url 'published_articles' %}",
+            "request_article_edit": "{% url 'published_articles' %}",
+            "request_article_deletion": "{% url 'published_articles' %}",
+            "report_article_content": "{% url 'published_articles' %}",
+
+            "review_edit_request": "{% url 'eic_edit_requests' %}",
+            "review_deletion_request": "{% url 'eic_deletion_requests' %}",
+            "cancel_content_report": "{% url 'my_content_reports' %}",
+            "resolve_content_report": "{% url 'eic_content_reports' %}",
+            "require_revision_from_report": "{% url 'eic_content_reports' %}",
+
+            "restore_archived_article": "{% url 'archived_articles' %}",
+            "permanently_delete_archived_article": "{% url 'archived_articles' %}",
+
+            "create_digital_publication": "{% url 'digital_publication_management' %}",
+            "edit_digital_publication": "{% url 'digital_publication_management' %}",
+            "set_digital_publication_status": "{% url 'digital_publication_management' %}",
+            "delete_digital_publication": "{% url 'digital_publication_management' %}",
+
+            "create_school_advertisement": "{% url 'school_advertisement_management' %}",
+            "edit_school_advertisement": "{% url 'school_advertisement_management' %}",
+            "set_school_advertisement_status": "{% url 'school_advertisement_management' %}",
+            "delete_school_advertisement": "{% url 'school_advertisement_management' %}",
+
+            "people_group_management": "{% url 'people_management' %}",
+            "create_people_profile": "{% url 'people_management' %}",
+            "edit_people_profile": "{% url 'people_management' %}",
+            "set_people_profile_status": "{% url 'people_management' %}",
+            "delete_people_profile": "{% url 'people_management' %}"
+        };
+
+        const parentHref = parentHrefByView[currentView] || "";
+
+        if (parentHref) {
+            const targetPath = normalizePath(
+                new URL(
+                    parentHref,
+                    window.location.origin
+                ).pathname
+            );
+
+            activeLink = navLinks.find(
+                function (link) {
+                    return linkPath(link) === targetPath;
+                }
+            );
+        }
+    }
+
+    if (activeLink) {
+        activeLink.classList.add("is-active");
+        activeLink.setAttribute("aria-current", "page");
     }
 
     const baseKey =

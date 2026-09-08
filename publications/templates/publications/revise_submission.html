@@ -439,6 +439,27 @@
 
             {% endif %}
 
+
+
+            <div class="custom-tag-entry">
+
+                <label for="custom_tags">
+                    Add Custom Tags
+                </label>
+
+                <textarea
+                    id="custom_tags"
+                    name="custom_tags"
+                    rows="2"
+                    maxlength="1100"
+                    placeholder="Example: Enrollment, Intramurals, Student Council"
+                >{% if request.method == 'POST' %}{{ request.POST.custom_tags }}{% endif %}</textarea>
+
+                <p class="form-help">
+                    Separate multiple tags with commas or new lines. New tags are saved and can be reused on future articles.
+                </p>
+
+            </div>
         </div>
 
 

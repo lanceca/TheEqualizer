@@ -359,6 +359,30 @@ h1 {
 }
 
 
+.staff-nav a.is-active,
+.staff-nav a[aria-current="page"] {
+    padding-left: 16px;
+
+    background: rgba(79, 174, 105, 0.30);
+    color: var(--eq-white);
+    font-weight: 750;
+
+    box-shadow:
+        inset 0 0 0 1px
+        rgba(142, 208, 159, 0.18);
+}
+
+.staff-nav a.is-active::before,
+.staff-nav a[aria-current="page"]::before {
+    height: 68%;
+}
+
+.staff-nav a.is-active:hover,
+.staff-nav a[aria-current="page"]:hover {
+    background: rgba(79, 174, 105, 0.38);
+}
+
+
 /* ==========================================================
    LOGOUT
    ========================================================== */
@@ -1424,6 +1448,29 @@ button:hover,
 }
 
 
+.custom-tag-entry {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--eq-border);
+}
+
+.custom-tag-entry > label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--eq-green-dark);
+    font-weight: 750;
+}
+
+.custom-tag-entry textarea {
+    min-height: 78px;
+    resize: vertical;
+}
+
+.custom-tag-entry .form-help {
+    margin-bottom: 0;
+}
+
+
 /* ==========================================================
    ACTIONS
    ========================================================== */
@@ -1846,6 +1893,7 @@ th {
 .article-form > .form-group:has(textarea),
 .article-form > .form-group:has(.contributor-list),
 .article-form > .form-group:has(.tag-checkbox-grid),
+.article-form > .form-group:has(.custom-tag-entry),
 .article-form > .form-group:has(input[type="file"]),
 .article-form > .form-group:has(.editable-attachment-gallery),
 .article-form > .form-group:has(.video-attachment-grid),
@@ -3898,15 +3946,45 @@ body.staff-preview-open {
     font-size: 13px;
 }
 
+.login-message,
 .login-error-message {
     margin-top: 18px;
     padding: 11px 13px;
-    border: 1px solid #efcaca;
-    border-left: 4px solid var(--eq-danger);
+    border: 1px solid #d7dfdb;
+    border-left: 4px solid var(--eq-green-dark);
     border-radius: 7px;
+    background: #f6f8f7;
+    color: var(--eq-charcoal);
+    font-size: 12px;
+}
+
+.login-message-success {
+    border-color: #b9dec3;
+    border-left-color: #2e7d32;
+    background: #f0faf3;
+    color: #1f6531;
+}
+
+.login-message-error,
+.login-error-message {
+    border-color: #efcaca;
+    border-left-color: var(--eq-danger);
     background: #fff5f5;
     color: var(--eq-danger-dark);
-    font-size: 12px;
+}
+
+.login-message-warning {
+    border-color: #ecd9ae;
+    border-left-color: #b7791f;
+    background: #fffaf0;
+    color: #7a4d12;
+}
+
+.login-message-info {
+    border-color: #c8d9e8;
+    border-left-color: #3b6f91;
+    background: #f4f8fb;
+    color: #315a74;
 }
 
 .equalizer-login-form {

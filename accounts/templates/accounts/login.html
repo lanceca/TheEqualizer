@@ -18,7 +18,7 @@
 
     <link
         rel="stylesheet"
-        href="{% static 'css/equalizer.css' %}?v=20260906-email-security"
+        href="{% static 'css/equalizer.css' %}?v=20260908-navigation-tags-auth-1"
     >
 
 
@@ -125,7 +125,7 @@
                 {% if messages %}
                     {% for message in messages %}
                         <div
-                            class="login-error-message"
+                            class="login-message login-message-{{ message.tags|default:'info' }}"
                             role="status"
                         >
                             {{ message }}
@@ -137,7 +137,7 @@
                 {% if error %}
 
                     <div
-                        class="login-error-message"
+                        class="login-message login-message-error"
                         role="alert"
                     >
                         {{ error }}

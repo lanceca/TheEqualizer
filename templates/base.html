@@ -18,6 +18,25 @@
         {% endblock %}
     </title>
 
+    <!-- Browser / tab icons -->
+    <link
+        rel="icon"
+        type="image/png"
+        sizes="32x32"
+        href="{% static 'images/favicon-32x32.png' %}?v=20260908-1"
+    >
+    <link
+        rel="icon"
+        type="image/png"
+        sizes="48x48"
+        href="{% static 'images/favicon-48x48.png' %}?v=20260908-1"
+    >
+    <link
+        rel="shortcut icon"
+        type="image/x-icon"
+        href="{% static 'images/favicon.ico' %}?v=20260908-1"
+    >
+
     <link
         rel="stylesheet"
         href="{% static 'css/style.css' %}"
@@ -228,6 +247,39 @@
                 flex: 1;
             }
 
+            .site-header {
+                will-change: transform;
+                transition:
+                    transform 0.22s ease,
+                    box-shadow 0.22s ease;
+            }
+
+            .site-header.site-header-hidden {
+                transform: translateY(-100%);
+                box-shadow: none;
+            }
+
+            body.staff-shell-body > .site-header {
+                height: var(--mobile-site-header-height, auto);
+                overflow: hidden;
+                transition:
+                    height 0.22s ease,
+                    transform 0.22s ease,
+                    box-shadow 0.22s ease;
+            }
+
+            body.staff-shell-body > .site-header.site-header-hidden {
+                height: 0;
+                border-bottom-color: transparent;
+            }
+
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .site-header,
+            body.staff-shell-body > .site-header {
+                transition: none;
+            }
         }
 
 
@@ -433,7 +485,7 @@
                     </span>
 
                     <span class="site-brand-subtitle">
-                        Official Student News Publication of Mabalacat City College
+                        The Official Student Publication of Mabalacat City College
                     </span>
 
                 </span>
@@ -1031,6 +1083,141 @@
 
     </script>
 
+
+
+    <script>
+    (function () {
+        const header = document.querySelector(".site-header");
+
+        if (!header) {
+            return;
+        }
+
+        const mobileQuery = window.matchMedia("(max-width: 720px)");
+        let scrollTarget = null;
+        let lastScrollTop = 0;
+        let frameRequested = false;
+
+        function isStaffShell() {
+            return document.body.classList.contains("staff-shell-body");
+        }
+
+        function getScrollTop() {
+            if (scrollTarget === window) {
+                return window.scrollY || window.pageYOffset || 0;
+            }
+
+            return scrollTarget ? scrollTarget.scrollTop : 0;
+        }
+
+        function showHeader() {
+            header.classList.remove("site-header-hidden");
+        }
+
+        function hideHeader() {
+            header.classList.add("site-header-hidden");
+        }
+
+        function updateStaffHeaderHeight() {
+            if (!mobileQuery.matches || !isStaffShell()) {
+                header.style.removeProperty("--mobile-site-header-height");
+                return;
+            }
+
+            const wasHidden = header.classList.contains("site-header-hidden");
+
+            if (wasHidden) {
+                showHeader();
+            }
+
+            header.style.setProperty(
+                "--mobile-site-header-height",
+                header.scrollHeight + "px"
+            );
+
+            if (wasHidden) {
+                hideHeader();
+            }
+        }
+
+        function handleScrollFrame() {
+            frameRequested = false;
+
+            if (!mobileQuery.matches) {
+                showHeader();
+                return;
+            }
+
+            const currentScrollTop = getScrollTop();
+            const delta = currentScrollTop - lastScrollTop;
+
+            if (currentScrollTop <= 20) {
+                showHeader();
+            } else if (delta > 4) {
+                hideHeader();
+            } else if (delta < -4) {
+                showHeader();
+            }
+
+            lastScrollTop = Math.max(currentScrollTop, 0);
+        }
+
+        function handleScroll() {
+            if (frameRequested) {
+                return;
+            }
+
+            frameRequested = true;
+            window.requestAnimationFrame(handleScrollFrame);
+        }
+
+        function detachScrollListener() {
+            if (!scrollTarget) {
+                return;
+            }
+
+            scrollTarget.removeEventListener("scroll", handleScroll);
+            scrollTarget = null;
+        }
+
+        function configureHeaderScroll() {
+            detachScrollListener();
+            showHeader();
+
+            if (!mobileQuery.matches) {
+                header.style.removeProperty("--mobile-site-header-height");
+                return;
+            }
+
+            scrollTarget = document.querySelector(".staff-content") || window;
+            lastScrollTop = getScrollTop();
+            updateStaffHeaderHeight();
+
+            scrollTarget.addEventListener(
+                "scroll",
+                handleScroll,
+                { passive: true }
+            );
+        }
+
+        configureHeaderScroll();
+
+        window.addEventListener(
+            "resize",
+            function () {
+                showHeader();
+                updateStaffHeaderHeight();
+            },
+            { passive: true }
+        );
+
+        if (mobileQuery.addEventListener) {
+            mobileQuery.addEventListener("change", configureHeaderScroll);
+        } else if (mobileQuery.addListener) {
+            mobileQuery.addListener(configureHeaderScroll);
+        }
+    })();
+    </script>
 
 
     <!-- React/Vite production/watch bundle -->

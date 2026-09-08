@@ -3,6 +3,7 @@ import re
 from html import escape, unescape
 
 from django.contrib import messages
+from django.contrib.staticfiles import finders
 from django.db import transaction
 from django.db.models import F, Q
 from django.http import HttpResponse, HttpResponseForbidden
@@ -15,17 +16,20 @@ from django.utils import timezone
 from django.utils.html import strip_tags
 
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import (
     HRFlowable,
     Image as PDFImage,
+    KeepTogether,
     PageBreak,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
+    Table,
+    TableStyle,
 )
 
 from rest_framework.decorators import (
@@ -67,11 +71,7 @@ def article_content_paragraphs(content):
     """Convert stored plain text or basic HTML into PDF paragraphs."""
 
     content = str(content or "")
-    content = re.sub(
-        r"(?i)<br\s*/?>",
-        "\n",
-        content,
-    )
+    content = re.sub(r"(?i)<br\s*/?>", "\n", content)
     content = re.sub(
         r"(?i)</(?:p|div|h[1-6]|li|blockquote)>",
         "\n\n",
@@ -88,7 +88,7 @@ def article_content_paragraphs(content):
 
 
 def pdf_image_flowable(file_field, max_width, max_height):
-    """Create a bounded PDF image, or return None if storage cannot read it."""
+    """Create a bounded image while preserving its original aspect ratio."""
 
     if not file_field:
         return None
@@ -116,25 +116,48 @@ def pdf_image_flowable(file_field, max_width, max_height):
         return None
 
 
+def equalizer_logo_flowable(width=0.62 * inch):
+    """Return the bundled Equalizer logo for PDF branding when available."""
+
+    logo_path = finders.find("images/equalizer-logo.jpg")
+    if not logo_path:
+        return None
+
+    try:
+        logo = PDFImage(logo_path)
+        ratio = logo.imageHeight / max(logo.imageWidth, 1)
+        logo.drawWidth = width
+        logo.drawHeight = width * ratio
+        logo.hAlign = "CENTER"
+        return logo
+    except Exception:
+        return None
+
+
 def draw_article_pdf_page(canvas, document):
+    """Draw a restrained branded footer on every article PDF page."""
+
+    page_width, _ = letter
+
     canvas.saveState()
     canvas.setStrokeColor(colors.HexColor("#d7dfdb"))
+    canvas.setLineWidth(0.6)
     canvas.line(
         document.leftMargin,
-        0.55 * inch,
-        letter[0] - document.rightMargin,
-        0.55 * inch,
+        0.52 * inch,
+        page_width - document.rightMargin,
+        0.52 * inch,
     )
     canvas.setFillColor(colors.HexColor("#65736d"))
-    canvas.setFont("Helvetica", 8)
+    canvas.setFont("Helvetica", 7.8)
     canvas.drawString(
         document.leftMargin,
-        0.35 * inch,
-        "The Equalizer",
+        0.31 * inch,
+        "The Equalizer · Mabalacat City College",
     )
     canvas.drawRightString(
-        letter[0] - document.rightMargin,
-        0.35 * inch,
+        page_width - document.rightMargin,
+        0.31 * inch,
         f"Page {document.page}",
     )
     canvas.restoreState()
@@ -505,18 +528,12 @@ def article_detail(
 # ==========================================================
 
 
-def download_article_pdf(
-    request,
-    slug,
-):
-    """Download the current published article as a branded PDF."""
+def download_article_pdf(request, slug):
+    """Download the current published article as a branded editorial PDF."""
 
     article = get_object_or_404(
         Article.objects
-        .select_related(
-            "category",
-            "author",
-        )
+        .select_related("category", "author")
         .prefetch_related(
             "tags",
             "attachments",
@@ -533,10 +550,10 @@ def download_article_pdf(
     document = SimpleDocTemplate(
         pdf_buffer,
         pagesize=letter,
-        rightMargin=0.7 * inch,
-        leftMargin=0.7 * inch,
-        topMargin=0.65 * inch,
-        bottomMargin=0.75 * inch,
+        rightMargin=0.72 * inch,
+        leftMargin=0.72 * inch,
+        topMargin=0.62 * inch,
+        bottomMargin=0.72 * inch,
         title=article.title,
         author="The Equalizer",
         subject="Published article",
@@ -544,116 +561,151 @@ def download_article_pdf(
 
     sample_styles = getSampleStyleSheet()
     styles = {
-        "masthead": ParagraphStyle(
-            "EqualizerMasthead",
-            parent=sample_styles["Heading2"],
-            fontName="Times-Bold",
-            fontSize=19,
-            leading=22,
+        "brand": ParagraphStyle(
+            "EqualizerBrand",
+            parent=sample_styles["Normal"],
+            fontName="Helvetica-Bold",
+            fontSize=10,
+            leading=12,
             textColor=colors.HexColor("#173f32"),
             alignment=TA_CENTER,
-            spaceAfter=4,
+            spaceAfter=2,
+        ),
+        "brand_sub": ParagraphStyle(
+            "EqualizerBrandSub",
+            parent=sample_styles["Normal"],
+            fontName="Helvetica",
+            fontSize=7.4,
+            leading=9,
+            textColor=colors.HexColor("#65736d"),
+            alignment=TA_CENTER,
+            spaceAfter=8,
         ),
         "category": ParagraphStyle(
             "EqualizerCategory",
             parent=sample_styles["Normal"],
             fontName="Helvetica-Bold",
-            fontSize=9,
-            leading=12,
+            fontSize=8.5,
+            leading=11,
             textColor=colors.HexColor("#a37d0f"),
             alignment=TA_CENTER,
-            spaceAfter=10,
+            spaceBefore=2,
+            spaceAfter=9,
         ),
         "title": ParagraphStyle(
             "EqualizerTitle",
             parent=sample_styles["Title"],
             fontName="Times-Bold",
-            fontSize=25,
-            leading=29,
+            fontSize=27,
+            leading=31,
             textColor=colors.HexColor("#0e2a22"),
+            alignment=TA_LEFT,
             spaceAfter=8,
         ),
         "subtitle": ParagraphStyle(
             "EqualizerSubtitle",
             parent=sample_styles["Normal"],
             fontName="Times-Italic",
-            fontSize=13,
+            fontSize=13.5,
             leading=18,
             textColor=colors.HexColor("#48534e"),
-            spaceAfter=10,
+            spaceAfter=11,
         ),
         "metadata": ParagraphStyle(
             "EqualizerMetadata",
             parent=sample_styles["Normal"],
-            fontSize=9,
-            leading=13,
+            fontName="Helvetica",
+            fontSize=8.6,
+            leading=12.5,
             textColor=colors.HexColor("#5f6d67"),
-            spaceAfter=5,
+            spaceAfter=4,
         ),
         "excerpt": ParagraphStyle(
             "EqualizerExcerpt",
             parent=sample_styles["Normal"],
             fontName="Times-BoldItalic",
-            fontSize=11,
-            leading=16,
+            fontSize=11.5,
+            leading=17,
             textColor=colors.HexColor("#33463e"),
             leftIndent=12,
             rightIndent=12,
-            spaceBefore=9,
-            spaceAfter=13,
+            spaceBefore=8,
+            spaceAfter=14,
         ),
         "body": ParagraphStyle(
             "EqualizerBody",
             parent=sample_styles["BodyText"],
             fontName="Times-Roman",
-            fontSize=11,
-            leading=17,
+            fontSize=11.2,
+            leading=17.4,
             textColor=colors.HexColor("#1d2924"),
-            alignment=4,
+            alignment=TA_JUSTIFY,
             spaceAfter=10,
+            allowWidows=0,
+            allowOrphans=0,
         ),
         "caption": ParagraphStyle(
             "EqualizerCaption",
             parent=sample_styles["Normal"],
             fontName="Helvetica-Oblique",
-            fontSize=8,
-            leading=11,
+            fontSize=7.8,
+            leading=10.5,
             textColor=colors.HexColor("#65736d"),
             alignment=TA_CENTER,
             spaceAfter=10,
         ),
+        "section": ParagraphStyle(
+            "EqualizerSection",
+            parent=sample_styles["Heading2"],
+            fontName="Times-Bold",
+            fontSize=18,
+            leading=22,
+            textColor=colors.HexColor("#173f32"),
+            spaceAfter=8,
+        ),
         "tags": ParagraphStyle(
             "EqualizerTags",
             parent=sample_styles["Normal"],
+            fontName="Helvetica",
             fontSize=8,
             leading=11,
             textColor=colors.HexColor("#65736d"),
-            spaceBefore=10,
+            spaceBefore=12,
         ),
     }
 
     published_value = article.published_at or article.created_at
     published_text = timezone.localtime(
         published_value
-    ).strftime("%B %d, %Y at %I:%M %p")
+    ).strftime("%B %d, %Y · %I:%M %p")
 
-    story = [
-        Paragraph("THE EQUALIZER", styles["masthead"]),
+    story = []
+
+    logo = equalizer_logo_flowable()
+    if logo:
+        story.extend([logo, Spacer(1, 5)])
+
+    story.extend([
+        Paragraph("THE EQUALIZER", styles["brand"]),
         Paragraph(
-            clean_pdf_text(article.category.name).upper(),
-            styles["category"],
+            "Official Student News Publication of Mabalacat City College",
+            styles["brand_sub"],
         ),
         HRFlowable(
             width="100%",
-            thickness=0.8,
+            thickness=1.1,
             color=colors.HexColor("#c9a227"),
-            spaceAfter=16,
+            spaceAfter=12,
+        ),
+        Paragraph(
+            clean_pdf_text(article.category.name).upper(),
+            styles["category"],
         ),
         Paragraph(
             clean_pdf_text(article.title),
             styles["title"],
         ),
-    ]
+    ])
 
     if article.subtitle:
         story.append(
@@ -667,21 +719,20 @@ def download_article_pdf(
         Paragraph(
             "By <b>"
             + clean_pdf_text(article.author.username)
-            + "</b> &nbsp;&nbsp;|&nbsp;&nbsp; "
+            + "</b> &nbsp;&nbsp;·&nbsp;&nbsp; "
             + clean_pdf_text(published_text),
             styles["metadata"],
         )
     )
 
     contributor_lines = [
-        (
-            clean_pdf_text(contributor.user.username)
-            + " ("
-            + clean_pdf_text(contributor.get_role_display())
-            + ")"
-        )
+        clean_pdf_text(contributor.user.username)
+        + " ("
+        + clean_pdf_text(contributor.get_role_display())
+        + ")"
         for contributor in article.contributors.all()
     ]
+
     if contributor_lines:
         story.append(
             Paragraph(
@@ -690,50 +741,67 @@ def download_article_pdf(
             )
         )
 
+    story.append(Spacer(1, 7))
+
     featured_image = pdf_image_flowable(
         article.featured_image,
-        6.4 * inch,
-        3.8 * inch,
+        6.35 * inch,
+        4.0 * inch,
     )
-    if featured_image:
-        story.extend(
-            [
-                Spacer(1, 9),
-                featured_image,
-                Spacer(1, 5),
-            ]
-        )
 
+    if featured_image:
         featured_caption = article.featured_image_caption
+
         if article.featured_image_credit:
             featured_caption = (
                 f"{featured_caption} — "
                 if featured_caption
                 else ""
             ) + f"Photo: {article.featured_image_credit}"
+
+        featured_block = [
+            featured_image,
+            Spacer(1, 5),
+        ]
+
         if featured_caption:
-            story.append(
+            featured_block.append(
                 Paragraph(
                     clean_pdf_text(featured_caption),
                     styles["caption"],
                 )
             )
 
-    if article.excerpt:
         story.append(
+            KeepTogether(featured_block)
+        )
+        story.append(Spacer(1, 5))
+
+    if article.excerpt:
+        story.extend([
+            HRFlowable(
+                width="20%",
+                thickness=2,
+                color=colors.HexColor("#c9a227"),
+                hAlign="LEFT",
+                spaceBefore=4,
+                spaceAfter=8,
+            ),
             Paragraph(
                 clean_pdf_text(article.excerpt),
                 styles["excerpt"],
-            )
-        )
+            ),
+        ])
 
-    paragraphs = article_content_paragraphs(
+    for paragraph in article_content_paragraphs(
         article.content
-    )
-    for paragraph in paragraphs:
+    ):
         story.append(
             Paragraph(
-                clean_pdf_text(paragraph).replace("\n", "<br/>"),
+                clean_pdf_text(paragraph).replace(
+                    "\n",
+                    "<br/>",
+                ),
                 styles["body"],
             )
         )
@@ -741,51 +809,142 @@ def download_article_pdf(
     image_attachments = list(
         article.attachments.all()
     )
+
     if image_attachments:
-        story.extend(
-            [
-                PageBreak(),
-                Paragraph("Article Images", styles["title"]),
-            ]
-        )
+        story.extend([
+            PageBreak(),
+            HRFlowable(
+                width="100%",
+                thickness=0.8,
+                color=colors.HexColor("#d7dfdb"),
+                spaceAfter=10,
+            ),
+            Paragraph(
+                "Article Images",
+                styles["section"],
+            ),
+        ])
+
+        attachment_cells = []
 
         for attachment in image_attachments:
             attachment_image = pdf_image_flowable(
                 attachment.image,
-                6.4 * inch,
-                4.8 * inch,
+                2.9 * inch,
+                2.15 * inch,
             )
+
             if not attachment_image:
                 continue
 
-            story.extend(
-                [
-                    attachment_image,
-                    Spacer(1, 5),
-                ]
+            caption = (
+                attachment.caption
+                or attachment.alt_text
             )
 
-            caption = attachment.caption or attachment.alt_text
             if attachment.credit:
                 caption = (
-                    f"{caption} — " if caption else ""
+                    f"{caption} — "
+                    if caption
+                    else ""
                 ) + f"Photo: {attachment.credit}"
+
+            cell_contents = [
+                attachment_image,
+                Spacer(1, 4),
+            ]
+
             if caption:
-                story.append(
+                cell_contents.append(
                     Paragraph(
                         clean_pdf_text(caption),
                         styles["caption"],
                     )
                 )
-            story.append(Spacer(1, 10))
+
+            attachment_cells.append(
+                cell_contents
+            )
+
+        if attachment_cells:
+            attachment_rows = []
+
+            for index in range(
+                0,
+                len(attachment_cells),
+                2,
+            ):
+                row = attachment_cells[
+                    index:index + 2
+                ]
+
+                if len(row) == 1:
+                    row.append("")
+
+                attachment_rows.append(row)
+
+            attachment_table = Table(
+                attachment_rows,
+                colWidths=[
+                    3.05 * inch,
+                    3.05 * inch,
+                ],
+                hAlign="CENTER",
+                splitByRow=1,
+            )
+
+            attachment_table.setStyle(
+                TableStyle(
+                    [
+                        (
+                            "VALIGN",
+                            (0, 0),
+                            (-1, -1),
+                            "TOP",
+                        ),
+                        (
+                            "LEFTPADDING",
+                            (0, 0),
+                            (-1, -1),
+                            5,
+                        ),
+                        (
+                            "RIGHTPADDING",
+                            (0, 0),
+                            (-1, -1),
+                            5,
+                        ),
+                        (
+                            "TOPPADDING",
+                            (0, 0),
+                            (-1, -1),
+                            6,
+                        ),
+                        (
+                            "BOTTOMPADDING",
+                            (0, 0),
+                            (-1, -1),
+                            8,
+                        ),
+                    ]
+                )
+            )
+
+            story.append(
+                attachment_table
+            )
 
     tag_names = list(
-        article.tags.values_list("name", flat=True)
+        article.tags.values_list(
+            "name",
+            flat=True,
+        )
     )
+
     if tag_names:
         story.append(
             Paragraph(
-                "Tags: "
+                "<b>Tags:</b> "
                 + ", ".join(
                     clean_pdf_text(tag)
                     for tag in tag_names

@@ -4,6 +4,7 @@ from functools import wraps
 from html import escape
 
 from django.contrib import messages
+from django.contrib.staticfiles import finders
 from django.contrib.auth import (
     authenticate,
     get_user_model,
@@ -23,11 +24,14 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import (
+    HRFlowable,
+    Image as PDFImage,
+    KeepTogether,
     LongTable,
     PageBreak,
     Paragraph,
@@ -1274,31 +1278,37 @@ def adviser_dashboard(request):
     )
 
 
-def draw_adviser_report_page(canvas, document):
-    """Draw a consistent header and footer on analytics report pages."""
+def equalizer_report_logo(width=0.56 * inch):
+    """Return the bundled Equalizer logo for analytics PDF branding."""
 
-    page_width, page_height = landscape(letter)
+    logo_path = finders.find("images/equalizer-logo.jpg")
+
+    if not logo_path:
+        return None
+
+    try:
+        logo = PDFImage(logo_path)
+        ratio = logo.imageHeight / max(
+            logo.imageWidth,
+            1,
+        )
+        logo.drawWidth = width
+        logo.drawHeight = width * ratio
+        return logo
+    except Exception:
+        return None
+
+
+def draw_adviser_report_page(canvas, document):
+    """Draw the branded footer on every Adviser analytics report page."""
+
+    page_width, _ = landscape(letter)
 
     canvas.saveState()
-    canvas.setFillColor(colors.HexColor("#173f32"))
-    canvas.rect(
-        0,
-        page_height - 0.46 * inch,
-        page_width,
-        0.46 * inch,
-        fill=1,
-        stroke=0,
-    )
-    canvas.setFillColor(colors.white)
-    canvas.setFont("Helvetica-Bold", 9)
-    canvas.drawString(
-        document.leftMargin,
-        page_height - 0.3 * inch,
-        "THE EQUALIZER — ADVISER ANALYTICS",
-    )
     canvas.setStrokeColor(
         colors.HexColor("#d7dfdb")
     )
+    canvas.setLineWidth(0.6)
     canvas.line(
         document.leftMargin,
         0.48 * inch,
@@ -1308,20 +1318,22 @@ def draw_adviser_report_page(canvas, document):
     canvas.setFillColor(
         colors.HexColor("#65736d")
     )
-    canvas.setFont("Helvetica", 8)
+    canvas.setFont("Helvetica", 7.6)
     canvas.drawString(
         document.leftMargin,
-        0.28 * inch,
-        (
-            "Generated "
-            + timezone.localtime().strftime(
-                "%B %d, %Y %I:%M %p"
-            )
+        0.27 * inch,
+        "The Equalizer · Adviser Analytics",
+    )
+    canvas.drawCentredString(
+        page_width / 2,
+        0.27 * inch,
+        timezone.localtime().strftime(
+            "Generated %b %d, %Y · %I:%M %p"
         ),
     )
     canvas.drawRightString(
         page_width - document.rightMargin,
-        0.28 * inch,
+        0.27 * inch,
         f"Page {document.page}",
     )
     canvas.restoreState()
@@ -1329,10 +1341,7 @@ def draw_adviser_report_page(canvas, document):
 
 @role_required(User.Role.ADVISER)
 def download_adviser_analytics_pdf(request):
-    """
-    Download an Adviser analytics PDF that follows the same
-    reporting period selected on the dashboard.
-    """
+    """Download a branded Adviser analytics report for the selected period."""
 
     analytics = get_adviser_analytics_data(
         request
@@ -1348,17 +1357,17 @@ def download_adviser_analytics_pdf(request):
         "analytics_period_label"
     ]
 
+    period_start_filter = (
+        None
+        if analytics["analytics_is_all_time"]
+        else analytics_start_date
+    )
+
     period_edit_requests = (
         filter_datetime_queryset_by_period(
             EditRequest.objects.all(),
             "created_at",
-            (
-                None
-                if analytics[
-                    "analytics_is_all_time"
-                ]
-                else analytics_start_date
-            ),
+            period_start_filter,
             analytics_end_date,
         )
     )
@@ -1367,13 +1376,7 @@ def download_adviser_analytics_pdf(request):
         filter_datetime_queryset_by_period(
             DeletionRequest.objects.all(),
             "created_at",
-            (
-                None
-                if analytics[
-                    "analytics_is_all_time"
-                ]
-                else analytics_start_date
-            ),
+            period_start_filter,
             analytics_end_date,
         )
     )
@@ -1382,13 +1385,7 @@ def download_adviser_analytics_pdf(request):
         filter_datetime_queryset_by_period(
             ContentReport.objects.all(),
             "created_at",
-            (
-                None
-                if analytics[
-                    "analytics_is_all_time"
-                ]
-                else analytics_start_date
-            ),
+            period_start_filter,
             analytics_end_date,
         )
     )
@@ -1400,16 +1397,9 @@ def download_adviser_analytics_pdf(request):
                     status=status
                 ),
                 "submitted_at",
-                (
-                    None
-                    if analytics[
-                        "analytics_is_all_time"
-                    ]
-                    else analytics_start_date
-                ),
+                period_start_filter,
                 analytics_end_date,
-            )
-            .count()
+            ).count()
         )
         for status in [
             Submission.Status.PENDING,
@@ -1461,9 +1451,7 @@ def download_adviser_analytics_pdf(request):
     }
 
     category_performance = list(
-        analytics[
-            "category_performance"
-        ]
+        analytics["category_performance"]
     )
 
     editors = list(
@@ -1471,9 +1459,7 @@ def download_adviser_analytics_pdf(request):
     )
 
     top_articles = list(
-        analytics[
-            "top_viewed_articles"
-        ]
+        analytics["top_viewed_articles"]
     )
 
     pdf_buffer = io.BytesIO()
@@ -1483,8 +1469,8 @@ def download_adviser_analytics_pdf(request):
         pagesize=landscape(letter),
         rightMargin=0.55 * inch,
         leftMargin=0.55 * inch,
-        topMargin=0.66 * inch,
-        bottomMargin=0.65 * inch,
+        topMargin=0.52 * inch,
+        bottomMargin=0.62 * inch,
         title="The Equalizer Adviser Analytics",
         author=request.user.username,
         subject="Publication analytics report",
@@ -1492,50 +1478,96 @@ def download_adviser_analytics_pdf(request):
 
     sample_styles = getSampleStyleSheet()
 
-    title_style = ParagraphStyle(
-        "AnalyticsTitle",
-        parent=sample_styles["Title"],
-        fontName="Times-Bold",
-        fontSize=24,
-        leading=28,
-        textColor=colors.HexColor(
-            "#0e2a22"
+    styles = {
+        "brand": ParagraphStyle(
+            "AnalyticsBrand",
+            parent=sample_styles["Normal"],
+            fontName="Helvetica-Bold",
+            fontSize=9.5,
+            leading=11,
+            textColor=colors.HexColor(
+                "#173f32"
+            ),
+            spaceAfter=1,
         ),
-        alignment=TA_CENTER,
-        spaceAfter=5,
-    )
-
-    subtitle_style = ParagraphStyle(
-        "AnalyticsSubtitle",
-        parent=sample_styles["Normal"],
-        fontSize=9,
-        leading=13,
-        textColor=colors.HexColor(
-            "#65736d"
+        "brand_sub": ParagraphStyle(
+            "AnalyticsBrandSub",
+            parent=sample_styles["Normal"],
+            fontName="Helvetica",
+            fontSize=7.2,
+            leading=9,
+            textColor=colors.HexColor(
+                "#65736d"
+            ),
         ),
-        alignment=TA_CENTER,
-        spaceAfter=15,
-    )
-
-    heading_style = ParagraphStyle(
-        "AnalyticsHeading",
-        parent=sample_styles["Heading2"],
-        fontName="Helvetica-Bold",
-        fontSize=13,
-        leading=16,
-        textColor=colors.HexColor(
-            "#173f32"
+        "title": ParagraphStyle(
+            "AnalyticsTitle",
+            parent=sample_styles["Title"],
+            fontName="Times-Bold",
+            fontSize=24,
+            leading=27,
+            textColor=colors.HexColor(
+                "#0e2a22"
+            ),
+            alignment=TA_LEFT,
+            spaceAfter=4,
         ),
-        spaceBefore=8,
-        spaceAfter=7,
-    )
-
-    cell_style = ParagraphStyle(
-        "AnalyticsCell",
-        parent=sample_styles["Normal"],
-        fontSize=7.5,
-        leading=10,
-    )
+        "subtitle": ParagraphStyle(
+            "AnalyticsSubtitle",
+            parent=sample_styles["Normal"],
+            fontName="Helvetica",
+            fontSize=8.4,
+            leading=11,
+            textColor=colors.HexColor(
+                "#65736d"
+            ),
+            spaceAfter=8,
+        ),
+        "heading": ParagraphStyle(
+            "AnalyticsHeading",
+            parent=sample_styles["Heading2"],
+            fontName="Times-Bold",
+            fontSize=14.5,
+            leading=18,
+            textColor=colors.HexColor(
+                "#173f32"
+            ),
+            spaceBefore=7,
+            spaceAfter=6,
+        ),
+        "cell": ParagraphStyle(
+            "AnalyticsCell",
+            parent=sample_styles["Normal"],
+            fontName="Helvetica",
+            fontSize=7.4,
+            leading=9.5,
+            textColor=colors.HexColor(
+                "#24332d"
+            ),
+        ),
+        "kpi_label": ParagraphStyle(
+            "KpiLabel",
+            parent=sample_styles["Normal"],
+            fontName="Helvetica-Bold",
+            fontSize=7,
+            leading=8.5,
+            textColor=colors.HexColor(
+                "#65736d"
+            ),
+            alignment=TA_CENTER,
+        ),
+        "kpi_value": ParagraphStyle(
+            "KpiValue",
+            parent=sample_styles["Normal"],
+            fontName="Times-Bold",
+            fontSize=18,
+            leading=20,
+            textColor=colors.HexColor(
+                "#173f32"
+            ),
+            alignment=TA_CENTER,
+        ),
+    }
 
     table_style = TableStyle(
         [
@@ -1567,13 +1599,13 @@ def download_adviser_analytics_pdf(request):
                 "FONTSIZE",
                 (0, 0),
                 (-1, -1),
-                8,
+                7.6,
             ),
             (
                 "LEADING",
                 (0, 0),
                 (-1, -1),
-                10,
+                9.5,
             ),
             (
                 "GRID",
@@ -1588,9 +1620,7 @@ def download_adviser_analytics_pdf(request):
                 (-1, -1),
                 [
                     colors.white,
-                    colors.HexColor(
-                        "#f3f7f5"
-                    ),
+                    colors.HexColor("#f3f7f5"),
                 ],
             ),
             (
@@ -1610,6 +1640,18 @@ def download_adviser_analytics_pdf(request):
                 (0, 0),
                 (-1, -1),
                 5,
+            ),
+            (
+                "LEFTPADDING",
+                (0, 0),
+                (-1, -1),
+                6,
+            ),
+            (
+                "RIGHTPADDING",
+                (0, 0),
+                (-1, -1),
+                6,
             ),
         ]
     )
@@ -1638,6 +1680,98 @@ def download_adviser_analytics_pdf(request):
 
         return table
 
+    def section_heading(text):
+        return KeepTogether(
+            [
+                Paragraph(
+                    text,
+                    styles["heading"],
+                ),
+                HRFlowable(
+                    width="100%",
+                    thickness=0.7,
+                    color=colors.HexColor(
+                        "#d7dfdb"
+                    ),
+                    spaceAfter=7,
+                ),
+            ]
+        )
+
+    def kpi_card(label, value):
+        return [
+            Paragraph(
+                str(value),
+                styles["kpi_value"],
+            ),
+            Spacer(1, 2),
+            Paragraph(
+                label,
+                styles["kpi_label"],
+            ),
+        ]
+
+    logo = equalizer_report_logo()
+
+    brand_text = [
+        Paragraph(
+            "THE EQUALIZER",
+            styles["brand"],
+        ),
+        Paragraph(
+            (
+                "The Official Student Publication "
+                "of Mabalacat City College"
+            ),
+            styles["brand_sub"],
+        ),
+    ]
+
+    brand_table = Table(
+        [[logo or "", brand_text]],
+        colWidths=[
+            0.7 * inch,
+            8.95 * inch,
+        ],
+    )
+
+    brand_table.setStyle(
+        TableStyle(
+            [
+                (
+                    "VALIGN",
+                    (0, 0),
+                    (-1, -1),
+                    "MIDDLE",
+                ),
+                (
+                    "LEFTPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    0,
+                ),
+                (
+                    "RIGHTPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    6,
+                ),
+                (
+                    "TOPPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    0,
+                ),
+                (
+                    "BOTTOMPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    0,
+                ),
+            ]
+        )
+    )
+
     period_start_text = (
         "Tracking start"
         if analytics["analytics_is_all_time"]
@@ -1646,24 +1780,113 @@ def download_adviser_analytics_pdf(request):
         )
     )
 
+    kpi_table = Table(
+        [
+            [
+                kpi_card(
+                    "Published articles",
+                    analytics[
+                        "published_articles"
+                    ],
+                ),
+                kpi_card(
+                    "Views",
+                    analytics["total_views"],
+                ),
+                kpi_card(
+                    "Reactions",
+                    analytics[
+                        "total_reactions"
+                    ],
+                ),
+                kpi_card(
+                    "Shares",
+                    analytics["total_shares"],
+                ),
+                kpi_card(
+                    "Total engagement",
+                    analytics[
+                        "total_engagement"
+                    ],
+                ),
+            ]
+        ],
+        colWidths=[1.92 * inch] * 5,
+        hAlign="LEFT",
+    )
+
+    kpi_table.setStyle(
+        TableStyle(
+            [
+                (
+                    "BACKGROUND",
+                    (0, 0),
+                    (-1, -1),
+                    colors.HexColor("#f4f7f5"),
+                ),
+                (
+                    "BOX",
+                    (0, 0),
+                    (-1, -1),
+                    0.6,
+                    colors.HexColor("#d7dfdb"),
+                ),
+                (
+                    "INNERGRID",
+                    (0, 0),
+                    (-1, -1),
+                    0.45,
+                    colors.HexColor("#d7dfdb"),
+                ),
+                (
+                    "VALIGN",
+                    (0, 0),
+                    (-1, -1),
+                    "MIDDLE",
+                ),
+                (
+                    "TOPPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    9,
+                ),
+                (
+                    "BOTTOMPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    9,
+                ),
+            ]
+        )
+    )
+
     story = [
+        brand_table,
+        Spacer(1, 7),
+        HRFlowable(
+            width="100%",
+            thickness=1.1,
+            color=colors.HexColor("#c9a227"),
+            spaceAfter=10,
+        ),
         Paragraph(
             "Adviser Analytics Report",
-            title_style,
+            styles["title"],
         ),
         Paragraph(
             (
-                f"{escape(analytics_period_label)} "
-                f"· Through "
+                f"{escape(analytics_period_label)} · "
+                f"Through "
                 f"{analytics_end_date.strftime('%B %d, %Y')} "
                 f"(Asia/Manila) · Prepared for "
                 f"{escape(request.user.username)}"
             ),
-            subtitle_style,
+            styles["subtitle"],
         ),
-        Paragraph(
-            "Current publication snapshot",
-            heading_style,
+        kpi_table,
+        Spacer(1, 11),
+        section_heading(
+            "Publication snapshot"
         ),
         report_table(
             [
@@ -1674,31 +1897,21 @@ def download_adviser_analytics_pdf(request):
                     "Archived",
                 ],
                 [
-                    analytics[
-                        "total_articles"
-                    ],
+                    analytics["total_articles"],
                     analytics[
                         "published_articles"
                     ],
-                    analytics[
-                        "draft_articles"
-                    ],
+                    analytics["draft_articles"],
                     analytics[
                         "archived_articles"
                     ],
                 ],
             ],
-            [
-                1.8 * inch,
-                1.8 * inch,
-                1.8 * inch,
-                1.8 * inch,
-            ],
+            [2.4 * inch] * 4,
         ),
         Spacer(1, 10),
-        Paragraph(
-            "Reader engagement for selected period",
-            heading_style,
+        section_heading(
+            "Reader engagement for selected period"
         ),
         report_table(
             [
@@ -1714,32 +1927,27 @@ def download_adviser_analytics_pdf(request):
                         f"{period_start_text} – "
                         f"{analytics_end_date:%b %d, %Y}"
                     ),
-                    analytics[
-                        "total_views"
-                    ],
+                    analytics["total_views"],
                     analytics[
                         "total_reactions"
                     ],
-                    analytics[
-                        "total_shares"
-                    ],
+                    analytics["total_shares"],
                     analytics[
                         "total_engagement"
                     ],
                 ],
             ],
             [
-                2.4 * inch,
-                1.35 * inch,
-                1.35 * inch,
-                1.35 * inch,
-                1.55 * inch,
+                2.8 * inch,
+                1.65 * inch,
+                1.65 * inch,
+                1.65 * inch,
+                1.85 * inch,
             ],
         ),
         Spacer(1, 10),
-        Paragraph(
-            "Editorial workflow created in selected period",
-            heading_style,
+        section_heading(
+            "Editorial workflow created in selected period"
         ),
         report_table(
             [
@@ -1810,17 +2018,16 @@ def download_adviser_analytics_pdf(request):
                 ],
             ],
             [
-                1.55 * inch,
-                1.55 * inch,
-                1.75 * inch,
-                1.75 * inch,
-                1.75 * inch,
+                1.7 * inch,
+                1.9 * inch,
+                2.0 * inch,
+                2.0 * inch,
+                2.0 * inch,
             ],
         ),
         PageBreak(),
-        Paragraph(
-            "Category performance",
-            heading_style,
+        section_heading(
+            "Category performance"
         ),
         report_table(
             [
@@ -1841,36 +2048,29 @@ def download_adviser_analytics_pdf(request):
                             ]
                             or "Uncategorized"
                         ),
-                        cell_style,
+                        styles["cell"],
                     ),
                     row["article_count"],
-                    row[
-                        "total_views"
-                    ]
-                    or 0,
+                    row["total_views"] or 0,
                     row[
                         "total_reactions"
                     ]
                     or 0,
-                    row[
-                        "total_shares"
-                    ]
-                    or 0,
+                    row["total_shares"] or 0,
                 ]
                 for row in category_performance
             ],
             [
-                2.7 * inch,
-                1.65 * inch,
-                1.1 * inch,
-                1.1 * inch,
-                1.1 * inch,
+                2.9 * inch,
+                2.05 * inch,
+                1.35 * inch,
+                1.35 * inch,
+                1.35 * inch,
             ],
         ),
-        Spacer(1, 12),
-        Paragraph(
-            "Editor performance",
-            heading_style,
+        Spacer(1, 13),
+        section_heading(
+            "Editor performance"
         ),
         report_table(
             [
@@ -1889,7 +2089,7 @@ def download_adviser_analytics_pdf(request):
                         escape(
                             editor.username
                         ),
-                        cell_style,
+                        styles["cell"],
                     ),
                     editor.article_count,
                     editor.published_count,
@@ -1900,18 +2100,17 @@ def download_adviser_analytics_pdf(request):
                 for editor in editors
             ],
             [
-                2.2 * inch,
-                1.25 * inch,
-                1.1 * inch,
-                1.2 * inch,
-                1.1 * inch,
-                1.1 * inch,
+                2.35 * inch,
+                1.45 * inch,
+                1.35 * inch,
+                1.45 * inch,
+                1.35 * inch,
+                1.35 * inch,
             ],
         ),
         PageBreak(),
-        Paragraph(
-            "Top published articles",
-            heading_style,
+        section_heading(
+            "Top published articles"
         ),
         report_table(
             [
@@ -1928,42 +2127,33 @@ def download_adviser_analytics_pdf(request):
                 [
                     Paragraph(
                         escape(article.title),
-                        cell_style,
+                        styles["cell"],
                     ),
                     Paragraph(
                         escape(
                             article.category.name
                         ),
-                        cell_style,
+                        styles["cell"],
                     ),
                     Paragraph(
                         escape(
                             article.author.username
                         ),
-                        cell_style,
+                        styles["cell"],
                     ),
-                    (
-                        article.period_views
-                        or 0
-                    ),
-                    (
-                        article.period_reactions
-                        or 0
-                    ),
-                    (
-                        article.period_shares
-                        or 0
-                    ),
+                    article.period_views or 0,
+                    article.period_reactions or 0,
+                    article.period_shares or 0,
                 ]
                 for article in top_articles
             ],
             [
-                3.2 * inch,
+                3.35 * inch,
+                1.55 * inch,
                 1.45 * inch,
-                1.35 * inch,
-                0.8 * inch,
                 0.9 * inch,
-                0.8 * inch,
+                1.0 * inch,
+                0.9 * inch,
             ],
         ),
     ]
@@ -2073,6 +2263,36 @@ def login_view(request):
 
             return redirect(
                 "dashboard"
+            )
+
+        candidate_user = (
+            User.objects
+            .filter(
+                username=(username or "").strip()
+            )
+            .first()
+        )
+
+        if (
+            candidate_user is not None
+            and candidate_user.is_active
+            and candidate_user.email
+            and not candidate_user.email_verified
+            and candidate_user.check_password(password or "")
+        ):
+            messages.error(
+                request,
+                (
+                    "Your account exists, but your email "
+                    "address has not been verified yet. "
+                    "Verify your email or use Resend "
+                    "verification email below."
+                ),
+            )
+
+            return render(
+                request,
+                "accounts/login.html",
             )
 
         messages.error(

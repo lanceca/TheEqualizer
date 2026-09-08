@@ -172,6 +172,172 @@ def get_normalized_attachment_mode(
     return Article.AttachmentMode.IMAGE
 
 
+CUSTOM_TAG_MAX_COUNT = 10
+
+
+def get_submitted_custom_tag_names(request):
+    """
+    Parse custom article tags entered by EICs and Editors.
+
+    Commas and new lines may both be used as separators. Existing tags
+    are reused later with a case-insensitive name match.
+    """
+
+    raw_value = request.POST.get(
+        "custom_tags",
+        "",
+    )
+
+    normalized_value = (
+        raw_value
+        .replace("\r\n", "\n")
+        .replace("\r", "\n")
+        .replace("\n", ",")
+    )
+
+    tag_name_max_length = (
+        Tag._meta
+        .get_field("name")
+        .max_length
+    )
+
+    custom_tag_names = []
+    seen_names = set()
+
+    for raw_name in normalized_value.split(","):
+        name = " ".join(
+            raw_name.split()
+        ).strip()
+
+        if not name:
+            continue
+
+        if len(name) > tag_name_max_length:
+            raise ValidationError(
+                (
+                    "Custom tags can contain a maximum "
+                    f"of {tag_name_max_length} characters each."
+                )
+            )
+
+        normalized_name = name.casefold()
+
+        if normalized_name in seen_names:
+            continue
+
+        seen_names.add(normalized_name)
+        custom_tag_names.append(name)
+
+    if len(custom_tag_names) > CUSTOM_TAG_MAX_COUNT:
+        raise ValidationError(
+            (
+                "You can add a maximum of "
+                f"{CUSTOM_TAG_MAX_COUNT} custom tags at a time."
+            )
+        )
+
+    return custom_tag_names
+
+
+def generate_unique_tag_slug(name):
+    """Generate a unique slug for a newly-created reusable tag."""
+
+    max_length = (
+        Tag._meta
+        .get_field("slug")
+        .max_length
+    )
+
+    base_slug = slugify(name)
+
+    if not base_slug:
+        raise ValidationError(
+            (
+                f'Custom tag "{name}" cannot be used because '
+                "it does not produce a valid URL-safe tag name."
+            )
+        )
+
+    base_slug = base_slug[:max_length].strip("-")
+
+    if not base_slug:
+        raise ValidationError(
+            (
+                f'Custom tag "{name}" cannot be used because '
+                "it does not produce a valid URL-safe tag name."
+            )
+        )
+
+    candidate = base_slug
+    counter = 2
+
+    while Tag.objects.filter(slug=candidate).exists():
+        suffix = f"-{counter}"
+        candidate = (
+            base_slug[: max_length - len(suffix)]
+            .rstrip("-")
+            + suffix
+        )
+        counter += 1
+
+    return candidate
+
+
+def resolve_article_tag_ids(
+    selected_tag_ids,
+    custom_tag_names,
+):
+    """Validate selected tags and create/reuse custom tags atomically."""
+
+    normalized_selected_ids = []
+
+    for tag_id in selected_tag_ids:
+        try:
+            normalized_selected_ids.append(int(tag_id))
+        except (TypeError, ValueError) as error:
+            raise ValidationError(
+                "An invalid article tag was selected."
+            ) from error
+
+    normalized_selected_ids = list(
+        dict.fromkeys(normalized_selected_ids)
+    )
+
+    if normalized_selected_ids:
+        existing_selected_ids = set(
+            Tag.objects
+            .filter(id__in=normalized_selected_ids)
+            .values_list("id", flat=True)
+        )
+
+        if len(existing_selected_ids) != len(normalized_selected_ids):
+            raise ValidationError(
+                "One or more selected article tags no longer exist."
+            )
+
+    resolved_ids = list(normalized_selected_ids)
+    resolved_id_set = set(resolved_ids)
+
+    for name in custom_tag_names:
+        tag = (
+            Tag.objects
+            .filter(name__iexact=name)
+            .first()
+        )
+
+        if tag is None:
+            tag = Tag.objects.create(
+                name=name,
+                slug=generate_unique_tag_slug(name),
+            )
+
+        if tag.id not in resolved_id_set:
+            resolved_ids.append(tag.id)
+            resolved_id_set.add(tag.id)
+
+    return resolved_ids
+
+
 def validate_uploaded_article_videos(
     attachments=None,
 ):
@@ -1221,6 +1387,12 @@ def create_article(request):
                 ),
             )
 
+            custom_tag_names = (
+                get_submitted_custom_tag_names(
+                    request
+                )
+            )
+
         except ValidationError as error:
 
             messages.error(
@@ -1434,8 +1606,15 @@ def create_article(request):
                     draft_type=Article.DraftType.NORMAL,
                 )
 
+                resolved_tag_ids = (
+                    resolve_article_tag_ids(
+                        tag_ids,
+                        custom_tag_names,
+                    )
+                )
+
                 article.tags.set(
-                    tag_ids
+                    resolved_tag_ids
                 )
 
                 set_article_contributors(
@@ -2498,6 +2677,12 @@ def revise_submission(
                 ),
             )
 
+            custom_tag_names = (
+                get_submitted_custom_tag_names(
+                    request
+                )
+            )
+
         except ValidationError as error:
 
             messages.error(
@@ -2781,8 +2966,15 @@ def revise_submission(
 
                 article.save()
 
+                resolved_tag_ids = (
+                    resolve_article_tag_ids(
+                        tag_ids,
+                        custom_tag_names,
+                    )
+                )
+
                 article.tags.set(
-                    tag_ids
+                    resolved_tag_ids
                 )
 
                 set_article_contributors(
@@ -3172,6 +3364,12 @@ def edit_draft(
                 ),
             )
 
+            custom_tag_names = (
+                get_submitted_custom_tag_names(
+                    request
+                )
+            )
+
         except ValidationError as error:
 
             messages.error(
@@ -3525,8 +3723,15 @@ def edit_draft(
 
                 locked_article.save()
 
+                resolved_tag_ids = (
+                    resolve_article_tag_ids(
+                        tag_ids,
+                        custom_tag_names,
+                    )
+                )
+
                 locked_article.tags.set(
-                    tag_ids
+                    resolved_tag_ids
                 )
 
                 set_article_contributors(
@@ -4132,6 +4337,12 @@ def edit_published_article(
                 ),
             )
 
+            custom_tag_names = (
+                get_submitted_custom_tag_names(
+                    request
+                )
+            )
+
         except ValidationError as error:
 
             messages.error(
@@ -4419,8 +4630,15 @@ def edit_published_article(
 
                 article.save()
 
+                resolved_tag_ids = (
+                    resolve_article_tag_ids(
+                        tag_ids,
+                        custom_tag_names,
+                    )
+                )
+
                 article.tags.set(
-                    tag_ids
+                    resolved_tag_ids
                 )
 
                 set_article_contributors(
