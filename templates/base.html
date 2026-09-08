@@ -259,17 +259,36 @@
                 box-shadow: none;
             }
 
+            /*
+             * Staff pages use .staff-content as their own scroll container.
+             * Keep the header at its natural height so translateY(-100%)
+             * remains stable, then reclaim its layout space with a negative
+             * margin instead of animating the header height to zero.
+             */
             body.staff-shell-body > .site-header {
-                height: var(--mobile-site-header-height, auto);
-                overflow: hidden;
+                flex: 0 0 auto;
+
+                height: auto;
+                overflow: visible;
+
+                margin-bottom: 0;
+
                 transition:
-                    height 0.22s ease,
                     transform 0.22s ease,
+                    margin-bottom 0.22s ease,
                     box-shadow 0.22s ease;
             }
 
             body.staff-shell-body > .site-header.site-header-hidden {
-                height: 0;
+                margin-bottom:
+                    calc(
+                        -1
+                        * var(
+                            --mobile-site-header-height,
+                            0px
+                        )
+                    );
+
                 border-bottom-color: transparent;
             }
 
@@ -1087,57 +1106,102 @@
 
     <script>
     (function () {
-        const header = document.querySelector(".site-header");
+        const header =
+            document.querySelector(
+                ".site-header"
+            );
 
         if (!header) {
             return;
         }
 
-        const mobileQuery = window.matchMedia("(max-width: 720px)");
+        const mobileQuery =
+            window.matchMedia(
+                "(max-width: 720px)"
+            );
+
         let scrollTarget = null;
         let lastScrollTop = 0;
+        let direction = 0;
+        let directionDistance = 0;
         let frameRequested = false;
 
         function isStaffShell() {
-            return document.body.classList.contains("staff-shell-body");
+            return document.body.classList.contains(
+                "staff-shell-body"
+            );
+        }
+
+        function getStaffScrollTarget() {
+            if (!isStaffShell()) {
+                return null;
+            }
+
+            return document.querySelector(
+                ".staff-content"
+            );
         }
 
         function getScrollTop() {
             if (scrollTarget === window) {
-                return window.scrollY || window.pageYOffset || 0;
+                return (
+                    window.scrollY
+                    || window.pageYOffset
+                    || 0
+                );
             }
 
-            return scrollTarget ? scrollTarget.scrollTop : 0;
+            return scrollTarget
+                ? scrollTarget.scrollTop
+                : 0;
         }
 
         function showHeader() {
-            header.classList.remove("site-header-hidden");
+            header.classList.remove(
+                "site-header-hidden"
+            );
         }
 
         function hideHeader() {
-            header.classList.add("site-header-hidden");
+            header.classList.add(
+                "site-header-hidden"
+            );
+        }
+
+        function resetDirectionTracking(
+            currentScrollTop
+        ) {
+            lastScrollTop =
+                Math.max(
+                    currentScrollTop,
+                    0
+                );
+
+            direction = 0;
+            directionDistance = 0;
         }
 
         function updateStaffHeaderHeight() {
-            if (!mobileQuery.matches || !isStaffShell()) {
-                header.style.removeProperty("--mobile-site-header-height");
+            if (
+                !mobileQuery.matches
+                || !isStaffShell()
+            ) {
+                header.style.removeProperty(
+                    "--mobile-site-header-height"
+                );
+
                 return;
             }
 
-            const wasHidden = header.classList.contains("site-header-hidden");
-
-            if (wasHidden) {
-                showHeader();
-            }
-
+            /*
+             * scrollHeight stays equal to the real header height even while
+             * the header is translated off-screen, so this measurement does
+             * not require briefly showing the header again.
+             */
             header.style.setProperty(
                 "--mobile-site-header-height",
                 header.scrollHeight + "px"
             );
-
-            if (wasHidden) {
-                hideHeader();
-            }
         }
 
         function handleScrollFrame() {
@@ -1145,21 +1209,71 @@
 
             if (!mobileQuery.matches) {
                 showHeader();
+                resetDirectionTracking(
+                    getScrollTop()
+                );
                 return;
             }
 
-            const currentScrollTop = getScrollTop();
-            const delta = currentScrollTop - lastScrollTop;
+            const currentScrollTop =
+                Math.max(
+                    getScrollTop(),
+                    0
+                );
 
-            if (currentScrollTop <= 20) {
+            const delta =
+                currentScrollTop
+                - lastScrollTop;
+
+            /*
+             * Always expose the header near the very top of the page.
+             */
+            if (currentScrollTop <= 12) {
                 showHeader();
-            } else if (delta > 4) {
-                hideHeader();
-            } else if (delta < -4) {
-                showHeader();
+                resetDirectionTracking(
+                    currentScrollTop
+                );
+                return;
             }
 
-            lastScrollTop = Math.max(currentScrollTop, 0);
+            /*
+             * Mobile/touch scrolling frequently reports many tiny scroll
+             * deltas. Accumulating movement makes the behavior reliable on
+             * staff dashboards instead of requiring one large scroll event.
+             */
+            if (delta > 0) {
+
+                if (direction !== 1) {
+                    direction = 1;
+                    directionDistance = 0;
+                }
+
+                directionDistance += delta;
+
+                if (directionDistance >= 14) {
+                    hideHeader();
+                    directionDistance = 0;
+                }
+
+            } else if (delta < 0) {
+
+                if (direction !== -1) {
+                    direction = -1;
+                    directionDistance = 0;
+                }
+
+                directionDistance +=
+                    Math.abs(delta);
+
+                if (directionDistance >= 10) {
+                    showHeader();
+                    directionDistance = 0;
+                }
+
+            }
+
+            lastScrollTop =
+                currentScrollTop;
         }
 
         function handleScroll() {
@@ -1168,7 +1282,10 @@
             }
 
             frameRequested = true;
-            window.requestAnimationFrame(handleScrollFrame);
+
+            window.requestAnimationFrame(
+                handleScrollFrame
+            );
         }
 
         function detachScrollListener() {
@@ -1176,7 +1293,11 @@
                 return;
             }
 
-            scrollTarget.removeEventListener("scroll", handleScroll);
+            scrollTarget.removeEventListener(
+                "scroll",
+                handleScroll
+            );
+
             scrollTarget = null;
         }
 
@@ -1185,13 +1306,28 @@
             showHeader();
 
             if (!mobileQuery.matches) {
-                header.style.removeProperty("--mobile-site-header-height");
+                header.style.removeProperty(
+                    "--mobile-site-header-height"
+                );
+
+                resetDirectionTracking(0);
                 return;
             }
 
-            scrollTarget = document.querySelector(".staff-content") || window;
-            lastScrollTop = getScrollTop();
+            /*
+             * Public pages scroll the browser window.
+             * Staff/officer dashboards intentionally scroll .staff-content
+             * because the staff shell itself is locked to the viewport.
+             */
+            scrollTarget =
+                getStaffScrollTarget()
+                || window;
+
             updateStaffHeaderHeight();
+
+            resetDirectionTracking(
+                getScrollTop()
+            );
 
             scrollTarget.addEventListener(
                 "scroll",
@@ -1205,16 +1341,35 @@
         window.addEventListener(
             "resize",
             function () {
-                showHeader();
                 updateStaffHeaderHeight();
+
+                resetDirectionTracking(
+                    getScrollTop()
+                );
+            },
+            { passive: true }
+        );
+
+        window.addEventListener(
+            "orientationchange",
+            function () {
+                window.setTimeout(
+                    configureHeaderScroll,
+                    80
+                );
             },
             { passive: true }
         );
 
         if (mobileQuery.addEventListener) {
-            mobileQuery.addEventListener("change", configureHeaderScroll);
+            mobileQuery.addEventListener(
+                "change",
+                configureHeaderScroll
+            );
         } else if (mobileQuery.addListener) {
-            mobileQuery.addListener(configureHeaderScroll);
+            mobileQuery.addListener(
+                configureHeaderScroll
+            );
         }
     })();
     </script>
