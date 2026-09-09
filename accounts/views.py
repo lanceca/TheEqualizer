@@ -1,4 +1,5 @@
 import io
+import logging
 from datetime import date, timedelta
 from functools import wraps
 from html import escape
@@ -62,6 +63,44 @@ from .forms import (
 
 
 User = get_user_model()
+
+logger = logging.getLogger(__name__)
+
+
+# ==========================================================
+# STORAGE CLEANUP HELPER
+# ==========================================================
+
+
+def delete_storage_file_safely(file_name):
+    """
+    Remove an obsolete profile image without allowing a temporary
+    Supabase/S3 cleanup failure to turn a successful profile update
+    into a server error.
+    """
+
+    if not file_name:
+        return True
+
+    try:
+        if default_storage.exists(
+            file_name
+        ):
+            default_storage.delete(
+                file_name
+            )
+
+    except Exception:
+        logger.exception(
+            (
+                "Non-fatal profile media cleanup failed "
+                "for storage object %s."
+            ),
+            file_name,
+        )
+        return False
+
+    return True
 
 
 # ==========================================================
@@ -2410,7 +2449,7 @@ def profile(request):
                     and old_profile_picture_name
                     != new_profile_picture_name
                 ):
-                    default_storage.delete(
+                    delete_storage_file_safely(
                         old_profile_picture_name
                     )
 

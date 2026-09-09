@@ -1,4 +1,5 @@
 from functools import wraps
+import logging
 
 from django.conf import settings
 from django.contrib import messages
@@ -48,6 +49,8 @@ from .validators import (
 
 
 User = get_user_model()
+
+logger = logging.getLogger(__name__)
 
 
 # ==========================================================
@@ -135,6 +138,45 @@ def notify_eics(
             message=message,
             related_url=related_url,
         )
+
+
+# ==========================================================
+# STORAGE CLEANUP HELPER
+# ==========================================================
+
+
+def delete_storage_file_safely(file_name):
+    """
+    Best-effort cleanup for media that has already been replaced/deleted
+    in the database.
+
+    Supabase/S3 cleanup is deliberately non-fatal: a temporary storage
+    outage must not turn an otherwise successful staff action into a 500.
+    The failure is still written to the server log for later cleanup.
+    """
+
+    if not file_name:
+        return True
+
+    try:
+        if default_storage.exists(
+            file_name
+        ):
+            default_storage.delete(
+                file_name
+            )
+
+    except Exception:
+        logger.exception(
+            (
+                "Non-fatal media cleanup failed for "
+                "storage object %s."
+            ),
+            file_name,
+        )
+        return False
+
+    return True
 
 
 # ==========================================================
@@ -3585,7 +3627,6 @@ def edit_draft(
                     Article.objects
                     .select_for_update()
                     .select_related(
-                        "source_article",
                         "author",
                     ),
                     id=article.id,
@@ -5188,7 +5229,6 @@ def review_edit_request(
             .select_for_update()
             .select_related(
                 "article",
-                "draft_article",
                 "requested_by",
             ),
             id=request_id,
@@ -7718,11 +7758,8 @@ def edit_digital_publication(
             and old_pdf_name
             and old_pdf_name
             != publication.pdf_file.name
-            and default_storage.exists(
-                old_pdf_name
-            )
         ):
-            default_storage.delete(
+            delete_storage_file_safely(
                 old_pdf_name
             )
 
@@ -7737,11 +7774,8 @@ def edit_digital_publication(
                 or old_cover_name
                 != publication.cover_image.name
             )
-            and default_storage.exists(
-                old_cover_name
-            )
         ):
-            default_storage.delete(
+            delete_storage_file_safely(
                 old_cover_name
             )
 
@@ -7875,13 +7909,8 @@ def delete_digital_publication(
         pdf_name,
         cover_name,
     }:
-        if (
-            file_name
-            and default_storage.exists(
-                file_name
-            )
-        ):
-            default_storage.delete(
+        if file_name:
+            delete_storage_file_safely(
                 file_name
             )
 
@@ -8150,11 +8179,8 @@ def edit_school_advertisement(
             and old_image_name
             and old_image_name
             != advertisement.image.name
-            and default_storage.exists(
-                old_image_name
-            )
         ):
-            default_storage.delete(
+            delete_storage_file_safely(
                 old_image_name
             )
 
@@ -8257,13 +8283,8 @@ def delete_school_advertisement(
 
     advertisement.delete()
 
-    if (
-        image_name
-        and default_storage.exists(
-            image_name
-        )
-    ):
-        default_storage.delete(
+    if image_name:
+        delete_storage_file_safely(
             image_name
         )
 
@@ -8516,9 +8537,10 @@ def edit_people_profile(request, section_slug, profile_id):
                 replacement_image
                 and old_image_name
                 and old_image_name != profile.image.name
-                and default_storage.exists(old_image_name)
             ):
-                default_storage.delete(old_image_name)
+                delete_storage_file_safely(
+                    old_image_name
+                )
 
             messages.success(
                 request,
@@ -8589,8 +8611,10 @@ def delete_people_profile(request, section_slug, profile_id):
     name = profile.name
     profile.delete()
 
-    if image_name and default_storage.exists(image_name):
-        default_storage.delete(image_name)
+    if image_name:
+        delete_storage_file_safely(
+            image_name
+        )
 
     messages.success(
         request,
@@ -8753,11 +8777,8 @@ def about_us_management(
             and old_image_name
             and old_image_name
             != about_page.hero_image.name
-            and default_storage.exists(
-                old_image_name
-            )
         ):
-            default_storage.delete(
+            delete_storage_file_safely(
                 old_image_name
             )
 
