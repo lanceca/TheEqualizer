@@ -31,6 +31,12 @@ urlpatterns = [
     ),
 
     path(
+        "dashboard/adviser/overview/",
+        views.adviser_overview,
+        name="adviser_overview",
+    ),
+
+    path(
         "dashboard/adviser/",
         views.adviser_dashboard,
         name="adviser_dashboard",

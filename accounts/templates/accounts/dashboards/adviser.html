@@ -199,55 +199,6 @@
 </section>
 
 
-<div class="dashboard-profile-strip adviser-react-profile-strip">
-
-    <div class="dashboard-profile-avatar">
-
-        {% if request.user.profile_picture %}
-
-            <img
-                src="{{ request.user.profile_picture.url }}"
-                alt="{{ request.user.username }} profile picture"
-            >
-
-        {% else %}
-
-            <span>
-                {{ request.user.username|slice:":1"|upper }}
-            </span>
-
-        {% endif %}
-
-    </div>
-
-
-    <div class="dashboard-profile-copy">
-
-        <span class="dashboard-profile-kicker">
-            Signed in as
-        </span>
-
-        <strong>
-            {{ request.user.username }}
-        </strong>
-
-        <span>
-            {{ request.user.get_role_display }}
-        </span>
-
-    </div>
-
-
-    <a
-        href="{% url 'profile' %}"
-        class="secondary-button dashboard-profile-link"
-    >
-        View Profile
-    </a>
-
-</div>
-
-
 <div
     id="adviser-analytics-react-root"
     data-period-label="{{ analytics_period_label }}"
@@ -280,9 +231,9 @@
             data-top-article
             data-title="{{ article.title }}"
             data-category="{{ article.category.name }}"
-            data-views="{{ article.period_views|default:0 }}"
-            data-reactions="{{ article.period_reactions|default:0 }}"
-            data-shares="{{ article.period_shares|default:0 }}"
+            data-views="{{ article.view_count|default:0 }}"
+            data-reactions="{{ article.reaction_count|default:0 }}"
+            data-shares="{{ article.share_count|default:0 }}"
         ></span>
 
     {% endfor %}
@@ -386,9 +337,6 @@
     margin-bottom: 16px;
 }
 
-.adviser-react-profile-strip {
-    margin-bottom: 24px;
-}
 
 .analytics-timezone-badge {
     flex-shrink: 0;

@@ -214,6 +214,25 @@
                     name="cover_image"
                     accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                 >
+
+            <div
+                class="staff-file-selection-tools"
+                data-file-clear-tools
+                hidden
+            >
+                <span
+                    class="staff-file-selection-summary"
+                    data-file-selection-summary
+                ></span>
+
+                <button
+                    type="button"
+                    class="staff-file-clear-button"
+                    data-clear-file-input="digital-cover"
+                >
+                    Clear selected file
+                </button>
+            </div>
             </div>
 
             <div class="digital-field">
@@ -225,6 +244,25 @@
                     accept=".pdf,application/pdf"
                     required
                 >
+
+            <div
+                class="staff-file-selection-tools"
+                data-file-clear-tools
+                hidden
+            >
+                <span
+                    class="staff-file-selection-summary"
+                    data-file-selection-summary
+                ></span>
+
+                <button
+                    type="button"
+                    class="staff-file-clear-button"
+                    data-clear-file-input="digital-pdf"
+                >
+                    Clear selected file
+                </button>
+            </div>
             </div>
 
             <div class="digital-field">
@@ -415,6 +453,83 @@
     </section>
 
 </div>
+
+<script>
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+        document.querySelectorAll(
+            "[data-clear-file-input]"
+        ).forEach(
+            function (button) {
+                const input =
+                    document.getElementById(
+                        button.dataset.clearFileInput
+                    );
+
+                const tools =
+                    button.closest(
+                        "[data-file-clear-tools]"
+                    );
+
+                if (!input || !tools) {
+                    return;
+                }
+
+                const summary =
+                    tools.querySelector(
+                        "[data-file-selection-summary]"
+                    );
+
+                function sync() {
+                    const files = Array.from(
+                        input.files || []
+                    );
+
+                    tools.hidden =
+                        files.length === 0;
+
+                    if (!summary) {
+                        return;
+                    }
+
+                    if (files.length === 0) {
+                        summary.textContent = "";
+                    } else if (files.length === 1) {
+                        summary.textContent =
+                            files[0].name;
+                    } else {
+                        summary.textContent =
+                            `${files.length} files selected`;
+                    }
+                }
+
+                input.addEventListener(
+                    "change",
+                    sync
+                );
+
+                button.addEventListener(
+                    "click",
+                    function () {
+                        input.value = "";
+                        input.dispatchEvent(
+                            new Event(
+                                "change",
+                                { bubbles: true }
+                            )
+                        );
+                        sync();
+                        input.focus();
+                    }
+                );
+
+                sync();
+            }
+        );
+    }
+);
+</script>
 
 {% include "publications/_preserve_post_form.html" %}
 

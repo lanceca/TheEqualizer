@@ -160,59 +160,8 @@ def dashboard_redirect(request):
         )
 
     elif role == User.Role.ADVISER:
-
-        overview_context = {
-            "overview_published_articles": (
-                Article.objects
-                .filter(
-                    draft_type=Article.DraftType.NORMAL,
-                    is_published=True,
-                    is_archived=False,
-                )
-                .count()
-            ),
-            "overview_pending_submissions": (
-                Submission.objects
-                .filter(
-                    status=Submission.Status.PENDING
-                )
-                .count()
-            ),
-            "overview_pending_edit_requests": (
-                EditRequest.objects
-                .filter(
-                    status=EditRequest.Status.PENDING
-                )
-                .count()
-            ),
-            "overview_active_content_reports": (
-                ContentReport.objects
-                .filter(
-                    status__in=[
-                        ContentReport.Status.OPEN,
-                        ContentReport.Status.REVISION_REQUIRED,
-                    ]
-                )
-                .count()
-            ),
-            "overview_active_staff": (
-                User.objects
-                .filter(
-                    is_active=True,
-                    role__in=[
-                        User.Role.EIC,
-                        User.Role.EDITOR,
-                        User.Role.STAFF,
-                    ],
-                )
-                .count()
-            ),
-        }
-
-        return render(
-            request,
-            "accounts/dashboards/adviser_overview.html",
-            overview_context,
+        return redirect(
+            "adviser_overview"
         )
 
     elif role == User.Role.EIC:
@@ -1072,10 +1021,20 @@ def get_adviser_analytics_data(request):
         )
     )
 
+    # Top Performing Articles is intentionally ranked by the
+    # authoritative lifetime counters stored on Article. This prevents
+    # older or partially backfilled daily-analytics rows from placing a
+    # lower-viewed article above a genuinely higher-viewed article.
     top_viewed_articles = (
-        period_article_queryset
+        published_queryset
+        .select_related(
+            "category",
+            "author",
+        )
         .order_by(
-            "-period_views",
+            "-view_count",
+            "-reaction_count",
+            "-share_count",
             "-published_at",
         )[:5]
     )
@@ -1377,6 +1336,64 @@ def get_adviser_analytics_data(request):
             editor_chart_data
         ),
     }
+
+
+@role_required(User.Role.ADVISER)
+def adviser_overview(request):
+
+    context = {
+        "overview_published_articles": (
+            Article.objects
+            .filter(
+                draft_type=Article.DraftType.NORMAL,
+                is_published=True,
+                is_archived=False,
+            )
+            .count()
+        ),
+        "overview_pending_submissions": (
+            Submission.objects
+            .filter(
+                status=Submission.Status.PENDING
+            )
+            .count()
+        ),
+        "overview_pending_edit_requests": (
+            EditRequest.objects
+            .filter(
+                status=EditRequest.Status.PENDING
+            )
+            .count()
+        ),
+        "overview_active_content_reports": (
+            ContentReport.objects
+            .filter(
+                status__in=[
+                    ContentReport.Status.OPEN,
+                    ContentReport.Status.REVISION_REQUIRED,
+                ]
+            )
+            .count()
+        ),
+        "overview_active_staff": (
+            User.objects
+            .filter(
+                is_active=True,
+                role__in=[
+                    User.Role.EIC,
+                    User.Role.EDITOR,
+                    User.Role.STAFF,
+                ],
+            )
+            .count()
+        ),
+    }
+
+    return render(
+        request,
+        "accounts/dashboards/adviser_overview.html",
+        context,
+    )
 
 
 @role_required(User.Role.ADVISER)

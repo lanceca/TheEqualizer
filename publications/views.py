@@ -2465,30 +2465,34 @@ def review_submission(
     User.Role.EDITOR
 )
 def my_submissions(request):
-    selected_scope = (
+    selected_status = (
         request.GET.get(
-            "scope",
+            "status",
             "ALL",
         )
         .strip()
         .upper()
     )
 
-    if selected_scope not in {
+    valid_statuses = {
         "ALL",
-        "CURRENT",
-        "HISTORY",
-    }:
-        selected_scope = "ALL"
+        Submission.Status.PENDING,
+        Submission.Status.REVISION,
+        Submission.Status.APPROVED,
+        Submission.Status.REJECTED,
+    }
+
+    if selected_status not in valid_statuses:
+        selected_status = "ALL"
 
     search_query = request.GET.get(
         "q",
         "",
     ).strip()
 
-    # Once a submission is resubmitted, the complete revision chain
-    # belongs exclusively to Resubmitted Submissions. My Submissions
-    # contains only non-resubmitted root submissions.
+    # My Submissions contains only non-resubmitted root submissions.
+    # Once a root submission receives a resubmission child, the revision
+    # chain moves exclusively to Resubmitted Submissions.
     submissions = (
         Submission.objects
         .filter(
@@ -2516,28 +2520,15 @@ def my_submissions(request):
             "article__contributors__user",
             "snapshot_attachments",
             "snapshot_video_attachments",
-            "resubmissions",
         )
     )
 
-    if selected_scope == "CURRENT":
+    if selected_status != "ALL":
         submissions = submissions.filter(
-            status__in=[
-                Submission.Status.PENDING,
-                Submission.Status.REVISION,
-            ]
-        )
-
-    elif selected_scope == "HISTORY":
-        submissions = submissions.filter(
-            status__in=[
-                Submission.Status.APPROVED,
-                Submission.Status.REJECTED,
-            ]
+            status=selected_status
         )
 
     if search_query:
-
         submissions = submissions.filter(
             Q(
                 snapshot_title__icontains=search_query
@@ -2593,10 +2584,7 @@ def my_submissions(request):
         "publications/my_submissions.html",
         {
             "submissions": submissions,
-            "selected_scope": selected_scope,
-            # Compatibility with the current template while the
-            # staff shell upgrades the visible tabs to scope tabs.
-            "selected_status": "ALL",
+            "selected_status": selected_status,
             "search_query": search_query,
         },
     )
@@ -3120,7 +3108,7 @@ def revise_submission(
         )
 
         return redirect(
-            "my_submissions"
+            "resubmitted_submissions"
         )
 
     return render(
@@ -3134,6 +3122,22 @@ def revise_submission(
     User.Role.EDITOR
 )
 def resubmitted_submissions(request):
+    selected_scope = (
+        request.GET.get(
+            "scope",
+            "ALL",
+        )
+        .strip()
+        .upper()
+    )
+
+    if selected_scope not in {
+        "ALL",
+        "CURRENT",
+        "HISTORY",
+    }:
+        selected_scope = "ALL"
+
     search_query = request.GET.get(
         "q",
         "",
@@ -3160,8 +3164,34 @@ def resubmitted_submissions(request):
             "snapshot_attachments",
             "snapshot_video_attachments",
             "resubmission_of__snapshot_attachments",
+            "resubmissions",
         )
     )
+
+    if selected_scope == "CURRENT":
+        # Only the latest unresolved record in each resubmission chain.
+        submissions = submissions.filter(
+            resubmissions__isnull=True,
+            status__in=[
+                Submission.Status.PENDING,
+                Submission.Status.REVISION,
+            ],
+        )
+
+    elif selected_scope == "HISTORY":
+        # Completed records plus older revision records superseded by
+        # a newer resubmission belong to History.
+        submissions = submissions.filter(
+            Q(
+                status__in=[
+                    Submission.Status.APPROVED,
+                    Submission.Status.REJECTED,
+                ]
+            )
+            | Q(
+                resubmissions__isnull=False
+            )
+        )
 
     if search_query:
         submissions = submissions.filter(
@@ -3213,6 +3243,7 @@ def resubmitted_submissions(request):
         "publications/resubmitted_submissions.html",
         {
             "submissions": submissions,
+            "selected_scope": selected_scope,
             "search_query": search_query,
         },
     )

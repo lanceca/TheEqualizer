@@ -410,6 +410,25 @@
                 accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
             >
 
+            <div
+                class="staff-file-selection-tools"
+                data-file-clear-tools
+                hidden
+            >
+                <span
+                    class="staff-file-selection-summary"
+                    data-file-selection-summary
+                ></span>
+
+                <button
+                    type="button"
+                    class="staff-file-clear-button"
+                    data-clear-file-input="featured_image"
+                >
+                    Clear selected file
+                </button>
+            </div>
+
             <p class="form-help">
                 This image will be used as the main image for the article.
             </p>
@@ -525,6 +544,25 @@
                 multiple
             >
 
+            <div
+                class="staff-file-selection-tools"
+                data-file-clear-tools
+                hidden
+            >
+                <span
+                    class="staff-file-selection-summary"
+                    data-file-selection-summary
+                ></span>
+
+                <button
+                    type="button"
+                    class="staff-file-clear-button"
+                    data-clear-file-input="attachments"
+                >
+                    Clear selected files
+                </button>
+            </div>
+
             <p class="form-help">
                 You may select multiple additional images, up to 15 per article.
             </p>
@@ -550,6 +588,25 @@
                 multiple
                 disabled
             >
+
+            <div
+                class="staff-file-selection-tools"
+                data-file-clear-tools
+                hidden
+            >
+                <span
+                    class="staff-file-selection-summary"
+                    data-file-selection-summary
+                ></span>
+
+                <button
+                    type="button"
+                    class="staff-file-clear-button"
+                    data-clear-file-input="video_attachments"
+                >
+                    Clear selected files
+                </button>
+            </div>
 
             <p class="form-help">
                 Videos category only. Up to 5 MP4, MOV, WEBM, or M4V files.
@@ -763,154 +820,7 @@
 </style>
 
 
-<script>
 
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
-
-        const contributorList =
-            document.getElementById(
-                "contributor-list"
-            );
-
-        const addContributorButton =
-            document.getElementById(
-                "add-contributor-button"
-            );
-
-        const contributorTemplate =
-            document.getElementById(
-                "contributor-row-template"
-            );
-
-
-        if (
-            !contributorList
-            || !addContributorButton
-            || !contributorTemplate
-        ) {
-            return;
-        }
-
-
-        function updateRemoveButtons() {
-
-            const rows =
-                contributorList.querySelectorAll(
-                    ".contributor-row"
-                );
-
-
-            rows.forEach(
-                function (row) {
-
-                    const removeButton =
-                        row.querySelector(
-                            ".contributor-remove-button"
-                        );
-
-
-                    if (!removeButton) {
-                        return;
-                    }
-
-
-                    removeButton.disabled =
-                        rows.length === 1;
-
-                }
-            );
-
-        }
-
-
-        addContributorButton.addEventListener(
-            "click",
-            function () {
-
-                const newRow =
-                    contributorTemplate.content
-                    .firstElementChild
-                    .cloneNode(true);
-
-
-                contributorList.appendChild(
-                    newRow
-                );
-
-
-                updateRemoveButtons();
-
-            }
-        );
-
-
-        contributorList.addEventListener(
-            "click",
-            function (event) {
-
-                const removeButton =
-                    event.target.closest(
-                        ".contributor-remove-button"
-                    );
-
-
-                if (!removeButton) {
-                    return;
-                }
-
-
-                const rows =
-                    contributorList.querySelectorAll(
-                        ".contributor-row"
-                    );
-
-
-                if (rows.length <= 1) {
-
-                    const row =
-                        removeButton.closest(
-                            ".contributor-row"
-                        );
-
-                    const selects =
-                        row.querySelectorAll(
-                            "select"
-                        );
-
-
-                    selects.forEach(
-                        function (select) {
-                            select.value = "";
-                        }
-                    );
-
-
-                    return;
-
-                }
-
-
-                removeButton
-                    .closest(
-                        ".contributor-row"
-                    )
-                    .remove();
-
-
-                updateRemoveButtons();
-
-            }
-        );
-
-
-        updateRemoveButtons();
-
-    }
-);
-
-</script>
 
 
 <script>
@@ -1057,17 +967,19 @@ document.addEventListener(
 );
 </script>
 
+
+
+
 <script>
 document.addEventListener(
     "DOMContentLoaded",
     function () {
-
         const contributorList =
             document.getElementById(
                 "contributor-list"
             );
 
-        const originalAddButton =
+        const addContributorButton =
             document.getElementById(
                 "add-contributor-button"
             );
@@ -1079,26 +991,21 @@ document.addEventListener(
 
         if (
             !contributorList
-            || !originalAddButton
+            || !addContributorButton
             || !contributorTemplate
         ) {
             return;
         }
 
-        /*
-         * This script runs after the form's legacy scripts.
-         * Cloning the Add button strips older click listeners so one
-         * click always creates exactly one contributor row.
-         */
-        const addContributorButton =
-            originalAddButton.cloneNode(true);
+        function rows() {
+            return Array.from(
+                contributorList.querySelectorAll(
+                    ".contributor-row"
+                )
+            );
+        }
 
-        originalAddButton.replaceWith(
-            addContributorButton
-        );
-
-        function clearContributorRow(row) {
-
+        function clearRow(row) {
             if (!row) {
                 return;
             }
@@ -1108,54 +1015,42 @@ document.addEventListener(
             ).forEach(
                 function (select) {
                     select.value = "";
-
                     select.dispatchEvent(
                         new Event(
                             "change",
-                            {
-                                bubbles: true,
-                            }
+                            { bubbles: true }
                         )
                     );
                 }
             );
         }
 
-        function updateContributorButtons() {
+        function syncButtons() {
+            const currentRows = rows();
+            const onlyOne =
+                currentRows.length === 1;
 
-            const rows = Array.from(
-                contributorList.querySelectorAll(
-                    ".contributor-row"
-                )
-            );
-
-            rows.forEach(
+            currentRows.forEach(
                 function (row) {
-
-                    const removeButton =
+                    const button =
                         row.querySelector(
                             ".contributor-remove-button"
                         );
 
-                    if (!removeButton) {
+                    if (!button) {
                         return;
                     }
 
-                    removeButton.disabled = false;
-
-                    const isOnlyRow =
-                        rows.length === 1;
-
-                    removeButton.textContent =
-                        isOnlyRow
+                    button.disabled = false;
+                    button.textContent =
+                        onlyOne
                             ? "Clear Selection"
                             : "Remove";
-
-                    removeButton.setAttribute(
+                    button.setAttribute(
                         "aria-label",
-                        isOnlyRow
+                        onlyOne
                             ? "Clear contributor selection"
-                            : "Remove contributor row"
+                            : "Remove contributor"
                     );
                 }
             );
@@ -1164,22 +1059,28 @@ document.addEventListener(
         addContributorButton.addEventListener(
             "click",
             function () {
-
-                const newRow =
+                const fragment =
                     contributorTemplate.content
-                    .firstElementChild
                     .cloneNode(true);
 
                 contributorList.appendChild(
-                    newRow
+                    fragment
                 );
 
-                updateContributorButtons();
+                syncButtons();
+
+                const currentRows = rows();
+                const latestRow =
+                    currentRows[
+                        currentRows.length - 1
+                    ];
 
                 const firstSelect =
-                    newRow.querySelector(
+                    latestRow
+                    ? latestRow.querySelector(
                         "select"
-                    );
+                    )
+                    : null;
 
                 if (firstSelect) {
                     firstSelect.focus();
@@ -1187,54 +1088,117 @@ document.addEventListener(
             }
         );
 
-        /*
-         * Capture prevents a legacy delegated Remove handler from also
-         * processing the same click on forms that still contain it.
-         */
         contributorList.addEventListener(
             "click",
             function (event) {
-
-                const removeButton =
+                const button =
                     event.target.closest(
                         ".contributor-remove-button"
                     );
 
-                if (!removeButton) {
+                if (!button) {
                     return;
                 }
 
                 event.preventDefault();
-                event.stopImmediatePropagation();
 
-                const rows =
-                    contributorList.querySelectorAll(
-                        ".contributor-row"
-                    );
-
+                const currentRows = rows();
                 const row =
-                    removeButton.closest(
+                    button.closest(
                         ".contributor-row"
                     );
 
-                if (rows.length <= 1) {
-                    clearContributorRow(
-                        row
-                    );
+                if (currentRows.length <= 1) {
+                    clearRow(row);
                 } else if (row) {
                     row.remove();
                 }
 
-                updateContributorButtons();
-            },
-            true
+                syncButtons();
+            }
         );
 
-        updateContributorButtons();
+        syncButtons();
     }
 );
 </script>
 
+<script>
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+        document.querySelectorAll(
+            "[data-clear-file-input]"
+        ).forEach(
+            function (button) {
+                const input =
+                    document.getElementById(
+                        button.dataset.clearFileInput
+                    );
+
+                const tools =
+                    button.closest(
+                        "[data-file-clear-tools]"
+                    );
+
+                if (!input || !tools) {
+                    return;
+                }
+
+                const summary =
+                    tools.querySelector(
+                        "[data-file-selection-summary]"
+                    );
+
+                function sync() {
+                    const files = Array.from(
+                        input.files || []
+                    );
+
+                    tools.hidden =
+                        files.length === 0;
+
+                    if (!summary) {
+                        return;
+                    }
+
+                    if (files.length === 0) {
+                        summary.textContent = "";
+                    } else if (files.length === 1) {
+                        summary.textContent =
+                            files[0].name;
+                    } else {
+                        summary.textContent =
+                            `${files.length} files selected`;
+                    }
+                }
+
+                input.addEventListener(
+                    "change",
+                    sync
+                );
+
+                button.addEventListener(
+                    "click",
+                    function () {
+                        input.value = "";
+                        input.dispatchEvent(
+                            new Event(
+                                "change",
+                                { bubbles: true }
+                            )
+                        );
+                        sync();
+                        input.focus();
+                    }
+                );
+
+                sync();
+            }
+        );
+    }
+);
+</script>
 
 {% include "publications/_preserve_post_form.html" %}
 

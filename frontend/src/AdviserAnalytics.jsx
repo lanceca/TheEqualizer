@@ -73,26 +73,35 @@ function readTopArticles() {
     container.querySelectorAll(
       '[data-top-article]',
     ),
-  ).map(
-    (element) => ({
-      title:
-        element.dataset.title || '',
-      category:
-        element.dataset.category || '',
-      views:
-        numberValue(
-          element.dataset.views,
-        ),
-      reactions:
-        numberValue(
-          element.dataset.reactions,
-        ),
-      shares:
-        numberValue(
-          element.dataset.shares,
-        ),
-    }),
   )
+    .map(
+      (element) => ({
+        title:
+          element.dataset.title || '',
+        category:
+          element.dataset.category || '',
+        views:
+          numberValue(
+            element.dataset.views,
+          ),
+        reactions:
+          numberValue(
+            element.dataset.reactions,
+          ),
+        shares:
+          numberValue(
+            element.dataset.shares,
+          ),
+      }),
+    )
+    .sort(
+      (left, right) => (
+        right.views - left.views
+        || right.reactions - left.reactions
+        || right.shares - left.shares
+      ),
+    )
+    .slice(0, 5)
 }
 
 function MetricCard({
@@ -1102,7 +1111,7 @@ function AdviserDashboard({
           <SectionHeading
             kicker="Top Content"
             title="Top Performing Articles"
-            copy={`Ranked by views during ${periodLabel}.`}
+            copy="Ranked by total article views, with reactions and shares shown for context."
           />
 
           <TopArticles

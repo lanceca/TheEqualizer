@@ -31,6 +31,85 @@
     </div>
 
 
+    <div class="submission-status-tabs">
+
+        <a
+            href="{% url 'resubmitted_submissions' %}?scope=ALL{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
+            class="{% if selected_scope == 'ALL' %}is-active{% endif %}"
+        >
+            All
+        </a>
+
+        <a
+            href="{% url 'resubmitted_submissions' %}?scope=CURRENT{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
+            class="{% if selected_scope == 'CURRENT' %}is-active{% endif %}"
+        >
+            Current
+        </a>
+
+        <a
+            href="{% url 'resubmitted_submissions' %}?scope=HISTORY{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
+            class="{% if selected_scope == 'HISTORY' %}is-active{% endif %}"
+        >
+            History
+        </a>
+
+    </div>
+
+
+    <div class="editorial-toolbar">
+
+        <form
+            method="GET"
+            action="{% url 'resubmitted_submissions' %}"
+            class="editorial-search-form"
+        >
+
+            <input
+                type="hidden"
+                name="scope"
+                value="{{ selected_scope }}"
+            >
+
+            <div class="editorial-search-field">
+
+                <label for="resubmission-search">
+                    Search Resubmissions
+                </label>
+
+                <input
+                    type="text"
+                    id="resubmission-search"
+                    name="q"
+                    value="{{ search_query }}"
+                    placeholder="Title, category, content, or EIC notes"
+                >
+
+            </div>
+
+            <button
+                type="submit"
+                class="secondary-button"
+            >
+                Search
+            </button>
+
+            {% if search_query %}
+
+                <a
+                    href="{% url 'resubmitted_submissions' %}?scope={{ selected_scope }}"
+                    class="text-action-link"
+                >
+                    Clear
+                </a>
+
+            {% endif %}
+
+        </form>
+
+    </div>
+
+
     {% if submissions %}
 
         <div class="editorial-card-list">
@@ -739,10 +818,29 @@
     {% else %}
 
         <div class="editorial-empty-state">
-            <strong>You do not have any resubmitted submissions yet.</strong>
-            <p>
-                Articles you revise and resubmit after EIC feedback will appear here.
-            </p>
+
+            {% if search_query %}
+                <strong>No resubmitted submissions matched your search.</strong>
+                <p>
+                    Try a different search term or clear the search field.
+                </p>
+            {% elif selected_scope == "CURRENT" %}
+                <strong>You do not have any current resubmissions.</strong>
+                <p>
+                    Pending or revision-required resubmissions will appear here.
+                </p>
+            {% elif selected_scope == "HISTORY" %}
+                <strong>You do not have any resubmission history yet.</strong>
+                <p>
+                    Approved, rejected, or superseded revision records will appear here.
+                </p>
+            {% else %}
+                <strong>You do not have any resubmitted submissions yet.</strong>
+                <p>
+                    Articles you revise and resubmit after EIC feedback will appear here.
+                </p>
+            {% endif %}
+
         </div>
 
     {% endif %}
