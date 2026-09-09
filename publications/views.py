@@ -1,5 +1,7 @@
 from functools import wraps
 import logging
+import sys
+import traceback
 
 from django.conf import settings
 from django.contrib import messages
@@ -7592,6 +7594,73 @@ def create_digital_publication(
             request,
             get_validation_error_message(
                 error
+            ),
+        )
+
+        return render(
+            request,
+            "publications/digital_publication_management.html",
+            digital_publication_management_context(),
+        )
+
+    except Exception:
+
+        print(
+            (
+                "\n[THE EQUALIZER DIGITAL PUBLICATION ERROR] "
+                f"{request.method} {request.path}"
+            ),
+            file=sys.stderr,
+            flush=True,
+        )
+
+        print(
+            (
+                "User ID: "
+                f"{getattr(request.user, 'id', 'unknown')}"
+            ),
+            file=sys.stderr,
+            flush=True,
+        )
+
+        uploaded_pdf = request.FILES.get(
+            "pdf_file"
+        )
+
+        uploaded_cover = request.FILES.get(
+            "cover_image"
+        )
+
+        print(
+            (
+                "PDF: "
+                f"{getattr(uploaded_pdf, 'name', 'none')} "
+                f"({getattr(uploaded_pdf, 'size', 'unknown')} bytes)"
+            ),
+            file=sys.stderr,
+            flush=True,
+        )
+
+        print(
+            (
+                "Cover: "
+                f"{getattr(uploaded_cover, 'name', 'none')} "
+                f"({getattr(uploaded_cover, 'size', 'unknown')} bytes)"
+            ),
+            file=sys.stderr,
+            flush=True,
+        )
+
+        traceback.print_exc(
+            file=sys.stderr
+        )
+
+        messages.error(
+            request,
+            (
+                "The Digital Publication could not be uploaded. "
+                "No further action is needed right now; "
+                "the server error has been logged for diagnosis."
             ),
         )
 
