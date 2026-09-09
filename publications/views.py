@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -2402,22 +2402,82 @@ def review_submission(
                 ]
             )
 
-            notify_user(
-                submission.submitted_by,
-                Notification.Type.SUBMISSION,
-                (
-                    f'Your submission "{article.title}" '
-                    f'was rejected by the EIC.'
-                ),
-                reverse(
-                    "my_submissions"
-                ),
-            )
+            if (
+                article.draft_type
+                == Article.DraftType.EDIT_REQUEST
+            ):
+                edit_request = (
+                    EditRequest.objects
+                    .select_for_update()
+                    .filter(
+                        draft_article=article,
+                        status=EditRequest.Status.APPROVED,
+                    )
+                    .first()
+                )
+
+                if edit_request is not None:
+                    edit_request.status = (
+                        EditRequest.Status.REJECTED
+                    )
+
+                    edit_request.save(
+                        update_fields=[
+                            "status",
+                        ]
+                    )
+
+                article.is_archived = True
+                article.archived_at = timezone.now()
+                article.is_published = False
+
+                article.save(
+                    update_fields=[
+                        "is_archived",
+                        "archived_at",
+                        "is_published",
+                        "updated_at",
+                    ]
+                )
+
+                if article.source_article:
+                    rejected_title = (
+                        article.source_article.title
+                    )
+                else:
+                    rejected_title = article.title
+
+                notify_user(
+                    submission.submitted_by,
+                    Notification.Type.REVISION,
+                    (
+                        f'Your revised version of '
+                        f'"{rejected_title}" was '
+                        f'rejected by the EIC.'
+                    ),
+                    reverse(
+                        "my_edit_requests"
+                    ),
+                )
+
+            else:
+                notify_user(
+                    submission.submitted_by,
+                    Notification.Type.SUBMISSION,
+                    (
+                        f'Your submission "{article.title}" '
+                        f'was rejected by the EIC.'
+                    ),
+                    reverse(
+                        "my_submissions"
+                    ),
+                )
 
             messages.warning(
                 request,
                 f'"{article.title}" was rejected.',
             )
+
 
         elif action == "revision":
 
@@ -5184,6 +5244,22 @@ def request_article_edit(
     User.Role.EDITOR
 )
 def my_edit_requests(request):
+    selected_scope = (
+        request.GET.get(
+            "scope",
+            "ALL",
+        )
+        .strip()
+        .upper()
+    )
+
+    if selected_scope not in {
+        "ALL",
+        "CURRENT",
+        "HISTORY",
+    }:
+        selected_scope = "ALL"
+
     search_query = request.GET.get(
         "q",
         "",
@@ -5199,13 +5275,34 @@ def my_edit_requests(request):
             "article__category",
             "draft_article",
         )
-        .order_by(
-            "-created_at"
+        .annotate(
+            draft_has_submission=Exists(
+                Submission.objects.filter(
+                    article_id=OuterRef(
+                        "draft_article_id"
+                    )
+                )
+            )
         )
     )
 
-    if search_query:
+    if selected_scope == "CURRENT":
+        requests = requests.filter(
+            status__in=[
+                EditRequest.Status.PENDING,
+                EditRequest.Status.APPROVED,
+            ]
+        )
 
+    elif selected_scope == "HISTORY":
+        requests = requests.filter(
+            status__in=[
+                EditRequest.Status.REJECTED,
+                EditRequest.Status.COMPLETED,
+            ]
+        )
+
+    if search_query:
         requests = requests.filter(
             Q(
                 article__title__icontains=search_query
@@ -5222,13 +5319,21 @@ def my_edit_requests(request):
             | Q(
                 reason__icontains=search_query
             )
+            | Q(
+                reviewer_notes__icontains=search_query
+            )
         )
+
+    requests = requests.order_by(
+        "-created_at"
+    )
 
     return render(
         request,
         "publications/my_edit_requests.html",
         {
             "edit_requests": requests,
+            "selected_scope": selected_scope,
             "search_query": search_query,
         },
     )
@@ -5795,6 +5900,22 @@ def request_article_deletion(
     User.Role.EDITOR
 )
 def my_deletion_requests(request):
+    selected_scope = (
+        request.GET.get(
+            "scope",
+            "ALL",
+        )
+        .strip()
+        .upper()
+    )
+
+    if selected_scope not in {
+        "ALL",
+        "CURRENT",
+        "HISTORY",
+    }:
+        selected_scope = "ALL"
+
     search_query = request.GET.get(
         "q",
         "",
@@ -5811,8 +5932,20 @@ def my_deletion_requests(request):
         )
     )
 
-    if search_query:
+    if selected_scope == "CURRENT":
+        requests = requests.filter(
+            status=DeletionRequest.Status.PENDING
+        )
 
+    elif selected_scope == "HISTORY":
+        requests = requests.filter(
+            status__in=[
+                DeletionRequest.Status.APPROVED,
+                DeletionRequest.Status.REJECTED,
+            ]
+        )
+
+    if search_query:
         requests = requests.filter(
             Q(
                 article__title__icontains=search_query
@@ -5843,6 +5976,7 @@ def my_deletion_requests(request):
         "publications/my_deletion_requests.html",
         {
             "deletion_requests": requests,
+            "selected_scope": selected_scope,
             "search_query": search_query,
         },
     )

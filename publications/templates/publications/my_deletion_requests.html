@@ -31,6 +31,32 @@
     </div>
 
 
+    <div class="submission-status-tabs">
+
+        <a
+            href="{% url 'my_deletion_requests' %}?scope=ALL{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
+            class="{% if selected_scope == 'ALL' %}is-active{% endif %}"
+        >
+            All
+        </a>
+
+        <a
+            href="{% url 'my_deletion_requests' %}?scope=CURRENT{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
+            class="{% if selected_scope == 'CURRENT' %}is-active{% endif %}"
+        >
+            Current
+        </a>
+
+        <a
+            href="{% url 'my_deletion_requests' %}?scope=HISTORY{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
+            class="{% if selected_scope == 'HISTORY' %}is-active{% endif %}"
+        >
+            History
+        </a>
+
+    </div>
+
+
     <div class="editorial-toolbar">
 
         <form
@@ -38,6 +64,12 @@
             action="{% url 'my_deletion_requests' %}"
             class="editorial-search-form"
         >
+
+            <input
+                type="hidden"
+                name="scope"
+                value="{{ selected_scope }}"
+            >
 
             <div class="editorial-search-field">
 
@@ -65,7 +97,7 @@
             {% if search_query %}
 
                 <a
-                    href="{% url 'my_deletion_requests' %}"
+                    href="{% url 'my_deletion_requests' %}?scope={{ selected_scope }}"
                     class="text-action-link"
                 >
                     Clear
@@ -474,11 +506,17 @@
         <div class="editorial-empty-state">
 
             <strong>
+
                 {% if search_query %}
-                    No deletion requests matched your search.
+                    No deletion requests matched your search in this view.
+                {% elif selected_scope == "CURRENT" %}
+                    You currently have no pending deletion requests.
+                {% elif selected_scope == "HISTORY" %}
+                    You do not have any deletion request history yet.
                 {% else %}
                     You have not submitted any deletion requests yet.
                 {% endif %}
+
             </strong>
 
         </div>

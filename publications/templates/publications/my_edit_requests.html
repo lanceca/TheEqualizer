@@ -31,6 +31,32 @@
     </div>
 
 
+    <div class="submission-status-tabs">
+
+        <a
+            href="{% url 'my_edit_requests' %}?scope=ALL{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
+            class="{% if selected_scope == 'ALL' %}is-active{% endif %}"
+        >
+            All
+        </a>
+
+        <a
+            href="{% url 'my_edit_requests' %}?scope=CURRENT{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
+            class="{% if selected_scope == 'CURRENT' %}is-active{% endif %}"
+        >
+            Current
+        </a>
+
+        <a
+            href="{% url 'my_edit_requests' %}?scope=HISTORY{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
+            class="{% if selected_scope == 'HISTORY' %}is-active{% endif %}"
+        >
+            History
+        </a>
+
+    </div>
+
+
     <div class="editorial-toolbar">
 
         <form
@@ -38,6 +64,12 @@
             action="{% url 'my_edit_requests' %}"
             class="editorial-search-form"
         >
+
+            <input
+                type="hidden"
+                name="scope"
+                value="{{ selected_scope }}"
+            >
 
             <div class="editorial-search-field">
 
@@ -65,7 +97,7 @@
             {% if search_query %}
 
                 <a
-                    href="{% url 'my_edit_requests' %}"
+                    href="{% url 'my_edit_requests' %}?scope={{ selected_scope }}"
                     class="text-action-link"
                 >
                     Clear
@@ -118,14 +150,30 @@
 
                             {% elif edit_request.status == "APPROVED" %}
 
-                                <span class="editorial-status-chip is-approved">
-                                    Approved
-                                </span>
+                                {% if edit_request.draft_has_submission %}
+
+                                    <span class="editorial-status-chip is-pending">
+                                        Revision Submitted
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="editorial-status-chip is-approved">
+                                        Draft Ready
+                                    </span>
+
+                                {% endif %}
 
                             {% elif edit_request.status == "REJECTED" %}
 
                                 <span class="editorial-status-chip is-rejected">
-                                    Rejected
+
+                                    {% if edit_request.draft_article %}
+                                        Revision Rejected
+                                    {% else %}
+                                        Request Rejected
+                                    {% endif %}
+
                                 </span>
 
                             {% else %}
@@ -215,7 +263,7 @@
                         </button>
 
 
-                        {% if edit_request.status == "APPROVED" and edit_request.draft_article %}
+                        {% if edit_request.status == "APPROVED" and edit_request.draft_article and not edit_request.draft_has_submission %}
 
                             <a
                                 href="{% url 'edit_draft' edit_request.draft_article.id %}"
@@ -223,6 +271,12 @@
                             >
                                 Open Edit Draft
                             </a>
+
+                        {% elif edit_request.status == "APPROVED" and edit_request.draft_has_submission %}
+
+                            <span class="editorial-meta-chip is-special">
+                                Waiting for EIC Review
+                            </span>
 
                         {% endif %}
 
@@ -247,11 +301,51 @@
 
                             </div>
 
-                            {% if edit_request.status == "COMPLETED" %}
+
+                            {% if edit_request.status == "PENDING" %}
+
+                                <div class="request-state-message is-pending">
+                                    This edit request is waiting for EIC review.
+                                </div>
+
+                            {% elif edit_request.status == "APPROVED" and edit_request.draft_has_submission %}
+
+                                <div class="request-state-message is-pending">
+                                    Your revision draft has already been submitted
+                                    to the EIC. The draft can no longer be opened
+                                    from Edit Requests while it is in the submission
+                                    workflow. If the EIC requests more changes,
+                                    continue from your Submissions or Resubmitted
+                                    Submissions page.
+                                </div>
+
+                            {% elif edit_request.status == "APPROVED" %}
+
+                                <div class="request-state-message is-success">
+                                    The EIC approved this edit request. Open the
+                                    revision draft above, make your changes, then
+                                    submit it for EIC review.
+                                </div>
+
+                            {% elif edit_request.status == "COMPLETED" %}
 
                                 <div class="request-state-message is-success">
                                     This edit request has been completed and the
                                     published article has been updated.
+                                </div>
+
+                            {% elif edit_request.status == "REJECTED" and edit_request.draft_article %}
+
+                                <div class="request-state-message is-danger">
+                                    The revision submitted under this edit request
+                                    was rejected. The previously published version
+                                    of the article remains unchanged.
+                                </div>
+
+                            {% else %}
+
+                                <div class="request-state-message is-danger">
+                                    This edit request was rejected by the EIC.
                                 </div>
 
                             {% endif %}
@@ -471,11 +565,17 @@
         <div class="editorial-empty-state">
 
             <strong>
+
                 {% if search_query %}
-                    No edit requests matched your search.
+                    No edit requests matched your search in this view.
+                {% elif selected_scope == "CURRENT" %}
+                    You currently have no active edit requests.
+                {% elif selected_scope == "HISTORY" %}
+                    You do not have any edit request history yet.
                 {% else %}
                     You currently have no edit requests.
                 {% endif %}
+
             </strong>
 
         </div>
