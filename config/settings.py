@@ -481,8 +481,32 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = (
     2 * 1024 * 1024
 )
 
+# Keep the application-side PDF limit aligned with the actual
+# Supabase Storage project limit. Supabase Free projects cannot
+# accept a single file larger than 50 MB.
+#
+# If the project is moved to a paid Supabase plan later, increase
+# the Supabase global/bucket file-size limit first, then set
+# DIGITAL_PUBLICATION_PDF_MAX_SIZE_MB in Render to the same value.
+try:
+    DIGITAL_PUBLICATION_PDF_MAX_SIZE_MB = int(
+        os.getenv(
+            "DIGITAL_PUBLICATION_PDF_MAX_SIZE_MB",
+            "50",
+        )
+    )
+except (TypeError, ValueError):
+    DIGITAL_PUBLICATION_PDF_MAX_SIZE_MB = 50
+
+DIGITAL_PUBLICATION_PDF_MAX_SIZE_MB = max(
+    1,
+    DIGITAL_PUBLICATION_PDF_MAX_SIZE_MB,
+)
+
 DIGITAL_PUBLICATION_PDF_MAX_SIZE = (
-    300 * 1024 * 1024
+    DIGITAL_PUBLICATION_PDF_MAX_SIZE_MB
+    * 1024
+    * 1024
 )
 
 
