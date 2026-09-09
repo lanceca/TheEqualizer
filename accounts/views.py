@@ -17,7 +17,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
-from django.db.models import Count, Q, Sum
+from django.db.models import BigIntegerField, Count, Q, Sum, Value
+from django.db.models.functions import Coalesce
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -159,8 +160,59 @@ def dashboard_redirect(request):
         )
 
     elif role == User.Role.ADVISER:
-        return redirect(
-            "adviser_dashboard"
+
+        overview_context = {
+            "overview_published_articles": (
+                Article.objects
+                .filter(
+                    draft_type=Article.DraftType.NORMAL,
+                    is_published=True,
+                    is_archived=False,
+                )
+                .count()
+            ),
+            "overview_pending_submissions": (
+                Submission.objects
+                .filter(
+                    status=Submission.Status.PENDING
+                )
+                .count()
+            ),
+            "overview_pending_edit_requests": (
+                EditRequest.objects
+                .filter(
+                    status=EditRequest.Status.PENDING
+                )
+                .count()
+            ),
+            "overview_active_content_reports": (
+                ContentReport.objects
+                .filter(
+                    status__in=[
+                        ContentReport.Status.OPEN,
+                        ContentReport.Status.REVISION_REQUIRED,
+                    ]
+                )
+                .count()
+            ),
+            "overview_active_staff": (
+                User.objects
+                .filter(
+                    is_active=True,
+                    role__in=[
+                        User.Role.EIC,
+                        User.Role.EDITOR,
+                        User.Role.STAFF,
+                    ],
+                )
+                .count()
+            ),
+        }
+
+        return render(
+            request,
+            "accounts/dashboards/adviser_overview.html",
+            overview_context,
         )
 
     elif role == User.Role.EIC:
@@ -942,23 +994,35 @@ def get_adviser_analytics_data(request):
                 "id",
                 distinct=True,
             ),
-            total_views=Sum(
-                "daily_analytics__views",
-                filter=(
-                    daily_relation_filter
+            total_views=Coalesce(
+                Sum(
+                    "daily_analytics__views",
+                    filter=(
+                        daily_relation_filter
+                    ),
                 ),
+                Value(0),
+                output_field=BigIntegerField(),
             ),
-            total_reactions=Sum(
-                "daily_analytics__reactions",
-                filter=(
-                    daily_relation_filter
+            total_reactions=Coalesce(
+                Sum(
+                    "daily_analytics__reactions",
+                    filter=(
+                        daily_relation_filter
+                    ),
                 ),
+                Value(0),
+                output_field=BigIntegerField(),
             ),
-            total_shares=Sum(
-                "daily_analytics__shares",
-                filter=(
-                    daily_relation_filter
+            total_shares=Coalesce(
+                Sum(
+                    "daily_analytics__shares",
+                    filter=(
+                        daily_relation_filter
+                    ),
                 ),
+                Value(0),
+                output_field=BigIntegerField(),
             ),
         )
         .order_by(
@@ -975,23 +1039,35 @@ def get_adviser_analytics_data(request):
             "author",
         )
         .annotate(
-            period_views=Sum(
-                "daily_analytics__views",
-                filter=(
-                    daily_relation_filter
+            period_views=Coalesce(
+                Sum(
+                    "daily_analytics__views",
+                    filter=(
+                        daily_relation_filter
+                    ),
                 ),
+                Value(0),
+                output_field=BigIntegerField(),
             ),
-            period_reactions=Sum(
-                "daily_analytics__reactions",
-                filter=(
-                    daily_relation_filter
+            period_reactions=Coalesce(
+                Sum(
+                    "daily_analytics__reactions",
+                    filter=(
+                        daily_relation_filter
+                    ),
                 ),
+                Value(0),
+                output_field=BigIntegerField(),
             ),
-            period_shares=Sum(
-                "daily_analytics__shares",
-                filter=(
-                    daily_relation_filter
+            period_shares=Coalesce(
+                Sum(
+                    "daily_analytics__shares",
+                    filter=(
+                        daily_relation_filter
+                    ),
                 ),
+                Value(0),
+                output_field=BigIntegerField(),
             ),
         )
     )

@@ -7,7 +7,7 @@
 
 <link
     rel="stylesheet"
-    href="{% static 'css/equalizer.css' %}?v=20260908-navigation-tags-auth-1"
+    href="{% static 'css/equalizer.css' %}?v=20260909-live-qa-1"
 >
 
 
@@ -251,8 +251,21 @@
                         My Drafts
                     </a>
 
-                    <a href="{% url 'pending_submissions' %}">
-                        Pending Submissions
+                    <a
+                        href="{% url 'pending_submissions' %}"
+                        class="staff-attention-link"
+                    >
+                        <span>Pending Submissions</span>
+
+                        {% if sidebar_pending_submissions_count > 0 %}
+                            <span
+                                class="staff-attention-badge"
+                                title="{{ sidebar_pending_submissions_count }} item(s) require attention"
+                                aria-label="{{ sidebar_pending_submissions_count }} pending submissions require attention"
+                            >
+                                !
+                            </span>
+                        {% endif %}
                     </a>
 
                     <a href="{% url 'published_articles' %}">
@@ -268,16 +281,55 @@
                         Requests
                     </p>
 
-                    <a href="{% url 'eic_edit_requests' %}">
-                        Edit Requests
+                    <a
+                        href="{% url 'eic_edit_requests' %}"
+                        class="staff-attention-link"
+                    >
+                        <span>Edit Requests</span>
+
+                        {% if sidebar_pending_edit_requests_count > 0 %}
+                            <span
+                                class="staff-attention-badge"
+                                title="{{ sidebar_pending_edit_requests_count }} item(s) require attention"
+                                aria-label="{{ sidebar_pending_edit_requests_count }} edit requests require attention"
+                            >
+                                !
+                            </span>
+                        {% endif %}
                     </a>
 
-                    <a href="{% url 'eic_deletion_requests' %}">
-                        Deletion Requests
+                    <a
+                        href="{% url 'eic_deletion_requests' %}"
+                        class="staff-attention-link"
+                    >
+                        <span>Deletion Requests</span>
+
+                        {% if sidebar_pending_deletion_requests_count > 0 %}
+                            <span
+                                class="staff-attention-badge"
+                                title="{{ sidebar_pending_deletion_requests_count }} item(s) require attention"
+                                aria-label="{{ sidebar_pending_deletion_requests_count }} deletion requests require attention"
+                            >
+                                !
+                            </span>
+                        {% endif %}
                     </a>
 
-                    <a href="{% url 'eic_content_reports' %}">
-                        Staff Reports
+                    <a
+                        href="{% url 'eic_content_reports' %}"
+                        class="staff-attention-link"
+                    >
+                        <span>Staff Reports</span>
+
+                        {% if sidebar_active_content_reports_count > 0 %}
+                            <span
+                                class="staff-attention-badge"
+                                title="{{ sidebar_active_content_reports_count }} item(s) require attention"
+                                aria-label="{{ sidebar_active_content_reports_count }} staff reports require attention"
+                            >
+                                !
+                            </span>
+                        {% endif %}
                     </a>
 
                 </div>
@@ -370,12 +422,38 @@
                         My Drafts
                     </a>
 
-                    <a href="{% url 'my_submissions' %}">
-                        My Submissions
+                    <a
+                        href="{% url 'my_submissions' %}"
+                        class="staff-attention-link"
+                    >
+                        <span>My Submissions</span>
+
+                        {% if sidebar_editor_current_submissions_count > 0 %}
+                            <span
+                                class="staff-attention-badge"
+                                title="{{ sidebar_editor_current_submissions_count }} item(s) require attention"
+                                aria-label="{{ sidebar_editor_current_submissions_count }} current submissions require attention"
+                            >
+                                !
+                            </span>
+                        {% endif %}
                     </a>
 
-                    <a href="{% url 'resubmitted_submissions' %}">
-                        Resubmitted Submissions
+                    <a
+                        href="{% url 'resubmitted_submissions' %}"
+                        class="staff-attention-link"
+                    >
+                        <span>Resubmitted Submissions</span>
+
+                        {% if sidebar_editor_resubmissions_count > 0 %}
+                            <span
+                                class="staff-attention-badge"
+                                title="{{ sidebar_editor_resubmissions_count }} item(s) require attention"
+                                aria-label="{{ sidebar_editor_resubmissions_count }} resubmitted submissions require attention"
+                            >
+                                !
+                            </span>
+                        {% endif %}
                     </a>
 
                     <a href="{% url 'published_articles' %}">
@@ -391,12 +469,38 @@
                         Requests
                     </p>
 
-                    <a href="{% url 'my_edit_requests' %}">
-                        Edit Requests
+                    <a
+                        href="{% url 'my_edit_requests' %}"
+                        class="staff-attention-link"
+                    >
+                        <span>Edit Requests</span>
+
+                        {% if sidebar_editor_edit_requests_count > 0 %}
+                            <span
+                                class="staff-attention-badge"
+                                title="{{ sidebar_editor_edit_requests_count }} item(s) require attention"
+                                aria-label="{{ sidebar_editor_edit_requests_count }} edit requests require attention"
+                            >
+                                !
+                            </span>
+                        {% endif %}
                     </a>
 
-                    <a href="{% url 'my_deletion_requests' %}">
-                        Deletion Requests
+                    <a
+                        href="{% url 'my_deletion_requests' %}"
+                        class="staff-attention-link"
+                    >
+                        <span>Deletion Requests</span>
+
+                        {% if sidebar_editor_deletion_requests_count > 0 %}
+                            <span
+                                class="staff-attention-badge"
+                                title="{{ sidebar_editor_deletion_requests_count }} item(s) require attention"
+                                aria-label="{{ sidebar_editor_deletion_requests_count }} deletion requests require attention"
+                            >
+                                !
+                            </span>
+                        {% endif %}
                     </a>
 
                 </div>
@@ -451,8 +555,21 @@
                         Content Reports
                     </a>
 
-                    <a href="{% url 'my_content_reports' %}">
-                        My Reports
+                    <a
+                        href="{% url 'my_content_reports' %}"
+                        class="staff-attention-link"
+                    >
+                        <span>My Reports</span>
+
+                        {% if sidebar_staff_active_reports_count > 0 %}
+                            <span
+                                class="staff-attention-badge"
+                                title="{{ sidebar_staff_active_reports_count }} item(s) require attention"
+                                aria-label="{{ sidebar_staff_active_reports_count }} reports require attention"
+                            >
+                                !
+                            </span>
+                        {% endif %}
                     </a>
 
                 </div>
@@ -1853,6 +1970,229 @@ document.addEventListener(
         }
 
 
+        function hideEqualizerLoading() {
+
+            loadingOverlay.classList.remove(
+                "is-visible"
+            );
+
+            loadingOverlay.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+        }
+
+
+        function getDownloadFilename(
+            response,
+            fallbackFilename
+        ) {
+
+            const contentDisposition =
+                response.headers.get(
+                    "Content-Disposition"
+                )
+                || "";
+
+            const utf8Match =
+                contentDisposition.match(
+                    /filename\*=UTF-8''([^;]+)/i
+                );
+
+            if (
+                utf8Match
+                && utf8Match[1]
+            ) {
+
+                try {
+                    return decodeURIComponent(
+                        utf8Match[1]
+                    );
+                } catch (error) {
+                    return utf8Match[1];
+                }
+
+            }
+
+
+            const filenameMatch =
+                contentDisposition.match(
+                    /filename="?([^";]+)"?/i
+                );
+
+            if (
+                filenameMatch
+                && filenameMatch[1]
+            ) {
+                return filenameMatch[1];
+            }
+
+
+            return fallbackFilename;
+
+        }
+
+
+        async function downloadFileWithLoading(
+            link,
+            title,
+            message,
+            fallbackFilename
+        ) {
+
+            if (
+                link.dataset.downloading
+                === "true"
+            ) {
+                return;
+            }
+
+            link.dataset.downloading =
+                "true";
+
+            link.setAttribute(
+                "aria-disabled",
+                "true"
+            );
+
+            showEqualizerLoading(
+                title,
+                message
+            );
+
+            try {
+
+                const response =
+                    await fetch(
+                        link.href,
+                        {
+                            method: "GET",
+                            credentials: "same-origin",
+                        }
+                    );
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Download request failed."
+                    );
+                }
+
+
+                const blob =
+                    await response.blob();
+
+                const objectUrl =
+                    URL.createObjectURL(
+                        blob
+                    );
+
+                const temporaryLink =
+                    document.createElement(
+                        "a"
+                    );
+
+                temporaryLink.href =
+                    objectUrl;
+
+                temporaryLink.download =
+                    getDownloadFilename(
+                        response,
+                        fallbackFilename
+                    );
+
+                temporaryLink.style.display =
+                    "none";
+
+                document.body.appendChild(
+                    temporaryLink
+                );
+
+                temporaryLink.click();
+                temporaryLink.remove();
+
+
+                window.setTimeout(
+                    function () {
+                        URL.revokeObjectURL(
+                            objectUrl
+                        );
+                    },
+                    1000
+                );
+
+            } catch (error) {
+
+                /*
+                 * Fall back to the browser's normal download
+                 * behavior if fetch/blob downloading fails.
+                 */
+                hideEqualizerLoading();
+
+                window.location.href =
+                    link.href;
+
+                return;
+
+            } finally {
+
+                delete (
+                    link.dataset.downloading
+                );
+
+                link.removeAttribute(
+                    "aria-disabled"
+                );
+
+            }
+
+
+            hideEqualizerLoading();
+
+        }
+
+
+        const adviserAnalyticsDownload =
+            document.querySelector(
+                'a[href*="/dashboard/adviser/report.pdf"]'
+            );
+
+
+        if (adviserAnalyticsDownload) {
+
+            adviserAnalyticsDownload.addEventListener(
+                "click",
+                function (event) {
+
+                    if (
+                        event.button !== 0
+                        || event.ctrlKey
+                        || event.metaKey
+                        || event.shiftKey
+                        || event.altKey
+                    ) {
+                        return;
+                    }
+
+                    event.preventDefault();
+
+                    downloadFileWithLoading(
+                        adviserAnalyticsDownload,
+                        "Preparing Analytics PDF",
+                        (
+                            "Please wait while The Equalizer "
+                            + "generates and downloads your "
+                            + "analytics report."
+                        ),
+                        "equalizer-adviser-analytics.pdf"
+                    );
+
+                }
+            );
+
+        }
+
+
         document.querySelectorAll(
             "form"
         ).forEach(
@@ -1935,14 +2275,7 @@ document.addEventListener(
             "pageshow",
             function () {
 
-                loadingOverlay.classList.remove(
-                    "is-visible"
-                );
-
-                loadingOverlay.setAttribute(
-                    "aria-hidden",
-                    "true"
-                );
+                hideEqualizerLoading();
 
             }
         );
@@ -2924,5 +3257,516 @@ document.addEventListener("DOMContentLoaded", function () {
     );
 });
 </script>
+
+
+<!-- ======================================================
+     LIVE QA UX ENHANCEMENTS
+     ====================================================== -->
+
+<script>
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        // --------------------------------------------------
+        // Adviser Analytics: remove redundant profile strip
+        // --------------------------------------------------
+
+        const adviserProfileStrip =
+            document.querySelector(
+                ".adviser-react-profile-strip"
+            );
+
+        if (adviserProfileStrip) {
+            adviserProfileStrip.remove();
+        }
+
+
+        // --------------------------------------------------
+        // Staff file inputs: clear selected upload(s)
+        // --------------------------------------------------
+
+        document.querySelectorAll(
+            '.staff-content input[type="file"]'
+        ).forEach(
+            function (input) {
+
+                if (
+                    input.dataset
+                    .equalizerFileClearReady
+                    === "true"
+                ) {
+                    return;
+                }
+
+                input.dataset
+                    .equalizerFileClearReady =
+                    "true";
+
+                const tools =
+                    document.createElement(
+                        "div"
+                    );
+
+                tools.className =
+                    "staff-file-selection-tools";
+
+                const fileSummary =
+                    document.createElement(
+                        "span"
+                    );
+
+                fileSummary.className =
+                    "staff-file-selection-summary";
+
+                const clearButton =
+                    document.createElement(
+                        "button"
+                    );
+
+                clearButton.type = "button";
+                clearButton.className =
+                    "staff-file-clear-button";
+
+                clearButton.textContent =
+                    "Clear selected file"
+                    + (input.multiple ? "s" : "");
+
+                tools.appendChild(
+                    fileSummary
+                );
+
+                tools.appendChild(
+                    clearButton
+                );
+
+                input.insertAdjacentElement(
+                    "afterend",
+                    tools
+                );
+
+                function syncFileTools() {
+
+                    const files =
+                        Array.from(
+                            input.files || []
+                        );
+
+                    if (!files.length) {
+                        tools.hidden = true;
+                        fileSummary.textContent =
+                            "";
+                        return;
+                    }
+
+                    tools.hidden = false;
+
+                    if (files.length === 1) {
+                        fileSummary.textContent =
+                            files[0].name;
+                    } else {
+                        fileSummary.textContent =
+                            (
+                                files.length
+                                + " files selected"
+                            );
+                    }
+                }
+
+                input.addEventListener(
+                    "change",
+                    syncFileTools
+                );
+
+                clearButton.addEventListener(
+                    "click",
+                    function () {
+
+                        input.value = "";
+
+                        input.dispatchEvent(
+                            new Event(
+                                "change",
+                                {
+                                    bubbles: true,
+                                }
+                            )
+                        );
+
+                        input.focus();
+                    }
+                );
+
+                syncFileTools();
+            }
+        );
+
+
+        // --------------------------------------------------
+        // My Submissions: All / Current / History scopes
+        // --------------------------------------------------
+
+        const currentPath =
+            window.location.pathname;
+
+        if (
+            currentPath.endsWith(
+                "/publications/submissions/mine/"
+            )
+        ) {
+
+            const params =
+                new URLSearchParams(
+                    window.location.search
+                );
+
+            const selectedScope =
+                (
+                    params.get("scope")
+                    || "ALL"
+                ).toUpperCase();
+
+            const searchQuery =
+                params.get("q")
+                || "";
+
+            const tabs =
+                document.querySelector(
+                    ".submission-status-tabs"
+                );
+
+            if (tabs) {
+
+                tabs.innerHTML = "";
+
+                [
+                    ["ALL", "All"],
+                    ["CURRENT", "Current"],
+                    ["HISTORY", "History"],
+                ].forEach(
+                    function (item) {
+
+                        const link =
+                            document.createElement(
+                                "a"
+                            );
+
+                        const linkParams =
+                            new URLSearchParams();
+
+                        linkParams.set(
+                            "scope",
+                            item[0]
+                        );
+
+                        if (searchQuery) {
+                            linkParams.set(
+                                "q",
+                                searchQuery
+                            );
+                        }
+
+                        link.href =
+                            (
+                                currentPath
+                                + "?"
+                                + linkParams
+                                    .toString()
+                            );
+
+                        link.textContent =
+                            item[1];
+
+                        if (
+                            selectedScope
+                            === item[0]
+                        ) {
+                            link.classList.add(
+                                "is-active"
+                            );
+
+                            link.setAttribute(
+                                "aria-current",
+                                "page"
+                            );
+                        }
+
+                        tabs.appendChild(
+                            link
+                        );
+                    }
+                );
+            }
+
+            const searchForm =
+                document.querySelector(
+                    'form[action*="/submissions/mine/"]'
+                );
+
+            if (searchForm) {
+
+                let scopeInput =
+                    searchForm.querySelector(
+                        'input[name="scope"]'
+                    );
+
+                const oldStatusInput =
+                    searchForm.querySelector(
+                        'input[name="status"]'
+                    );
+
+                if (oldStatusInput) {
+                    oldStatusInput.name =
+                        "scope";
+
+                    scopeInput =
+                        oldStatusInput;
+                }
+
+                if (!scopeInput) {
+                    scopeInput =
+                        document.createElement(
+                            "input"
+                        );
+
+                    scopeInput.type =
+                        "hidden";
+
+                    scopeInput.name =
+                        "scope";
+
+                    searchForm.prepend(
+                        scopeInput
+                    );
+                }
+
+                scopeInput.value =
+                    selectedScope;
+
+                const clearLink =
+                    searchForm.querySelector(
+                        ".text-action-link"
+                    );
+
+                if (clearLink) {
+                    clearLink.href =
+                        (
+                            currentPath
+                            + "?scope="
+                            + encodeURIComponent(
+                                selectedScope
+                            )
+                        );
+                }
+            }
+
+            const emptyCopy =
+                document.querySelector(
+                    ".editorial-empty-state strong"
+                );
+
+            if (
+                emptyCopy
+                && emptyCopy.textContent
+                    .includes(
+                        "status filter"
+                    )
+            ) {
+                emptyCopy.textContent =
+                    (
+                        searchQuery
+                        ? "No submissions matched your search and selected view."
+                        : "No submissions are available in this view."
+                    );
+            }
+        }
+
+
+        // --------------------------------------------------
+        // Resubmitted Submissions: add search toolbar
+        // --------------------------------------------------
+
+        if (
+            currentPath.endsWith(
+                "/publications/submissions/resubmitted/"
+            )
+        ) {
+
+            const page =
+                document.querySelector(
+                    ".editorial-list-page"
+                );
+
+            const header =
+                page
+                ? page.querySelector(
+                    ".editorial-page-header"
+                )
+                : null;
+
+            if (
+                page
+                && header
+                && !page.querySelector(
+                    "[data-resubmission-search-toolbar]"
+                )
+            ) {
+
+                const params =
+                    new URLSearchParams(
+                        window.location.search
+                    );
+
+                const searchQuery =
+                    params.get("q")
+                    || "";
+
+                const toolbar =
+                    document.createElement(
+                        "div"
+                    );
+
+                toolbar.className =
+                    "editorial-toolbar";
+
+                toolbar.setAttribute(
+                    "data-resubmission-search-toolbar",
+                    ""
+                );
+
+                const form =
+                    document.createElement(
+                        "form"
+                    );
+
+                form.method = "GET";
+                form.action =
+                    currentPath;
+
+                form.className =
+                    "editorial-search-form";
+
+                const field =
+                    document.createElement(
+                        "div"
+                    );
+
+                field.className =
+                    "editorial-search-field";
+
+                const label =
+                    document.createElement(
+                        "label"
+                    );
+
+                label.htmlFor =
+                    "resubmission-search";
+
+                label.textContent =
+                    "Search Resubmissions";
+
+                const input =
+                    document.createElement(
+                        "input"
+                    );
+
+                input.type = "text";
+                input.id =
+                    "resubmission-search";
+
+                input.name = "q";
+                input.value =
+                    searchQuery;
+
+                input.placeholder =
+                    (
+                        "Title, category, "
+                        + "content, or EIC notes"
+                    );
+
+                field.appendChild(
+                    label
+                );
+
+                field.appendChild(
+                    input
+                );
+
+                const submit =
+                    document.createElement(
+                        "button"
+                    );
+
+                submit.type = "submit";
+                submit.className =
+                    "secondary-button";
+
+                submit.textContent =
+                    "Search";
+
+                form.appendChild(
+                    field
+                );
+
+                form.appendChild(
+                    submit
+                );
+
+                if (searchQuery) {
+
+                    const clear =
+                        document.createElement(
+                            "a"
+                        );
+
+                    clear.href =
+                        currentPath;
+
+                    clear.className =
+                        "text-action-link";
+
+                    clear.textContent =
+                        "Clear";
+
+                    form.appendChild(
+                        clear
+                    );
+                }
+
+                toolbar.appendChild(
+                    form
+                );
+
+                header.insertAdjacentElement(
+                    "afterend",
+                    toolbar
+                );
+            }
+
+            const emptyState =
+                document.querySelector(
+                    ".editorial-empty-state strong"
+                );
+
+            const searchQuery =
+                new URLSearchParams(
+                    window.location.search
+                ).get("q");
+
+            if (
+                emptyState
+                && searchQuery
+            ) {
+                emptyState.textContent =
+                    (
+                        "No resubmitted submissions "
+                        + "matched your search."
+                    );
+            }
+        }
+    }
+);
+</script>
+
 
 {% endblock %}

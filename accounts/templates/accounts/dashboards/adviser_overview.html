@@ -1,0 +1,244 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+
+<div class="dashboard-header">
+
+    <div>
+
+        <p class="workflow-eyebrow">
+            Adviser Oversight
+        </p>
+
+        <h1>
+            Adviser Dashboard
+        </h1>
+
+        <p class="dashboard-subtitle">
+            A quick overview of the publication's current editorial activity.
+            Open Analytics for detailed reporting and historical performance.
+        </p>
+
+    </div>
+
+    <a
+        href="{% url 'adviser_dashboard' %}"
+        class="primary-button"
+    >
+        Open Analytics
+    </a>
+
+</div>
+
+
+<div class="adviser-overview-grid">
+
+    <article class="adviser-overview-card">
+
+        <span>
+            Published Articles
+        </span>
+
+        <strong>
+            {{ overview_published_articles }}
+        </strong>
+
+        <p>
+            Articles currently visible to readers.
+        </p>
+
+    </article>
+
+
+    <article class="adviser-overview-card">
+
+        <span>
+            Pending Submissions
+        </span>
+
+        <strong>
+            {{ overview_pending_submissions }}
+        </strong>
+
+        <p>
+            Submissions currently waiting for EIC review.
+        </p>
+
+    </article>
+
+
+    <article class="adviser-overview-card">
+
+        <span>
+            Pending Edit Requests
+        </span>
+
+        <strong>
+            {{ overview_pending_edit_requests }}
+        </strong>
+
+        <p>
+            Editor requests currently waiting for a decision.
+        </p>
+
+    </article>
+
+
+    <article class="adviser-overview-card">
+
+        <span>
+            Active Staff Reports
+        </span>
+
+        <strong>
+            {{ overview_active_content_reports }}
+        </strong>
+
+        <p>
+            Open or revision-required content concerns.
+        </p>
+
+    </article>
+
+
+    <article class="adviser-overview-card">
+
+        <span>
+            Active Publication Staff
+        </span>
+
+        <strong>
+            {{ overview_active_staff }}
+        </strong>
+
+        <p>
+            Active EIC, Editor, and Staff accounts.
+        </p>
+
+    </article>
+
+</div>
+
+
+<div class="content-panel adviser-overview-actions">
+
+    <div>
+
+        <p class="workflow-eyebrow">
+            Oversight Tools
+        </p>
+
+        <h2>
+            Continue to detailed monitoring
+        </h2>
+
+        <p class="section-description">
+            Analytics contains reporting-period filters, engagement trends,
+            workflow metrics, content performance, and downloadable reports.
+        </p>
+
+    </div>
+
+
+    <div class="adviser-overview-action-links">
+
+        <a
+            href="{% url 'adviser_dashboard' %}"
+            class="primary-button"
+        >
+            View Analytics
+        </a>
+
+        <a
+            href="{% url 'staff_directory' %}"
+            class="secondary-button"
+        >
+            Staff Directory
+        </a>
+
+    </div>
+
+</div>
+
+
+<style>
+.adviser-overview-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(5, minmax(0, 1fr));
+    gap: 14px;
+    margin: 22px 0;
+}
+
+.adviser-overview-card {
+    min-width: 0;
+    padding: 18px;
+    border: 1px solid var(--eq-border);
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+.adviser-overview-card span {
+    display: block;
+    color: var(--eq-muted);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.adviser-overview-card strong {
+    display: block;
+    margin: 8px 0 5px;
+    color: var(--eq-green-dark);
+    font-size: clamp(28px, 4vw, 42px);
+}
+
+.adviser-overview-card p {
+    margin: 0;
+    color: var(--eq-muted);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.adviser-overview-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 22px;
+}
+
+.adviser-overview-actions h2 {
+    margin: 4px 0 5px;
+}
+
+.adviser-overview-action-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+@media (max-width: 1050px) {
+    .adviser-overview-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .adviser-overview-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .adviser-overview-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .adviser-overview-action-links {
+        flex-direction: column;
+    }
+}
+</style>
+
+{% endblock %}

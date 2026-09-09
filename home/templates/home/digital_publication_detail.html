@@ -32,6 +32,22 @@
         font-size: 13px;
     }
 
+    .digital-mobile-orientation-note {
+        display: none;
+        margin: 0 0 16px;
+        padding: 13px 15px;
+        border: 1px solid #d9c170;
+        border-radius: 10px;
+        background: #fff9e9;
+        color: #5d4a16;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .digital-mobile-orientation-note strong {
+        color: #3f3210;
+    }
+
     .digital-viewer-shell {
         min-height: 620px;
         margin-top: 24px;
@@ -51,6 +67,17 @@
     .digital-viewer-fallback a {
         color: #173f32;
         font-weight: 800;
+    }
+
+    @media (max-width: 820px) {
+        .digital-mobile-orientation-note {
+            display: block;
+        }
+
+        .digital-viewer-shell {
+            min-height: 520px;
+            padding: 12px;
+        }
     }
 </style>
 
@@ -100,6 +127,17 @@
         {% endif %}
 
     </header>
+
+
+    <div
+        class="digital-mobile-orientation-note"
+        role="note"
+        aria-label="Mobile viewing recommendation"
+    >
+        <strong>Mobile viewing tip:</strong>
+        For the best booklet viewing experience, rotate your device to
+        landscape orientation before reading the publication.
+    </div>
 
 
     <section

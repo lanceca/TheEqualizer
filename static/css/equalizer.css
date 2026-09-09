@@ -5895,3 +5895,127 @@ body.equalizer-confirm-open {
     }
 
 }
+
+
+/* ==========================================================
+   LIVE QA: STAFF ATTENTION INDICATORS
+   ========================================================== */
+
+.staff-attention-link {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.staff-attention-badge {
+    flex: 0 0 auto;
+
+    display: inline-grid;
+    place-items: center;
+
+    width: 22px;
+    height: 22px;
+
+    border: 2px solid rgba(255, 255, 255, 0.78);
+    border-radius: 50%;
+
+    background: #c94b4b;
+    color: #ffffff;
+
+    font-size: 12px;
+    font-weight: 900;
+    line-height: 1;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(201, 75, 75, 0.14);
+
+    animation:
+        eq-attention-badge-pulse
+        2.4s
+        ease-in-out
+        infinite;
+}
+
+@keyframes eq-attention-badge-pulse {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.08);
+    }
+}
+
+
+/* ==========================================================
+   LIVE QA: CLEARABLE STAFF FILE INPUTS
+   ========================================================== */
+
+.staff-file-selection-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+
+    margin-top: 8px;
+}
+
+.staff-file-selection-tools[hidden] {
+    display: none !important;
+}
+
+.staff-file-selection-summary {
+    min-width: 0;
+
+    color: var(--eq-muted);
+
+    font-size: 12px;
+    font-weight: 650;
+
+    overflow-wrap: anywhere;
+}
+
+.staff-file-clear-button {
+    min-height: 34px;
+
+    padding: 6px 10px;
+
+    border: 1px solid var(--eq-danger);
+    border-radius: 6px;
+
+    background: #ffffff;
+    color: var(--eq-danger);
+
+    font: inherit;
+    font-size: 12px;
+    font-weight: 750;
+
+    cursor: pointer;
+
+    transition:
+        background 0.18s ease,
+        color 0.18s ease,
+        border-color 0.18s ease;
+}
+
+.staff-file-clear-button:hover {
+    background: #fff0f0;
+}
+
+.staff-file-clear-button:focus-visible {
+    outline: none;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(176, 65, 65, 0.15);
+}
+
+
+/* The Adviser Analytics page no longer uses the redundant profile strip. */
+.adviser-react-profile-strip {
+    display: none !important;
+}
+

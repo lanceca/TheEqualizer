@@ -1,7 +1,5 @@
 from functools import wraps
 import logging
-import sys
-import traceback
 
 from django.conf import settings
 from django.contrib import messages
@@ -2467,20 +2465,35 @@ def review_submission(
     User.Role.EDITOR
 )
 def my_submissions(request):
-    selected_status = request.GET.get(
-        "status",
-        "ALL",
+    selected_scope = (
+        request.GET.get(
+            "scope",
+            "ALL",
+        )
+        .strip()
+        .upper()
     )
+
+    if selected_scope not in {
+        "ALL",
+        "CURRENT",
+        "HISTORY",
+    }:
+        selected_scope = "ALL"
 
     search_query = request.GET.get(
         "q",
         "",
     ).strip()
 
+    # Once a submission is resubmitted, the complete revision chain
+    # belongs exclusively to Resubmitted Submissions. My Submissions
+    # contains only non-resubmitted root submissions.
     submissions = (
         Submission.objects
         .filter(
             submitted_by=request.user,
+            resubmission_of__isnull=True,
             resubmissions__isnull=True,
         )
         .exclude(
@@ -2503,20 +2516,24 @@ def my_submissions(request):
             "article__contributors__user",
             "snapshot_attachments",
             "snapshot_video_attachments",
+            "resubmissions",
         )
     )
 
-    valid_statuses = {
-        Submission.Status.PENDING,
-        Submission.Status.APPROVED,
-        Submission.Status.REJECTED,
-        Submission.Status.REVISION,
-    }
-
-    if selected_status in valid_statuses:
-
+    if selected_scope == "CURRENT":
         submissions = submissions.filter(
-            status=selected_status
+            status__in=[
+                Submission.Status.PENDING,
+                Submission.Status.REVISION,
+            ]
+        )
+
+    elif selected_scope == "HISTORY":
+        submissions = submissions.filter(
+            status__in=[
+                Submission.Status.APPROVED,
+                Submission.Status.REJECTED,
+            ]
         )
 
     if search_query:
@@ -2576,7 +2593,10 @@ def my_submissions(request):
         "publications/my_submissions.html",
         {
             "submissions": submissions,
-            "selected_status": selected_status,
+            "selected_scope": selected_scope,
+            # Compatibility with the current template while the
+            # staff shell upgrades the visible tabs to scope tabs.
+            "selected_status": "ALL",
             "search_query": search_query,
         },
     )
@@ -3114,6 +3134,11 @@ def revise_submission(
     User.Role.EDITOR
 )
 def resubmitted_submissions(request):
+    search_query = request.GET.get(
+        "q",
+        "",
+    ).strip()
+
     submissions = (
         Submission.objects
         .filter(
@@ -3136,9 +3161,51 @@ def resubmitted_submissions(request):
             "snapshot_video_attachments",
             "resubmission_of__snapshot_attachments",
         )
+    )
+
+    if search_query:
+        submissions = submissions.filter(
+            Q(
+                snapshot_title__icontains=search_query
+            )
+            | Q(
+                snapshot_subtitle__icontains=search_query
+            )
+            | Q(
+                snapshot_excerpt__icontains=search_query
+            )
+            | Q(
+                snapshot_content__icontains=search_query
+            )
+            | Q(
+                snapshot_category_name__icontains=search_query
+            )
+            | Q(
+                article__title__icontains=search_query
+            )
+            | Q(
+                article__subtitle__icontains=search_query
+            )
+            | Q(
+                article__excerpt__icontains=search_query
+            )
+            | Q(
+                article__content__icontains=search_query
+            )
+            | Q(
+                article__category__name__icontains=search_query
+            )
+            | Q(
+                resubmission_of__reviewer_notes__icontains=search_query
+            )
+        )
+
+    submissions = (
+        submissions
         .order_by(
             "-submitted_at"
         )
+        .distinct()
     )
 
     return render(
@@ -3146,6 +3213,7 @@ def resubmitted_submissions(request):
         "publications/resubmitted_submissions.html",
         {
             "submissions": submissions,
+            "search_query": search_query,
         },
     )
 
@@ -7603,72 +7671,6 @@ def create_digital_publication(
             digital_publication_management_context(),
         )
 
-    except Exception:
-
-        print(
-            (
-                "\n[THE EQUALIZER DIGITAL PUBLICATION ERROR] "
-                f"{request.method} {request.path}"
-            ),
-            file=sys.stderr,
-            flush=True,
-        )
-
-        print(
-            (
-                "User ID: "
-                f"{getattr(request.user, 'id', 'unknown')}"
-            ),
-            file=sys.stderr,
-            flush=True,
-        )
-
-        uploaded_pdf = request.FILES.get(
-            "pdf_file"
-        )
-
-        uploaded_cover = request.FILES.get(
-            "cover_image"
-        )
-
-        print(
-            (
-                "PDF: "
-                f"{getattr(uploaded_pdf, 'name', 'none')} "
-                f"({getattr(uploaded_pdf, 'size', 'unknown')} bytes)"
-            ),
-            file=sys.stderr,
-            flush=True,
-        )
-
-        print(
-            (
-                "Cover: "
-                f"{getattr(uploaded_cover, 'name', 'none')} "
-                f"({getattr(uploaded_cover, 'size', 'unknown')} bytes)"
-            ),
-            file=sys.stderr,
-            flush=True,
-        )
-
-        traceback.print_exc(
-            file=sys.stderr
-        )
-
-        messages.error(
-            request,
-            (
-                "The Digital Publication could not be uploaded. "
-                "No further action is needed right now; "
-                "the server error has been logged for diagnosis."
-            ),
-        )
-
-        return render(
-            request,
-            "publications/digital_publication_management.html",
-            digital_publication_management_context(),
-        )
 
     messages.success(
         request,

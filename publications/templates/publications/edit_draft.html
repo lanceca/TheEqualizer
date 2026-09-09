@@ -1329,6 +1329,185 @@ document.addEventListener(
 );
 </script>
 
+<script>
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const contributorList =
+            document.getElementById(
+                "contributor-list"
+            );
+
+        const originalAddButton =
+            document.getElementById(
+                "add-contributor-button"
+            );
+
+        const contributorTemplate =
+            document.getElementById(
+                "contributor-row-template"
+            );
+
+        if (
+            !contributorList
+            || !originalAddButton
+            || !contributorTemplate
+        ) {
+            return;
+        }
+
+        /*
+         * This script runs after the form's legacy scripts.
+         * Cloning the Add button strips older click listeners so one
+         * click always creates exactly one contributor row.
+         */
+        const addContributorButton =
+            originalAddButton.cloneNode(true);
+
+        originalAddButton.replaceWith(
+            addContributorButton
+        );
+
+        function clearContributorRow(row) {
+
+            if (!row) {
+                return;
+            }
+
+            row.querySelectorAll(
+                "select"
+            ).forEach(
+                function (select) {
+                    select.value = "";
+
+                    select.dispatchEvent(
+                        new Event(
+                            "change",
+                            {
+                                bubbles: true,
+                            }
+                        )
+                    );
+                }
+            );
+        }
+
+        function updateContributorButtons() {
+
+            const rows = Array.from(
+                contributorList.querySelectorAll(
+                    ".contributor-row"
+                )
+            );
+
+            rows.forEach(
+                function (row) {
+
+                    const removeButton =
+                        row.querySelector(
+                            ".contributor-remove-button"
+                        );
+
+                    if (!removeButton) {
+                        return;
+                    }
+
+                    removeButton.disabled = false;
+
+                    const isOnlyRow =
+                        rows.length === 1;
+
+                    removeButton.textContent =
+                        isOnlyRow
+                            ? "Clear Selection"
+                            : "Remove";
+
+                    removeButton.setAttribute(
+                        "aria-label",
+                        isOnlyRow
+                            ? "Clear contributor selection"
+                            : "Remove contributor row"
+                    );
+                }
+            );
+        }
+
+        addContributorButton.addEventListener(
+            "click",
+            function () {
+
+                const newRow =
+                    contributorTemplate.content
+                    .firstElementChild
+                    .cloneNode(true);
+
+                contributorList.appendChild(
+                    newRow
+                );
+
+                updateContributorButtons();
+
+                const firstSelect =
+                    newRow.querySelector(
+                        "select"
+                    );
+
+                if (firstSelect) {
+                    firstSelect.focus();
+                }
+            }
+        );
+
+        /*
+         * Capture prevents a legacy delegated Remove handler from also
+         * processing the same click on forms that still contain it.
+         */
+        contributorList.addEventListener(
+            "click",
+            function (event) {
+
+                const removeButton =
+                    event.target.closest(
+                        ".contributor-remove-button"
+                    );
+
+                if (!removeButton) {
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopImmediatePropagation();
+
+                const rows =
+                    contributorList.querySelectorAll(
+                        ".contributor-row"
+                    );
+
+                const row =
+                    removeButton.closest(
+                        ".contributor-row"
+                    );
+
+                if (rows.length <= 1) {
+                    clearContributorRow(
+                        row
+                    );
+                } else if (row) {
+                    row.remove();
+                }
+
+                updateContributorButtons();
+            },
+            true
+        );
+
+        updateContributorButtons();
+    }
+);
+</script>
+
+
 {% include "publications/_preserve_post_form.html" %}
 
 {% endblock %}
