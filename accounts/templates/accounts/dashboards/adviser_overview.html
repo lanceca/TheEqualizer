@@ -2,243 +2,283 @@
 
 {% block staff_content %}
 
+
+<style>
+
+    .staff-profile-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(
+                auto-fit,
+                minmax(220px, 1fr)
+            );
+        gap: 16px;
+        margin-top: 22px;
+    }
+
+    .staff-profile-card {
+        padding: 20px;
+        background: var(--eq-white);
+        border: 1px solid var(--eq-border);
+        border-radius: var(--eq-radius);
+        box-shadow: var(--eq-shadow);
+    }
+
+    .staff-profile-card h2 {
+        margin: 0 0 14px;
+        padding: 0 0 9px;
+        border-bottom: 2px solid var(--eq-green-soft);
+        font-size: 18px;
+    }
+
+    .staff-profile-row {
+        display: grid;
+        grid-template-columns: 135px 1fr;
+        gap: 12px;
+        padding: 8px 0;
+        border-bottom: 1px solid #edf1ee;
+    }
+
+    .staff-profile-row:last-child {
+        border-bottom: none;
+    }
+
+    .staff-profile-label {
+        color: var(--eq-muted);
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .staff-profile-value {
+        min-width: 0;
+        color: var(--eq-charcoal);
+        overflow-wrap: anywhere;
+    }
+
+    .staff-role-summary {
+        margin-top: 22px;
+        padding: 22px;
+        background: var(--eq-white);
+        border: 1px solid var(--eq-border);
+        border-left: 5px solid var(--eq-gold);
+        border-radius: var(--eq-radius);
+        box-shadow: var(--eq-shadow);
+    }
+
+    .staff-role-summary h2 {
+        margin: 0 0 10px;
+        padding: 0;
+        border: none;
+        font-size: 19px;
+    }
+
+    .staff-role-summary p {
+        margin: 0;
+        color: var(--eq-muted);
+        line-height: 1.7;
+    }
+
+    .staff-account-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        width: fit-content;
+        padding: 4px 9px;
+        border-radius: 999px;
+        background: #e9f5ec;
+        color: var(--eq-green-dark);
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .staff-account-status::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--eq-green);
+    }
+
+    @media (max-width: 620px) {
+        .staff-profile-row {
+            grid-template-columns: 1fr;
+            gap: 2px;
+        }
+    }
+
+</style>
+
+
 <div class="dashboard-header">
 
-    <div>
+    <h1>Adviser Dashboard</h1>
 
-        <p class="workflow-eyebrow">
-            Adviser Oversight
-        </p>
+    <p class="dashboard-subtitle">
+        Your account and advisory role information.
+    </p>
 
-        <h1>
-            Adviser Dashboard
-        </h1>
+</div>
 
-        <p class="dashboard-subtitle">
-            A quick overview of the publication's current editorial activity.
-            Open Analytics for detailed reporting and historical performance.
-        </p>
+
+<div class="dashboard-profile-strip">
+
+    <div class="dashboard-profile-avatar">
+
+        {% if request.user.profile_picture %}
+
+            <img
+                src="{{ request.user.profile_picture.url }}"
+                alt="{{ request.user.username }} profile picture"
+            >
+
+        {% else %}
+
+            <span>
+                {{ request.user.username|slice:":1"|upper }}
+            </span>
+
+        {% endif %}
 
     </div>
 
+
+    <div class="dashboard-profile-copy">
+
+        <span class="dashboard-profile-kicker">
+            Signed in as
+        </span>
+
+        <strong>
+            {{ request.user.username }}
+        </strong>
+
+        <span>
+            {{ request.user.get_role_display }}
+        </span>
+
+    </div>
+
+
     <a
-        href="{% url 'adviser_dashboard' %}"
-        class="primary-button"
+        href="{% url 'profile' %}"
+        class="secondary-button dashboard-profile-link"
     >
-        Open Analytics
+        View Profile
     </a>
 
 </div>
 
 
-<div class="adviser-overview-grid">
 
-    <article class="adviser-overview-card">
+<div class="dashboard-welcome">
 
-        <span>
-            Published Articles
-        </span>
-
-        <strong>
-            {{ overview_published_articles }}
-        </strong>
-
-        <p>
-            Articles currently visible to readers.
-        </p>
-
-    </article>
-
-
-    <article class="adviser-overview-card">
-
-        <span>
-            Pending Submissions
-        </span>
-
-        <strong>
-            {{ overview_pending_submissions }}
-        </strong>
-
-        <p>
-            Submissions currently waiting for EIC review.
-        </p>
-
-    </article>
-
-
-    <article class="adviser-overview-card">
-
-        <span>
-            Pending Edit Requests
-        </span>
-
-        <strong>
-            {{ overview_pending_edit_requests }}
-        </strong>
-
-        <p>
-            Editor requests currently waiting for a decision.
-        </p>
-
-    </article>
-
-
-    <article class="adviser-overview-card">
-
-        <span>
-            Active Staff Reports
-        </span>
-
-        <strong>
-            {{ overview_active_content_reports }}
-        </strong>
-
-        <p>
-            Open or revision-required content concerns.
-        </p>
-
-    </article>
-
-
-    <article class="adviser-overview-card">
-
-        <span>
-            Active Publication Staff
-        </span>
-
-        <strong>
-            {{ overview_active_staff }}
-        </strong>
-
-        <p>
-            Active EIC, Editor, and Staff accounts.
-        </p>
-
-    </article>
+    <h2>
+        Welcome, {{ request.user.username }}
+    </h2>
 
 </div>
 
 
-<div class="content-panel adviser-overview-actions">
+<div class="staff-profile-grid">
 
-    <div>
-
-        <p class="workflow-eyebrow">
-            Oversight Tools
-        </p>
+    <section class="staff-profile-card">
 
         <h2>
-            Continue to detailed monitoring
+            Account Information
         </h2>
 
-        <p class="section-description">
-            Analytics contains reporting-period filters, engagement trends,
-            workflow metrics, content performance, and downloadable reports.
-        </p>
+        <div class="staff-profile-row">
+            <span class="staff-profile-label">Username</span>
+            <span class="staff-profile-value">
+                {{ request.user.username }}
+            </span>
+        </div>
 
-    </div>
+        <div class="staff-profile-row">
+            <span class="staff-profile-label">Role</span>
+            <span class="staff-profile-value">
+                {{ request.user.get_role_display }}
+            </span>
+        </div>
+
+        <div class="staff-profile-row">
+            <span class="staff-profile-label">Full Name</span>
+            <span class="staff-profile-value">
+                {% if request.user.get_full_name %}
+                    {{ request.user.get_full_name }}
+                {% else %}
+                    Not provided
+                {% endif %}
+            </span>
+        </div>
+
+        <div class="staff-profile-row">
+            <span class="staff-profile-label">Email</span>
+            <span class="staff-profile-value">
+                {% if request.user.email %}
+                    {{ request.user.email }}
+                {% else %}
+                    Not provided
+                {% endif %}
+            </span>
+        </div>
+
+    </section>
 
 
-    <div class="adviser-overview-action-links">
+    <section class="staff-profile-card">
 
-        <a
-            href="{% url 'adviser_dashboard' %}"
-            class="primary-button"
-        >
-            View Analytics
-        </a>
+        <h2>
+            Account Details
+        </h2>
 
-        <a
-            href="{% url 'staff_directory' %}"
-            class="secondary-button"
-        >
-            Staff Directory
-        </a>
+        <div class="staff-profile-row">
+            <span class="staff-profile-label">Status</span>
+            <span class="staff-profile-value">
+                {% if request.user.is_active %}
+                    <span class="staff-account-status">
+                        Active
+                    </span>
+                {% else %}
+                    Inactive
+                {% endif %}
+            </span>
+        </div>
 
-    </div>
+        <div class="staff-profile-row">
+            <span class="staff-profile-label">Date Joined</span>
+            <span class="staff-profile-value">
+                {{ request.user.date_joined|date:"M. d, Y - g:i A" }}
+            </span>
+        </div>
+
+        <div class="staff-profile-row">
+            <span class="staff-profile-label">Last Login</span>
+            <span class="staff-profile-value">
+                {% if request.user.last_login %}
+                    {{ request.user.last_login|date:"M. d, Y - g:i A" }}
+                {% else %}
+                    No previous login recorded
+                {% endif %}
+            </span>
+        </div>
+
+    </section>
 
 </div>
 
 
-<style>
-.adviser-overview-grid {
-    display: grid;
-    grid-template-columns:
-        repeat(5, minmax(0, 1fr));
-    gap: 14px;
-    margin: 22px 0;
-}
+<section class="staff-role-summary">
 
-.adviser-overview-card {
-    min-width: 0;
-    padding: 18px;
-    border: 1px solid var(--eq-border);
-    border-radius: 10px;
-    background: #ffffff;
-}
+    <h2>
+        Role Overview
+    </h2>
 
-.adviser-overview-card span {
-    display: block;
-    color: var(--eq-muted);
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-}
+    <p>
+        As Adviser, you monitor publication performance through reader and staff analytics, review engagement and workflow trends, and support editorial oversight through data-driven reporting.
+    </p>
 
-.adviser-overview-card strong {
-    display: block;
-    margin: 8px 0 5px;
-    color: var(--eq-green-dark);
-    font-size: clamp(28px, 4vw, 42px);
-}
+</section>
 
-.adviser-overview-card p {
-    margin: 0;
-    color: var(--eq-muted);
-    font-size: 13px;
-    line-height: 1.45;
-}
-
-.adviser-overview-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 22px;
-}
-
-.adviser-overview-actions h2 {
-    margin: 4px 0 5px;
-}
-
-.adviser-overview-action-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-@media (max-width: 1050px) {
-    .adviser-overview-grid {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 700px) {
-    .adviser-overview-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .adviser-overview-actions {
-        align-items: stretch;
-        flex-direction: column;
-    }
-
-    .adviser-overview-action-links {
-        flex-direction: column;
-    }
-}
-</style>
 
 {% endblock %}

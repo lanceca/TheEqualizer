@@ -477,6 +477,34 @@ ARTICLE_ALLOWED_IMAGE_FORMATS = [
 ARTICLE_MAX_ATTACHMENTS = 15
 
 
+# Keep the application-side article video limit aligned with the
+# Supabase Storage Free-project per-file limit.
+#
+# If the storage project is upgraded later, raise the Supabase
+# bucket/global file-size limit first, then set
+# ARTICLE_VIDEO_MAX_SIZE_MB in Render to the same value.
+try:
+    ARTICLE_VIDEO_MAX_SIZE_MB = int(
+        os.getenv(
+            "ARTICLE_VIDEO_MAX_SIZE_MB",
+            "50",
+        )
+    )
+except (TypeError, ValueError):
+    ARTICLE_VIDEO_MAX_SIZE_MB = 50
+
+ARTICLE_VIDEO_MAX_SIZE_MB = max(
+    1,
+    ARTICLE_VIDEO_MAX_SIZE_MB,
+)
+
+ARTICLE_VIDEO_MAX_SIZE = (
+    ARTICLE_VIDEO_MAX_SIZE_MB
+    * 1024
+    * 1024
+)
+
+
 FILE_UPLOAD_MAX_MEMORY_SIZE = (
     2 * 1024 * 1024
 )
