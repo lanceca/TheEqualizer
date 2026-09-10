@@ -259,12 +259,12 @@
         </p>
 
         <h1>
-            Homepage Advertisements
+            Homepage School Updates
         </h1>
 
         <p class="section-description">
             Create school-related promotional cards for the public homepage.
-            Active advertisements appear in the homepage side panel and open
+            Active advertisements or school updates appear in the homepage side panel and open
             a dedicated School Updates detail page when selected.
         </p>
     </div>
@@ -286,7 +286,7 @@
     <section class="ad-management-card">
 
         <h2>
-            Create Advertisement
+            Create Content
         </h2>
 
         <p>
@@ -328,7 +328,7 @@
                     required
                 >{% if request.method == 'POST' %}{{ request.POST.summary }}{% endif %}</textarea>
                 <p class="ad-form-help">
-                    This text appears on the homepage advertisement card.
+                    This text appears on the homepage school update card.
                 </p>
             </div>
 
@@ -350,7 +350,7 @@
 
             <div class="ad-form-field">
                 <label for="advertisement-image">
-                    Advertisement Image
+                    Featured Image
                 </label>
                 <input
                     type="file"
@@ -402,7 +402,7 @@
                 data-confirm-title="Create Homepage Advertisement"
                 data-confirm="Create this school advertisement with the current information?"
             >
-                Create Advertisement
+                Create Content
             </button>
 
         </form>
@@ -417,7 +417,7 @@
         </h2>
 
         <p>
-            Preview of the advertisement card used in the homepage side panel.
+            Preview of the school update card used in the homepage side panel.
         </p>
 
         <div class="ad-preview-card">
@@ -439,7 +439,7 @@
 
             <div class="ad-preview-copy">
                 <h3 id="ad-preview-title">
-                    Advertisement title
+                    Content title
                 </h3>
                 <p id="ad-preview-summary">
                     Your short summary will appear here.
@@ -602,7 +602,7 @@
 
         <div class="content-panel">
             <p class="empty-message">
-                No school advertisements have been created yet.
+                No content have been created yet.
             </p>
         </div>
 
