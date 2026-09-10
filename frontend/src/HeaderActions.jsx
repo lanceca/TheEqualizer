@@ -149,12 +149,6 @@ function HeaderActions({
             Install App
           </span>
 
-          <span
-            className="header-action-coming-soon"
-            aria-hidden="true"
-          >
-            Soon
-          </span>
         </button>
       )}
 

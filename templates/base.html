@@ -1,4 +1,4 @@
-{% load static %}
+{% load static mobile_app_tags %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -478,7 +478,10 @@
 </head>
 
 
+
 <body class="{% block body_class %}{% endblock %}">
+
+    {% get_mobile_app_settings as mobile_app_settings %}
 
 
     <header class="site-header">
@@ -550,7 +553,7 @@
                     class="site-header-react-actions"
                     data-react-component="HeaderActions"
                     data-facebook-url="https://www.facebook.com/mcctheequalizer"
-                    data-install-url=""
+                    data-install-url="{% if mobile_app_settings.download_url %}{% url 'mobile_app_download' %}{% endif %}"
                 ></div>
 
             </nav>
