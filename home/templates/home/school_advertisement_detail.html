@@ -1,22 +1,22 @@
 {% extends "public_base.html" %}
 
 {% block title %}
-{{ advertisement.title }} | School Updates | The Equalizer
+{{ advertisement.title }} | Advertisements | The Equalizer
 {% endblock %}
 
 {% block public_content %}
 
 <main class="school-update-detail-page">
 
-    <header class="school-update-detail-header">
+    <header class="school-updates-detail-header">
         <p class="reader-section-kicker">
-            School Updates
+            Advertisements
         </p>
         <h1>
             {{ advertisement.title }}
         </h1>
         <p>
-            School-related information published through The Equalizer.
+            Mini all around advertisements from The Equalizer!
         </p>
     </header>
 
@@ -48,7 +48,7 @@
                 href="{% url 'school_updates' %}"
                 class="school-update-back-link"
             >
-                &larr; Back to School Updates
+                &larr; Back to Advertisements
             </a>
 
         </div>

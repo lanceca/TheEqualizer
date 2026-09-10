@@ -1,5 +1,5 @@
 {% extends "public_base.html" %}
-{% load static %}
+{% load static mobile_app_tags %}
 
 {% block title %}
 The Equalizer
@@ -8,11 +8,55 @@ The Equalizer
 
 {% block public_content %}
 
+{% get_mobile_app_settings as mobile_app_settings %}
+
 <!-- ======================================================
      TOP STORIES
      ====================================================== -->
 
 <section class="reader-homepage">
+
+    {% if mobile_app_settings.notice_enabled and mobile_app_settings.download_url %}
+
+        <aside
+            class="reader-app-update-notice"
+            aria-label="The Equalizer mobile app update"
+        >
+
+            <div class="reader-app-update-copy">
+
+                <p class="reader-section-kicker">
+                    Mobile App Update
+                </p>
+
+                <h2>
+                    {{ mobile_app_settings.notice_title }}
+                </h2>
+
+                {% if mobile_app_settings.notice_message %}
+                    <p>
+                        {{ mobile_app_settings.notice_message }}
+                    </p>
+                {% endif %}
+
+                {% if mobile_app_settings.current_version %}
+                    <span class="reader-app-version">
+                        Version {{ mobile_app_settings.current_version }}
+                    </span>
+                {% endif %}
+
+            </div>
+
+            <a
+                href="{% url 'mobile_app_download' %}"
+                class="reader-app-update-button"
+            >
+                Install Update
+            </a>
+
+        </aside>
+
+    {% endif %}
 
     <div class="reader-section-heading">
 
@@ -368,12 +412,8 @@ The Equalizer
                     Campus Notices
                 </p>
                 <h2>
-                    School Updates
+                    Advertisements
                 </h2>
-                <p>
-                    Announcements, programs, opportunities, and other
-                    school-related information selected by The Equalizer.
-                </p>
             </div>
 
             {% if homepage_advertisements %}
@@ -388,7 +428,7 @@ The Equalizer
                         >
 
                             <span class="reader-ad-label">
-                                School Update
+                                Advertisements
                             </span>
 
                             <div class="reader-ad-media">
@@ -422,13 +462,13 @@ The Equalizer
                     href="{% url 'school_updates' %}"
                     class="reader-ad-all-link"
                 >
-                    View all school updates
+                    View all advertisements
                 </a>
 
             {% else %}
 
                 <div class="reader-ad-empty">
-                    No school updates are currently posted.
+                    No advertisements are currently posted.
                 </div>
 
             {% endif %}
@@ -436,6 +476,58 @@ The Equalizer
         </aside>
 
     </div>
+
+
+    {% if mobile_app_settings.download_url %}
+
+        <section
+            class="reader-app-download"
+            aria-labelledby="reader-app-download-title"
+        >
+
+            <div class="reader-app-download-copy">
+
+                <p class="reader-section-kicker">
+                    The Equalizer Mobile
+                </p>
+
+                <h2 id="reader-app-download-title">
+                    Read The Equalizer on Android
+                </h2>
+
+                <p>
+                    Install the official mobile reader for published
+                    stories, categories, school updates, Digital
+                    Publications, and more.
+                </p>
+
+            </div>
+
+            <div class="reader-app-download-actions">
+
+                <a
+                    href="{% url 'mobile_app_download' %}"
+                    class="reader-app-download-button"
+                >
+                    Install App
+                </a>
+
+                {% if mobile_app_settings.current_version %}
+                    <span>
+                        Current version:
+                        {{ mobile_app_settings.current_version }}
+                    </span>
+                {% else %}
+                    <span>
+                        Android APK
+                    </span>
+                {% endif %}
+
+            </div>
+
+        </section>
+
+    {% endif %}
 
 </section>
 

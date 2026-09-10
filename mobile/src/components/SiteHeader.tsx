@@ -54,7 +54,7 @@ export function SiteHeader() {
           <View style={styles.brandText}>
             <Text style={styles.brandTitle}>The Equalizer</Text>
             <Text style={styles.brandSubtitle} numberOfLines={2}>
-              Official Student News Publication of Mabalacat City College
+              The Official Student Publication of Mabalacat City College
             </Text>
           </View>
         </Pressable>

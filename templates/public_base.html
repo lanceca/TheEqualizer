@@ -1,7 +1,9 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static mobile_app_tags %}
 
 {% block content %}
+
+    {% get_mobile_app_settings as mobile_app_settings %}
 
     <!--
         Reader stylesheet is loaded again with a version query so the
@@ -9,7 +11,7 @@
     -->
     <link
         rel="stylesheet"
-        href="{% static 'css/style.css' %}?v=20260908-category-active-1"
+        href="{% static 'css/style.css' %}?v=20260910-mobile-release-manager-1"
     >
 
     <div class="public-layout">
@@ -26,7 +28,7 @@
                     </a>
 
                     <a href="{% url 'school_updates' %}" class="public-nav-link">
-                        School Updates
+                        Advertisements
                     </a>
 
                     <a href="{% url 'about_us' %}" class="public-nav-link">
@@ -36,6 +38,15 @@
                     <a href="{% url 'people_and_teams' %}" class="public-nav-link">
                         People &amp; Teams
                     </a>
+
+                    {% if mobile_app_settings.download_url %}
+                        <a
+                            href="{% url 'mobile_app_download' %}"
+                            class="public-nav-link public-app-download-link"
+                        >
+                            Install App
+                        </a>
+                    {% endif %}
 
                     <div class="public-category-dropdown">
 

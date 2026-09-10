@@ -95,14 +95,17 @@ export default function DigitalPublicationDetailScreen() {
             <Text style={styles.meta}>
               {formatDate(publication.publication_date)}
             </Text>
+
             {publication.page_count ? (
               <Text style={styles.meta}>
                 {publication.page_count} pages
               </Text>
             ) : null}
+
             {publication.volume ? (
               <Text style={styles.meta}>{publication.volume}</Text>
             ) : null}
+
             {publication.issue_number ? (
               <Text style={styles.meta}>{publication.issue_number}</Text>
             ) : null}
@@ -122,9 +125,21 @@ export default function DigitalPublicationDetailScreen() {
             </Text>
           ) : null}
 
+          <View style={styles.orientationTip}>
+            <Text style={styles.orientationTipTitle}>
+              Best viewing on mobile
+            </Text>
+
+            <Text style={styles.orientationTipText}>
+              For the best publication booklet experience, open the
+              interactive reader and rotate your phone to landscape
+              orientation.
+            </Text>
+          </View>
+
           <Pressable style={styles.primaryButton} onPress={openInteractive}>
             <Text style={styles.primaryButtonText}>
-              Open interactive publication
+              Read interactive booklet
             </Text>
           </Pressable>
 
@@ -193,8 +208,28 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 24,
   },
+  orientationTip: {
+    marginTop: 22,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: "#d9c170",
+    borderRadius: 12,
+    backgroundColor: "#fff9e9",
+  },
+  orientationTipTitle: {
+    color: "#3f3210",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  orientationTipText: {
+    marginTop: 5,
+    color: "#5d4a16",
+    fontSize: 13,
+    lineHeight: 20,
+  },
   primaryButton: {
-    marginTop: 24,
+    marginTop: 18,
     minHeight: 46,
     alignItems: "center",
     justifyContent: "center",

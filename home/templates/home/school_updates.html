@@ -1,7 +1,7 @@
 {% extends "public_base.html" %}
 
 {% block title %}
-School Updates | The Equalizer
+Advertisements | The Equalizer
 {% endblock %}
 
 {% block public_content %}
@@ -10,15 +10,12 @@ School Updates | The Equalizer
 
     <header class="school-updates-intro">
         <p class="reader-section-kicker">
-            Campus Notices
+            Exclusive Showcase
         </p>
+
         <h1>
-            School Updates
+            Advertisements
         </h1>
-        <p>
-            School-related announcements, programs, opportunities, events,
-            and other public information curated by The Equalizer.
-        </p>
     </header>
 
     {% if advertisements %}
@@ -38,11 +35,13 @@ School Updates | The Equalizer
 
                     <div class="school-update-list-copy">
                         <p class="reader-section-kicker">
-                            School Update
+                            Advertisements
                         </p>
+
                         <h2>
                             {{ advertisement.title }}
                         </h2>
+
                         <p>
                             {{ advertisement.summary }}
                         </p>
@@ -57,11 +56,11 @@ School Updates | The Equalizer
 
         <div class="reader-empty-state">
             <h2>
-                No school updates are currently posted
+                No advertisements are currently posted
             </h2>
+
             <p>
-                New school-related announcements will appear here when they
-                are published by The Equalizer.
+                New advertisements will appear here when available.
             </p>
         </div>
 

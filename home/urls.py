@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import mobile_app_views, views
 
 
 urlpatterns = [
@@ -15,8 +15,21 @@ urlpatterns = [
         name="home",
     ),
 
+    # ======================================================
+    # MOBILE APP DOWNLOAD / RELEASE SETTINGS
+    # ======================================================
 
+    path(
+        "mobile-app/install/",
+        mobile_app_views.download_mobile_app,
+        name="mobile_app_download",
+    ),
 
+    path(
+        "mobile-app/settings/update/",
+        mobile_app_views.update_mobile_app_settings,
+        name="update_mobile_app_settings",
+    ),
 
     # ======================================================
     # PEOPLE & TEAMS
@@ -43,7 +56,6 @@ urlpatterns = [
         views.about_us,
         name="about_us",
     ),
-
 
     # ======================================================
     # ARTICLE CATEGORIES
@@ -82,10 +94,6 @@ urlpatterns = [
         views.share_article,
         name="share_article",
     ),
-
-
-
-
 
     # ======================================================
     # SCHOOL UPDATES
