@@ -3332,6 +3332,162 @@ def toggle_admin_account_status(
 
 
 # ==========================================================
+# PUBLICATION STAFF DEACTIVATION SAFETY
+# ==========================================================
+
+
+def get_staff_deactivation_blockers(staff_user):
+    """
+    Return human-readable blockers that make publication staff
+    deactivation unsafe.
+
+    Roles are permanent after account creation. Deactivation is therefore
+    the supported way to retire an account, but it must never strand
+    workflow items that still require that specific account.
+
+    EIC approval queues are shared across active EIC accounts. Because of
+    that, an EIC's shared pending approvals do not block that individual
+    EIC from being deactivated when another active EIC remains. The final
+    active EIC, however, can never be deactivated.
+    """
+
+    blockers = []
+
+    if not staff_user.is_active:
+        return blockers
+
+    if staff_user.role == User.Role.EDITOR:
+
+        unresolved_submissions = (
+            Submission.objects
+            .filter(
+                submitted_by=staff_user,
+                status__in=[
+                    Submission.Status.PENDING,
+                    Submission.Status.REVISION,
+                ],
+            )
+            .count()
+        )
+
+        if unresolved_submissions:
+            blockers.append(
+                (
+                    f"{unresolved_submissions} unresolved "
+                    f"submission{'s' if unresolved_submissions != 1 else ''} "
+                    "still awaiting review or revision."
+                )
+            )
+
+        active_edit_requests = (
+            EditRequest.objects
+            .filter(
+                requested_by=staff_user,
+                status__in=[
+                    EditRequest.Status.PENDING,
+                    EditRequest.Status.APPROVED,
+                ],
+            )
+            .count()
+        )
+
+        if active_edit_requests:
+            blockers.append(
+                (
+                    f"{active_edit_requests} active edit "
+                    f"request{'s' if active_edit_requests != 1 else ''} "
+                    "are still pending or approved but unfinished."
+                )
+            )
+
+        pending_deletion_requests = (
+            DeletionRequest.objects
+            .filter(
+                requested_by=staff_user,
+                status=DeletionRequest.Status.PENDING,
+            )
+            .count()
+        )
+
+        if pending_deletion_requests:
+            blockers.append(
+                (
+                    f"{pending_deletion_requests} pending deletion "
+                    f"request{'s' if pending_deletion_requests != 1 else ''} "
+                    "still require a decision."
+                )
+            )
+
+    elif staff_user.role == User.Role.STAFF:
+
+        active_content_reports = (
+            ContentReport.objects
+            .filter(
+                reported_by=staff_user,
+                status__in=[
+                    ContentReport.Status.OPEN,
+                    ContentReport.Status.REVISION_REQUIRED,
+                ],
+            )
+            .count()
+        )
+
+        if active_content_reports:
+            blockers.append(
+                (
+                    f"{active_content_reports} unresolved content "
+                    f"report{'s' if active_content_reports != 1 else ''} "
+                    "are still open or require revision."
+                )
+            )
+
+    elif staff_user.role == User.Role.EIC:
+
+        unfinished_drafts = (
+            Article.objects
+            .filter(
+                author=staff_user,
+                draft_type=Article.DraftType.NORMAL,
+                is_published=False,
+                is_archived=False,
+            )
+            .count()
+        )
+
+        if unfinished_drafts:
+            blockers.append(
+                (
+                    f"{unfinished_drafts} unfinished EIC "
+                    f"draft{'s' if unfinished_drafts != 1 else ''} "
+                    "still belong to this account."
+                )
+            )
+
+        another_active_eic_exists = (
+            User.objects
+            .filter(
+                role=User.Role.EIC,
+                is_active=True,
+            )
+            .exclude(
+                id=staff_user.id
+            )
+            .exists()
+        )
+
+        if not another_active_eic_exists:
+            blockers.append(
+                (
+                    "This is the last active Editor in Chief account. "
+                    "Create and activate another EIC account before "
+                    "deactivating this one."
+                )
+            )
+
+    return blockers
+
+
+# ==========================================================
 # ADMIN - MANAGE PUBLICATION STAFF
 # ==========================================================
 
@@ -3486,6 +3642,12 @@ def edit_staff_account(
         role__in=allowed_roles,
     )
 
+    deactivation_blockers = (
+        get_staff_deactivation_blockers(
+            staff_user
+        )
+    )
+
     if request.method == "POST":
 
         form = StaffAccountEditForm(
@@ -3495,24 +3657,82 @@ def edit_staff_account(
 
         if form.is_valid():
 
-            form.save()
+            wants_deactivation = (
+                staff_user.is_active
+                and not form.cleaned_data.get(
+                    "is_active",
+                    False,
+                )
+            )
 
-            messages.success(
+            if wants_deactivation:
+
+                deactivation_blockers = (
+                    get_staff_deactivation_blockers(
+                        staff_user
+                    )
+                )
+
+                if deactivation_blockers:
+
+                    for blocker in (
+                        deactivation_blockers
+                    ):
+                        form.add_error(
+                            None,
+                            blocker,
+                        )
+
+                    messages.error(
+                        request,
+                        (
+                            f'Account "{staff_user.username}" '
+                            "cannot be deactivated until its "
+                            "unresolved publication work is cleared."
+                        ),
+                    )
+
+                else:
+
+                    form.save()
+
+                    messages.warning(
+                        request,
+                        (
+                            f'Account "{staff_user.username}" '
+                            "was deactivated."
+                        ),
+                    )
+
+                    return redirect(
+                        "manage_staff_accounts"
+                    )
+
+            else:
+
+                form.save()
+
+                messages.success(
+                    request,
+                    (
+                        f'Account "{staff_user.username}" '
+                        f"was updated successfully."
+                    ),
+                )
+
+                return redirect(
+                    "manage_staff_accounts"
+                )
+
+        else:
+
+            messages.error(
                 request,
                 (
-                    f'Account "{staff_user.username}" '
-                    f"was updated successfully."
+                    "The account could not be updated. "
+                    "Please check the form."
                 ),
             )
-
-            return redirect(
-                "manage_staff_accounts"
-            )
-
-        messages.error(
-            request,
-            "The account could not be updated. Please check the form.",
-        )
 
     else:
 
@@ -3526,6 +3746,9 @@ def edit_staff_account(
         {
             "form": form,
             "managed_user": staff_user,
+            "deactivation_blockers": (
+                deactivation_blockers
+            ),
         },
     )
 
@@ -3555,17 +3778,16 @@ def toggle_staff_account_status(
         role__in=allowed_roles,
     )
 
-    staff_user.is_active = (
-        not staff_user.is_active
-    )
+    # Activation never strands workflow work and is always allowed.
+    if not staff_user.is_active:
 
-    staff_user.save(
-        update_fields=[
-            "is_active",
-        ]
-    )
+        staff_user.is_active = True
 
-    if staff_user.is_active:
+        staff_user.save(
+            update_fields=[
+                "is_active",
+            ]
+        )
 
         messages.success(
             request,
@@ -3575,15 +3797,48 @@ def toggle_staff_account_status(
             ),
         )
 
-    else:
+        return redirect(
+            "manage_staff_accounts"
+        )
 
-        messages.warning(
+    deactivation_blockers = (
+        get_staff_deactivation_blockers(
+            staff_user
+        )
+    )
+
+    if deactivation_blockers:
+
+        messages.error(
             request,
             (
                 f'Account "{staff_user.username}" '
-                f"was deactivated."
+                "cannot be deactivated. "
+                + " ".join(
+                    deactivation_blockers
+                )
             ),
         )
+
+        return redirect(
+            "manage_staff_accounts"
+        )
+
+    staff_user.is_active = False
+
+    staff_user.save(
+        update_fields=[
+            "is_active",
+        ]
+    )
+
+    messages.warning(
+        request,
+        (
+            f'Account "{staff_user.username}" '
+            f"was deactivated."
+        ),
+    )
 
     return redirect(
         "manage_staff_accounts"

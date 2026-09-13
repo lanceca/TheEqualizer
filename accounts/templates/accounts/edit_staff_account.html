@@ -13,7 +13,7 @@
         <h1>Edit Publication Staff Account</h1>
 
         <p class="section-description">
-            Update publication account information, assigned role, and account status.
+            Update publication account information and account status. The assigned role is permanent after account creation.
         </p>
 
     </div>
@@ -88,6 +88,67 @@
             {% csrf_token %}
 
             {{ form.non_field_errors }}
+
+
+            <div class="account-form-field">
+
+                <div class="account-field-label-row">
+                    <span>Assigned Role</span>
+                </div>
+
+                <div class="account-field-help">
+                    <strong>{{ managed_user.get_role_display }}</strong>
+                    — Publication roles cannot be changed after an account is created.
+                    If a different role is required, create a separate account with the correct role.
+                </div>
+
+            </div>
+
+
+            {% if managed_user.is_active and deactivation_blockers %}
+
+                <div class="account-form-field">
+
+                    <div class="account-field-label-row">
+                        <span>Deactivation Protection</span>
+                    </div>
+
+                    <div class="form-errors">
+
+                        <p>
+                            This account cannot currently be deactivated:
+                        </p>
+
+                        <ul>
+                            {% for blocker in deactivation_blockers %}
+                                <li>{{ blocker }}</li>
+                            {% endfor %}
+                        </ul>
+
+                        <p>
+                            Resolve the items above before deactivating this account.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            {% elif managed_user.is_active %}
+
+                <div class="account-form-field">
+
+                    <div class="account-field-label-row">
+                        <span>Deactivation Protection</span>
+                    </div>
+
+                    <div class="account-field-help">
+                        No unresolved workflow blockers were found for this account.
+                        Deactivation is currently allowed.
+                    </div>
+
+                </div>
+
+            {% endif %}
 
 
             {% for field in form %}

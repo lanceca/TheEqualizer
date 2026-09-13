@@ -423,44 +423,26 @@ class AdminAccountEditForm(forms.ModelForm):
 
 class StaffAccountEditForm(forms.ModelForm):
 
-    ALLOWED_ROLES = [
-        User.Role.ADVISER,
-        User.Role.EIC,
-        User.Role.EDITOR,
-        User.Role.STAFF,
-    ]
-
-    role = forms.ChoiceField(
-        choices=[
-            (
-                User.Role.ADVISER,
-                User.Role.ADVISER.label,
-            ),
-            (
-                User.Role.EIC,
-                User.Role.EIC.label,
-            ),
-            (
-                User.Role.EDITOR,
-                User.Role.EDITOR.label,
-            ),
-            (
-                User.Role.STAFF,
-                User.Role.STAFF.label,
-            ),
-        ]
-    )
-
     class Meta:
         model = User
 
+        # Publication roles are intentionally immutable after account
+        # creation. Admins may update profile details and account status,
+        # but changing a role requires a new account instead.
         fields = [
             "first_name",
             "last_name",
             "email",
-            "role",
             "is_active",
         ]
+
+        help_texts = {
+            "is_active": (
+                "Uncheck to deactivate this account. Deactivation is "
+                "blocked while the account has unresolved publication "
+                "workflow responsibilities."
+            ),
+        }
 
     def clean_email(self):
 
@@ -492,20 +474,6 @@ class StaffAccountEditForm(forms.ModelForm):
             )
 
         return email
-
-    def clean_role(self):
-
-        role = self.cleaned_data[
-            "role"
-        ]
-
-        if role not in self.ALLOWED_ROLES:
-
-            raise forms.ValidationError(
-                "This account cannot be assigned that role."
-            )
-
-        return role
 
 
 # ==========================================================
