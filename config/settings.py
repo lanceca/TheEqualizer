@@ -621,11 +621,48 @@ PASSWORD_RESET_TIMEOUT = int(
 )
 
 
+
+
+# ==========================================================
+# LOGIN RATE LIMITING
+# ==========================================================
+
+try:
+    LOGIN_MAX_FAILED_ATTEMPTS = int(
+        os.getenv(
+            "LOGIN_MAX_FAILED_ATTEMPTS",
+            "3",
+        )
+    )
+except (TypeError, ValueError):
+    LOGIN_MAX_FAILED_ATTEMPTS = 3
+
+LOGIN_MAX_FAILED_ATTEMPTS = max(
+    1,
+    LOGIN_MAX_FAILED_ATTEMPTS,
+)
+
+try:
+    LOGIN_LOCKOUT_MINUTES = int(
+        os.getenv(
+            "LOGIN_LOCKOUT_MINUTES",
+            "5",
+        )
+    )
+except (TypeError, ValueError):
+    LOGIN_LOCKOUT_MINUTES = 5
+
+LOGIN_LOCKOUT_MINUTES = max(
+    1,
+    LOGIN_LOCKOUT_MINUTES,
+)
+
+
 # ==========================================================
 # AUTH REDIRECTS
 # ==========================================================
 
-LOGIN_URL = "/login/"
+LOGIN_URL = "/staff-login/"
 
 LOGIN_REDIRECT_URL = (
     "/dashboard/"

@@ -1,6 +1,10 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.auth.forms import (
+    PasswordChangeForm,
+    PasswordResetForm,
+    SetPasswordForm,
+)
 
 
 User = get_user_model()
@@ -177,3 +181,87 @@ class VerifiedPasswordResetForm(
         for user in users:
             if user.has_usable_password():
                 yield user
+
+# ==========================================================
+# STRONG SELF-SERVICE PASSWORD FORMS
+# ==========================================================
+
+
+SELF_SERVICE_PASSWORD_MIN_LENGTH = 8
+
+
+class StrongPasswordRequirementsMixin:
+    """
+    Adds password rules only to self-service password changes and
+    password-reset confirmation.
+
+    Account creation forms are intentionally left unchanged because
+    administrators issue temporary passwords for newly created accounts.
+    """
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        password = cleaned_data.get(
+            "new_password1",
+            "",
+        )
+
+        if not password:
+            return cleaned_data
+
+        if len(password) < SELF_SERVICE_PASSWORD_MIN_LENGTH:
+            self.add_error(
+                "new_password1",
+                (
+                    "Your new password must contain at least "
+                    f"{SELF_SERVICE_PASSWORD_MIN_LENGTH} characters."
+                ),
+            )
+
+        if not any(
+            character.isdigit()
+            for character in password
+        ):
+            self.add_error(
+                "new_password1",
+                (
+                    "Your new password must contain at least "
+                    "one number."
+                ),
+            )
+
+        if not any(
+            not character.isalnum()
+            and not character.isspace()
+            for character in password
+        ):
+            self.add_error(
+                "new_password1",
+                (
+                    "Your new password must contain at least "
+                    "one symbol."
+                ),
+            )
+
+        return cleaned_data
+
+
+class StrongSetPasswordForm(
+    StrongPasswordRequirementsMixin,
+    SetPasswordForm,
+):
+    """
+    Strong-password form used by the forgot-password confirmation flow.
+    """
+
+
+class StrongPasswordChangeForm(
+    StrongPasswordRequirementsMixin,
+    PasswordChangeForm,
+):
+    """
+    Strong-password form used by authenticated staff changing their own
+    password.
+    """
+

@@ -249,3 +249,41 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
+
+
+class LoginAttemptThrottle(models.Model):
+    """
+    Stores short-lived failed-login counters.
+
+    identifier_hash is a SHA-256 digest derived from the normalized
+    submitted username together with the current client IP address.
+    This scopes the cooldown to one account-and-client pair so a failed
+    login from another network cannot globally lock that staff account.
+    """
+
+    identifier_hash = models.CharField(
+        max_length=64,
+        unique=True,
+    )
+
+    failed_attempts = models.PositiveSmallIntegerField(
+        default=0,
+    )
+
+    locked_until = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        db_index=True,
+    )
+
+    def __str__(self):
+        return (
+            f"Login throttle "
+            f"{self.identifier_hash[:12]} "
+            f"({self.failed_attempts})"
+        )
+

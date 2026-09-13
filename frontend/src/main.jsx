@@ -68,6 +68,12 @@ function getComponentProps(
       facebookUrl:
         mountPoint.dataset.facebookUrl
         || '',
+      instagramUrl:
+        mountPoint.dataset.instagramUrl
+        || '',
+      xUrl:
+        mountPoint.dataset.xUrl
+        || '',
       installUrl:
         mountPoint.dataset.installUrl
         || '',

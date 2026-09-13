@@ -1,9 +1,11 @@
+import hashlib
 import io
 import logging
 from datetime import date, timedelta
 from functools import wraps
 from html import escape
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.staticfiles import finders
 from django.contrib.auth import (
@@ -14,9 +16,9 @@ from django.contrib.auth import (
     update_session_auth_hash,
 )
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
+from django.db import transaction
 from django.db.models import BigIntegerField, Count, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse, HttpResponseForbidden
@@ -61,6 +63,8 @@ from .forms import (
     StaffAccountEditForm,
     UsernameChangeForm,
 )
+from .models import LoginAttemptThrottle
+from .security_forms import StrongPasswordChangeForm
 
 
 User = get_user_model()
@@ -2357,6 +2361,217 @@ def staff_dashboard(request):
 # ==========================================================
 
 
+def _get_client_ip(request):
+    """
+    Resolve the client address used by the login limiter.
+
+    Render and other reverse proxies commonly provide X-Forwarded-For.
+    The first address is the originating client, while REMOTE_ADDR is the
+    fallback for local development or requests without that header.
+    """
+
+    forwarded_for = (
+        request.META.get(
+            "HTTP_X_FORWARDED_FOR",
+            "",
+        )
+        or ""
+    )
+
+    if forwarded_for:
+        client_ip = (
+            forwarded_for
+            .split(",", 1)[0]
+            .strip()
+        )
+    else:
+        client_ip = (
+            request.META.get(
+                "REMOTE_ADDR",
+                "",
+            )
+            or "unknown"
+        ).strip()
+
+    return client_ip or "unknown"
+
+
+def _get_login_throttle_key(
+    request,
+    username,
+):
+    """
+    Build a throttle key scoped to both the submitted username and the
+    current client IP address.
+
+    This prevents one visitor on a different network from intentionally
+    locking another staff member out of their account. At the same time,
+    repeated wrong-password attempts against the same username from the
+    same client address are still blocked for the configured cooldown.
+
+    The combined value is hashed before storage so neither the username
+    nor client IP needs to be stored in plain text in the throttle table.
+    """
+
+    normalized_username = (
+        (username or "")
+        .strip()
+        .casefold()
+    )
+
+    client_ip = _get_client_ip(
+        request
+    )
+
+    throttle_identity = (
+        f"{normalized_username}\x00{client_ip}"
+    )
+
+    return hashlib.sha256(
+        throttle_identity.encode(
+            "utf-8"
+        )
+    ).hexdigest()
+
+
+def _get_active_login_throttle(
+    identifier_hash,
+):
+    """
+    Return a still-relevant login throttle record.
+
+    A partial failed-attempt sequence expires after the same period as
+    the lockout, so one old mistake does not follow a user forever.
+    """
+
+    throttle = (
+        LoginAttemptThrottle.objects
+        .filter(
+            identifier_hash=(
+                identifier_hash
+            )
+        )
+        .first()
+    )
+
+    if throttle is None:
+        return None
+
+    now = timezone.now()
+
+    if (
+        throttle.locked_until
+        and throttle.locked_until > now
+    ):
+        return throttle
+
+    attempt_window_start = (
+        now
+        - timedelta(
+            minutes=(
+                settings.LOGIN_LOCKOUT_MINUTES
+            )
+        )
+    )
+
+    if (
+        throttle.locked_until
+        or throttle.updated_at
+        <= attempt_window_start
+    ):
+        throttle.delete()
+        return None
+
+    return throttle
+
+
+@transaction.atomic
+def _register_failed_login(
+    identifier_hash,
+):
+    """
+    Add one failed attempt and apply the temporary lockout when the
+    configured limit is reached.
+    """
+
+    now = timezone.now()
+
+    # Periodically discard abandoned limiter rows so random usernames
+    # cannot leave permanent records behind.
+    LoginAttemptThrottle.objects.filter(
+        updated_at__lt=(
+            now - timedelta(days=1)
+        )
+    ).delete()
+
+    throttle, _created = (
+        LoginAttemptThrottle.objects
+        .select_for_update()
+        .get_or_create(
+            identifier_hash=(
+                identifier_hash
+            ),
+            defaults={
+                "failed_attempts": 0,
+            },
+        )
+    )
+
+    attempt_window_start = (
+        now
+        - timedelta(
+            minutes=(
+                settings.LOGIN_LOCKOUT_MINUTES
+            )
+        )
+    )
+
+    if (
+        (
+            throttle.locked_until
+            and throttle.locked_until
+            <= now
+        )
+        or (
+            throttle.updated_at
+            <= attempt_window_start
+        )
+    ):
+        throttle.failed_attempts = 0
+        throttle.locked_until = None
+
+    throttle.failed_attempts += 1
+
+    if (
+        throttle.failed_attempts
+        >= settings.LOGIN_MAX_FAILED_ATTEMPTS
+    ):
+        throttle.failed_attempts = (
+            settings.LOGIN_MAX_FAILED_ATTEMPTS
+        )
+
+        throttle.locked_until = (
+            now
+            + timedelta(
+                minutes=(
+                    settings.LOGIN_LOCKOUT_MINUTES
+                )
+            )
+        )
+
+    throttle.save()
+
+    return throttle
+
+
+def _clear_login_throttle(
+    identifier_hash,
+):
+    LoginAttemptThrottle.objects.filter(
+        identifier_hash=identifier_hash
+    ).delete()
+
+
 @never_cache
 def login_view(request):
 
@@ -2367,13 +2582,79 @@ def login_view(request):
 
     if request.method == "POST":
 
-        username = request.POST.get(
-            "username"
+        username = (
+            request.POST.get(
+                "username"
+            )
+            or ""
+        ).strip()
+
+        password = (
+            request.POST.get(
+                "password"
+            )
+            or ""
         )
 
-        password = request.POST.get(
-            "password"
+        identifier_hash = (
+            _get_login_throttle_key(
+                request,
+                username,
+            )
         )
+
+        throttle = (
+            _get_active_login_throttle(
+                identifier_hash
+            )
+        )
+
+        if (
+            throttle is not None
+            and throttle.locked_until
+            and throttle.locked_until
+            > timezone.now()
+        ):
+            remaining_seconds = max(
+                1,
+                int(
+                    (
+                        throttle.locked_until
+                        - timezone.now()
+                    ).total_seconds()
+                ),
+            )
+
+            remaining_minutes = max(
+                1,
+                (
+                    remaining_seconds
+                    + 59
+                )
+                // 60,
+            )
+
+            minute_word = (
+                "minute"
+                if remaining_minutes == 1
+                else "minutes"
+            )
+
+            messages.error(
+                request,
+                (
+                    "Too many failed login attempts. "
+                    "Sign-in is temporarily locked. "
+                    f"Try again in about "
+                    f"{remaining_minutes} "
+                    f"{minute_word}."
+                ),
+            )
+
+            return render(
+                request,
+                "accounts/login.html",
+            )
 
         user = authenticate(
             request,
@@ -2382,6 +2663,10 @@ def login_view(request):
         )
 
         if user is not None:
+
+            _clear_login_throttle(
+                identifier_hash
+            )
 
             login(
                 request,
@@ -2400,7 +2685,7 @@ def login_view(request):
         candidate_user = (
             User.objects
             .filter(
-                username=(username or "").strip()
+                username=username
             )
             .first()
         )
@@ -2410,8 +2695,16 @@ def login_view(request):
             and candidate_user.is_active
             and candidate_user.email
             and not candidate_user.email_verified
-            and candidate_user.check_password(password or "")
+            and candidate_user.check_password(
+                password
+            )
         ):
+            # The credentials were correct. Email verification, not a
+            # bad password, is what prevented authentication.
+            _clear_login_throttle(
+                identifier_hash
+            )
+
             messages.error(
                 request,
                 (
@@ -2427,10 +2720,54 @@ def login_view(request):
                 "accounts/login.html",
             )
 
-        messages.error(
-            request,
-            "Invalid username or password.",
+        throttle = (
+            _register_failed_login(
+                identifier_hash
+            )
         )
+
+        if (
+            throttle.locked_until
+            and throttle.locked_until
+            > timezone.now()
+        ):
+            messages.error(
+                request,
+                (
+                    "Too many failed login attempts. "
+                    "You have reached the login attempt "
+                    "limit. Sign-in is locked for "
+                    f"{settings.LOGIN_LOCKOUT_MINUTES} "
+                    "minutes."
+                ),
+            )
+
+        else:
+            remaining_attempts = max(
+                0,
+                (
+                    settings
+                    .LOGIN_MAX_FAILED_ATTEMPTS
+                    - throttle.failed_attempts
+                ),
+            )
+
+            attempt_word = (
+                "attempt"
+                if remaining_attempts == 1
+                else "attempts"
+            )
+
+            messages.warning(
+                request,
+                (
+                    "Invalid username or password. "
+                    f"You have {remaining_attempts} "
+                    f"more {attempt_word} before a "
+                    f"{settings.LOGIN_LOCKOUT_MINUTES}-"
+                    "minute lockout."
+                ),
+            )
 
         return render(
             request,
@@ -2589,7 +2926,7 @@ def change_password(request):
 
     if request.method == "POST":
 
-        form = PasswordChangeForm(
+        form = StrongPasswordChangeForm(
             request.user,
             request.POST,
         )
@@ -2619,7 +2956,7 @@ def change_password(request):
 
     else:
 
-        form = PasswordChangeForm(
+        form = StrongPasswordChangeForm(
             request.user
         )
 

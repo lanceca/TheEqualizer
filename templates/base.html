@@ -321,13 +321,15 @@
         }
 
         .message-popup {
+            position: relative;
+
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
 
             gap: 15px;
 
-            padding: 14px 16px;
+            padding: 14px 52px 14px 16px;
 
             background: #ffffff;
 
@@ -364,16 +366,46 @@
         }
 
         .message-popup-close {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            width: 32px;
+            height: 32px;
             padding: 0;
 
-            border: none;
+            border: 1px solid transparent;
+            border-radius: 50%;
 
             background: transparent;
+            color: #4a5751;
 
-            font-size: 20px;
+            font: inherit;
+            font-size: 24px;
+            font-weight: 500;
             line-height: 1;
 
             cursor: pointer;
+
+            transition:
+                background 0.16s ease,
+                border-color 0.16s ease,
+                color 0.16s ease;
+        }
+
+        .message-popup-close:hover {
+            background: #eef3f0;
+            border-color: #d5ddd8;
+            color: #173f32;
+        }
+
+        .message-popup-close:focus-visible {
+            outline: 3px solid rgba(214, 173, 50, 0.34);
+            outline-offset: 2px;
         }
 
 
@@ -472,7 +504,7 @@
     <!-- React/Vite progressive enhancement -->
     <link
         rel="stylesheet"
-        href="{% static 'react-dist/assets/equalizer-react.css' %}?v=20260907-form-errors-1"
+        href="{% static 'react-dist/assets/equalizer-react.css' %}?v=20260913-social-header-1"
     >
 
 </head>
@@ -537,15 +569,6 @@
                         Dashboard
                     </a>
 
-                {% else %}
-
-                    <a
-                        href="{% url 'login' %}"
-                        class="site-nav-link site-nav-link-primary"
-                    >
-                        Staff Login
-                    </a>
-
                 {% endif %}
 
 
@@ -553,6 +576,8 @@
                     class="site-header-react-actions"
                     data-react-component="HeaderActions"
                     data-facebook-url="https://www.facebook.com/mcctheequalizer"
+                    data-instagram-url="https://www.instagram.com/mcctheequalizer/"
+                    data-x-url="https://x.com/mcctheequalizer"
                     data-install-url="{% if mobile_app_settings.download_url %}{% url 'mobile_app_download' %}{% endif %}"
                 ></div>
 
@@ -1381,7 +1406,7 @@
     <!-- React/Vite production/watch bundle -->
     <script
         type="module"
-        src="{% static 'react-dist/assets/equalizer-react.js' %}?v=20260907-form-errors-1"
+        src="{% static 'react-dist/assets/equalizer-react.js' %}?v=20260913-social-header-1"
     ></script>
 
 </body>

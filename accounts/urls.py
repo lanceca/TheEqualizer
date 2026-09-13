@@ -3,6 +3,7 @@ from django.urls import path, reverse_lazy
 
 from . import security_views, views
 from .security_forms import (
+    StrongSetPasswordForm,
     VerifiedPasswordResetForm,
 )
 
@@ -71,7 +72,7 @@ urlpatterns = [
     # =========================
 
     path(
-        "login/",
+        "staff-login/",
         views.login_view,
         name="login",
     ),
@@ -150,6 +151,9 @@ urlpatterns = [
             template_name=(
                 "accounts/"
                 "password_reset_confirm.html"
+            ),
+            form_class=(
+                StrongSetPasswordForm
             ),
             success_url=reverse_lazy(
                 "password_reset_complete"

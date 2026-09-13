@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   Image,
   Linking,
+  Modal,
   Pressable,
   ScrollView,
   Share,
@@ -35,6 +36,11 @@ export default function ArticleScreen() {
   const [error, setError] = useState("");
   const [reacting, setReacting] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [expandedImage, setExpandedImage] = useState<{
+    uri: string;
+    caption: string;
+    credit: string;
+  } | null>(null);
 
   const load = useCallback(async () => {
     if (!slug) return;
@@ -198,11 +204,30 @@ export default function ArticleScreen() {
 
           {article.featured_image_url ? (
             <View style={styles.featuredFigure}>
-              <Image
-                source={{ uri: article.featured_image_url }}
-                style={styles.featuredImage}
-                resizeMode="contain"
-              />
+              <Pressable
+                style={({ pressed }) => [
+                  styles.expandableImageButton,
+                  pressed && styles.expandableImagePressed,
+                ]}
+                onPress={() =>
+                  setExpandedImage({
+                    uri: article.featured_image_url,
+                    caption: article.featured_image_caption || "",
+                    credit: article.featured_image_credit || "",
+                  })
+                }
+                accessibilityRole="button"
+                accessibilityLabel="Expand featured image"
+              >
+                <Image
+                  source={{ uri: article.featured_image_url }}
+                  style={styles.featuredImage}
+                  resizeMode="contain"
+                />
+                <View style={styles.expandHint}>
+                  <Text style={styles.expandHintText}>Tap to expand</Text>
+                </View>
+              </Pressable>
 
               {article.featured_image_caption ||
               article.featured_image_credit ? (
@@ -232,11 +257,34 @@ export default function ArticleScreen() {
               <View style={styles.gallery}>
                 {article.image_attachments.map((attachment) => (
                   <View key={attachment.id} style={styles.galleryItem}>
-                    <Image
-                      source={{ uri: attachment.image_url }}
-                      style={styles.galleryImage}
-                      resizeMode="cover"
-                    />
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.expandableImageButton,
+                        pressed && styles.expandableImagePressed,
+                      ]}
+                      onPress={() =>
+                        setExpandedImage({
+                          uri: attachment.image_url,
+                          caption: attachment.caption || "",
+                          credit: attachment.credit || "",
+                        })
+                      }
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        attachment.caption
+                          ? `Expand image: ${attachment.caption}`
+                          : "Expand article image"
+                      }
+                    >
+                      <Image
+                        source={{ uri: attachment.image_url }}
+                        style={styles.galleryImage}
+                        resizeMode="cover"
+                      />
+                      <View style={styles.expandHint}>
+                        <Text style={styles.expandHintText}>Tap to expand</Text>
+                      </View>
+                    </Pressable>
 
                     {attachment.caption || attachment.credit ? (
                       <View style={styles.captionRow}>
@@ -350,6 +398,59 @@ export default function ArticleScreen() {
           </View>
         </ScrollView>
       )}
+
+      <Modal
+        visible={Boolean(expandedImage)}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setExpandedImage(null)}
+      >
+        <View style={styles.imageViewerBackdrop}>
+          <Pressable
+            style={StyleSheet.absoluteFillObject}
+            onPress={() => setExpandedImage(null)}
+            accessibilityRole="button"
+            accessibilityLabel="Close expanded image"
+          />
+
+          <View style={styles.imageViewerContent}>
+            <Pressable
+              style={styles.imageViewerClose}
+              onPress={() => setExpandedImage(null)}
+              accessibilityRole="button"
+              accessibilityLabel="Close expanded image"
+            >
+              <Text style={styles.imageViewerCloseText}>×</Text>
+            </Pressable>
+
+            {expandedImage ? (
+              <>
+                <Image
+                  source={{ uri: expandedImage.uri }}
+                  style={styles.imageViewerImage}
+                  resizeMode="contain"
+                />
+
+                {expandedImage.caption || expandedImage.credit ? (
+                  <View style={styles.imageViewerCaptionPanel}>
+                    {expandedImage.caption ? (
+                      <Text style={styles.imageViewerCaption}>
+                        {expandedImage.caption}
+                      </Text>
+                    ) : null}
+                    {expandedImage.credit ? (
+                      <Text style={styles.imageViewerCredit}>
+                        {expandedImage.credit}
+                      </Text>
+                    ) : null}
+                  </View>
+                ) : null}
+              </>
+            ) : null}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -430,6 +531,28 @@ const styles = StyleSheet.create({
     aspectRatio: 16 / 10,
     borderRadius: 8,
     backgroundColor: "#f1f3f2",
+  },
+  expandableImageButton: {
+    position: "relative",
+    overflow: "hidden",
+    borderRadius: 8,
+  },
+  expandableImagePressed: {
+    opacity: 0.88,
+  },
+  expandHint: {
+    position: "absolute",
+    right: 10,
+    bottom: 10,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: "rgba(15, 45, 36, 0.82)",
+  },
+  expandHintText: {
+    color: colors.white,
+    fontSize: 10.5,
+    fontWeight: "800",
   },
   captionRow: {
     marginTop: 8,
@@ -591,5 +714,60 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     marginTop: 14,
+  },
+  imageViewerBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(4, 9, 7, 0.96)",
+  },
+  imageViewerContent: {
+    flex: 1,
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    paddingTop: 54,
+    paddingBottom: 28,
+  },
+  imageViewerClose: {
+    position: "absolute",
+    top: 48,
+    right: 18,
+    zIndex: 2,
+    width: 42,
+    height: 42,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 21,
+    backgroundColor: "rgba(255, 255, 255, 0.14)",
+  },
+  imageViewerCloseText: {
+    color: colors.white,
+    fontSize: 30,
+    lineHeight: 32,
+    fontWeight: "400",
+  },
+  imageViewerImage: {
+    width: "100%",
+    height: "78%",
+  },
+  imageViewerCaptionPanel: {
+    width: "100%",
+    maxWidth: 720,
+    marginTop: 16,
+    paddingHorizontal: 4,
+    gap: 4,
+  },
+  imageViewerCaption: {
+    color: colors.white,
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: "center",
+  },
+  imageViewerCredit: {
+    color: "#c8d2cd",
+    fontSize: 12,
+    lineHeight: 18,
+    fontStyle: "italic",
+    textAlign: "center",
   },
 });
