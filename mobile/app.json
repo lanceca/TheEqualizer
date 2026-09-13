@@ -2,7 +2,7 @@
   "expo": {
     "name": "The Equalizer",
     "slug": "the-equalizer",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "theequalizer",
@@ -12,7 +12,7 @@
     },
     "android": {
       "package": "com.theequalizer.mcc",
-      "versionCode": 2,
+      "versionCode": 3,
       "adaptiveIcon": {
         "backgroundColor": "#173F32",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

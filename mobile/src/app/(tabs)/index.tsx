@@ -11,14 +11,16 @@ import {
 import { router } from "expo-router";
 import {
   apiGet,
-  Article,
-  DigitalPublication,
-  SchoolUpdate,
   formatDate,
 } from "../../lib/api";
+import type {
+  ArticleSummary,
+  DigitalPublication,
+  SchoolUpdate,
+} from "../../lib/types";
 
 type HomeResponse = {
-  latest_articles: Article[];
+  latest_articles: ArticleSummary[];
   school_updates: SchoolUpdate[];
   digital_publications: DigitalPublication[];
 };

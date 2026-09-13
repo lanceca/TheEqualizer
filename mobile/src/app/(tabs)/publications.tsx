@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Image, Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import { apiGet, DigitalPublication, formatDate } from "../../lib/api";
+import { apiGet, formatDate } from "../../lib/api";
+import type { DigitalPublication } from "../../lib/types";
 
 type Response = { digital_publications: DigitalPublication[] };
 type DetailResponse = { digital_publication: DigitalPublication };

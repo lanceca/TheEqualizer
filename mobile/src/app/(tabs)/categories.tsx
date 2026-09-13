@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import { apiGet, Category } from "../../lib/api";
+import { apiGet } from "../../lib/api";
+import type { Category } from "../../lib/types";
 
 type Response = { categories: Category[] };
 

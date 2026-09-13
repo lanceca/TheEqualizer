@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Image, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import { apiGet, PeopleGroup } from "../../lib/api";
+import { apiGet } from "../../lib/api";
+import type { PeopleGroup } from "../../lib/types";
 
 type Response = { groups: PeopleGroup[] };
 

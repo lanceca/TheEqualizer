@@ -97,7 +97,7 @@ export default function ArticleScreen() {
       setError(
         err instanceof Error
           ? err.message
-          : "Unable to record reaction."
+          : "Unable to record like."
       );
     } finally {
       setReacting(false);
@@ -352,7 +352,7 @@ export default function ArticleScreen() {
                 <Text style={styles.statStrong}>
                   {article.engagement.reactions}
                 </Text>{" "}
-                reactions
+                {article.engagement.reactions === 1 ? "like" : "likes"}
               </Text>
               <Text style={styles.stat}>
                 <Text style={styles.statStrong}>{article.engagement.shares}</Text>{" "}
@@ -371,10 +371,10 @@ export default function ArticleScreen() {
               >
                 <Text style={styles.secondaryActionText}>
                   {data?.has_reacted
-                    ? "Reacted"
+                    ? "Liked"
                     : reacting
-                      ? "Reacting…"
-                      : "React"}
+                      ? "Liking…"
+                      : "Like"}
                 </Text>
               </Pressable>
 
@@ -408,7 +408,7 @@ export default function ArticleScreen() {
       >
         <View style={styles.imageViewerBackdrop}>
           <Pressable
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
             onPress={() => setExpandedImage(null)}
             accessibilityRole="button"
             accessibilityLabel="Close expanded image"

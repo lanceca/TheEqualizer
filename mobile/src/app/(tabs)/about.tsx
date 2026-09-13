@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Image, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import { AboutPage, apiGet } from "../../lib/api";
+import { apiGet } from "../../lib/api";
+import type { AboutPage } from "../../lib/types";
 
 type Response = { about: AboutPage | null };
 
