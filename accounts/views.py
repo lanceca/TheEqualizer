@@ -3358,15 +3358,29 @@ def get_staff_deactivation_blockers(staff_user):
 
     if staff_user.role == User.Role.EDITOR:
 
+        # Only the latest unresolved submission in each revision/
+        # resubmission chain is active work. Older REVISION records remain
+        # in the database as history after a newer resubmission is created,
+        # so counting every PENDING/REVISION row would produce false
+        # deactivation blockers.
+        #
+        # A current Editor submission must also still belong to an
+        # unpublished, non-archived article. This prevents legacy/stale
+        # submission rows attached to already-finished articles from
+        # blocking account deactivation.
         unresolved_submissions = (
             Submission.objects
             .filter(
                 submitted_by=staff_user,
+                resubmissions__isnull=True,
                 status__in=[
                     Submission.Status.PENDING,
                     Submission.Status.REVISION,
                 ],
+                article__is_published=False,
+                article__is_archived=False,
             )
+            .distinct()
             .count()
         )
 
