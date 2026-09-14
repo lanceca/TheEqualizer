@@ -1098,12 +1098,17 @@ body.reader-pdf-download-open {
 
                 <span>
                     <strong>{{ article.reaction_count }}</strong>
-                    reaction{{ article.reaction_count|pluralize }}
+                    like{{ article.reaction_count|pluralize }}
                 </span>
 
                 <span>
                     <strong>{{ article.share_count }}</strong>
                     share{{ article.share_count|pluralize }}
+                </span>
+
+                <span>
+                    <strong>{{ pdf_download_count|default:0 }}</strong>
+                    PDF download{{ pdf_download_count|default:0|pluralize }}
                 </span>
 
             </div>
@@ -1119,35 +1124,26 @@ body.reader-pdf-download-open {
                     Download PDF
                 </a>
 
-                {% if has_reacted %}
+                <form
+                    method="POST"
+                    action="{% url 'react_to_article' article.slug %}"
+                >
+
+                    {% csrf_token %}
 
                     <button
-                        type="button"
-                        class="reader-action-button"
-                        disabled
+                        type="submit"
+                        class="reader-action-button{% if not has_reacted %} reader-action-primary{% else %} reader-action-liked{% endif %}"
+                        aria-pressed="{% if has_reacted %}true{% else %}false{% endif %}"
                     >
-                        Liked
+                        {% if has_reacted %}
+                            Unlike
+                        {% else %}
+                            Like
+                        {% endif %}
                     </button>
 
-                {% else %}
-
-                    <form
-                        method="POST"
-                        action="{% url 'react_to_article' article.slug %}"
-                    >
-
-                        {% csrf_token %}
-
-                        <button
-                            type="submit"
-                            class="reader-action-button reader-action-primary"
-                        >
-                            Like
-                        </button>
-
-                    </form>
-
-                {% endif %}
+                </form>
 
 
                 <form

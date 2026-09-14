@@ -59,6 +59,43 @@ function valueFor(items, label) {
   return numberValue(item?.value)
 }
 
+function readPeriodArticles() {
+  const container =
+    document.getElementById(
+      'adviser-period-articles-data',
+    )
+
+  if (!container) {
+    return []
+  }
+
+  return Array.from(
+    container.querySelectorAll(
+      '[data-period-article]',
+    ),
+  ).map(
+    (element) => ({
+      title: element.dataset.title || '',
+      category: element.dataset.category || '',
+      author: element.dataset.author || '',
+      publishedAt:
+        element.dataset.publishedAt || '',
+      views: numberValue(
+        element.dataset.views,
+      ),
+      reactions: numberValue(
+        element.dataset.reactions,
+      ),
+      shares: numberValue(
+        element.dataset.shares,
+      ),
+      downloads: numberValue(
+        element.dataset.downloads,
+      ),
+    }),
+  )
+}
+
 function readTopArticles() {
   const container =
     document.getElementById(
@@ -92,6 +129,10 @@ function readTopArticles() {
           numberValue(
             element.dataset.shares,
           ),
+        downloads:
+          numberValue(
+            element.dataset.downloads,
+          ),
       }),
     )
     .sort(
@@ -99,6 +140,7 @@ function readTopArticles() {
         right.views - left.views
         || right.reactions - left.reactions
         || right.shares - left.shares
+        || right.downloads - left.downloads
       ),
     )
     .slice(0, 5)
@@ -365,6 +407,7 @@ function EngagementTrend({
   views,
   reactions,
   shares,
+  downloads,
 }) {
   const width = 900
   const height = 300
@@ -381,6 +424,7 @@ function EngagementTrend({
     ...views,
     ...reactions,
     ...shares,
+    ...downloads,
   )
 
   const gridFractions = [
@@ -406,6 +450,11 @@ function EngagementTrend({
       label: 'Shares',
       values: shares,
       color: CHART_COLORS[2],
+    },
+    {
+      label: 'PDF Downloads',
+      values: downloads,
+      color: CHART_COLORS[3],
     },
   ]
 
@@ -470,7 +519,7 @@ function EngagementTrend({
         viewBox={`0 0 ${width} ${height}`}
         className="aa-line-chart"
         role="img"
-        aria-label="Daily views, reactions, and shares"
+        aria-label="Daily views, reactions, shares, and PDF downloads"
       >
         {gridFractions.map(
           (fraction) => {
@@ -594,9 +643,12 @@ function CategoryPerformance({
 }) {
   if (!items.length) {
     return (
-      <p className="aa-empty-state">
-        No published category data is currently available.
-      </p>
+      <div className="aa-zero-state">
+        <strong>0</strong>
+        <span>
+          No articles were published in the selected period.
+        </span>
+      </div>
     )
   }
 
@@ -649,6 +701,9 @@ function CategoryPerformance({
                 </span>
                 <span>
                   <b>{formatNumber(item.shares)}</b> shares
+                </span>
+                <span>
+                  <b>{formatNumber(item.downloads)}</b> PDF downloads
                 </span>
               </div>
             </div>
@@ -757,14 +812,74 @@ function EditorPerformance({
   )
 }
 
+function PeriodArticles({
+  items,
+}) {
+  if (!items.length) {
+    return (
+      <div className="aa-zero-state">
+        <strong>0</strong>
+        <span>
+          No articles were published in the selected period.
+        </span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="aa-period-articles">
+      {items.map(
+        (article, index) => (
+          <article
+            className="aa-period-article"
+            key={`${article.title}-${article.publishedAt}-${index}`}
+          >
+            <div className="aa-period-article-copy">
+              <strong>{article.title}</strong>
+              <span>
+                {article.category}
+                {article.author
+                  ? ` · ${article.author}`
+                  : ''}
+              </span>
+            </div>
+
+            <time>
+              {article.publishedAt || 'Date unavailable'}
+            </time>
+
+            <div className="aa-period-article-stats">
+              <span>
+                <b>{formatNumber(article.views)}</b> views
+              </span>
+              <span>
+                <b>{formatNumber(article.reactions)}</b> reacts
+              </span>
+              <span>
+                <b>{formatNumber(article.shares)}</b> shares
+              </span>
+              <span>
+                <b>{formatNumber(article.downloads)}</b> PDF downloads
+              </span>
+            </div>
+          </article>
+        ),
+      )}
+    </div>
+  )
+}
+
 function TopArticles({
   items,
 }) {
   if (!items.length) {
     return (
-      <p className="aa-empty-state">
-        No published articles are currently available.
-      </p>
+      <div className="aa-zero-state">
+        <strong>0</strong>
+        <span>
+          No articles were published in the selected period.
+        </span>
+      </div>
     )
   }
 
@@ -802,6 +917,10 @@ function TopArticles({
               <span>
                 <b>{formatNumber(article.shares)}</b>
                 shares
+              </span>
+              <span>
+                <b>{formatNumber(article.downloads)}</b>
+                PDF downloads
               </span>
             </div>
           </article>
@@ -866,6 +985,13 @@ function AdviserDashboard({
     'adviser-history-shares',
   )
 
+  const historyDownloads = readJson(
+    'adviser-history-downloads',
+  )
+
+  const periodArticles =
+    readPeriodArticles()
+
   const topArticles =
     readTopArticles()
 
@@ -883,6 +1009,11 @@ function AdviserDashboard({
     mountPoint.dataset.timezone
     || 'Asia/Manila'
 
+  const periodPublishedCount =
+    numberValue(
+      mountPoint.dataset.periodPublishedCount,
+    )
+
   const totalViews =
     valueFor(engagement, 'Views')
 
@@ -894,6 +1025,9 @@ function AdviserDashboard({
 
   const totalShares =
     valueFor(engagement, 'Shares')
+
+  const totalDownloads =
+    valueFor(engagement, 'PDF Downloads')
 
   const pendingEditRequests =
     valueFor(editRequests, 'Pending')
@@ -974,6 +1108,12 @@ function AdviserDashboard({
 
       <div className="aa-metrics-grid">
         <MetricCard
+          eyebrow="Articles Published"
+          value={periodPublishedCount}
+          description="Published during this period"
+        />
+
+        <MetricCard
           eyebrow="Period Views"
           value={totalViews}
           description="Tracked article views"
@@ -989,6 +1129,12 @@ function AdviserDashboard({
           eyebrow="Period Shares"
           value={totalShares}
           description="Tracked article shares"
+        />
+
+        <MetricCard
+          eyebrow="PDF Downloads"
+          value={totalDownloads}
+          description="Article PDF downloads"
         />
 
         <MetricCard
@@ -1012,6 +1158,7 @@ function AdviserDashboard({
             views={historyViews}
             reactions={historyReactions}
             shares={historyShares}
+            downloads={historyDownloads}
           />
 
           <p className="aa-panel-note">
@@ -1096,9 +1243,21 @@ function AdviserDashboard({
 
       <article className="aa-panel aa-panel--full">
         <SectionHeading
+          kicker="Exact Range Content"
+          title="Articles Published in Period"
+          copy={`Every published article whose publication date falls within ${periodLabel}.`}
+        />
+
+        <PeriodArticles
+          items={periodArticles}
+        />
+      </article>
+
+      <article className="aa-panel aa-panel--full">
+        <SectionHeading
           kicker="Content Performance"
           title="Category Reach"
-          copy="Currently published articles grouped by category, with engagement limited to the selected period."
+          copy={`Articles published during ${periodLabel}, grouped by category with engagement from the same period.`}
         />
 
         <CategoryPerformance
@@ -1111,7 +1270,7 @@ function AdviserDashboard({
           <SectionHeading
             kicker="Top Content"
             title="Top Performing Articles"
-            copy="Ranked by total article views, with reactions and shares shown for context."
+            copy={`Only articles published during ${periodLabel}, ranked by views recorded in that period.`}
           />
 
           <TopArticles

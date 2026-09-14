@@ -209,7 +209,7 @@
                         {% endif %}
 
 
-                        <p class="editorial-item-summary">
+                        <p class="editorial-item-summary editorial-item-summary--concern">
                             {{ edit_request.reason|truncatechars:180 }}
                         </p>
 
@@ -239,7 +239,7 @@
 
                         {% if edit_request.reviewer_notes %}
 
-                            <div class="editorial-review-note">
+                            <div class="editorial-review-note editorial-attention-callout editorial-attention-callout--eic">
                                 <strong>EIC Notes</strong>
                                 <p>
                                     {{ edit_request.reviewer_notes|linebreaksbr }}
@@ -291,7 +291,7 @@
 
                         <div class="editorial-review-panel">
 
-                            <div class="request-detail-block">
+                            <div class="request-detail-block editorial-attention-callout editorial-attention-callout--concern">
 
                                 <span>Reason for Edit</span>
 

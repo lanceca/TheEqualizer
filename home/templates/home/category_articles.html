@@ -71,7 +71,7 @@
             <p>
                 {{ articles|length }}
 
-                {% if category_search_query %}
+                {% if category_filter_active %}
                     result{{ articles|length|pluralize }}
                 {% else %}
                     published
@@ -88,10 +88,10 @@
                     </strong>
 
                     <a
-                        href="{% url 'category_articles' category.slug %}"
+                        href="{% url 'category_articles' category.slug %}{% if category_date_start or category_date_end %}?{% if category_date_start %}start={{ category_date_start|urlencode }}{% endif %}{% if category_date_start and category_date_end %}&amp;{% endif %}{% if category_date_end %}end={{ category_date_end|urlencode }}{% endif %}{% endif %}"
                         class="category-search-clear"
                     >
-                        Clear
+                        Clear Search
                     </a>
                 </p>
 
@@ -100,6 +100,83 @@
         </div>
 
     </header>
+
+
+    <section class="category-date-filter-panel" aria-label="Filter articles by publication date">
+
+        <div class="category-date-filter-copy">
+            <span>Date Filter</span>
+            <strong>Published between</strong>
+            <small>Choose one date for an open-ended range, or use the same date in both fields for one exact day.</small>
+        </div>
+
+        <form
+            method="GET"
+            action="{% url 'category_articles' category.slug %}"
+            class="category-date-filter-form"
+        >
+
+            {% if category_search_query %}
+                <input type="hidden" name="q" value="{{ category_search_query }}">
+            {% endif %}
+
+            <label>
+                <span>From</span>
+                <input
+                    type="date"
+                    name="start"
+                    value="{{ category_date_start }}"
+                    {% if category_date_end %}max="{{ category_date_end }}"{% endif %}
+                >
+            </label>
+
+            <label>
+                <span>To</span>
+                <input
+                    type="date"
+                    name="end"
+                    value="{{ category_date_end }}"
+                    {% if category_date_start %}min="{{ category_date_start }}"{% endif %}
+                >
+            </label>
+
+            <div class="category-date-filter-actions">
+                <button type="submit" class="category-date-filter-apply">
+                    Apply Date
+                </button>
+
+                {% if category_date_start or category_date_end %}
+                    <a
+                        href="{% url 'category_articles' category.slug %}{% if category_search_query %}?q={{ category_search_query|urlencode }}{% endif %}"
+                        class="category-date-filter-clear"
+                    >
+                        Clear Dates
+                    </a>
+                {% endif %}
+            </div>
+
+        </form>
+
+        {% if category_date_filter_error %}
+            <p class="category-date-filter-error" role="alert">
+                {{ category_date_filter_error }}
+            </p>
+        {% endif %}
+
+        {% if category_date_start or category_date_end %}
+            <p class="category-date-filter-summary">
+                Showing articles published
+                {% if category_date_start and category_date_end %}
+                    from <strong>{{ category_date_start }}</strong> through <strong>{{ category_date_end }}</strong>.
+                {% elif category_date_start %}
+                    on or after <strong>{{ category_date_start }}</strong>.
+                {% else %}
+                    on or before <strong>{{ category_date_end }}</strong>.
+                {% endif %}
+            </p>
+        {% endif %}
+
+    </section>
 
 
     {% if lead_article %}
@@ -303,23 +380,22 @@
 
         <section class="category-empty-state">
 
-            {% if category_search_query %}
+            {% if category_filter_active %}
 
                 <h2>
-                    No {{ category.name }} articles matched
-                    “{{ category_search_query }}”
+                    No {{ category.name }} articles matched the active filters
                 </h2>
 
                 <p>
-                    Try another search term or clear the current search
-                    to view every published article in this category.
+                    Try another search term or publication-date range, or clear
+                    the active filters to view every published article in this category.
                 </p>
 
                 <a
                     href="{% url 'category_articles' category.slug %}"
                     class="reader-read-link"
                 >
-                    Clear search
+                    Clear all filters
                 </a>
 
             {% else %}

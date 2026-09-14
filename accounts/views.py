@@ -486,6 +486,23 @@ def get_adviser_analytics_data(request):
         )
     )
 
+    # Articles used by period-specific content analytics must have
+    # actually been published inside the selected range. This keeps an
+    # exact single-day/custom range from displaying unrelated articles
+    # that merely received engagement during that period.
+    period_published_queryset = (
+        filter_datetime_queryset_by_period(
+            published_queryset,
+            "published_at",
+            analytics_start_date,
+            analytics_end_date,
+        )
+    )
+
+    period_published_articles = (
+        period_published_queryset.count()
+    )
+
     # ======================================================
     # CURRENT PUBLICATION SNAPSHOT
     # ======================================================
@@ -697,6 +714,9 @@ def get_adviser_analytics_data(request):
                 "reactions"
             ),
             total_shares=Sum("shares"),
+            total_downloads=Sum(
+                "downloads"
+            ),
         )
     )
 
@@ -715,10 +735,16 @@ def get_adviser_analytics_data(request):
         or 0
     )
 
+    total_downloads = (
+        reader_totals["total_downloads"]
+        or 0
+    )
+
     total_engagement = (
         total_views
         + total_reactions
         + total_shares
+        + total_downloads
     )
 
     daily_engagement_rows = (
@@ -728,6 +754,7 @@ def get_adviser_analytics_data(request):
             views=Sum("views"),
             reactions=Sum("reactions"),
             shares=Sum("shares"),
+            downloads=Sum("downloads"),
         )
         .order_by("date")
     )
@@ -740,6 +767,9 @@ def get_adviser_analytics_data(request):
                 or 0
             ),
             "shares": row["shares"] or 0,
+            "downloads": (
+                row["downloads"] or 0
+            ),
         }
         for row in daily_engagement_rows
     }
@@ -765,6 +795,7 @@ def get_adviser_analytics_data(request):
     historical_views = []
     historical_reactions = []
     historical_shares = []
+    historical_downloads = []
 
     chart_day_count = (
         analytics_end_date
@@ -789,6 +820,7 @@ def get_adviser_analytics_data(request):
                     "views": 0,
                     "reactions": 0,
                     "shares": 0,
+                    "downloads": 0,
                 },
             )
         )
@@ -813,6 +845,10 @@ def get_adviser_analytics_data(request):
 
         historical_shares.append(
             current_values["shares"]
+        )
+
+        historical_downloads.append(
+            current_values["downloads"]
         )
 
     # ======================================================
@@ -937,8 +973,11 @@ def get_adviser_analytics_data(request):
         )
     )
 
+    # Category performance contains only articles whose publication date
+    # falls inside the reporting range. Engagement values are likewise
+    # restricted to the same range.
     category_performance = (
-        published_queryset
+        period_published_queryset
         .values(
             "category__name"
         )
@@ -977,6 +1016,16 @@ def get_adviser_analytics_data(request):
                 Value(0),
                 output_field=BigIntegerField(),
             ),
+            total_downloads=Coalesce(
+                Sum(
+                    "daily_analytics__downloads",
+                    filter=(
+                        daily_relation_filter
+                    ),
+                ),
+                Value(0),
+                output_field=BigIntegerField(),
+            ),
         )
         .order_by(
             "-total_views",
@@ -986,7 +1035,7 @@ def get_adviser_analytics_data(request):
     )
 
     period_article_queryset = (
-        published_queryset
+        period_published_queryset
         .select_related(
             "category",
             "author",
@@ -1022,23 +1071,38 @@ def get_adviser_analytics_data(request):
                 Value(0),
                 output_field=BigIntegerField(),
             ),
+            period_downloads=Coalesce(
+                Sum(
+                    "daily_analytics__downloads",
+                    filter=(
+                        daily_relation_filter
+                    ),
+                ),
+                Value(0),
+                output_field=BigIntegerField(),
+            ),
         )
     )
 
-    # Top Performing Articles is intentionally ranked by the
-    # authoritative lifetime counters stored on Article. This prevents
-    # older or partially backfilled daily-analytics rows from placing a
-    # lower-viewed article above a genuinely higher-viewed article.
-    top_viewed_articles = (
-        published_queryset
-        .select_related(
-            "category",
-            "author",
-        )
+    period_published_article_list = (
+        period_article_queryset
         .order_by(
-            "-view_count",
-            "-reaction_count",
-            "-share_count",
+            "-published_at",
+            "-created_at",
+            "title",
+        )
+    )
+
+    # Top Performing Articles now follows the selected reporting period in
+    # both dimensions: the article must have been published in the range,
+    # and ranking uses engagement captured during that same range.
+    top_viewed_articles = (
+        period_article_queryset
+        .order_by(
+            "-period_views",
+            "-period_reactions",
+            "-period_shares",
+            "-period_downloads",
             "-published_at",
         )[:5]
     )
@@ -1047,6 +1111,7 @@ def get_adviser_analytics_data(request):
         period_article_queryset
         .order_by(
             "-period_reactions",
+            "-period_views",
             "-published_at",
         )[:5]
     )
@@ -1055,6 +1120,7 @@ def get_adviser_analytics_data(request):
         period_article_queryset
         .order_by(
             "-period_shares",
+            "-period_views",
             "-published_at",
         )[:5]
     )
@@ -1163,6 +1229,10 @@ def get_adviser_analytics_data(request):
             "label": "Shares",
             "value": total_shares,
         },
+        {
+            "label": "PDF Downloads",
+            "value": total_downloads,
+        },
     ]
 
     category_chart_data = [
@@ -1187,6 +1257,10 @@ def get_adviser_analytics_data(request):
             ),
             "shares": (
                 category["total_shares"]
+                or 0
+            ),
+            "downloads": (
+                category["total_downloads"]
                 or 0
             ),
         }
@@ -1240,6 +1314,9 @@ def get_adviser_analytics_data(request):
 
         "total_articles": total_articles,
         "published_articles": published_articles,
+        "period_published_articles": (
+            period_published_articles
+        ),
         "archived_articles": archived_articles,
         "draft_articles": draft_articles,
 
@@ -1286,6 +1363,7 @@ def get_adviser_analytics_data(request):
         "total_views": total_views,
         "total_reactions": total_reactions,
         "total_shares": total_shares,
+        "total_downloads": total_downloads,
         "total_engagement": total_engagement,
 
         "historical_engagement_labels": (
@@ -1299,10 +1377,16 @@ def get_adviser_analytics_data(request):
             historical_reactions
         ),
         "historical_shares": historical_shares,
+        "historical_downloads": (
+            historical_downloads
+        ),
 
         "editors": editors,
         "category_performance": (
             category_performance
+        ),
+        "period_published_article_list": (
+            period_published_article_list
         ),
 
         "top_viewed_articles": (
@@ -1592,6 +1676,12 @@ def download_adviser_analytics_pdf(request):
 
     editors = list(
         analytics["editors"]
+    )
+
+    period_articles = list(
+        analytics[
+            "period_published_article_list"
+        ]
     )
 
     top_articles = list(
@@ -1916,13 +2006,127 @@ def download_adviser_analytics_pdf(request):
         )
     )
 
+    period_article_rows = [
+        [
+            Paragraph(
+                escape(article.title),
+                styles["cell"],
+            ),
+            Paragraph(
+                escape(
+                    article.category.name
+                ),
+                styles["cell"],
+            ),
+            article.published_at.strftime(
+                "%b %d, %Y"
+            ) if article.published_at else "—",
+            article.period_views or 0,
+            article.period_reactions or 0,
+            article.period_shares or 0,
+            article.period_downloads or 0,
+        ]
+        for article in period_articles
+    ]
+
+    if not period_article_rows:
+        period_article_rows = [
+            [
+                Paragraph(
+                    "No articles published in this period",
+                    styles["cell"],
+                ),
+                "—",
+                "—",
+                0,
+                0,
+                0,
+                0,
+            ]
+        ]
+
+    category_performance_rows = [
+        [
+            Paragraph(
+                escape(
+                    row["category__name"]
+                    or "Uncategorized"
+                ),
+                styles["cell"],
+            ),
+            row["article_count"],
+            row["total_views"] or 0,
+            row["total_reactions"] or 0,
+            row["total_shares"] or 0,
+            row["total_downloads"] or 0,
+        ]
+        for row in category_performance
+    ]
+
+    if not category_performance_rows:
+        category_performance_rows = [
+            [
+                Paragraph(
+                    "No articles published in this period",
+                    styles["cell"],
+                ),
+                0,
+                0,
+                0,
+                0,
+                0,
+            ]
+        ]
+
+    top_article_rows = [
+        [
+            Paragraph(
+                escape(article.title),
+                styles["cell"],
+            ),
+            Paragraph(
+                escape(
+                    article.category.name
+                ),
+                styles["cell"],
+            ),
+            Paragraph(
+                escape(
+                    article.author.username
+                ),
+                styles["cell"],
+            ),
+            article.period_views or 0,
+            article.period_reactions or 0,
+            article.period_shares or 0,
+            article.period_downloads or 0,
+        ]
+        for article in top_articles
+    ]
+
+    if not top_article_rows:
+        top_article_rows = [
+            [
+                Paragraph(
+                    "No articles published in this period",
+                    styles["cell"],
+                ),
+                "—",
+                "—",
+                0,
+                0,
+                0,
+                0,
+            ]
+        ]
+
     kpi_table = Table(
         [
             [
                 kpi_card(
-                    "Published articles",
+                    "Published in period",
                     analytics[
-                        "published_articles"
+                        "period_published_articles"
                     ],
                 ),
                 kpi_card(
@@ -1940,6 +2144,12 @@ def download_adviser_analytics_pdf(request):
                     analytics["total_shares"],
                 ),
                 kpi_card(
+                    "PDF downloads",
+                    analytics[
+                        "total_downloads"
+                    ],
+                ),
+                kpi_card(
                     "Total engagement",
                     analytics[
                         "total_engagement"
@@ -1947,7 +2157,7 @@ def download_adviser_analytics_pdf(request):
                 ),
             ]
         ],
-        colWidths=[1.92 * inch] * 5,
+        colWidths=[1.6 * inch] * 6,
         hAlign="LEFT",
     )
 
@@ -2056,6 +2266,7 @@ def download_adviser_analytics_pdf(request):
                     "Views",
                     "Reactions",
                     "Shares",
+                    "PDF Downloads",
                     "Total engagement",
                 ],
                 [
@@ -2069,16 +2280,20 @@ def download_adviser_analytics_pdf(request):
                     ],
                     analytics["total_shares"],
                     analytics[
+                        "total_downloads"
+                    ],
+                    analytics[
                         "total_engagement"
                     ],
                 ],
             ],
             [
-                2.8 * inch,
-                1.65 * inch,
-                1.65 * inch,
-                1.65 * inch,
-                1.85 * inch,
+                2.5 * inch,
+                1.35 * inch,
+                1.35 * inch,
+                1.35 * inch,
+                1.35 * inch,
+                1.7 * inch,
             ],
         ),
         Spacer(1, 10),
@@ -2163,45 +2378,54 @@ def download_adviser_analytics_pdf(request):
         ),
         PageBreak(),
         section_heading(
+            "Articles published in selected period"
+        ),
+        report_table(
+            [
+                [
+                    "Article",
+                    "Category",
+                    "Published",
+                    "Views",
+                    "Reactions",
+                    "Shares",
+                    "PDF Downloads",
+                ]
+            ]
+            + period_article_rows,
+            [
+                2.85 * inch,
+                1.3 * inch,
+                1.25 * inch,
+                0.85 * inch,
+                0.95 * inch,
+                0.85 * inch,
+                1.0 * inch,
+            ],
+        ),
+        Spacer(1, 13),
+        section_heading(
             "Category performance"
         ),
         report_table(
             [
                 [
                     "Category",
-                    "Current published articles",
+                    "Published in selected period",
                     "Views",
                     "Reactions",
                     "Shares",
+                    "PDF Downloads",
                 ]
             ]
-            + [
-                [
-                    Paragraph(
-                        escape(
-                            row[
-                                "category__name"
-                            ]
-                            or "Uncategorized"
-                        ),
-                        styles["cell"],
-                    ),
-                    row["article_count"],
-                    row["total_views"] or 0,
-                    row[
-                        "total_reactions"
-                    ]
-                    or 0,
-                    row["total_shares"] or 0,
-                ]
-                for row in category_performance
-            ],
+            + category_performance_rows,
             [
-                2.9 * inch,
-                2.05 * inch,
-                1.35 * inch,
-                1.35 * inch,
-                1.35 * inch,
+                2.6 * inch,
+                1.8 * inch,
+                1.25 * inch,
+                1.25 * inch,
+                1.25 * inch,
+                1.25 * inch,
             ],
         ),
         Spacer(1, 13),
@@ -2246,7 +2470,7 @@ def download_adviser_analytics_pdf(request):
         ),
         PageBreak(),
         section_heading(
-            "Top published articles"
+            "Top articles published in selected period"
         ),
         report_table(
             [
@@ -2257,39 +2481,18 @@ def download_adviser_analytics_pdf(request):
                     "Views",
                     "Reactions",
                     "Shares",
+                    "PDF Downloads",
                 ]
             ]
-            + [
-                [
-                    Paragraph(
-                        escape(article.title),
-                        styles["cell"],
-                    ),
-                    Paragraph(
-                        escape(
-                            article.category.name
-                        ),
-                        styles["cell"],
-                    ),
-                    Paragraph(
-                        escape(
-                            article.author.username
-                        ),
-                        styles["cell"],
-                    ),
-                    article.period_views or 0,
-                    article.period_reactions or 0,
-                    article.period_shares or 0,
-                ]
-                for article in top_articles
-            ],
+            + top_article_rows,
             [
-                3.35 * inch,
-                1.55 * inch,
-                1.45 * inch,
+                2.75 * inch,
+                1.25 * inch,
+                1.2 * inch,
+                0.8 * inch,
                 0.9 * inch,
+                0.8 * inch,
                 1.0 * inch,
-                0.9 * inch,
             ],
         ),
     ]

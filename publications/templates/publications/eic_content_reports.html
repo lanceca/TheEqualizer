@@ -150,7 +150,7 @@
                         </h2>
 
 
-                        <p class="editorial-item-summary">
+                        <p class="editorial-item-summary editorial-item-summary--concern">
                             {{ report.description|truncatechars:200 }}
                         </p>
 
@@ -183,10 +183,10 @@
 
                         {% if report.staff_notes %}
 
-                            <div class="editorial-review-note">
+                            <div class="editorial-review-note editorial-attention-callout editorial-attention-callout--eic">
 
                                 <strong>
-                                    Revision Instructions
+                                    EIC Feedback / Revision Instructions
                                 </strong>
 
                                 <p>
@@ -227,7 +227,7 @@
 
                         <div class="editorial-review-panel">
 
-                            <div class="request-detail-block">
+                            <div class="request-detail-block editorial-attention-callout editorial-attention-callout--concern">
 
                                 <span>
                                     Reported Concern
@@ -249,10 +249,10 @@
 
                                     {% csrf_token %}
 
-                                    <div class="form-group">
+                                    <div class="form-group editorial-attention-input">
 
                                         <label for="staff_notes_{{ report.id }}">
-                                            EIC Notes / Revision Instructions
+                                            EIC Feedback / Revision Instructions
                                         </label>
 
                                         <textarea

@@ -11,7 +11,7 @@
     -->
     <link
         rel="stylesheet"
-        href="{% static 'css/style.css' %}?v=20260910-mobile-release-manager-1"
+        href="{% static 'css/style.css' %}?v=20260914-reader-filter-search-like-1"
     >
 
     <div class="public-layout">
@@ -157,7 +157,14 @@
                             class="public-category-search"
                             id="public-category-search"
                             role="search"
+                            data-suggestions-url="{% url 'category_article_suggestions' category.slug %}"
                         >
+                            {% if category_date_start %}
+                                <input type="hidden" name="start" value="{{ category_date_start }}">
+                            {% endif %}
+                            {% if category_date_end %}
+                                <input type="hidden" name="end" value="{{ category_date_end }}">
+                            {% endif %}
                             <div
                                 class="public-category-search-field"
                                 id="public-category-search-field"
@@ -178,7 +185,17 @@
                                     placeholder="Search {{ category.name }}"
                                     maxlength="100"
                                     autocomplete="off"
+                                    aria-autocomplete="list"
+                                    aria-controls="public-category-search-suggestions"
+                                    aria-expanded="false"
                                 >
+
+                                <div
+                                    class="public-category-search-suggestions"
+                                    id="public-category-search-suggestions"
+                                    role="listbox"
+                                    hidden
+                                ></div>
                             </div>
 
                             <button
@@ -475,7 +492,7 @@ document.addEventListener(
 
 
         // ==========================================
-        // CATEGORY-ONLY SEARCH
+        // CATEGORY SEARCH + LIVE ARTICLE PREVIEWS
         // ==========================================
 
         const categorySearchForm =
@@ -498,12 +515,143 @@ document.addEventListener(
                 "public-category-search-input"
             );
 
+        const categorySearchSuggestions =
+            document.getElementById(
+                "public-category-search-suggestions"
+            );
+
         if (
             categorySearchForm
             && categorySearchToggle
             && categorySearchField
             && categorySearchInput
         ) {
+            let suggestionTimer = null;
+            let suggestionController = null;
+
+            function closeSuggestions() {
+                if (!categorySearchSuggestions) {
+                    return;
+                }
+
+                categorySearchSuggestions.hidden = true;
+                categorySearchSuggestions.innerHTML = "";
+                categorySearchInput.setAttribute(
+                    "aria-expanded",
+                    "false"
+                );
+            }
+
+            function renderSuggestions(results) {
+                if (!categorySearchSuggestions) {
+                    return;
+                }
+
+                categorySearchSuggestions.innerHTML = "";
+
+                if (!results.length) {
+                    const empty = document.createElement("div");
+                    empty.className = "public-search-suggestion-empty";
+                    empty.textContent = "No matching published articles.";
+                    categorySearchSuggestions.appendChild(empty);
+                } else {
+                    results.forEach(
+                        function (result) {
+                            const link = document.createElement("a");
+                            link.className = "public-search-suggestion";
+                            link.href = result.url;
+                            link.setAttribute("role", "option");
+
+                            const title = document.createElement("strong");
+                            title.textContent = result.title || "Untitled Article";
+
+                            const summary = document.createElement("span");
+                            summary.className = "public-search-suggestion-summary";
+                            summary.textContent = result.summary || "Open article preview";
+
+                            const meta = document.createElement("small");
+                            meta.textContent = [
+                                result.author,
+                                result.published,
+                            ].filter(Boolean).join(" · ");
+
+                            link.appendChild(title);
+                            link.appendChild(summary);
+                            link.appendChild(meta);
+                            categorySearchSuggestions.appendChild(link);
+                        }
+                    );
+                }
+
+                categorySearchSuggestions.hidden = false;
+                categorySearchInput.setAttribute(
+                    "aria-expanded",
+                    "true"
+                );
+            }
+
+            async function loadSuggestions() {
+                const query = categorySearchInput.value.trim();
+
+                if (!query) {
+                    closeSuggestions();
+                    return;
+                }
+
+                const endpoint = categorySearchForm.dataset.suggestionsUrl;
+
+                if (!endpoint) {
+                    return;
+                }
+
+                if (suggestionController) {
+                    suggestionController.abort();
+                }
+
+                suggestionController = new AbortController();
+
+                const params = new URLSearchParams();
+                params.set("q", query);
+
+                const startInput = categorySearchForm.querySelector(
+                    'input[name="start"]'
+                );
+                const endInput = categorySearchForm.querySelector(
+                    'input[name="end"]'
+                );
+
+                if (startInput && startInput.value) {
+                    params.set("start", startInput.value);
+                }
+
+                if (endInput && endInput.value) {
+                    params.set("end", endInput.value);
+                }
+
+                try {
+                    const response = await fetch(
+                        `${endpoint}?${params.toString()}`,
+                        {
+                            headers: {
+                                "X-Requested-With": "XMLHttpRequest",
+                            },
+                            signal: suggestionController.signal,
+                        }
+                    );
+
+                    if (!response.ok) {
+                        throw new Error("Suggestion request failed.");
+                    }
+
+                    const payload = await response.json();
+                    renderSuggestions(payload.results || []);
+                } catch (error) {
+                    if (error.name !== "AbortError") {
+                        closeSuggestions();
+                    }
+                }
+            }
+
             categorySearchToggle.addEventListener(
                 "click",
                 function () {
@@ -518,6 +666,10 @@ document.addEventListener(
                         requestAnimationFrame(
                             function () {
                                 categorySearchInput.focus();
+
+                                if (categorySearchInput.value.trim()) {
+                                    loadSuggestions();
+                                }
                             }
                         );
 
@@ -529,6 +681,7 @@ document.addEventListener(
                         return;
                     }
 
+                    closeSuggestions();
                     categorySearchField.hidden = true;
 
                     categorySearchToggle.setAttribute(
@@ -539,20 +692,109 @@ document.addEventListener(
             );
 
             categorySearchInput.addEventListener(
+                "input",
+                function () {
+                    window.clearTimeout(suggestionTimer);
+
+                    suggestionTimer = window.setTimeout(
+                        loadSuggestions,
+                        180
+                    );
+                }
+            );
+
+            categorySearchInput.addEventListener(
+                "focus",
+                function () {
+                    if (categorySearchInput.value.trim()) {
+                        loadSuggestions();
+                    }
+                }
+            );
+
+            categorySearchInput.addEventListener(
                 "keydown",
                 function (event) {
-                    if (
-                        event.key === "Escape"
-                        && !categorySearchInput.value
-                    ) {
-                        categorySearchField.hidden = true;
+                    if (event.key === "Escape") {
+                        if (
+                            categorySearchSuggestions
+                            && !categorySearchSuggestions.hidden
+                        ) {
+                            closeSuggestions();
+                            event.preventDefault();
+                            return;
+                        }
 
-                        categorySearchToggle.setAttribute(
-                            "aria-expanded",
-                            "false"
+                        if (!categorySearchInput.value) {
+                            categorySearchField.hidden = true;
+
+                            categorySearchToggle.setAttribute(
+                                "aria-expanded",
+                                "false"
+                            );
+
+                            categorySearchToggle.focus();
+                        }
+                    }
+
+                    if (
+                        event.key === "ArrowDown"
+                        && categorySearchSuggestions
+                        && !categorySearchSuggestions.hidden
+                    ) {
+                        const firstSuggestion =
+                            categorySearchSuggestions.querySelector(
+                                "a.public-search-suggestion"
+                            );
+
+                        if (firstSuggestion) {
+                            event.preventDefault();
+                            firstSuggestion.focus();
+                        }
+                    }
+                }
+            );
+
+            if (categorySearchSuggestions) {
+                categorySearchSuggestions.addEventListener(
+                    "keydown",
+                    function (event) {
+                        const suggestions = Array.from(
+                            categorySearchSuggestions.querySelectorAll(
+                                "a.public-search-suggestion"
+                            )
                         );
 
-                        categorySearchToggle.focus();
+                        const currentIndex = suggestions.indexOf(
+                            document.activeElement
+                        );
+
+                        if (event.key === "ArrowDown") {
+                            const next = suggestions[currentIndex + 1];
+                            if (next) {
+                                event.preventDefault();
+                                next.focus();
+                            }
+                        } else if (event.key === "ArrowUp") {
+                            event.preventDefault();
+                            if (currentIndex <= 0) {
+                                categorySearchInput.focus();
+                            } else {
+                                suggestions[currentIndex - 1].focus();
+                            }
+                        } else if (event.key === "Escape") {
+                            closeSuggestions();
+                            categorySearchInput.focus();
+                        }
+                    }
+                );
+            }
+
+            document.addEventListener(
+                "click",
+                function (event) {
+                    if (!categorySearchForm.contains(event.target)) {
+                        closeSuggestions();
                     }
                 }
             );

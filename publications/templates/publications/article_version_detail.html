@@ -2,456 +2,298 @@
 
 {% block staff_content %}
 
-<style>
+<div class="version-preview-page">
 
-    .version-detail-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 16px;
-        margin-bottom: 24px;
-    }
-
-    .version-detail-header h1 {
-        margin-bottom: 6px;
-    }
-
-    .version-detail-heading-meta {
-        margin: 0;
-        color: var(--eq-muted);
-    }
-
-    .version-detail-panel {
-        padding: 26px;
-        background: var(--eq-white);
-        border: 1px solid var(--eq-border);
-        border-radius: var(--eq-radius);
-        box-shadow: var(--eq-shadow);
-    }
-
-    .version-detail-badges {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 18px;
-    }
-
-    .version-detail-grid {
-        display: grid;
-        grid-template-columns:
-            repeat(
-                auto-fit,
-                minmax(190px, 1fr)
-            );
-        gap: 12px;
-        margin: 18px 0 24px;
-    }
-
-    .version-detail-meta-card {
-        padding: 12px 14px;
-        border: 1px solid var(--eq-border);
-        border-radius: 7px;
-        background: var(--eq-offwhite);
-    }
-
-    .version-detail-meta-card span {
-        display: block;
-        margin-bottom: 3px;
-        color: var(--eq-muted);
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.6px;
-        text-transform: uppercase;
-    }
-
-    .version-detail-meta-card strong {
-        color: var(--eq-charcoal);
-    }
-
-    .version-detail-section {
-        margin-top: 28px;
-        padding-top: 20px;
-        border-top: 1px solid var(--eq-border);
-    }
-
-    .version-detail-section h2 {
-        margin-top: 0;
-        padding-bottom: 8px;
-        border-bottom: 2px solid var(--eq-green-soft);
-        font-size: 20px;
-    }
-
-    .version-detail-content {
-        overflow-wrap: anywhere;
-        line-height: 1.75;
-    }
-
-    .version-detail-contributor-list {
-        display: grid;
-        gap: 7px;
-    }
-
-    .version-video-grid {
-        display: grid;
-        grid-template-columns:
-            repeat(
-                auto-fill,
-                minmax(280px, 1fr)
-            );
-        gap: 18px;
-    }
-
-    .version-video-card {
-        padding: 12px;
-        border: 1px solid var(--eq-border);
-        border-radius: 8px;
-        background: var(--eq-offwhite);
-    }
-
-    .version-video-card video {
-        display: block;
-        width: 100%;
-        max-height: 380px;
-        background: #000000;
-        border-radius: 6px;
-    }
-
-</style>
-
-
-<div class="version-detail-header">
-
-    <div>
-
-        <h1>
-            Version {{ article_version.version_number }}
-        </h1>
-
-        <p class="version-detail-heading-meta">
-            {{ article.title }}
-        </p>
-
-    </div>
-
-    <a
-        href="{% url 'article_version_history' article.id %}"
-        class="secondary-button"
-    >
-        Back to Version History
-    </a>
-
-</div>
-
-
-<div class="version-detail-panel">
-
-    <div class="version-detail-badges">
-
-        <span class="status-badge status-approved">
-            Version {{ article_version.version_number }}
-        </span>
-
-        <span class="status-badge badge-edit">
-            {{ article_version.get_change_type_display }}
-        </span>
-
-        {% if article_version.version_number == article.version_number %}
-
-            <span class="status-badge status-approved">
-                Current Published Version
-            </span>
-
-        {% endif %}
-
-    </div>
-
-
-    <h2>
-        {{ article_version.title }}
-    </h2>
-
-    {% if article_version.subtitle %}
-
-        <p class="article-detail-subtitle">
-            {{ article_version.subtitle }}
-        </p>
-
-    {% endif %}
-
-
-    <div class="version-detail-grid">
-
-        <div class="version-detail-meta-card">
-            <span>Category</span>
-            <strong>
-                {{ article_version.category_name|default:"Unavailable" }}
-            </strong>
-        </div>
-
-        <div class="version-detail-meta-card">
-            <span>Primary Author</span>
-            <strong>
-                {{ article_version.author_name|default:"Unavailable" }}
-            </strong>
-        </div>
-
-        <div class="version-detail-meta-card">
-            <span>Attachment Type</span>
-            <strong>
-                {{ article_version.get_attachment_mode_display }}
-            </strong>
-        </div>
-
-        <div class="version-detail-meta-card">
-            <span>Version Created</span>
-            <strong>
-                {{ article_version.created_at|date:"M. d, Y - g:i A" }}
-            </strong>
-        </div>
-
-        <div class="version-detail-meta-card">
-            <span>Version Created By</span>
-            <strong>
-                {% if article_version.created_by_name %}
-                    {{ article_version.created_by_name }}
+    <div class="version-preview-toolbar">
+        <div>
+            <p class="workflow-eyebrow">Version Control Preview</p>
+            <h1>Version {{ article_version.version_number }}</h1>
+            <p>
+                {{ article_version.get_change_type_display }}
+                {% if previous_version %}
+                    &middot; compared with Version {{ previous_version.version_number }}
                 {% else %}
-                    System / pre-history baseline
+                    &middot; baseline snapshot
+                {% endif %}
+            </p>
+        </div>
+
+        <a
+            href="{% url 'article_version_history' article.id %}"
+            class="secondary-button"
+        >
+            Back to Version History
+        </a>
+    </div>
+
+
+    <section class="version-change-overview">
+        <div>
+            <span class="version-change-overview-kicker">Change Map</span>
+            <strong>
+                {% if previous_version %}
+                    Changes introduced in Version {{ article_version.version_number }}
+                {% else %}
+                    Initial official snapshot
                 {% endif %}
             </strong>
-        </div>
-
-        <div class="version-detail-meta-card">
-            <span>Change Type</span>
-            <strong>
-                {{ article_version.get_change_type_display }}
-            </strong>
-        </div>
-
-    </div>
-
-
-    {% if article_version.excerpt %}
-
-        <div class="article-excerpt-box">
-
-            <strong>
-                Summary
-            </strong>
-
             <p>
-                {{ article_version.excerpt|linebreaksbr }}
+                Yellow highlighting marks text added or replaced in this version.
+                Gold outlined sections indicate other changed article fields or media.
             </p>
-
         </div>
 
-    {% endif %}
-
-
-    {% if article_version.contributors %}
-
-        <section class="version-detail-section">
-
-            <h2>
-                Contributors
-            </h2>
-
-            <div class="version-detail-contributor-list">
-
-                {% for contributor in article_version.contributors %}
-
-                    <p class="article-meta">
-                        <strong>
-                            {{ contributor.role_display }}:
-                        </strong>
-                        {{ contributor.username }}
-                    </p>
-
+        {% if changed_field_labels %}
+            <div class="version-change-overview-chips">
+                {% for label in changed_field_labels %}
+                    <span>{{ label }}</span>
                 {% endfor %}
-
             </div>
-
-        </section>
-
-    {% endif %}
-
-
-    {% if article_version.featured_image %}
-
-        <section class="version-detail-section">
-
-            <h2>
-                Featured Image
-            </h2>
-
-            <img
-                src="{{ article_version.featured_image_url }}"
-                alt="{{ article_version.title }}"
-                class="featured-image"
-                tabindex="0"
-                role="button"
-                data-lightbox-image
-            >
-
-            {% if article_version.featured_image_caption %}
-
-                <p class="featured-image-caption">
-                    {{ article_version.featured_image_caption }}
-                </p>
-
-            {% endif %}
-
-            {% if article_version.featured_image_credit %}
-
-                <p class="featured-image-credit">
-                    {{ article_version.featured_image_credit }}
-                </p>
-
-            {% endif %}
-
-        </section>
-
-    {% endif %}
-
-
-    <section class="version-detail-section">
-
-        <h2>
-            Article Content
-        </h2>
-
-        <div class="version-detail-content">
-            {{ article_version.content|linebreaksbr }}
-        </div>
-
+        {% elif previous_version %}
+            <div class="version-change-overview-zero">
+                No stored article fields changed.
+            </div>
+        {% else %}
+            <div class="version-change-overview-zero">
+                No previous version is available for comparison.
+            </div>
+        {% endif %}
     </section>
 
 
-    {% if article_version.tags %}
+    <article class="version-reader-preview">
 
-        <section class="version-detail-section">
+        <header class="version-reader-header">
 
-            <h2>
-                Tags
+            <div class="version-reader-category-row{% if version_changes.category %} version-change-region{% endif %}">
+                <span class="version-reader-category">
+                    {{ article_version.category_name|default:"Uncategorized" }}
+                </span>
+                {% if version_changes.category %}
+                    <span class="version-changed-badge">Changed</span>
+                {% endif %}
+            </div>
+
+            <h2 class="version-reader-title{% if version_changes.title %} version-change-region{% endif %}">
+                {{ version_diff.title_html|safe }}
+                {% if version_changes.title %}
+                    <span class="version-changed-badge">Headline changed</span>
+                {% endif %}
             </h2>
 
-            <div class="tag-list">
+            {% if article_version.subtitle %}
+                <p class="version-reader-subtitle{% if version_changes.subtitle %} version-change-region{% endif %}">
+                    {{ version_diff.subtitle_html|safe }}
+                    {% if version_changes.subtitle %}
+                        <span class="version-changed-badge">Subtitle changed</span>
+                    {% endif %}
+                </p>
+            {% elif version_changes.subtitle %}
+                <p class="version-removed-field version-change-region">
+                    Subtitle removed in this version.
+                </p>
+            {% endif %}
 
-                {% for tag in article_version.tags %}
-
-                    <span class="tag-item">
-                        {{ tag }}
+            <div class="version-reader-byline{% if version_changes.author or version_changes.contributors %} version-change-region{% endif %}">
+                <div>
+                    <span>
+                        By <strong>{{ article_version.author_name|default:"Unavailable" }}</strong>
                     </span>
 
-                {% endfor %}
+                    {% if article_version.contributors %}
+                        <div class="version-reader-contributors">
+                            {% for contributor in article_version.contributors %}
+                                <span>
+                                    {{ contributor.role_display }}: {{ contributor.username }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
 
+                <div class="version-reader-date">
+                    <span>{{ article_version.created_at|date:"M. d, Y - g:i A" }}</span>
+                    <small>
+                        Version created by
+                        {% if article_version.created_by_name %}
+                            {{ article_version.created_by_name }}
+                        {% else %}
+                            System / pre-history baseline
+                        {% endif %}
+                    </small>
+                </div>
+
+                {% if version_changes.author or version_changes.contributors %}
+                    <span class="version-changed-badge">Byline / contributors changed</span>
+                {% endif %}
             </div>
 
-        </section>
-
-    {% endif %}
+        </header>
 
 
-    {% if article_version.image_attachments.all %}
+        {% if article_version.featured_image %}
+            <figure class="version-reader-featured{% if version_changes.featured_image %} version-change-region{% endif %}">
+                {% if version_changes.featured_image %}
+                    <span class="version-changed-badge version-media-change-badge">Featured image changed</span>
+                {% endif %}
 
-        <section class="version-detail-section">
+                <img
+                    src="{{ article_version.featured_image_url }}"
+                    alt="{{ article_version.title }}"
+                    tabindex="0"
+                    role="button"
+                    data-lightbox-image
+                >
 
-            <h2>
-                Attached Images
-            </h2>
+                {% if article_version.featured_image_caption or article_version.featured_image_credit %}
+                    <figcaption>
+                        <span>{{ article_version.featured_image_caption }}</span>
+                        {% if article_version.featured_image_credit %}
+                            <em>{{ article_version.featured_image_credit }}</em>
+                        {% endif %}
+                    </figcaption>
+                {% endif %}
+            </figure>
+        {% elif version_changes.featured_image %}
+            <div class="version-removed-field version-change-region version-reader-width-wide">
+                Featured image removed in this version.
+            </div>
+        {% endif %}
 
-            <p class="form-help">
-                Click an image to enlarge it.
+
+        {% if article_version.excerpt %}
+            <p class="version-reader-excerpt{% if version_changes.excerpt %} version-change-region{% endif %}">
+                {{ version_diff.excerpt_html|safe }}
+                {% if version_changes.excerpt %}
+                    <span class="version-changed-badge">Summary changed</span>
+                {% endif %}
             </p>
+        {% elif version_changes.excerpt %}
+            <p class="version-removed-field version-change-region version-reader-width-body">
+                Summary removed in this version.
+            </p>
+        {% endif %}
 
-            <div class="attachment-gallery">
 
-                {% for attachment in article_version.image_attachments.all %}
-
-                    <div class="attachment-item">
-
-                        <img
-                            src="{{ attachment.image_url }}"
-                            alt="{{ attachment.alt_text|default:attachment.caption|default:'Article version attachment' }}"
-                            class="attachment-image"
-                            tabindex="0"
-                            role="button"
-                            data-lightbox-image
-                        >
-
-                        {% if attachment.caption %}
-
-                            <p class="attachment-caption">
-                                {{ attachment.caption }}
-                            </p>
-
-                        {% endif %}
-
-                        {% if attachment.credit %}
-
-                            <p class="attachment-credit">
-                                {{ attachment.credit }}
-                            </p>
-
-                        {% endif %}
-
-                    </div>
-
-                {% endfor %}
-
-            </div>
-
+        <section class="version-reader-body{% if version_changes.content %} version-change-region{% endif %}">
+            {% if version_changes.content %}
+                <span class="version-changed-badge version-body-change-badge">Article body changed</span>
+            {% endif %}
+            {{ version_diff.content_html|safe }}
         </section>
 
-    {% endif %}
 
-
-    {% if article_version.video_attachments.all %}
-
-        <section class="version-detail-section">
-
-            <h2>
-                Attached Videos
-            </h2>
-
-            <div class="version-video-grid">
-
-                {% for attachment in article_version.video_attachments.all %}
-
-                    <div class="version-video-card">
-
-                        <video controls preload="metadata">
-                            <source src="{{ attachment.video_url }}">
-                            Your browser does not support video playback.
-                        </video>
-
-                        {% if attachment.caption %}
-
-                            <p class="attachment-caption">
-                                {{ attachment.caption }}
-                            </p>
-
-                        {% endif %}
-
-                        {% if attachment.credit %}
-
-                            <p class="attachment-credit">
-                                {{ attachment.credit }}
-                            </p>
-
-                        {% endif %}
-
-                    </div>
-
-                {% endfor %}
-
+        <div class="version-reader-meta-strip">
+            <div{% if version_changes.attachment_mode %} class="version-change-region"{% endif %}>
+                <span>Attachment Type</span>
+                <strong>{{ article_version.get_attachment_mode_display }}</strong>
+                {% if version_changes.attachment_mode %}
+                    <small>Changed in this version</small>
+                {% endif %}
             </div>
+            <div>
+                <span>Change Type</span>
+                <strong>{{ article_version.get_change_type_display }}</strong>
+            </div>
+            <div>
+                <span>Version</span>
+                <strong>{{ article_version.version_number }}</strong>
+            </div>
+        </div>
 
-        </section>
 
-    {% endif %}
+        {% if article_version.tags %}
+            <section class="version-reader-tags{% if version_changes.tags %} version-change-region{% endif %}">
+                {% if version_changes.tags %}
+                    <span class="version-changed-badge">Tags changed</span>
+                {% endif %}
+                {% for tag in article_version.tags %}
+                    <span class="tag-item">{{ tag }}</span>
+                {% endfor %}
+            </section>
+        {% elif version_changes.tags %}
+            <div class="version-removed-field version-change-region version-reader-width-body">
+                Tags removed in this version.
+            </div>
+        {% endif %}
+
+
+        {% if article_version.image_attachments.all %}
+            <section class="version-reader-media{% if version_changes.image_attachments %} version-change-region{% endif %}">
+                <div class="version-reader-section-heading">
+                    <div>
+                        <span>Article Media</span>
+                        <h3>Images</h3>
+                    </div>
+                    {% if version_changes.image_attachments %}
+                        <span class="version-changed-badge">Image set changed</span>
+                    {% endif %}
+                </div>
+
+                <div class="version-reader-image-grid">
+                    {% for attachment in article_version.image_attachments.all %}
+                        <figure>
+                            <img
+                                src="{{ attachment.image_url }}"
+                                alt="{{ attachment.alt_text|default:attachment.caption|default:'Article version attachment' }}"
+                                tabindex="0"
+                                role="button"
+                                data-lightbox-image
+                            >
+                            {% if attachment.caption or attachment.credit %}
+                                <figcaption>
+                                    <span>{{ attachment.caption }}</span>
+                                    {% if attachment.credit %}<em>{{ attachment.credit }}</em>{% endif %}
+                                </figcaption>
+                            {% endif %}
+                        </figure>
+                    {% endfor %}
+                </div>
+            </section>
+        {% elif version_changes.image_attachments %}
+            <div class="version-removed-field version-change-region version-reader-width-wide">
+                Article image attachments were removed in this version.
+            </div>
+        {% endif %}
+
+
+        {% if article_version.video_attachments.all %}
+            <section class="version-reader-media{% if version_changes.video_attachments %} version-change-region{% endif %}">
+                <div class="version-reader-section-heading">
+                    <div>
+                        <span>Article Media</span>
+                        <h3>Videos</h3>
+                    </div>
+                    {% if version_changes.video_attachments %}
+                        <span class="version-changed-badge">Video set changed</span>
+                    {% endif %}
+                </div>
+
+                <div class="version-reader-video-grid">
+                    {% for attachment in article_version.video_attachments.all %}
+                        <figure>
+                            <video controls preload="metadata">
+                                <source src="{{ attachment.video_url }}">
+                                Your browser does not support video playback.
+                            </video>
+                            {% if attachment.caption or attachment.credit %}
+                                <figcaption>
+                                    <span>{{ attachment.caption }}</span>
+                                    {% if attachment.credit %}<em>{{ attachment.credit }}</em>{% endif %}
+                                </figcaption>
+                            {% endif %}
+                        </figure>
+                    {% endfor %}
+                </div>
+            </section>
+        {% elif version_changes.video_attachments %}
+            <div class="version-removed-field version-change-region version-reader-width-wide">
+                Article video attachments were removed in this version.
+            </div>
+        {% endif %}
+
+    </article>
 
 </div>
-
 
 {% endblock %}

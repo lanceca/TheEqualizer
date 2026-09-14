@@ -155,7 +155,7 @@
 .aa-metrics-grid {
     display: grid;
     grid-template-columns:
-        repeat(4, minmax(0, 1fr));
+        repeat(6, minmax(0, 1fr));
 
     gap: 14px;
 
@@ -1013,5 +1013,101 @@
 @media (prefers-reduced-motion: reduce) {
     .adviser-analytics-shell * {
         scroll-behavior: auto !important;
+    }
+}
+
+
+/* Exact-range content empty state */
+.aa-zero-state {
+    display: flex;
+    min-height: 150px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 7px;
+    padding: 22px;
+    border: 1px dashed var(--aa-border);
+    border-radius: 13px;
+    background: #fbfcfb;
+    color: var(--aa-muted);
+    text-align: center;
+}
+
+.aa-zero-state strong {
+    color: var(--aa-green-deep);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 38px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.aa-zero-state span {
+    max-width: 320px;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+
+.aa-period-articles {
+    display: grid;
+    gap: 0;
+}
+
+.aa-period-article {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) auto minmax(220px, 0.8fr);
+    align-items: center;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid #edf1ef;
+}
+
+.aa-period-article:last-child {
+    border-bottom: 0;
+}
+
+.aa-period-article-copy {
+    min-width: 0;
+}
+
+.aa-period-article-copy strong,
+.aa-period-article-copy span {
+    display: block;
+}
+
+.aa-period-article-copy strong {
+    overflow-wrap: anywhere;
+    color: var(--aa-green-deep);
+    font-size: 12px;
+}
+
+.aa-period-article-copy span,
+.aa-period-article time {
+    margin-top: 3px;
+    color: var(--aa-muted);
+    font-size: 9px;
+}
+
+.aa-period-article-stats {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 7px 13px;
+    color: var(--aa-muted);
+    font-size: 9px;
+}
+
+.aa-period-article-stats b {
+    color: var(--aa-green-deep);
+}
+
+@media (max-width: 760px) {
+    .aa-period-article {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .aa-period-article-stats {
+        justify-content: flex-start;
     }
 }

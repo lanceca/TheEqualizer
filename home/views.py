@@ -5,14 +5,17 @@ from html import escape, unescape
 from django.contrib import messages
 from django.contrib.staticfiles import finders
 from django.db import transaction
-from django.db.models import F, Q
-from django.http import HttpResponse, HttpResponseForbidden
+from django.db.models import F, Q, Sum
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import (
     get_object_or_404,
     redirect,
     render,
 )
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.crypto import salted_hmac
+from django.utils.dateparse import parse_date
 from django.utils.html import strip_tags
 
 from reportlab.lib import colors
@@ -39,7 +42,10 @@ from rest_framework.decorators import (
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from analytics.models import ArticleDailyAnalytics
+from analytics.models import (
+    ArticleDailyAnalytics,
+    ArticlePdfDownloadTracker,
+)
 from publications.models import (
     AboutUsPage,
     Article,
@@ -164,6 +170,93 @@ def draw_article_pdf_page(canvas, document):
 
 
 # ==========================================================
+# READER DOWNLOAD FINGERPRINT HELPERS
+# ==========================================================
+
+
+def get_reader_client_ip(request):
+    """
+    Return the reader-facing client IP supplied by the reverse proxy.
+
+    The raw address is used only while creating the fingerprint and is
+    never stored in the database.
+    """
+
+    forwarded_for = (
+        request.META.get(
+            "HTTP_X_FORWARDED_FOR",
+            "",
+        )
+        or ""
+    )
+
+    if forwarded_for:
+        return (
+            forwarded_for
+            .split(",", 1)[0]
+            .strip()
+        )[:128]
+
+    return (
+        request.META.get(
+            "REMOTE_ADDR",
+            "",
+        )
+        or ""
+    ).strip()[:128]
+
+
+def build_article_pdf_download_fingerprint(request):
+    """
+    Build a privacy-conscious, stable reader fingerprint for PDF counting.
+
+    The fingerprint combines the client IP with browser/device headers and
+    is keyed with Django's SECRET_KEY. Only the resulting HMAC digest is
+    stored, so neither the raw IP address nor the raw browser signature is
+    persisted.
+    """
+
+    fingerprint_source = "\n".join(
+        [
+            get_reader_client_ip(request),
+            (
+                request.META.get(
+                    "HTTP_USER_AGENT",
+                    "",
+                )
+                or ""
+            ).strip()[:1000],
+            (
+                request.META.get(
+                    "HTTP_SEC_CH_UA",
+                    "",
+                )
+                or ""
+            ).strip()[:500],
+            (
+                request.META.get(
+                    "HTTP_SEC_CH_UA_PLATFORM",
+                    "",
+                )
+                or ""
+            ).strip()[:200],
+            (
+                request.META.get(
+                    "HTTP_ACCEPT_LANGUAGE",
+                    "",
+                )
+                or ""
+            ).strip()[:300],
+        ]
+    )
+
+    return salted_hmac(
+        "equalizer.article-pdf-download",
+        fingerprint_source,
+    ).hexdigest()
+
+
+# ==========================================================
 # ANALYTICS HELPERS
 # ==========================================================
 
@@ -174,6 +267,7 @@ def increment_daily_article_analytics(
     views=0,
     reactions=0,
     shares=0,
+    downloads=0,
 ):
     """
     Increment the current Manila-calendar-day analytics row
@@ -209,6 +303,11 @@ def increment_daily_article_analytics(
         if shares:
             updates["shares"] = (
                 F("shares") + shares
+            )
+
+        if downloads:
+            updates["downloads"] = (
+                F("downloads") + downloads
             )
 
         if updates:
@@ -310,6 +409,112 @@ def home(request):
 
 
 # ==========================================================
+# PUBLIC CATEGORY ARTICLE FILTER HELPERS
+# ==========================================================
+
+
+def get_category_article_date_filters(request):
+    """Resolve optional inclusive publication-date filters for category pages."""
+
+    start_value = (
+        request.GET.get("start", "").strip()
+    )[:10]
+    end_value = (
+        request.GET.get("end", "").strip()
+    )[:10]
+
+    start_date = (
+        parse_date(start_value)
+        if start_value
+        else None
+    )
+    end_date = (
+        parse_date(end_value)
+        if end_value
+        else None
+    )
+
+    filter_error = ""
+
+    if start_value and start_date is None:
+        filter_error = "Choose a valid From date."
+        start_value = ""
+
+    if end_value and end_date is None:
+        filter_error = (
+            filter_error
+            or "Choose a valid To date."
+        )
+        end_value = ""
+
+    if (
+        start_date is not None
+        and end_date is not None
+        and start_date > end_date
+    ):
+        filter_error = (
+            "The From date cannot be later than the To date."
+        )
+        start_date = None
+        end_date = None
+        start_value = ""
+        end_value = ""
+
+    return {
+        "start_date": start_date,
+        "end_date": end_date,
+        "start_value": start_value,
+        "end_value": end_value,
+        "filter_error": filter_error,
+    }
+
+
+def filter_public_category_articles(
+    queryset,
+    *,
+    search_query="",
+    start_date=None,
+    end_date=None,
+):
+    """Apply the reader category search and publication-date filters."""
+
+    if search_query:
+        # Treat the reader query as words rather than requiring one exact
+        # contiguous phrase. Every entered word must match at least one
+        # searchable article field, which makes live suggestions and the
+        # submitted search behave consistently.
+        search_terms = [
+            term
+            for term in search_query.split()
+            if term
+        ][:8]
+
+        for term in search_terms:
+            queryset = queryset.filter(
+                Q(title__icontains=term)
+                | Q(subtitle__icontains=term)
+                | Q(excerpt__icontains=term)
+                | Q(content__icontains=term)
+                | Q(author__username__icontains=term)
+                | Q(tags__name__icontains=term)
+            )
+
+        queryset = queryset.distinct()
+
+    if start_date is not None:
+        queryset = queryset.filter(
+            published_at__date__gte=start_date
+        )
+
+    if end_date is not None:
+        queryset = queryset.filter(
+            published_at__date__lte=end_date
+        )
+
+    return queryset
+
+
+# ==========================================================
 # PUBLIC CATEGORY ARTICLES
 # ==========================================================
 
@@ -325,6 +530,12 @@ def category_articles(
 
     category_search_query = (
         request.GET.get("q", "").strip()[:100]
+    )
+
+    date_filters = (
+        get_category_article_date_filters(
+            request
+        )
     )
 
     articles = (
@@ -348,43 +559,12 @@ def category_articles(
         )
     )
 
-    if category_search_query:
-        articles = (
-            articles
-            .filter(
-                Q(
-                    title__icontains=(
-                        category_search_query
-                    )
-                )
-                | Q(
-                    subtitle__icontains=(
-                        category_search_query
-                    )
-                )
-                | Q(
-                    excerpt__icontains=(
-                        category_search_query
-                    )
-                )
-                | Q(
-                    content__icontains=(
-                        category_search_query
-                    )
-                )
-                | Q(
-                    author__username__icontains=(
-                        category_search_query
-                    )
-                )
-                | Q(
-                    tags__name__icontains=(
-                        category_search_query
-                    )
-                )
-            )
-            .distinct()
-        )
+    articles = filter_public_category_articles(
+        articles,
+        search_query=category_search_query,
+        start_date=date_filters["start_date"],
+        end_date=date_filters["end_date"],
+    )
 
     articles = list(
         articles.order_by(
@@ -413,12 +593,141 @@ def category_articles(
             "category_search_query": (
                 category_search_query
             ),
+            "category_date_start": (
+                date_filters["start_value"]
+            ),
+            "category_date_end": (
+                date_filters["end_value"]
+            ),
+            "category_date_filter_error": (
+                date_filters["filter_error"]
+            ),
+            "category_filter_active": bool(
+                category_search_query
+                or date_filters["start_value"]
+                or date_filters["end_value"]
+            ),
             "articles": articles,
             "lead_article": lead_article,
             "remaining_articles": (
                 remaining_articles
             ),
         },
+    )
+
+
+# ==========================================================
+# PUBLIC CATEGORY LIVE SEARCH SUGGESTIONS
+# ==========================================================
+
+
+def category_article_suggestions(
+    request,
+    category_slug,
+):
+    """Return a small reader-safe list of matching articles for live search."""
+
+    if request.method != "GET":
+        return JsonResponse(
+            {
+                "results": [],
+                "detail": "This endpoint accepts GET requests only.",
+            },
+            status=405,
+        )
+
+    category = get_object_or_404(
+        Category,
+        slug=category_slug,
+    )
+
+    search_query = (
+        request.GET.get("q", "").strip()[:100]
+    )
+
+    if not search_query:
+        return JsonResponse(
+            {"results": []}
+        )
+
+    date_filters = (
+        get_category_article_date_filters(
+            request
+        )
+    )
+
+    articles = (
+        Article.objects
+        .filter(
+            category=category,
+            draft_type=Article.DraftType.NORMAL,
+            is_published=True,
+            is_archived=False,
+        )
+        .select_related(
+            "category",
+            "author",
+        )
+    )
+
+    articles = filter_public_category_articles(
+        articles,
+        search_query=search_query,
+        start_date=date_filters["start_date"],
+        end_date=date_filters["end_date"],
+    )
+
+    results = []
+
+    for article in articles.order_by(
+        "-published_at",
+        "-created_at",
+    )[:8]:
+        summary = (
+            article.subtitle
+            or article.excerpt
+            or strip_tags(article.content or "")
+        )
+        summary = " ".join(
+            summary.split()
+        )
+
+        if len(summary) > 135:
+            summary = summary[:132].rstrip() + "..."
+
+        published_value = (
+            article.published_at
+            or article.created_at
+        )
+
+        if timezone.is_aware(published_value):
+            published_value = timezone.localtime(
+                published_value
+            )
+
+        results.append(
+            {
+                "title": article.title,
+                "summary": summary,
+                "category": category.name,
+                "author": article.author.username,
+                "published": published_value.strftime(
+                    "%b. %d, %Y"
+                ),
+                "url": reverse(
+                    "article_detail",
+                    kwargs={
+                        "slug": article.slug,
+                    },
+                ),
+            }
+        )
+
+    return JsonResponse(
+        {
+            "results": results,
+            "query": search_query,
+        }
     )
 
 
@@ -504,6 +813,13 @@ def article_detail(
         [],
     )
 
+    pdf_download_count = (
+        ArticleDailyAnalytics.objects
+        .filter(article=article)
+        .aggregate(total=Sum("downloads"))["total"]
+        or 0
+    )
+
     return render(
         request,
         "home/article_detail.html",
@@ -518,6 +834,10 @@ def article_detail(
             "has_shared": (
                 article.id
                 in shared_articles
+            ),
+
+            "pdf_download_count": (
+                pdf_download_count
             ),
         },
     )
@@ -961,6 +1281,38 @@ def download_article_pdf(request, slug):
 
     pdf_content = pdf_buffer.getvalue()
 
+    # Count the reader only once per article for the same device/IP
+    # fingerprint. The PDF itself is still returned on every request.
+    #
+    # This is intentionally recorded only after ReportLab successfully
+    # generates the document. The tracker stores only a keyed hash; raw
+    # IP addresses and browser/device header values are never persisted.
+    download_fingerprint = (
+        build_article_pdf_download_fingerprint(
+            request
+        )
+    )
+
+    with transaction.atomic():
+        (
+            _download_tracker,
+            is_first_unique_download,
+        ) = (
+            ArticlePdfDownloadTracker.objects
+            .get_or_create(
+                article=article,
+                fingerprint_hash=(
+                    download_fingerprint
+                ),
+            )
+        )
+
+        if is_first_unique_download:
+            increment_daily_article_analytics(
+                article,
+                downloads=1,
+            )
+
     response = HttpResponse(
         pdf_content,
         content_type="application/pdf",
@@ -976,7 +1328,7 @@ def download_article_pdf(request, slug):
 
 
 # ==========================================================
-# ARTICLE REACTION
+# ARTICLE LIKE / UNLIKE
 # ==========================================================
 
 
@@ -984,9 +1336,9 @@ def react_to_article(
     request,
     slug,
 ):
+    """Toggle the current browser session's Like for a published article."""
 
     if request.method != "POST":
-
         return HttpResponseForbidden(
             "This action requires a POST request."
         )
@@ -1004,45 +1356,75 @@ def react_to_article(
         [],
     )
 
+    # Normalize older session payloads while preserving compatibility
+    # with the existing reader-session Like tracking.
+    reacted_articles = list(
+        dict.fromkeys(
+            reacted_articles
+            if isinstance(
+                reacted_articles,
+                list,
+            )
+            else []
+        )
+    )
+
     if article.id in reacted_articles:
+        # Undo only the lifetime Like total. Daily analytics intentionally
+        # remain an event history of reader interactions rather than being
+        # rewritten when a reader removes a Like later.
+        with transaction.atomic():
+            Article.objects.filter(
+                id=article.id,
+                reaction_count__gt=0,
+            ).update(
+                reaction_count=(
+                    F("reaction_count") - 1
+                )
+            )
+
+        reacted_articles = [
+            article_id
+            for article_id in reacted_articles
+            if article_id != article.id
+        ]
+
+        request.session[
+            "reacted_articles"
+        ] = reacted_articles
 
         messages.info(
             request,
-            "You have already reacted to this article.",
+            "Your Like was removed.",
         )
 
-        return redirect(
-            "article_detail",
-            slug=article.slug,
+    else:
+        with transaction.atomic():
+            Article.objects.filter(
+                id=article.id
+            ).update(
+                reaction_count=(
+                    F("reaction_count") + 1
+                )
+            )
+
+            increment_daily_article_analytics(
+                article,
+                reactions=1,
+            )
+
+        reacted_articles.append(
+            article.id
         )
 
-    with transaction.atomic():
+        request.session[
+            "reacted_articles"
+        ] = reacted_articles
 
-        Article.objects.filter(
-            id=article.id
-        ).update(
-            reaction_count=F(
-                "reaction_count"
-            ) + 1
+        messages.success(
+            request,
+            "Your Like was recorded.",
         )
-
-        increment_daily_article_analytics(
-            article,
-            reactions=1,
-        )
-
-    reacted_articles.append(
-        article.id
-    )
-
-    request.session[
-        "reacted_articles"
-    ] = reacted_articles
-
-    messages.success(
-        request,
-        "Your reaction was recorded.",
-    )
 
     return redirect(
         "article_detail",

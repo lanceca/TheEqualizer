@@ -67,6 +67,12 @@ urlpatterns = [
         name="category_articles",
     ),
 
+    path(
+        "category/<slug:category_slug>/suggestions/",
+        views.category_article_suggestions,
+        name="category_article_suggestions",
+    ),
+
     # ======================================================
     # PUBLIC ARTICLES
     # ======================================================

@@ -205,6 +205,7 @@
     data-start-date="{{ analytics_start_date|date:'Y-m-d' }}"
     data-end-date="{{ analytics_end_date|date:'Y-m-d' }}"
     data-timezone="Asia/Manila"
+    data-period-published-count="{{ period_published_articles|default:0 }}"
 ></div>
 
 
@@ -221,6 +222,28 @@
 {{ historical_views|json_script:"adviser-history-views" }}
 {{ historical_reactions|json_script:"adviser-history-reactions" }}
 {{ historical_shares|json_script:"adviser-history-shares" }}
+{{ historical_downloads|json_script:"adviser-history-downloads" }}
+
+
+<div id="adviser-period-articles-data" hidden>
+
+    {% for article in period_published_article_list %}
+
+        <span
+            data-period-article
+            data-title="{{ article.title }}"
+            data-category="{{ article.category.name }}"
+            data-author="{{ article.author.username }}"
+            data-published-at="{{ article.published_at|date:'Y-m-d' }}"
+            data-views="{{ article.period_views|default:0 }}"
+            data-reactions="{{ article.period_reactions|default:0 }}"
+            data-shares="{{ article.period_shares|default:0 }}"
+            data-downloads="{{ article.period_downloads|default:0 }}"
+        ></span>
+
+    {% endfor %}
+
+</div>
 
 
 <div id="adviser-top-articles-data" hidden>
@@ -231,9 +254,11 @@
             data-top-article
             data-title="{{ article.title }}"
             data-category="{{ article.category.name }}"
-            data-views="{{ article.view_count|default:0 }}"
-            data-reactions="{{ article.reaction_count|default:0 }}"
-            data-shares="{{ article.share_count|default:0 }}"
+            data-views="{{ article.period_views|default:0 }}"
+            data-reactions="{{ article.period_reactions|default:0 }}"
+            data-shares="{{ article.period_shares|default:0 }}"
+            data-downloads="{{ article.period_downloads|default:0 }}"
+            data-published-at="{{ article.published_at|date:'Y-m-d' }}"
         ></span>
 
     {% endfor %}

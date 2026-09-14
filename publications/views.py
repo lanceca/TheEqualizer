@@ -1,5 +1,7 @@
+from difflib import SequenceMatcher
 from functools import wraps
 import logging
+import re
 
 from django.conf import settings
 from django.contrib import messages
@@ -13,6 +15,8 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.html import escape
+from django.utils.safestring import mark_safe
 from django.utils.text import slugify
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
@@ -4345,6 +4349,343 @@ def get_version_history_article_for_user(
     )
 
 
+# ==========================================================
+# ARTICLE VERSION COMPARISON HELPERS
+# ==========================================================
+
+
+VERSION_DIFF_TOKEN_PATTERN = re.compile(
+    r"\s+|[\w]+|[^\w\s]",
+    re.UNICODE,
+)
+
+
+def get_version_file_identity(value):
+    """Return a stable comparable string for stored version media fields."""
+
+    if not value:
+        return ""
+
+    return str(
+        getattr(value, "name", value)
+        or ""
+    )
+
+
+def get_version_image_attachment_signature(article_version):
+    return [
+        (
+            get_version_file_identity(
+                attachment.image
+            ),
+            attachment.caption or "",
+            attachment.alt_text or "",
+            attachment.credit or "",
+            attachment.display_order,
+        )
+        for attachment in (
+            article_version.image_attachments
+            .all()
+        )
+    ]
+
+
+def get_version_video_attachment_signature(article_version):
+    return [
+        (
+            get_version_file_identity(
+                attachment.video
+            ),
+            attachment.caption or "",
+            attachment.credit or "",
+            attachment.display_order,
+        )
+        for attachment in (
+            article_version.video_attachments
+            .all()
+        )
+    ]
+
+
+def get_article_version_change_map(
+    previous_version,
+    article_version,
+):
+    """Compare two immutable official article snapshots field by field."""
+
+    keys = [
+        "category",
+        "title",
+        "subtitle",
+        "excerpt",
+        "content",
+        "author",
+        "contributors",
+        "tags",
+        "featured_image",
+        "attachment_mode",
+        "image_attachments",
+        "video_attachments",
+    ]
+
+    if previous_version is None:
+        return {
+            key: False
+            for key in keys
+        }
+
+    featured_image_changed = any(
+        [
+            get_version_file_identity(
+                previous_version.featured_image
+            )
+            != get_version_file_identity(
+                article_version.featured_image
+            ),
+            (
+                previous_version.featured_image_caption
+                or ""
+            )
+            != (
+                article_version.featured_image_caption
+                or ""
+            ),
+            (
+                previous_version.featured_image_credit
+                or ""
+            )
+            != (
+                article_version.featured_image_credit
+                or ""
+            ),
+        ]
+    )
+
+    return {
+        "category": (
+            previous_version.category_name
+            != article_version.category_name
+            or previous_version.category_slug
+            != article_version.category_slug
+        ),
+        "title": (
+            previous_version.title
+            != article_version.title
+        ),
+        "subtitle": (
+            (previous_version.subtitle or "")
+            != (article_version.subtitle or "")
+        ),
+        "excerpt": (
+            (previous_version.excerpt or "")
+            != (article_version.excerpt or "")
+        ),
+        "content": (
+            (previous_version.content or "")
+            != (article_version.content or "")
+        ),
+        "author": (
+            (previous_version.author_name or "")
+            != (article_version.author_name or "")
+        ),
+        "contributors": (
+            previous_version.contributors
+            != article_version.contributors
+        ),
+        "tags": (
+            previous_version.tags
+            != article_version.tags
+        ),
+        "featured_image": featured_image_changed,
+        "attachment_mode": (
+            previous_version.attachment_mode
+            != article_version.attachment_mode
+        ),
+        "image_attachments": (
+            get_version_image_attachment_signature(
+                previous_version
+            )
+            != get_version_image_attachment_signature(
+                article_version
+            )
+        ),
+        "video_attachments": (
+            get_version_video_attachment_signature(
+                previous_version
+            )
+            != get_version_video_attachment_signature(
+                article_version
+            )
+        ),
+    }
+
+
+def get_article_version_changed_field_labels(change_map):
+    labels = [
+        ("category", "Category"),
+        ("title", "Headline"),
+        ("subtitle", "Subtitle"),
+        ("excerpt", "Summary"),
+        ("content", "Article Body"),
+        ("author", "Primary Author"),
+        ("contributors", "Contributors"),
+        ("tags", "Tags"),
+        ("featured_image", "Featured Image"),
+        ("attachment_mode", "Attachment Type"),
+        ("image_attachments", "Article Images"),
+        ("video_attachments", "Article Videos"),
+    ]
+
+    return [
+        label
+        for key, label in labels
+        if change_map.get(key)
+    ]
+
+
+def build_version_inline_diff(
+    previous_value,
+    current_value,
+):
+    """
+    Render the current text safely while marking inserted/replaced tokens.
+
+    Removed-only edits are surfaced by the surrounding changed-region badge
+    and the version change summary, because removed text no longer belongs in
+    the article preview itself.
+    """
+
+    previous_text = str(
+        previous_value or ""
+    )
+    current_text = str(
+        current_value or ""
+    )
+
+    current_tokens = (
+        VERSION_DIFF_TOKEN_PATTERN.findall(
+            current_text
+        )
+    )
+
+    if previous_text == current_text:
+        return mark_safe(
+            escape(current_text).replace(
+                "\n",
+                "<br>",
+            )
+        )
+
+    previous_tokens = (
+        VERSION_DIFF_TOKEN_PATTERN.findall(
+            previous_text
+        )
+    )
+
+    matcher = SequenceMatcher(
+        None,
+        previous_tokens,
+        current_tokens,
+        autojunk=False,
+    )
+
+    output = []
+    had_visible_addition = False
+
+    for tag, _i1, _i2, j1, j2 in matcher.get_opcodes():
+        if tag == "delete":
+            continue
+
+        fragment = "".join(
+            current_tokens[j1:j2]
+        )
+        safe_fragment = escape(fragment).replace(
+            "\n",
+            "<br>",
+        )
+
+        if tag in {"insert", "replace"}:
+            had_visible_addition = True
+            output.append(
+                '<mark class="version-inline-change">'
+                + safe_fragment
+                + "</mark>"
+            )
+        else:
+            output.append(
+                safe_fragment
+            )
+
+    if not had_visible_addition and previous_text != current_text:
+        output.append(
+            '<span class="version-inline-removal-marker">'
+            'Content was removed in this version'
+            "</span>"
+        )
+
+    return mark_safe(
+        "".join(output)
+    )
+
+
+def build_article_version_diff_context(
+    previous_version,
+    article_version,
+):
+    change_map = (
+        get_article_version_change_map(
+            previous_version,
+            article_version,
+        )
+    )
+
+    previous_title = (
+        previous_version.title
+        if previous_version
+        else article_version.title
+    )
+    previous_subtitle = (
+        previous_version.subtitle
+        if previous_version
+        else article_version.subtitle
+    )
+    previous_excerpt = (
+        previous_version.excerpt
+        if previous_version
+        else article_version.excerpt
+    )
+    previous_content = (
+        previous_version.content
+        if previous_version
+        else article_version.content
+    )
+
+    return {
+        "change_map": change_map,
+        "changed_field_labels": (
+            get_article_version_changed_field_labels(
+                change_map
+            )
+        ),
+        "title_html": build_version_inline_diff(
+            previous_title,
+            article_version.title,
+        ),
+        "subtitle_html": build_version_inline_diff(
+            previous_subtitle,
+            article_version.subtitle,
+        ),
+        "excerpt_html": build_version_inline_diff(
+            previous_excerpt,
+            article_version.excerpt,
+        ),
+        "content_html": build_version_inline_diff(
+            previous_content,
+            article_version.content,
+        ),
+    }
+
+
 @publication_role_required(
     User.Role.EIC,
     User.Role.EDITOR,
@@ -4361,7 +4702,7 @@ def article_version_history(
         )
     )
 
-    versions = (
+    chronological_versions = list(
         ArticleVersion.objects
         .filter(
             article=article
@@ -4369,9 +4710,42 @@ def article_version_history(
         .select_related(
             "created_by"
         )
+        .prefetch_related(
+            "image_attachments",
+            "video_attachments",
+        )
         .order_by(
-            "-version_number",
-            "-created_at",
+            "version_number",
+            "created_at",
+        )
+    )
+
+    previous_version = None
+
+    for version in chronological_versions:
+        change_map = (
+            get_article_version_change_map(
+                previous_version,
+                version,
+            )
+        )
+
+        version.changed_field_labels = (
+            get_article_version_changed_field_labels(
+                change_map
+            )
+        )
+        version.compared_to_version_number = (
+            previous_version.version_number
+            if previous_version
+            else None
+        )
+
+        previous_version = version
+
+    versions = list(
+        reversed(
+            chronological_versions
         )
     )
 
@@ -4417,12 +4791,51 @@ def article_version_detail(
         )
     )
 
+    previous_version = (
+        ArticleVersion.objects
+        .filter(
+            article=article,
+            version_number__lt=(
+                article_version.version_number
+            ),
+        )
+        .select_related(
+            "created_by"
+        )
+        .prefetch_related(
+            "image_attachments",
+            "video_attachments",
+        )
+        .order_by(
+            "-version_number",
+            "-created_at",
+        )
+        .first()
+    )
+
+    version_diff = (
+        build_article_version_diff_context(
+            previous_version,
+            article_version,
+        )
+    )
+
     return render(
         request,
         "publications/article_version_detail.html",
         {
             "article": article,
             "article_version": article_version,
+            "previous_version": previous_version,
+            "version_changes": (
+                version_diff["change_map"]
+            ),
+            "changed_field_labels": (
+                version_diff[
+                    "changed_field_labels"
+                ]
+            ),
+            "version_diff": version_diff,
         },
     )
 
