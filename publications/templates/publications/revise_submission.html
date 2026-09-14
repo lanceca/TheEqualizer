@@ -11,11 +11,24 @@
 
 {% if submission.reviewer_notes %}
 
-    <div class="info-box">
+    <div class="editorial-attention-callout editorial-attention-callout--eic">
 
         <strong>
             EIC Revision Notes
         </strong>
+
+        <div class="editorial-note-attribution">
+            <span>Recorded by</span>
+            <strong>
+                {% if submission.reviewed_by_username %}
+                    {{ submission.reviewed_by_username }}
+                {% elif submission.reviewed_by %}
+                    {{ submission.reviewed_by.username }}
+                {% else %}
+                    EIC account not captured (legacy record)
+                {% endif %}
+            </strong>
+        </div>
 
         <p>
             {{ submission.reviewer_notes|linebreaksbr }}

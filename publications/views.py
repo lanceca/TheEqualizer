@@ -1275,6 +1275,7 @@ def resolve_eic_direct_revision_reports(
 
 def resolve_reports_after_eic_archive(
     article,
+    reviewed_by=None,
 ):
     """
     Resolve active Staff reports when an EIC archives their own
@@ -1318,15 +1319,29 @@ def resolve_reports_after_eic_archive(
             ContentReport.Status.RESOLVED
         )
 
+        if reviewed_by is not None:
+            report.reviewed_by = reviewed_by
+            report.reviewed_by_username = (
+                reviewed_by.username
+            )
+
         report.resolved_at = timezone.now()
 
+        update_fields = [
+            "status",
+            "staff_notes",
+            "resolved_at",
+            "updated_at",
+        ]
+
+        if reviewed_by is not None:
+            update_fields.extend([
+                "reviewed_by",
+                "reviewed_by_username",
+            ])
+
         report.save(
-            update_fields=[
-                "status",
-                "staff_notes",
-                "resolved_at",
-                "updated_at",
-            ]
+            update_fields=update_fields
         )
 
         notify_user(
@@ -2189,12 +2204,16 @@ def review_submission(
                 )
 
                 submission.reviewer_notes = reviewer_notes
+                submission.reviewed_by = request.user
+                submission.reviewed_by_username = request.user.username
                 submission.reviewed_at = timezone.now()
 
                 submission.save(
                     update_fields=[
                         "status",
                         "reviewer_notes",
+                        "reviewed_by",
+                        "reviewed_by_username",
                         "reviewed_at",
                     ]
                 )
@@ -2355,12 +2374,16 @@ def review_submission(
             )
 
             submission.reviewer_notes = reviewer_notes
+            submission.reviewed_by = request.user
+            submission.reviewed_by_username = request.user.username
             submission.reviewed_at = timezone.now()
 
             submission.save(
                 update_fields=[
                     "status",
                     "reviewer_notes",
+                    "reviewed_by",
+                    "reviewed_by_username",
                     "reviewed_at",
                 ]
             )
@@ -2396,12 +2419,16 @@ def review_submission(
             )
 
             submission.reviewer_notes = reviewer_notes
+            submission.reviewed_by = request.user
+            submission.reviewed_by_username = request.user.username
             submission.reviewed_at = timezone.now()
 
             submission.save(
                 update_fields=[
                     "status",
                     "reviewer_notes",
+                    "reviewed_by",
+                    "reviewed_by_username",
                     "reviewed_at",
                 ]
             )
@@ -2490,12 +2517,16 @@ def review_submission(
             )
 
             submission.reviewer_notes = reviewer_notes
+            submission.reviewed_by = request.user
+            submission.reviewed_by_username = request.user.username
             submission.reviewed_at = timezone.now()
 
             submission.save(
                 update_fields=[
                     "status",
                     "reviewer_notes",
+                    "reviewed_by",
+                    "reviewed_by_username",
                     "reviewed_at",
                 ]
             )
@@ -2575,6 +2606,7 @@ def my_submissions(request):
             "article__category",
             "article__source_article",
             "article__author",
+            "reviewed_by",
         )
         .prefetch_related(
             "article__attachments",
@@ -2667,6 +2699,7 @@ def revise_submission(
             "article",
             "article__category",
             "article__author",
+            "reviewed_by",
         )
         .prefetch_related(
             "article__attachments",
@@ -3217,7 +3250,9 @@ def resubmitted_submissions(request):
             "article",
             "article__category",
             "article__author",
+            "reviewed_by",
             "resubmission_of",
+            "resubmission_of__reviewed_by",
         )
         .prefetch_related(
             "article__attachments",
@@ -5418,7 +5453,8 @@ def archive_own_published_article(
 
         resolved_report_count = (
             resolve_reports_after_eic_archive(
-                article
+                article,
+                reviewed_by=request.user,
             )
         )
 
@@ -5687,6 +5723,7 @@ def my_edit_requests(request):
             "article",
             "article__category",
             "draft_article",
+            "reviewed_by",
         )
         .annotate(
             draft_has_submission=Exists(
@@ -6022,6 +6059,11 @@ def review_edit_request(
                 reviewer_notes
             )
 
+            edit_request.reviewed_by = request.user
+            edit_request.reviewed_by_username = (
+                request.user.username
+            )
+
             edit_request.reviewed_at = (
                 timezone.now()
             )
@@ -6065,6 +6107,11 @@ def review_edit_request(
                 reviewer_notes
             )
 
+            edit_request.reviewed_by = request.user
+            edit_request.reviewed_by_username = (
+                request.user.username
+            )
+
             edit_request.reviewed_at = (
                 timezone.now()
             )
@@ -6073,6 +6120,8 @@ def review_edit_request(
                 update_fields=[
                     "status",
                     "reviewer_notes",
+                    "reviewed_by",
+                    "reviewed_by_username",
                     "reviewed_at",
                 ]
             )
@@ -6342,6 +6391,7 @@ def my_deletion_requests(request):
         .select_related(
             "article",
             "article__category",
+            "reviewed_by",
         )
     )
 
@@ -6595,6 +6645,11 @@ def review_deletion_request(
                 reviewer_notes
             )
 
+            deletion_request.reviewed_by = request.user
+            deletion_request.reviewed_by_username = (
+                request.user.username
+            )
+
             deletion_request.reviewed_at = (
                 timezone.now()
             )
@@ -6603,6 +6658,8 @@ def review_deletion_request(
                 update_fields=[
                     "status",
                     "reviewer_notes",
+                    "reviewed_by",
+                    "reviewed_by_username",
                     "reviewed_at",
                 ]
             )
@@ -6638,6 +6695,11 @@ def review_deletion_request(
                 reviewer_notes
             )
 
+            deletion_request.reviewed_by = request.user
+            deletion_request.reviewed_by_username = (
+                request.user.username
+            )
+
             deletion_request.reviewed_at = (
                 timezone.now()
             )
@@ -6646,6 +6708,8 @@ def review_deletion_request(
                 update_fields=[
                     "status",
                     "reviewer_notes",
+                    "reviewed_by",
+                    "reviewed_by_username",
                     "reviewed_at",
                 ]
             )
@@ -6877,6 +6941,7 @@ def my_content_reports(request):
             "article",
             "article__category",
             "article__author",
+            "reviewed_by",
             "forced_edit_request",
             "forced_edit_request__draft_article",
         )
@@ -7002,6 +7067,7 @@ def eic_content_reports(request):
             "article__category",
             "article__author",
             "reported_by",
+            "reviewed_by",
             "forced_edit_request",
             "forced_edit_request__draft_article",
         )
@@ -7111,12 +7177,18 @@ def resolve_content_report(
         )
 
         report.staff_notes = staff_notes
+        report.reviewed_by = request.user
+        report.reviewed_by_username = (
+            request.user.username
+        )
         report.resolved_at = timezone.now()
 
         report.save(
             update_fields=[
                 "status",
                 "staff_notes",
+                "reviewed_by",
+                "reviewed_by_username",
                 "resolved_at",
                 "updated_at",
             ]
@@ -7291,6 +7363,10 @@ def require_revision_from_report(
             )
 
             report.staff_notes = staff_notes
+            report.reviewed_by = request.user
+            report.reviewed_by_username = (
+                request.user.username
+            )
 
             report.forced_edit_request = None
 
@@ -7298,6 +7374,8 @@ def require_revision_from_report(
                 update_fields=[
                     "status",
                     "staff_notes",
+                    "reviewed_by",
+                    "reviewed_by_username",
                     "forced_edit_request",
                     "updated_at",
                 ]
@@ -7427,6 +7505,10 @@ def require_revision_from_report(
                 ),
                 status=EditRequest.Status.APPROVED,
                 reviewer_notes=staff_notes,
+                reviewed_by=request.user,
+                reviewed_by_username=(
+                    request.user.username
+                ),
                 reviewed_at=timezone.now(),
             )
         )
@@ -7506,6 +7588,10 @@ def require_revision_from_report(
         )
 
         report.staff_notes = staff_notes
+        report.reviewed_by = request.user
+        report.reviewed_by_username = (
+            request.user.username
+        )
 
         report.forced_edit_request = (
             forced_edit_request
@@ -7515,6 +7601,8 @@ def require_revision_from_report(
             update_fields=[
                 "status",
                 "staff_notes",
+                "reviewed_by",
+                "reviewed_by_username",
                 "forced_edit_request",
                 "updated_at",
             ]

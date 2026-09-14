@@ -178,7 +178,7 @@
                         </h2>
 
 
-                        <p class="editorial-item-summary">
+                        <p class="editorial-item-summary editorial-item-summary--concern">
                             {{ deletion_request.reason|truncatechars:180 }}
                         </p>
 
@@ -221,8 +221,21 @@
 
                         {% if deletion_request.reviewer_notes %}
 
-                            <div class="editorial-review-note">
+                            <div class="editorial-review-note editorial-attention-callout editorial-attention-callout--eic">
                                 <strong>EIC Reviewer Notes</strong>
+                                <div class="editorial-note-attribution">
+                                    <span>Recorded by</span>
+                                    <strong>
+                                        {% if deletion_request.reviewed_by_username %}
+                                            {{ deletion_request.reviewed_by_username }}
+                                        {% elif deletion_request.reviewed_by %}
+                                            {{ deletion_request.reviewed_by.username }}
+                                        {% else %}
+                                            EIC account not captured (legacy record)
+                                        {% endif %}
+                                    </strong>
+                                </div>
+
                                 <p>
                                     {{ deletion_request.reviewer_notes|linebreaksbr }}
                                 </p>
@@ -255,7 +268,7 @@
 
                         <div class="editorial-review-panel">
 
-                            <div class="request-detail-block">
+                            <div class="request-detail-block editorial-attention-callout editorial-attention-callout--concern">
 
                                 <span>Reason for Deletion</span>
 

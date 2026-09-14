@@ -260,6 +260,19 @@
 
                             <div class="editorial-review-note editorial-attention-callout editorial-attention-callout--eic">
                                 <strong>Previous EIC Notes</strong>
+                                <div class="editorial-note-attribution">
+                                    <span>Recorded by</span>
+                                    <strong>
+                                        {% if submission.resubmission_of.reviewed_by_username %}
+                                            {{ submission.resubmission_of.reviewed_by_username }}
+                                        {% elif submission.resubmission_of.reviewed_by %}
+                                            {{ submission.resubmission_of.reviewed_by.username }}
+                                        {% else %}
+                                            EIC account not captured (legacy record)
+                                        {% endif %}
+                                    </strong>
+                                </div>
+
                                 <p>
                                     {{ submission.resubmission_of.reviewer_notes|linebreaksbr }}
                                 </p>

@@ -132,7 +132,7 @@
                         </h2>
 
 
-                        <p class="editorial-item-summary">
+                        <p class="editorial-item-summary editorial-item-summary--concern">
                             {{ deletion_request.reason|truncatechars:190 }}
                         </p>
 
@@ -187,7 +187,7 @@
 
                         <div class="editorial-review-panel">
 
-                            <div class="request-detail-block">
+                            <div class="request-detail-block editorial-attention-callout editorial-attention-callout--concern">
 
                                 <span>
                                     Reason for Deletion
@@ -216,10 +216,10 @@
 
                                 {% csrf_token %}
 
-                                <div class="form-group">
+                                <div class="form-group editorial-attention-input">
 
                                     <label for="reviewer_notes_{{ deletion_request.id }}">
-                                        Reviewer Notes
+                                        EIC Feedback / Reviewer Notes
                                     </label>
 
                                     <textarea

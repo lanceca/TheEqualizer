@@ -1975,13 +1975,69 @@ th {
 
 .article-form .contributor-list {
     display: grid;
-    gap: 10px;
+    gap: 12px;
     margin-top: 12px;
+    margin-bottom: 12px;
 }
 
 .article-form .contributor-row {
+    display: grid;
+    grid-template-columns:
+        minmax(180px, 0.8fr)
+        minmax(220px, 1.2fr)
+        minmax(150px, auto);
+    align-items: end;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--eq-border);
     border-radius: 9px;
     background: var(--eq-offwhite);
+}
+
+.article-form .contributor-field {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.article-form .contributor-field label {
+    margin-bottom: 5px;
+}
+
+.article-form .contributor-field select {
+    width: 100%;
+    min-height: 42px;
+}
+
+.article-form .contributor-remove-field {
+    display: flex;
+    align-items: flex-end;
+    min-width: 150px;
+}
+
+.article-form .contributor-remove-button {
+    width: 100%;
+    min-height: 42px;
+    white-space: nowrap;
+}
+
+.article-form #add-contributor-button {
+    margin-top: 3px;
+}
+
+@media (max-width: 850px) {
+    .article-form .contributor-row {
+        grid-template-columns: 1fr;
+    }
+
+    .article-form .contributor-remove-field {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .article-form .contributor-remove-button {
+        width: 100%;
+    }
 }
 
 .article-form .tag-checkbox-grid {
@@ -6679,6 +6735,29 @@ mark.version-inline-change {
 .editorial-attention-callout--eic > strong {
     padding-right: 42px;
     color: var(--eq-green-deep);
+}
+
+.editorial-note-attribution {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 5px 8px;
+    margin: 2px 0 9px;
+    color: #66736d;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.editorial-note-attribution > span {
+    font-weight: 700;
+}
+
+.editorial-note-attribution > strong {
+    color: var(--eq-green-deep);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: none;
 }
 
 .editorial-attention-input {

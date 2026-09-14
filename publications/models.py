@@ -811,6 +811,20 @@ class Submission(models.Model):
         blank=True,
     )
 
+
+    reviewed_by = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="reviewed_submissions",
+    )
+
+    reviewed_by_username = models.CharField(
+        max_length=150,
+        blank=True,
+    )
+
     submitted_at = models.DateTimeField(
         auto_now_add=True,
     )
@@ -1192,6 +1206,20 @@ class EditRequest(models.Model):
         blank=True,
     )
 
+
+    reviewed_by = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="reviewed_edit_requests",
+    )
+
+    reviewed_by_username = models.CharField(
+        max_length=150,
+        blank=True,
+    )
+
     created_at = models.DateTimeField(
         auto_now_add=True,
     )
@@ -1238,6 +1266,20 @@ class DeletionRequest(models.Model):
     )
 
     reviewer_notes = models.TextField(
+        blank=True,
+    )
+
+
+    reviewed_by = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="reviewed_deletion_requests",
+    )
+
+    reviewed_by_username = models.CharField(
+        max_length=150,
         blank=True,
     )
 
@@ -1300,6 +1342,20 @@ class ContentReport(models.Model):
     )
 
     staff_notes = models.TextField(
+        blank=True,
+    )
+
+
+    reviewed_by = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="reviewed_content_reports",
+    )
+
+    reviewed_by_username = models.CharField(
+        max_length=150,
         blank=True,
     )
 

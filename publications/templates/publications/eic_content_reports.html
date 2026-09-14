@@ -189,6 +189,19 @@
                                     EIC Feedback / Revision Instructions
                                 </strong>
 
+                                <div class="editorial-note-attribution">
+                                    <span>Recorded by</span>
+                                    <strong>
+                                        {% if report.reviewed_by_username %}
+                                            {{ report.reviewed_by_username }}
+                                        {% elif report.reviewed_by %}
+                                            {{ report.reviewed_by.username }}
+                                        {% else %}
+                                            EIC account not captured (legacy record)
+                                        {% endif %}
+                                    </strong>
+                                </div>
+
                                 <p>
                                     {{ report.staff_notes|linebreaksbr }}
                                 </p>

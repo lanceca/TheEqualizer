@@ -241,6 +241,19 @@
 
                             <div class="editorial-review-note editorial-attention-callout editorial-attention-callout--eic">
                                 <strong>EIC Notes</strong>
+                                <div class="editorial-note-attribution">
+                                    <span>Recorded by</span>
+                                    <strong>
+                                        {% if edit_request.reviewed_by_username %}
+                                            {{ edit_request.reviewed_by_username }}
+                                        {% elif edit_request.reviewed_by %}
+                                            {{ edit_request.reviewed_by.username }}
+                                        {% else %}
+                                            EIC account not captured (legacy record)
+                                        {% endif %}
+                                    </strong>
+                                </div>
+
                                 <p>
                                     {{ edit_request.reviewer_notes|linebreaksbr }}
                                 </p>
