@@ -2,282 +2,262 @@
 
 {% block staff_content %}
 
+<div class="workspace-dashboard workspace-dashboard--editor">
 
-<style>
+    <section class="workspace-dashboard-hero">
 
-    .staff-profile-grid {
-        display: grid;
-        grid-template-columns:
-            repeat(
-                auto-fit,
-                minmax(220px, 1fr)
-            );
-        gap: 16px;
-        margin-top: 22px;
-    }
+        <div class="workspace-dashboard-hero-copy">
+            <span class="workspace-dashboard-eyebrow">
+                My Editorial Workspace
+            </span>
 
-    .staff-profile-card {
-        padding: 20px;
-        background: var(--eq-white);
-        border: 1px solid var(--eq-border);
-        border-radius: var(--eq-radius);
-        box-shadow: var(--eq-shadow);
-    }
+            <h1>Editor Dashboard</h1>
 
-    .staff-profile-card h2 {
-        margin: 0 0 14px;
-        padding: 0 0 9px;
-        border-bottom: 2px solid var(--eq-green-soft);
-        font-size: 18px;
-    }
+            <p>
+                Create publication content, continue drafts, track submissions,
+                and manage requests connected to your published work.
+            </p>
 
-    .staff-profile-row {
-        display: grid;
-        grid-template-columns: 135px 1fr;
-        gap: 12px;
-        padding: 8px 0;
-        border-bottom: 1px solid #edf1ee;
-    }
+            <div class="workspace-dashboard-hero-actions">
+                <a
+                    href="{% url 'create_article' %}"
+                    class="workspace-hero-button workspace-hero-button--primary"
+                >
+                    Create Article
+                </a>
 
-    .staff-profile-row:last-child {
-        border-bottom: none;
-    }
+                <a
+                    href="{% url 'my_drafts' %}"
+                    class="workspace-hero-button workspace-hero-button--secondary"
+                >
+                    Open My Drafts
+                </a>
+            </div>
+        </div>
 
-    .staff-profile-label {
-        color: var(--eq-muted);
-        font-size: 13px;
-        font-weight: 700;
-    }
+        <aside class="workspace-dashboard-user-card">
+            <div class="workspace-dashboard-user-avatar">
+                {% if request.user.profile_picture %}
+                    <img
+                        src="{{ request.user.profile_picture.url }}"
+                        alt="{{ request.user.username }} profile picture"
+                    >
+                {% else %}
+                    <span>{{ request.user.username|slice:":1"|upper }}</span>
+                {% endif %}
+            </div>
 
-    .staff-profile-value {
-        min-width: 0;
-        color: var(--eq-charcoal);
-        overflow-wrap: anywhere;
-    }
+            <div class="workspace-dashboard-user-copy">
+                <span>Signed in as</span>
+                <strong>{{ request.user.username }}</strong>
+                <small>{{ request.user.get_role_display }}</small>
+            </div>
 
-    .staff-role-summary {
-        margin-top: 22px;
-        padding: 22px;
-        background: var(--eq-white);
-        border: 1px solid var(--eq-border);
-        border-left: 5px solid var(--eq-gold);
-        border-radius: var(--eq-radius);
-        box-shadow: var(--eq-shadow);
-    }
+            <a href="{% url 'profile' %}">
+                View profile
+            </a>
+        </aside>
 
-    .staff-role-summary h2 {
-        margin: 0 0 10px;
-        padding: 0;
-        border: none;
-        font-size: 19px;
-    }
-
-    .staff-role-summary p {
-        margin: 0;
-        color: var(--eq-muted);
-        line-height: 1.7;
-    }
-
-    .staff-account-status {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        width: fit-content;
-        padding: 4px 9px;
-        border-radius: 999px;
-        background: #e9f5ec;
-        color: var(--eq-green-dark);
-        font-size: 12px;
-        font-weight: 700;
-    }
-
-    .staff-account-status::before {
-        content: "";
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: var(--eq-green);
-    }
-
-    @media (max-width: 620px) {
-        .staff-profile-row {
-            grid-template-columns: 1fr;
-            gap: 2px;
-        }
-    }
-
-</style>
+    </section>
 
 
-<div class="dashboard-header">
+    <section class="workspace-metric-grid" aria-label="My editorial workflow">
 
-    <h1>Editor Dashboard</h1>
-
-    <p class="dashboard-subtitle">
-        Your account and editorial role information.
-    </p>
-
-</div>
-
-<div class="dashboard-profile-strip">
-
-    <div class="dashboard-profile-avatar">
-
-        {% if request.user.profile_picture %}
-
-            <img
-                src="{{ request.user.profile_picture.url }}"
-                alt="{{ request.user.username }} profile picture"
+        <article class="workspace-metric-card">
+            <span class="workspace-metric-label">Current Submissions</span>
+            <strong
+                class="workspace-metric-value"
+                data-dashboard-metric-value
+                data-value="{{ sidebar_editor_current_submissions_count|default:0 }}"
             >
+                {{ sidebar_editor_current_submissions_count|default:0 }}
+            </strong>
+            <p>Work currently in the submission flow</p>
+        </article>
 
-        {% else %}
+        <article class="workspace-metric-card workspace-metric-card--attention">
+            <span class="workspace-metric-label">Resubmissions</span>
+            <strong
+                class="workspace-metric-value"
+                data-dashboard-metric-value
+                data-value="{{ sidebar_editor_resubmissions_count|default:0 }}"
+            >
+                {{ sidebar_editor_resubmissions_count|default:0 }}
+            </strong>
+            <p>Returned work ready for another review cycle</p>
+        </article>
 
-            <span>
-                {{ request.user.username|slice:":1"|upper }}
-            </span>
+        <article class="workspace-metric-card">
+            <span class="workspace-metric-label">Edit Requests</span>
+            <strong
+                class="workspace-metric-value"
+                data-dashboard-metric-value
+                data-value="{{ sidebar_editor_edit_requests_count|default:0 }}"
+            >
+                {{ sidebar_editor_edit_requests_count|default:0 }}
+            </strong>
+            <p>Your active published-article edit requests</p>
+        </article>
 
-        {% endif %}
+        <article class="workspace-metric-card">
+            <span class="workspace-metric-label">Deletion Requests</span>
+            <strong
+                class="workspace-metric-value"
+                data-dashboard-metric-value
+                data-value="{{ sidebar_editor_deletion_requests_count|default:0 }}"
+            >
+                {{ sidebar_editor_deletion_requests_count|default:0 }}
+            </strong>
+            <p>Your active published-article deletion requests</p>
+        </article>
 
-    </div>
-
-
-    <div class="dashboard-profile-copy">
-
-        <span class="dashboard-profile-kicker">
-            Signed in as
-        </span>
-
-        <strong>
-            {{ request.user.username }}
-        </strong>
-
-        <span>
-            {{ request.user.get_role_display }}
-        </span>
-
-    </div>
-
-
-    <a
-        href="{% url 'profile' %}"
-        class="secondary-button dashboard-profile-link"
-    >
-        View Profile
-    </a>
-
-</div>
-
-
-
-<div class="dashboard-welcome">
-
-    <h2>
-        Welcome, {{ request.user.username }}
-    </h2>
-
-</div>
+    </section>
 
 
-<div class="staff-profile-grid">
+    <section class="workspace-dashboard-section">
 
-    <section class="staff-profile-card">
-
-        <h2>
-            Account Information
-        </h2>
-
-        <div class="staff-profile-row">
-            <span class="staff-profile-label">Username</span>
-            <span class="staff-profile-value">
-                {{ request.user.username }}
-            </span>
+        <div class="workspace-section-heading">
+            <div>
+                <span>Editorial Flow</span>
+                <h2>Continue your work</h2>
+                <p>
+                    Jump directly into the stage of the publication workflow
+                    you need.
+                </p>
+            </div>
         </div>
 
-        <div class="staff-profile-row">
-            <span class="staff-profile-label">Role</span>
-            <span class="staff-profile-value">
-                {{ request.user.get_role_display }}
-            </span>
-        </div>
+        <div class="workspace-action-grid">
 
-        <div class="staff-profile-row">
-            <span class="staff-profile-label">Full Name</span>
-            <span class="staff-profile-value">
-                {% if request.user.get_full_name %}
-                    {{ request.user.get_full_name }}
-                {% else %}
-                    Not provided
-                {% endif %}
-            </span>
-        </div>
+            <a href="{% url 'my_drafts' %}" class="workspace-action-card">
+                <div>
+                    <span class="workspace-action-kicker">Drafting</span>
+                    <h3>My Drafts</h3>
+                    <p>
+                        Continue articles that have not yet been submitted.
+                    </p>
+                </div>
+                <span class="workspace-action-arrow" aria-hidden="true">→</span>
+            </a>
 
-        <div class="staff-profile-row">
-            <span class="staff-profile-label">Email</span>
-            <span class="staff-profile-value">
-                {% if request.user.email %}
-                    {{ request.user.email }}
-                {% else %}
-                    Not provided
-                {% endif %}
-            </span>
+            <a href="{% url 'my_submissions' %}" class="workspace-action-card">
+                <div>
+                    <span class="workspace-action-kicker">Review</span>
+                    <h3>My Submissions</h3>
+                    <p>
+                        Track work currently submitted to the Editor in Chief.
+                    </p>
+                </div>
+                <span class="workspace-action-count">
+                    {{ sidebar_editor_current_submissions_count|default:0 }}
+                </span>
+            </a>
+
+            <a href="{% url 'resubmitted_submissions' %}" class="workspace-action-card">
+                <div>
+                    <span class="workspace-action-kicker">Revision</span>
+                    <h3>Resubmitted Work</h3>
+                    <p>
+                        Follow articles that returned to the review queue.
+                    </p>
+                </div>
+                <span class="workspace-action-count">
+                    {{ sidebar_editor_resubmissions_count|default:0 }}
+                </span>
+            </a>
+
+            <a href="{% url 'published_articles' %}" class="workspace-action-card">
+                <div>
+                    <span class="workspace-action-kicker">Published</span>
+                    <h3>Published Articles</h3>
+                    <p>
+                        Review your live content and start approved requests.
+                    </p>
+                </div>
+                <span class="workspace-action-arrow" aria-hidden="true">→</span>
+            </a>
+
         </div>
 
     </section>
 
 
-    <section class="staff-profile-card">
+    <section class="workspace-dashboard-section">
 
-        <h2>
-            Account Details
-        </h2>
-
-        <div class="staff-profile-row">
-            <span class="staff-profile-label">Status</span>
-            <span class="staff-profile-value">
-                {% if request.user.is_active %}
-                    <span class="staff-account-status">
-                        Active
-                    </span>
-                {% else %}
-                    Inactive
-                {% endif %}
-            </span>
+        <div class="workspace-section-heading">
+            <div>
+                <span>Requests</span>
+                <h2>Published-content requests</h2>
+            </div>
         </div>
 
-        <div class="staff-profile-row">
-            <span class="staff-profile-label">Date Joined</span>
-            <span class="staff-profile-value">
-                {{ request.user.date_joined|date:"M. d, Y - g:i A" }}
-            </span>
+        <div class="workspace-action-grid workspace-action-grid--compact">
+
+            <a href="{% url 'my_edit_requests' %}" class="workspace-action-card">
+                <div>
+                    <span class="workspace-action-kicker">Changes</span>
+                    <h3>Edit Requests</h3>
+                    <p>Track requested changes to your published articles.</p>
+                </div>
+                <span class="workspace-action-count">
+                    {{ sidebar_editor_edit_requests_count|default:0 }}
+                </span>
+            </a>
+
+            <a href="{% url 'my_deletion_requests' %}" class="workspace-action-card">
+                <div>
+                    <span class="workspace-action-kicker">Removal</span>
+                    <h3>Deletion Requests</h3>
+                    <p>Track requests to remove your published articles.</p>
+                </div>
+                <span class="workspace-action-count">
+                    {{ sidebar_editor_deletion_requests_count|default:0 }}
+                </span>
+            </a>
+
         </div>
 
-        <div class="staff-profile-row">
-            <span class="staff-profile-label">Last Login</span>
-            <span class="staff-profile-value">
-                {% if request.user.last_login %}
-                    {{ request.user.last_login|date:"M. d, Y - g:i A" }}
-                {% else %}
-                    No previous login recorded
-                {% endif %}
-            </span>
+    </section>
+
+
+    <section class="workspace-account-panel">
+
+        <div class="workspace-section-heading workspace-section-heading--compact">
+            <div>
+                <span>Account</span>
+                <h2>Editor access</h2>
+            </div>
+
+            <a href="{% url 'profile' %}" class="workspace-text-link">
+                Manage profile →
+            </a>
+        </div>
+
+        <div class="workspace-account-grid">
+            <div>
+                <span>Account status</span>
+                <strong>{% if request.user.is_active %}Active{% else %}Inactive{% endif %}</strong>
+            </div>
+
+            <div>
+                <span>Email</span>
+                <strong>{{ request.user.email|default:"Not provided" }}</strong>
+            </div>
+
+            <div>
+                <span>Last login</span>
+                <strong>
+                    {% if request.user.last_login %}
+                        {{ request.user.last_login|date:"M. d, Y - g:i A" }}
+                    {% else %}
+                        No previous login
+                    {% endif %}
+                </strong>
+            </div>
         </div>
 
     </section>
 
 </div>
-
-
-<section class="staff-role-summary">
-
-    <h2>
-        Role Overview
-    </h2>
-
-    <p>
-        As an Editor, you create and submit articles for review, manage your drafts and submissions, and request approved changes or deletion of your own published articles.
-    </p>
-
-</section>
-
 
 {% endblock %}

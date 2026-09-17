@@ -2,7 +2,7 @@
 
 {% block staff_content %}
 
-<div class="editorial-list-page">
+<div class="editorial-list-page editorial-workflow-page editorial-archive-library">
 
     <div class="editorial-page-header">
 
@@ -176,13 +176,13 @@
                         {% if article.excerpt %}
 
                             <p class="editorial-item-summary">
-                                {{ article.excerpt|truncatechars:180 }}
+                                {{ article.excerpt|truncatechars:280 }}
                             </p>
 
                         {% else %}
 
                             <p class="editorial-item-summary">
-                                {{ article.content|striptags|truncatechars:180 }}
+                                {{ article.content|striptags|truncatechars:280 }}
                             </p>
 
                         {% endif %}

@@ -2,6 +2,8 @@
 
 {% block staff_content %}
 
+<div class="management-suite-page management-suite-page--utility management-suite-page--audit">
+
 <div
     data-react-component="AuditLogPanel"
     data-api-url="{% url 'audit:action_log_data' %}"
@@ -16,5 +18,7 @@
         </p>
     </div>
 </noscript>
+
+</div>
 
 {% endblock %}

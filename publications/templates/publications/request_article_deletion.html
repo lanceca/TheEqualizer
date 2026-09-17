@@ -2,7 +2,7 @@
 
 {% block staff_content %}
 
-<div class="editorial-request-page">
+<div class="editorial-request-page workflow-suite-page workflow-suite-page--request workflow-suite-page--deletion-request">
 
     <div class="editorial-page-header">
 
@@ -25,6 +25,39 @@
 
     </div>
 
+
+
+    <div class="workflow-process-strip workflow-process-strip--danger" aria-label="Deletion request workflow">
+
+        <div class="workflow-process-step is-current">
+            <span class="workflow-process-index">1</span>
+            <div>
+                <strong>Request removal</strong>
+                <small>Explain why the article should leave publication.</small>
+            </div>
+        </div>
+
+        <span class="workflow-process-connector" aria-hidden="true"></span>
+
+        <div class="workflow-process-step">
+            <span class="workflow-process-index">2</span>
+            <div>
+                <strong>EIC review</strong>
+                <small>The request is approved or rejected.</small>
+            </div>
+        </div>
+
+        <span class="workflow-process-connector" aria-hidden="true"></span>
+
+        <div class="workflow-process-step">
+            <span class="workflow-process-index">3</span>
+            <div>
+                <strong>Archive outcome</strong>
+                <small>Approval removes the article from active publication.</small>
+            </div>
+        </div>
+
+    </div>
 
     <div class="request-workspace-modern">
 

@@ -2,6 +2,17 @@
 
 {% block staff_content %}
 
+<div class="editorial-composer-page editorial-composer-page--draft">
+
+<header class="editorial-composer-header">
+    <div class="editorial-composer-header-copy">
+        <p class="workflow-eyebrow">
+            {% if article.draft_type == "EDIT_REQUEST" %}
+                Approved Edit Request
+            {% else %}
+                Editorial Composer
+            {% endif %}
+        </p>
 
 {% if article.draft_type == "EDIT_REQUEST" %}
 
@@ -68,16 +79,27 @@
 
 {% endif %}
 
+    </div>
 
-<div class="content-panel article-form-panel">
+    <div class="editorial-composer-header-actions">
+        <a href="{% url 'my_drafts' %}" class="secondary-button">
+            Back to Drafts
+        </a>
+    </div>
+</header>
+
+
+<div class="content-panel article-form-panel editorial-composer-panel">
 
     <form
         method="POST"
         enctype="multipart/form-data"
-        class="article-form"
+        class="article-form editorial-composer-form"
     >
 
         {% csrf_token %}
+
+        <div class="editorial-composer-main-column">
 
 
         <div class="form-group">
@@ -879,6 +901,22 @@
         </div>
 
 
+
+        </div>
+
+
+        <aside class="editorial-composer-inspector-slot">
+            <div
+                data-react-component="EditorialWorkspaceEnhancer"
+                data-mode="draft"
+                data-role="{{ request.user.role }}"
+                data-status-label="{% if article.draft_type == 'EDIT_REQUEST' %}Edit request draft{% else %}Draft{% endif %}"
+                data-version="{{ article.version_number }}"
+                data-has-featured-image="{% if article.featured_image %}true{% else %}false{% endif %}"
+            ></div>
+        </aside>
+
+
         <div class="form-actions">
 
             
@@ -939,6 +977,8 @@
         </div>
 
     </form>
+
+</div>
 
 </div>
 

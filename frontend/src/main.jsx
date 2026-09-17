@@ -4,6 +4,8 @@ import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
 import AuditLogPanel from './AuditLogPanel.jsx'
 import DigitalPublicationViewer from './DigitalPublicationViewer.jsx'
+import DashboardEnhancer from './DashboardEnhancer.jsx'
+import EditorialWorkspaceEnhancer from './EditorialWorkspaceEnhancer.jsx'
 import FormErrorEnhancer from './FormErrorEnhancer.jsx'
 import HeaderActions from './HeaderActions.jsx'
 import PeopleAndTeams from './PeopleAndTeams.jsx'
@@ -16,6 +18,8 @@ const componentRegistry = {
   ReaderTools: App,
   AuditLogPanel,
   DigitalPublicationViewer,
+  DashboardEnhancer,
+  EditorialWorkspaceEnhancer,
   FormErrorEnhancer,
   HeaderActions,
   PeopleAndTeams,
@@ -60,6 +64,28 @@ function getComponentProps(
       role:
         mountPoint.dataset.role
         || '',
+    }
+  }
+
+  if (
+    componentName === 'EditorialWorkspaceEnhancer'
+  ) {
+    return {
+      mode:
+        mountPoint.dataset.mode
+        || 'create',
+      role:
+        mountPoint.dataset.role
+        || '',
+      statusLabel:
+        mountPoint.dataset.statusLabel
+        || 'Draft',
+      version:
+        mountPoint.dataset.version
+        || '',
+      hasFeaturedImage:
+        mountPoint.dataset.hasFeaturedImage
+        === 'true',
     }
   }
 

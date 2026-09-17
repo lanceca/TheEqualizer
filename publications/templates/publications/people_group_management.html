@@ -90,13 +90,25 @@
     border-color:var(--eq-green);
     background:#f1f6f3;
 }
+.people-actions .people-status-button{
+    border-color:var(--eq-green-dark)!important;
+    background:var(--eq-green-dark)!important;
+    color:#fff!important;
+}
+.people-actions .people-status-button:hover{
+    border-color:var(--eq-green-deep)!important;
+    background:var(--eq-green-deep)!important;
+    color:#fff!important;
+}
 .people-actions .people-delete-button{
-    color:#8a2d2d!important;
-    border-color:#e1caca;
+    border-color:var(--eq-danger)!important;
+    background:var(--eq-danger)!important;
+    color:#fff!important;
 }
 .people-actions .people-delete-button:hover{
-    background:#fff3f3;
-    border-color:#c98e8e;
+    border-color:var(--eq-danger-dark)!important;
+    background:var(--eq-danger-dark)!important;
+    color:#fff!important;
 }
 .people-submit-button{display:inline-flex!important;align-items:center;justify-content:center;min-height:42px;padding:10px 17px!important;border:1px solid var(--eq-green-dark)!important;border-radius:8px!important;background:var(--eq-green-dark)!important;color:#fff!important;font-weight:800!important;cursor:pointer}.people-submit-button:hover{background:var(--eq-green)!important;color:#fff!important}
 .people-field-label-row,
@@ -136,7 +148,9 @@
     .people-actions button{width:100%;min-width:0}
 }
 </style>
-<div class="dashboard-header"><div><h1>{{ section_title }}</h1><p class="dashboard-subtitle">Create, edit, order, show, or hide profiles.</p></div><a href="{% url 'people_management' %}" class="secondary-button">Back</a></div>
+
+<div class="management-suite-page management-suite-page--people">
+<div class="dashboard-header management-suite-hero"><div><p class="workflow-eyebrow">People &amp; Teams</p><h1>{{ section_title }}</h1><p class="dashboard-subtitle">Create, edit, order, show, or hide profiles.</p></div><a href="{% url 'people_management' %}" class="secondary-button">Back</a></div>
 <div class="people-group-layout"><section class="people-panel"><h2>Add Profile</h2>
 <form method="POST" enctype="multipart/form-data" action="{% url 'create_people_profile' section_slug %}">{% csrf_token %}
 <div class="people-field"><div class="people-field-label-row"><label for="people-name">Name</label><span class="people-character-count" id="people-name-count">0/40</span></div><input id="people-name" type="text" name="name" maxlength="40" data-people-counter="people-name-count" required value="{% if request.method == 'POST' %}{{ request.POST.name }}{% endif %}"></div>
@@ -150,7 +164,10 @@
 <div class="people-field"><label>Display order</label><input type="number" name="display_order" min="0" max="9999" value="{% if request.method == 'POST' %}{{ request.POST.display_order|default:'0' }}{% else %}0{% endif %}"></div>
 <label style="display:flex;gap:8px;align-items:center;margin:16px 0"><input type="checkbox" name="is_active" value="1" {% if request.method != 'POST' or request.POST.is_active == '1' %}checked{% endif %}>Visible on public page</label>
 <button class="people-submit-button" type="submit">Add Profile</button></form></section>
-<section class="people-panel"><h2>Current Profiles</h2><div class="people-list">{% for profile in profiles %}<article class="people-row"><img src="{{ profile.image.url }}" alt="{{ profile.name }}"><div><h3>{{ profile.name }}</h3>{% if profile.role_title %}<p>{{ profile.role_title }}</p>{% endif %}{% if profile.school_position %}<p>{{ profile.school_position }}</p>{% endif %}<p>Order: {{ profile.display_order }} · {% if profile.is_active %}Visible{% else %}Hidden{% endif %}</p></div><div class="people-actions"><a href="{% url 'edit_people_profile' section_slug profile.id %}">Edit</a><form method="POST" action="{% url 'set_people_profile_status' section_slug profile.id %}" data-confirm-title="{% if profile.is_active %}Hide Profile{% else %}Show Profile{% endif %}" data-confirm="{% if profile.is_active %}Hide '{{ profile.name }}' from the public People & Teams page?{% else %}Show '{{ profile.name }}' on the public People & Teams page?{% endif %}">{% csrf_token %}<input type="hidden" name="is_active" value="{% if profile.is_active %}0{% else %}1{% endif %}"><button type="submit">{% if profile.is_active %}Hide{% else %}Show{% endif %}</button></form><form method="POST" action="{% url 'delete_people_profile' section_slug profile.id %}" data-confirm-title="Delete Profile" data-confirm="Permanently delete '{{ profile.name }}'? This cannot be undone.">{% csrf_token %}<button type="submit" class="people-delete-button">Delete</button></form></div></article>{% empty %}<p>No profiles have been added yet.</p>{% endfor %}</div></section></div>
+<section class="people-panel"><h2>Current Profiles</h2><div class="people-list">{% for profile in profiles %}<article class="people-row"><img src="{{ profile.image.url }}" alt="{{ profile.name }}"><div><h3>{{ profile.name }}</h3>{% if profile.role_title %}<p>{{ profile.role_title }}</p>{% endif %}{% if profile.school_position %}<p>{{ profile.school_position }}</p>{% endif %}<p>Order: {{ profile.display_order }} · {% if profile.is_active %}Visible{% else %}Hidden{% endif %}</p></div><div class="people-actions"><a href="{% url 'edit_people_profile' section_slug profile.id %}">Edit</a><form method="POST" action="{% url 'set_people_profile_status' section_slug profile.id %}" data-confirm-title="{% if profile.is_active %}Hide Profile{% else %}Show Profile{% endif %}" data-confirm="{% if profile.is_active %}Hide '{{ profile.name }}' from the public People & Teams page?{% else %}Show '{{ profile.name }}' on the public People & Teams page?{% endif %}">{% csrf_token %}<input type="hidden" name="is_active" value="{% if profile.is_active %}0{% else %}1{% endif %}"><button type="submit" class="people-status-button">{% if profile.is_active %}Hide{% else %}Show{% endif %}</button></form><form method="POST" action="{% url 'delete_people_profile' section_slug profile.id %}" data-confirm-title="Delete Profile" data-confirm="Permanently delete '{{ profile.name }}'? This cannot be undone.">{% csrf_token %}<button type="submit" class="people-delete-button">Delete</button></form></div></article>{% empty %}<p>No profiles have been added yet.</p>{% endfor %}</div></section></div>
+
+</div>
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 function initializePeopleCharacterCounters() {

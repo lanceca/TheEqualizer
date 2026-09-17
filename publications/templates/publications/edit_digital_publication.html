@@ -2,23 +2,17 @@
 
 {% block staff_content %}
 
-<div class="dashboard-header">
+<div class="management-suite-page management-suite-page--library">
+
+<div class="dashboard-header management-suite-hero">
+    <p class="workflow-eyebrow">Publication Library</p>
     <h1>Edit Digital Publication</h1>
     <p class="dashboard-subtitle">
         Update metadata, cover image, PDF file, status, or display order.
     </p>
 </div>
 
-<section
-    style="
-        max-width: 760px;
-        padding: 22px;
-        background: var(--eq-white);
-        border: 1px solid var(--eq-border);
-        border-radius: var(--eq-radius);
-        box-shadow: var(--eq-shadow);
-    "
->
+<section class="management-editor-card digital-edit-card">
 
     <form
         method="POST"
@@ -199,6 +193,9 @@
     </form>
 
 </section>
+
+
+</div>
 
 {% include "publications/_preserve_post_form.html" %}
 

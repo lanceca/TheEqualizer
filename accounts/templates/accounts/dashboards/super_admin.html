@@ -5,396 +5,350 @@
 
 {% get_mobile_app_settings as mobile_app_settings %}
 
-<style>
-.staff-profile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:22px}
-.staff-profile-card{padding:20px;background:var(--eq-white);border:1px solid var(--eq-border);border-radius:var(--eq-radius);box-shadow:var(--eq-shadow)}
-.staff-profile-card h2{margin:0 0 14px;padding:0 0 9px;border-bottom:2px solid var(--eq-green-soft);font-size:18px}
-.staff-profile-row{display:grid;grid-template-columns:135px 1fr;gap:12px;padding:8px 0;border-bottom:1px solid #edf1ee}
-.staff-profile-row:last-child{border-bottom:none}.staff-profile-label{color:var(--eq-muted);font-size:13px;font-weight:700}.staff-profile-value{min-width:0;color:var(--eq-charcoal);overflow-wrap:anywhere}
-.staff-role-summary{margin-top:22px;padding:22px;background:var(--eq-white);border:1px solid var(--eq-border);border-left:5px solid var(--eq-gold);border-radius:var(--eq-radius);box-shadow:var(--eq-shadow)}
-.staff-role-summary h2{margin:0 0 10px;padding:0;border:none;font-size:19px}.staff-role-summary p{margin:0;color:var(--eq-muted);line-height:1.7}
-.staff-account-status{display:inline-flex;align-items:center;gap:7px;width:fit-content;padding:4px 9px;border-radius:999px;background:#e9f5ec;color:var(--eq-green-dark);font-size:12px;font-weight:700}.staff-account-status::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--eq-green)}
+<div class="workspace-dashboard workspace-dashboard--super-admin">
 
-.mobile-release-panel{
-    margin-top:22px;
-    padding:22px;
-    background:var(--eq-white);
-    border:1px solid var(--eq-border);
-    border-left:5px solid var(--eq-green);
-    border-radius:var(--eq-radius);
-    box-shadow:var(--eq-shadow);
-}
-.mobile-release-panel-header{
-    display:flex;
-    align-items:flex-start;
-    justify-content:space-between;
-    gap:18px;
-    margin-bottom:18px;
-    padding-bottom:14px;
-    border-bottom:1px solid #e4ebe7;
-}
-.mobile-release-panel-header h2{
-    margin:0 0 5px;
-    font-size:20px;
-}
-.mobile-release-panel-header p{
-    margin:0;
-    color:var(--eq-muted);
-    line-height:1.6;
-}
-.mobile-release-status{
-    flex:0 0 auto;
-    padding:6px 10px;
-    border-radius:999px;
-    background:#edf5f1;
-    color:var(--eq-green-dark);
-    font-size:12px;
-    font-weight:800;
-}
-.mobile-release-grid{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:16px;
-}
-.mobile-release-field{
-    min-width:0;
-}
-.mobile-release-field.is-wide{
-    grid-column:1/-1;
-}
-.mobile-release-field label{
-    display:block;
-    margin-bottom:6px;
-    color:var(--eq-charcoal);
-    font-size:13px;
-    font-weight:800;
-}
-.mobile-release-field input[type="text"],
-.mobile-release-field input[type="url"],
-.mobile-release-field textarea{
-    width:100%;
-    padding:10px 12px;
-    border:1px solid var(--eq-border);
-    border-radius:8px;
-    background:#fff;
-    color:var(--eq-charcoal);
-    font:inherit;
-}
-.mobile-release-field textarea{
-    min-height:96px;
-    resize:vertical;
-}
-.mobile-release-field input:focus,
-.mobile-release-field textarea:focus{
-    outline:3px solid rgba(27,108,79,.12);
-    border-color:var(--eq-green);
-}
-.mobile-release-help{
-    margin:6px 0 0;
-    color:var(--eq-muted);
-    font-size:12px;
-    line-height:1.55;
-}
-.mobile-release-toggle{
-    display:flex;
-    align-items:center;
-    gap:9px;
-    min-height:42px;
-}
-.mobile-release-toggle input{
-    width:18px;
-    height:18px;
-}
-.mobile-release-actions{
-    display:flex;
-    justify-content:flex-end;
-    margin-top:18px;
-}
-.mobile-release-note{
-    margin-top:16px;
-    padding:13px 14px;
-    border-radius:9px;
-    background:#f7f4e9;
-    color:#62531e;
-    font-size:12px;
-    line-height:1.65;
-}
+    <section class="workspace-dashboard-hero">
 
-@media(max-width:720px){
-    .mobile-release-grid{grid-template-columns:1fr}
-    .mobile-release-field.is-wide{grid-column:auto}
-    .mobile-release-panel-header{flex-direction:column}
-    .mobile-release-actions{justify-content:stretch}
-    .mobile-release-actions .primary-button{width:100%}
-}
-@media(max-width:620px){.staff-profile-row{grid-template-columns:1fr;gap:2px}}
-</style>
-
-<div class="dashboard-header">
-    <h1>Super Admin Dashboard</h1>
-    <p class="dashboard-subtitle">
-        Your account and administrative role information.
-    </p>
-</div>
-
-<div class="dashboard-profile-strip">
-    <div class="dashboard-profile-avatar">
-        {% if request.user.profile_picture %}
-            <img
-                src="{{ request.user.profile_picture.url }}"
-                alt="{{ request.user.username }} profile picture"
-            >
-        {% else %}
-            <span>{{ request.user.username|slice:":1"|upper }}</span>
-        {% endif %}
-    </div>
-
-    <div class="dashboard-profile-copy">
-        <span class="dashboard-profile-kicker">Signed in as</span>
-        <strong>{{ request.user.username }}</strong>
-        <span>{{ request.user.get_role_display }}</span>
-    </div>
-
-    <a
-        href="{% url 'profile' %}"
-        class="secondary-button dashboard-profile-link"
-    >
-        View Profile
-    </a>
-</div>
-
-<div class="dashboard-welcome">
-    <h2>Welcome, {{ request.user.username }}</h2>
-    <p>
-        Oversee administrator access and the highest-level CMS account
-        controls.
-    </p>
-</div>
-
-<div class="staff-profile-grid">
-
-    <section class="staff-profile-card">
-        <h2>Account Information</h2>
-
-        <div class="staff-profile-row">
-            <span class="staff-profile-label">Username</span>
-            <span class="staff-profile-value">
-                {{ request.user.username }}
+        <div class="workspace-dashboard-hero-copy">
+            <span class="workspace-dashboard-eyebrow">
+                System Administration
             </span>
-        </div>
 
-        <div class="staff-profile-row">
-            <span class="staff-profile-label">Role</span>
-            <span class="staff-profile-value">
-                {{ request.user.get_role_display }}
-            </span>
-        </div>
+            <h1>Super Admin Dashboard</h1>
 
-        <div class="staff-profile-row">
-            <span class="staff-profile-label">Full Name</span>
-            <span class="staff-profile-value">
-                {% if request.user.get_full_name %}
-                    {{ request.user.get_full_name }}
-                {% else %}
-                    Not provided
-                {% endif %}
-            </span>
-        </div>
-
-        <div class="staff-profile-row">
-            <span class="staff-profile-label">Email</span>
-            <span class="staff-profile-value">
-                {% if request.user.email %}
-                    {{ request.user.email }}
-                {% else %}
-                    Not provided
-                {% endif %}
-            </span>
-        </div>
-    </section>
-
-    <section class="staff-profile-card">
-        <h2>Account Details</h2>
-
-        <div class="staff-profile-row">
-            <span class="staff-profile-label">Status</span>
-            <span class="staff-profile-value">
-                {% if request.user.is_active %}
-                    <span class="staff-account-status">Active</span>
-                {% else %}
-                    Inactive
-                {% endif %}
-            </span>
-        </div>
-
-        <div class="staff-profile-row">
-            <span class="staff-profile-label">Date Joined</span>
-            <span class="staff-profile-value">
-                {{ request.user.date_joined|date:"M. d, Y - g:i A" }}
-            </span>
-        </div>
-
-        <div class="staff-profile-row">
-            <span class="staff-profile-label">Last Login</span>
-            <span class="staff-profile-value">
-                {% if request.user.last_login %}
-                    {{ request.user.last_login|date:"M. d, Y - g:i A" }}
-                {% else %}
-                    No previous login recorded
-                {% endif %}
-            </span>
-        </div>
-    </section>
-
-</div>
-
-<section class="staff-role-summary">
-    <h2>Role Overview</h2>
-    <p>
-        As Super Admin, you manage Admin accounts and maintain top-level
-        administrative access to The Equalizer CMS. Account-management
-        actions remain available from the sidebar.
-    </p>
-</section>
-
-<section class="mobile-release-panel">
-
-    <div class="mobile-release-panel-header">
-
-        <div>
-            <h2>Mobile App Release Manager</h2>
             <p>
-                Control the Android installation link and the optional
-                update notice shown on the public homepage.
+                Control administrator access, maintain top-level CMS settings,
+                and manage the public mobile-app release configuration.
             </p>
+
+            <div class="workspace-dashboard-hero-actions">
+                <a
+                    href="{% url 'manage_admin_accounts' %}"
+                    class="workspace-hero-button workspace-hero-button--primary"
+                >
+                    Manage Admin Accounts
+                </a>
+
+                <a
+                    href="#mobile-release-manager"
+                    class="workspace-hero-button workspace-hero-button--secondary"
+                >
+                    Mobile Release Settings
+                </a>
+            </div>
         </div>
 
-        <span class="mobile-release-status">
-            {% if mobile_app_settings.current_version %}
-                v{{ mobile_app_settings.current_version }}
-            {% else %}
-                Not configured
-            {% endif %}
-        </span>
+        <aside class="workspace-dashboard-user-card">
+            <div class="workspace-dashboard-user-avatar">
+                {% if request.user.profile_picture %}
+                    <img
+                        src="{{ request.user.profile_picture.url }}"
+                        alt="{{ request.user.username }} profile picture"
+                    >
+                {% else %}
+                    <span>{{ request.user.username|slice:":1"|upper }}</span>
+                {% endif %}
+            </div>
 
-    </div>
+            <div class="workspace-dashboard-user-copy">
+                <span>Signed in as</span>
+                <strong>{{ request.user.username }}</strong>
+                <small>{{ request.user.get_role_display }}</small>
+            </div>
 
-    <form
-        method="POST"
-        action="{% url 'update_mobile_app_settings' %}"
+            <a href="{% url 'profile' %}">
+                View profile
+            </a>
+        </aside>
+
+    </section>
+
+
+    <section class="workspace-metric-grid" aria-label="Account and release status">
+
+        <article class="workspace-metric-card">
+            <span class="workspace-metric-label">Account Status</span>
+            <strong class="workspace-metric-value workspace-metric-value--text">
+                {% if request.user.is_active %}Active{% else %}Inactive{% endif %}
+            </strong>
+            <p>Top-level CMS access</p>
+        </article>
+
+        <article class="workspace-metric-card">
+            <span class="workspace-metric-label">Email Verification</span>
+            <strong class="workspace-metric-value workspace-metric-value--text">
+                {% if request.user.email_verified %}Verified{% else %}Required{% endif %}
+            </strong>
+            <p>{{ request.user.email|default:"No email configured" }}</p>
+        </article>
+
+        <article class="workspace-metric-card">
+            <span class="workspace-metric-label">Mobile App Version</span>
+            <strong class="workspace-metric-value workspace-metric-value--text">
+                {% if mobile_app_settings.current_version %}
+                    v{{ mobile_app_settings.current_version }}
+                {% else %}
+                    Not set
+                {% endif %}
+            </strong>
+            <p>Current public Android release</p>
+        </article>
+
+        <article class="workspace-metric-card">
+            <span class="workspace-metric-label">Homepage Update Notice</span>
+            <strong class="workspace-metric-value workspace-metric-value--text">
+                {% if mobile_app_settings.notice_enabled %}Enabled{% else %}Disabled{% endif %}
+            </strong>
+            <p>Public release announcement</p>
+        </article>
+
+    </section>
+
+
+    <section class="workspace-dashboard-section">
+
+        <div class="workspace-section-heading">
+            <div>
+                <span>Administration</span>
+                <h2>System controls</h2>
+                <p>
+                    High-level tools for account governance, release settings,
+                    and system accountability.
+                </p>
+            </div>
+        </div>
+
+        <div class="workspace-action-grid">
+
+            <a
+                href="{% url 'manage_admin_accounts' %}"
+                class="workspace-action-card"
+            >
+                <div>
+                    <span class="workspace-action-kicker">Accounts</span>
+                    <h3>Manage Admin Accounts</h3>
+                    <p>
+                        Create, update, activate, or deactivate administrator
+                        access.
+                    </p>
+                </div>
+                <span class="workspace-action-arrow" aria-hidden="true">→</span>
+            </a>
+
+            <a
+                href="#mobile-release-manager"
+                class="workspace-action-card"
+            >
+                <div>
+                    <span class="workspace-action-kicker">Mobile</span>
+                    <h3>Release Manager</h3>
+                    <p>
+                        Maintain the app version, installation URL, and update
+                        notice.
+                    </p>
+                </div>
+                <span class="workspace-action-arrow" aria-hidden="true">→</span>
+            </a>
+
+            <a
+                href="{% url 'audit:action_log' %}"
+                class="workspace-action-card"
+            >
+                <div>
+                    <span class="workspace-action-kicker">Accountability</span>
+                    <h3>Action Log</h3>
+                    <p>
+                        Review recorded administrative and editorial activity.
+                    </p>
+                </div>
+                <span class="workspace-action-arrow" aria-hidden="true">→</span>
+            </a>
+
+        </div>
+
+    </section>
+
+
+    <section class="workspace-account-panel">
+
+        <div class="workspace-section-heading workspace-section-heading--compact">
+            <div>
+                <span>Account</span>
+                <h2>Access snapshot</h2>
+            </div>
+
+            <a href="{% url 'profile' %}" class="workspace-text-link">
+                Manage profile →
+            </a>
+        </div>
+
+        <div class="workspace-account-grid">
+            <div>
+                <span>Full name</span>
+                <strong>
+                    {% if request.user.get_full_name %}
+                        {{ request.user.get_full_name }}
+                    {% else %}
+                        Not provided
+                    {% endif %}
+                </strong>
+            </div>
+
+            <div>
+                <span>Date joined</span>
+                <strong>{{ request.user.date_joined|date:"M. d, Y" }}</strong>
+            </div>
+
+            <div>
+                <span>Last login</span>
+                <strong>
+                    {% if request.user.last_login %}
+                        {{ request.user.last_login|date:"M. d, Y - g:i A" }}
+                    {% else %}
+                        No previous login
+                    {% endif %}
+                </strong>
+            </div>
+        </div>
+
+    </section>
+
+
+    <section
+        class="workspace-management-panel workspace-mobile-release-panel"
+        id="mobile-release-manager"
     >
-        {% csrf_token %}
 
-        <div class="mobile-release-grid">
-
-            <div class="mobile-release-field">
-                <label for="id_current_version">
-                    Current App Version
-                </label>
-
-                <input
-                    type="text"
-                    name="current_version"
-                    id="id_current_version"
-                    maxlength="30"
-                    value="{{ mobile_app_settings.current_version|default:'' }}"
-                    placeholder="Example: 1.0.1"
-                >
-
-                <p class="mobile-release-help">
-                    This should match the version in mobile/app.json.
+        <div class="workspace-section-heading">
+            <div>
+                <span>Mobile Application</span>
+                <h2>Mobile App Release Manager</h2>
+                <p>
+                    Control the Android installation link and optional update
+                    notice shown on the public homepage.
                 </p>
             </div>
 
-            <div class="mobile-release-field">
-                <label for="id_notice_enabled">
-                    Homepage Update Notice
-                </label>
+            <span class="workspace-status-pill">
+                {% if mobile_app_settings.current_version %}
+                    v{{ mobile_app_settings.current_version }}
+                {% else %}
+                    Not configured
+                {% endif %}
+            </span>
+        </div>
 
-                <div class="mobile-release-toggle">
+        <form
+            method="POST"
+            action="{% url 'update_mobile_app_settings' %}"
+            class="workspace-form"
+        >
+            {% csrf_token %}
+
+            <div class="workspace-form-grid">
+
+                <div class="workspace-form-field">
+                    <label for="id_current_version">
+                        Current App Version
+                    </label>
+
                     <input
-                        type="checkbox"
-                        name="notice_enabled"
-                        id="id_notice_enabled"
-                        {% if mobile_app_settings.notice_enabled %}checked{% endif %}
+                        type="text"
+                        name="current_version"
+                        id="id_current_version"
+                        maxlength="30"
+                        value="{{ mobile_app_settings.current_version|default:'' }}"
+                        placeholder="Example: 1.0.1"
                     >
 
-                    <span>
-                        Show the update notice on the public homepage
-                    </span>
+                    <small>
+                        Match this value with the version configured in
+                        mobile/app.json.
+                    </small>
                 </div>
+
+                <div class="workspace-form-field">
+                    <label for="id_notice_enabled">
+                        Homepage Update Notice
+                    </label>
+
+                    <label class="workspace-switch-row">
+                        <input
+                            type="checkbox"
+                            name="notice_enabled"
+                            id="id_notice_enabled"
+                            {% if mobile_app_settings.notice_enabled %}checked{% endif %}
+                        >
+                        <span>
+                            Show the update notice on the public homepage
+                        </span>
+                    </label>
+                </div>
+
+                <div class="workspace-form-field workspace-form-field--wide">
+                    <label for="id_download_url">
+                        APK Download URL
+                    </label>
+
+                    <input
+                        type="url"
+                        name="download_url"
+                        id="id_download_url"
+                        maxlength="600"
+                        value="{{ mobile_app_settings.download_url|default:'' }}"
+                        placeholder="https://github.com/lanceca/TheEqualizer/releases/latest/download/TheEqualizer.apk"
+                    >
+
+                    <small>
+                        The website's Install App controls use this address.
+                        GitHub Releases remains the recommended APK host.
+                    </small>
+                </div>
+
+                <div class="workspace-form-field workspace-form-field--wide">
+                    <label for="id_notice_title">
+                        Update Notice Title
+                    </label>
+
+                    <input
+                        type="text"
+                        name="notice_title"
+                        id="id_notice_title"
+                        maxlength="140"
+                        value="{{ mobile_app_settings.notice_title|default:'A new version of The Equalizer app is available.' }}"
+                    >
+                </div>
+
+                <div class="workspace-form-field workspace-form-field--wide">
+                    <label for="id_notice_message">
+                        Update Notice Message
+                    </label>
+
+                    <textarea
+                        name="notice_message"
+                        id="id_notice_message"
+                        maxlength="500"
+                        placeholder="Example: Version 1.0.1 includes interface improvements and bug fixes."
+                    >{{ mobile_app_settings.notice_message|default:'' }}</textarea>
+                </div>
+
             </div>
 
-            <div class="mobile-release-field is-wide">
-                <label for="id_download_url">
-                    APK Download URL
-                </label>
-
-                <input
-                    type="url"
-                    name="download_url"
-                    id="id_download_url"
-                    maxlength="600"
-                    value="{{ mobile_app_settings.download_url|default:'' }}"
-                    placeholder="https://github.com/lanceca/TheEqualizer/releases/latest/download/TheEqualizer.apk"
-                >
-
-                <p class="mobile-release-help">
-                    Recommended: use the GitHub Releases direct APK URL.
-                    The website's Install App buttons will always use this
-                    value.
-                </p>
+            <div class="workspace-form-actions">
+                <button type="submit" class="primary-button">
+                    Save Mobile App Settings
+                </button>
             </div>
+        </form>
 
-            <div class="mobile-release-field is-wide">
-                <label for="id_notice_title">
-                    Update Notice Title
-                </label>
+        <p class="workspace-panel-note">
+            The APK itself remains outside Render and Supabase storage. This
+            setting only controls which hosted APK the website presents to
+            readers.
+        </p>
 
-                <input
-                    type="text"
-                    name="notice_title"
-                    id="id_notice_title"
-                    maxlength="140"
-                    value="{{ mobile_app_settings.notice_title|default:'A new version of The Equalizer app is available.' }}"
-                >
-            </div>
+    </section>
 
-            <div class="mobile-release-field is-wide">
-                <label for="id_notice_message">
-                    Update Notice Message
-                </label>
-
-                <textarea
-                    name="notice_message"
-                    id="id_notice_message"
-                    maxlength="500"
-                    placeholder="Example: Version 1.0.1 includes interface improvements and bug fixes."
-                >{{ mobile_app_settings.notice_message|default:'' }}</textarea>
-            </div>
-
-        </div>
-
-        <div class="mobile-release-actions">
-            <button
-                type="submit"
-                class="primary-button"
-            >
-                Save Mobile App Settings
-            </button>
-        </div>
-
-    </form>
-
-    <div class="mobile-release-note">
-        The APK itself is intentionally not uploaded to Render or Supabase
-        through this form. Your current hosting uses an ephemeral Render
-        filesystem, while the configured Supabase storage has a practical
-        per-file limit. GitHub Releases is the safer place for APK files.
-        The Super Admin controls which APK the website installs by changing
-        the URL here.
-    </div>
-
-</section>
+</div>
 
 {% endblock %}

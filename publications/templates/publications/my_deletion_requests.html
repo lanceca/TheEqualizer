@@ -2,7 +2,7 @@
 
 {% block staff_content %}
 
-<div class="editorial-list-page">
+<div class="editorial-list-page workflow-suite-page workflow-suite-page--tracker">
 
     <div class="editorial-page-header">
 
@@ -173,14 +173,29 @@
                         </div>
 
 
+
+                        <div class="workflow-card-progress" aria-label="Deletion request progress">
+
+                            <span class="is-complete">Requested</span>
+
+                            {% if deletion_request.status == "PENDING" %}
+                                <span class="is-current">EIC decision</span>
+                                <span>Archive outcome</span>
+
+                            {% elif deletion_request.status == "APPROVED" %}
+                                <span class="is-complete">EIC decision</span>
+                                <span class="is-complete">Archived</span>
+
+                            {% else %}
+                                <span class="is-stopped">Request rejected</span>
+                                <span>Archive outcome</span>
+                            {% endif %}
+
+                        </div>
+
                         <h2>
                             {{ deletion_request.article.title }}
                         </h2>
-
-
-                        <p class="editorial-item-summary editorial-item-summary--concern">
-                            {{ deletion_request.reason|truncatechars:180 }}
-                        </p>
 
 
                         <div class="editorial-item-meta">

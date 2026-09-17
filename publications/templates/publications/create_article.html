@@ -2,20 +2,33 @@
 
 {% block staff_content %}
 
-<h1>Create Article</h1>
+<div class="editorial-composer-page editorial-composer-page--create">
 
-{% if request.user.role == "EIC" %}
-    <p class="section-description">
-        Create a new publication article and either save it as a draft or publish it directly.
-    </p>
-{% else %}
-    <p class="section-description">
-        Create a new publication article and either save it as a draft or submit it for EIC approval.
-    </p>
-{% endif %}
+<header class="editorial-composer-header">
+    <div class="editorial-composer-header-copy">
+        <p class="workflow-eyebrow">Editorial Composer</p>
+        <h1>Create Article</h1>
+
+        {% if request.user.role == "EIC" %}
+            <p class="section-description">
+                Build a publication-ready story, save it as a draft, or publish it directly.
+            </p>
+        {% else %}
+            <p class="section-description">
+                Build a publication-ready story, save it as a draft, or send it to the Editor in Chief for review.
+            </p>
+        {% endif %}
+    </div>
+
+    <div class="editorial-composer-header-actions">
+        <a href="{% url 'my_drafts' %}" class="secondary-button">
+            View Drafts
+        </a>
+    </div>
+</header>
 
 
-<div class="content-panel article-form-panel">
+<div class="content-panel article-form-panel editorial-composer-panel">
 
     <div class="info-box">
         <p>
@@ -33,10 +46,12 @@
     <form
         method="POST"
         enctype="multipart/form-data"
-        class="article-form"
+        class="article-form editorial-composer-form"
     >
 
         {% csrf_token %}
+
+        <div class="editorial-composer-main-column">
 
 
         <div class="form-group">
@@ -615,6 +630,22 @@
         </div>
 
 
+
+        </div>
+
+
+        <aside class="editorial-composer-inspector-slot">
+            <div
+                data-react-component="EditorialWorkspaceEnhancer"
+                data-mode="create"
+                data-role="{{ request.user.role }}"
+                data-status-label="New article"
+                data-version="1"
+                data-has-featured-image="false"
+            ></div>
+        </aside>
+
+
         <div class="form-actions">
 
             
@@ -667,6 +698,8 @@
         </div>
 
     </form>
+
+</div>
 
 </div>
 

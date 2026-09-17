@@ -2531,6 +2531,19 @@ def review_submission(
                 ]
             )
 
+            revision_tracking_url = (
+                (
+                    reverse(
+                        "resubmitted_submissions"
+                    )
+                    + "?scope=CURRENT"
+                )
+                if submission.resubmission_of_id
+                else reverse(
+                    "my_submissions"
+                )
+            )
+
             notify_user(
                 submission.submitted_by,
                 Notification.Type.REVISION,
@@ -2538,9 +2551,7 @@ def review_submission(
                     f'The EIC requested revisions for '
                     f'"{article.title}".'
                 ),
-                reverse(
-                    "my_submissions"
-                ),
+                revision_tracking_url,
             )
 
             messages.info(
@@ -2714,6 +2725,15 @@ def revise_submission(
         submitted_by=request.user,
     )
 
+    revision_tracking_view = (
+        "resubmitted_submissions"
+        if (
+            submission.resubmission_of_id
+            or submission.resubmissions.exists()
+        )
+        else "my_submissions"
+    )
+
     if (
         submission.status
         != Submission.Status.REVISION
@@ -2728,7 +2748,7 @@ def revise_submission(
         )
 
         return redirect(
-            "my_submissions"
+            revision_tracking_view
         )
 
     if submission.resubmissions.exists():
@@ -2742,7 +2762,7 @@ def revise_submission(
         )
 
         return redirect(
-            "my_submissions"
+            revision_tracking_view
         )
 
     article = submission.article
@@ -3050,7 +3070,7 @@ def revise_submission(
                     )
 
                     return redirect(
-                        "my_submissions"
+                        revision_tracking_view
                     )
 
                 if (
@@ -3068,7 +3088,7 @@ def revise_submission(
                     )
 
                     return redirect(
-                        "my_submissions"
+                        revision_tracking_view
                     )
 
                 article = (
@@ -3265,12 +3285,19 @@ def resubmitted_submissions(request):
             "resubmission_of__snapshot_attachments",
             "resubmissions",
         )
+        .annotate(
+            has_resubmission=Exists(
+                Submission.objects.filter(
+                    resubmission_of=OuterRef("pk")
+                )
+            )
+        )
     )
 
     if selected_scope == "CURRENT":
         # Only the latest unresolved record in each resubmission chain.
         submissions = submissions.filter(
-            resubmissions__isnull=True,
+            has_resubmission=False,
             status__in=[
                 Submission.Status.PENDING,
                 Submission.Status.REVISION,
@@ -3288,7 +3315,7 @@ def resubmitted_submissions(request):
                 ]
             )
             | Q(
-                resubmissions__isnull=False
+                has_resubmission=True
             )
         )
 

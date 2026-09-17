@@ -4,12 +4,24 @@
 {% block staff_content %}
 
 
-<h1>Edit Published Article</h1>
+<div class="editorial-composer-page editorial-composer-page--published">
 
-<p class="section-description">
-    Changes made here are applied directly to the published article.
-    No additional approval is required.
-</p>
+<header class="editorial-composer-header">
+    <div class="editorial-composer-header-copy">
+        <p class="workflow-eyebrow">Published Story Editor</p>
+        <h1>Edit Published Article</h1>
+
+        <p class="section-description">
+            Update the live story carefully. Saving this form creates the next official article version immediately.
+        </p>
+    </div>
+
+    <div class="editorial-composer-header-actions">
+        <a href="{% url 'published_articles' %}" class="secondary-button">
+            Back to Published
+        </a>
+    </div>
+</header>
 
 
 <div class="article-version-workflow-cards">
@@ -102,15 +114,17 @@
 </style>
 
 
-<div class="content-panel article-form-panel">
+<div class="content-panel article-form-panel editorial-composer-panel">
 
     <form
         method="POST"
         enctype="multipart/form-data"
-        class="article-form"
+        class="article-form editorial-composer-form"
     >
 
         {% csrf_token %}
+
+        <div class="editorial-composer-main-column">
 
 
         <div class="form-group">
@@ -890,6 +904,22 @@
         </div>
 
 
+
+        </div>
+
+
+        <aside class="editorial-composer-inspector-slot">
+            <div
+                data-react-component="EditorialWorkspaceEnhancer"
+                data-mode="published"
+                data-role="{{ request.user.role }}"
+                data-status-label="Published edit"
+                data-version="{{ article.version_number|add:'1' }}"
+                data-has-featured-image="{% if article.featured_image %}true{% else %}false{% endif %}"
+            ></div>
+        </aside>
+
+
         <div class="form-actions">
 
             
@@ -920,6 +950,8 @@
         </div>
 
     </form>
+
+</div>
 
 </div>
 

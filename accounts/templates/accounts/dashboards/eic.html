@@ -2,282 +2,295 @@
 
 {% block staff_content %}
 
+<div class="workspace-dashboard workspace-dashboard--eic">
 
-<style>
+    <section class="workspace-dashboard-hero">
 
-    .staff-profile-grid {
-        display: grid;
-        grid-template-columns:
-            repeat(
-                auto-fit,
-                minmax(220px, 1fr)
-            );
-        gap: 16px;
-        margin-top: 22px;
-    }
+        <div class="workspace-dashboard-hero-copy">
+            <span class="workspace-dashboard-eyebrow">
+                Editorial Command Center
+            </span>
 
-    .staff-profile-card {
-        padding: 20px;
-        background: var(--eq-white);
-        border: 1px solid var(--eq-border);
-        border-radius: var(--eq-radius);
-        box-shadow: var(--eq-shadow);
-    }
+            <h1>Editor in Chief Dashboard</h1>
 
-    .staff-profile-card h2 {
-        margin: 0 0 14px;
-        padding: 0 0 9px;
-        border-bottom: 2px solid var(--eq-green-soft);
-        font-size: 18px;
-    }
+            <p>
+                Review incoming work, manage editorial requests, and keep the
+                publication workflow moving from submission to publication.
+            </p>
 
-    .staff-profile-row {
-        display: grid;
-        grid-template-columns: 135px 1fr;
-        gap: 12px;
-        padding: 8px 0;
-        border-bottom: 1px solid #edf1ee;
-    }
+            <div class="workspace-dashboard-hero-actions">
+                <a
+                    href="{% url 'create_article' %}"
+                    class="workspace-hero-button workspace-hero-button--primary"
+                >
+                    Create Article
+                </a>
 
-    .staff-profile-row:last-child {
-        border-bottom: none;
-    }
+                <a
+                    href="{% url 'pending_submissions' %}"
+                    class="workspace-hero-button workspace-hero-button--secondary"
+                >
+                    Review Submissions
+                </a>
+            </div>
+        </div>
 
-    .staff-profile-label {
-        color: var(--eq-muted);
-        font-size: 13px;
-        font-weight: 700;
-    }
+        <aside class="workspace-dashboard-user-card">
+            <div class="workspace-dashboard-user-avatar">
+                {% if request.user.profile_picture %}
+                    <img
+                        src="{{ request.user.profile_picture.url }}"
+                        alt="{{ request.user.username }} profile picture"
+                    >
+                {% else %}
+                    <span>{{ request.user.username|slice:":1"|upper }}</span>
+                {% endif %}
+            </div>
 
-    .staff-profile-value {
-        min-width: 0;
-        color: var(--eq-charcoal);
-        overflow-wrap: anywhere;
-    }
+            <div class="workspace-dashboard-user-copy">
+                <span>Signed in as</span>
+                <strong>{{ request.user.username }}</strong>
+                <small>{{ request.user.get_role_display }}</small>
+            </div>
 
-    .staff-role-summary {
-        margin-top: 22px;
-        padding: 22px;
-        background: var(--eq-white);
-        border: 1px solid var(--eq-border);
-        border-left: 5px solid var(--eq-gold);
-        border-radius: var(--eq-radius);
-        box-shadow: var(--eq-shadow);
-    }
+            <a href="{% url 'profile' %}">
+                View profile
+            </a>
+        </aside>
 
-    .staff-role-summary h2 {
-        margin: 0 0 10px;
-        padding: 0;
-        border: none;
-        font-size: 19px;
-    }
-
-    .staff-role-summary p {
-        margin: 0;
-        color: var(--eq-muted);
-        line-height: 1.7;
-    }
-
-    .staff-account-status {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        width: fit-content;
-        padding: 4px 9px;
-        border-radius: 999px;
-        background: #e9f5ec;
-        color: var(--eq-green-dark);
-        font-size: 12px;
-        font-weight: 700;
-    }
-
-    .staff-account-status::before {
-        content: "";
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: var(--eq-green);
-    }
-
-    @media (max-width: 620px) {
-        .staff-profile-row {
-            grid-template-columns: 1fr;
-            gap: 2px;
-        }
-    }
-
-</style>
+    </section>
 
 
-<div class="dashboard-header">
+    <section class="workspace-metric-grid" aria-label="Editorial attention metrics">
 
-    <h1>Editor in Chief Dashboard</h1>
-
-    <p class="dashboard-subtitle">
-        Your account and editorial role information.
-    </p>
-
-</div>
-
-<div class="dashboard-profile-strip">
-
-    <div class="dashboard-profile-avatar">
-
-        {% if request.user.profile_picture %}
-
-            <img
-                src="{{ request.user.profile_picture.url }}"
-                alt="{{ request.user.username }} profile picture"
+        <article class="workspace-metric-card workspace-metric-card--attention">
+            <span class="workspace-metric-label">Pending Submissions</span>
+            <strong
+                class="workspace-metric-value"
+                data-dashboard-metric-value
+                data-value="{{ sidebar_pending_submissions_count|default:0 }}"
             >
+                {{ sidebar_pending_submissions_count|default:0 }}
+            </strong>
+            <p>Articles waiting for review</p>
+        </article>
 
-        {% else %}
+        <article class="workspace-metric-card workspace-metric-card--attention">
+            <span class="workspace-metric-label">Edit Requests</span>
+            <strong
+                class="workspace-metric-value"
+                data-dashboard-metric-value
+                data-value="{{ sidebar_pending_edit_requests_count|default:0 }}"
+            >
+                {{ sidebar_pending_edit_requests_count|default:0 }}
+            </strong>
+            <p>Pending article-change requests</p>
+        </article>
 
-            <span>
-                {{ request.user.username|slice:":1"|upper }}
-            </span>
+        <article class="workspace-metric-card workspace-metric-card--attention">
+            <span class="workspace-metric-label">Deletion Requests</span>
+            <strong
+                class="workspace-metric-value"
+                data-dashboard-metric-value
+                data-value="{{ sidebar_pending_deletion_requests_count|default:0 }}"
+            >
+                {{ sidebar_pending_deletion_requests_count|default:0 }}
+            </strong>
+            <p>Pending removal requests</p>
+        </article>
 
-        {% endif %}
+        <article class="workspace-metric-card workspace-metric-card--attention">
+            <span class="workspace-metric-label">Active Staff Reports</span>
+            <strong
+                class="workspace-metric-value"
+                data-dashboard-metric-value
+                data-value="{{ sidebar_active_content_reports_count|default:0 }}"
+            >
+                {{ sidebar_active_content_reports_count|default:0 }}
+            </strong>
+            <p>Reports requiring editorial attention</p>
+        </article>
 
-    </div>
-
-
-    <div class="dashboard-profile-copy">
-
-        <span class="dashboard-profile-kicker">
-            Signed in as
-        </span>
-
-        <strong>
-            {{ request.user.username }}
-        </strong>
-
-        <span>
-            {{ request.user.get_role_display }}
-        </span>
-
-    </div>
-
-
-    <a
-        href="{% url 'profile' %}"
-        class="secondary-button dashboard-profile-link"
-    >
-        View Profile
-    </a>
-
-</div>
-
-
-
-<div class="dashboard-welcome">
-
-    <h2>
-        Welcome, {{ request.user.username }}
-    </h2>
-
-</div>
+    </section>
 
 
-<div class="staff-profile-grid">
+    <section class="workspace-dashboard-section">
 
-    <section class="staff-profile-card">
-
-        <h2>
-            Account Information
-        </h2>
-
-        <div class="staff-profile-row">
-            <span class="staff-profile-label">Username</span>
-            <span class="staff-profile-value">
-                {{ request.user.username }}
-            </span>
+        <div class="workspace-section-heading">
+            <div>
+                <span>Editorial Workflow</span>
+                <h2>Work that needs your attention</h2>
+                <p>
+                    Move directly into review queues and active editorial
+                    requests without leaving the dashboard context.
+                </p>
+            </div>
         </div>
 
-        <div class="staff-profile-row">
-            <span class="staff-profile-label">Role</span>
-            <span class="staff-profile-value">
-                {{ request.user.get_role_display }}
-            </span>
-        </div>
+        <div class="workspace-action-grid">
 
-        <div class="staff-profile-row">
-            <span class="staff-profile-label">Full Name</span>
-            <span class="staff-profile-value">
-                {% if request.user.get_full_name %}
-                    {{ request.user.get_full_name }}
-                {% else %}
-                    Not provided
-                {% endif %}
-            </span>
-        </div>
+            <a
+                href="{% url 'pending_submissions' %}"
+                class="workspace-action-card"
+            >
+                <div>
+                    <span class="workspace-action-kicker">Review</span>
+                    <h3>Pending Submissions</h3>
+                    <p>
+                        Review, approve, reject, or return Editor submissions
+                        for revision.
+                    </p>
+                </div>
+                <span class="workspace-action-count">
+                    {{ sidebar_pending_submissions_count|default:0 }}
+                </span>
+            </a>
 
-        <div class="staff-profile-row">
-            <span class="staff-profile-label">Email</span>
-            <span class="staff-profile-value">
-                {% if request.user.email %}
-                    {{ request.user.email }}
-                {% else %}
-                    Not provided
-                {% endif %}
-            </span>
+            <a
+                href="{% url 'eic_edit_requests' %}"
+                class="workspace-action-card"
+            >
+                <div>
+                    <span class="workspace-action-kicker">Requests</span>
+                    <h3>Edit Requests</h3>
+                    <p>
+                        Review requested changes to already published
+                        articles.
+                    </p>
+                </div>
+                <span class="workspace-action-count">
+                    {{ sidebar_pending_edit_requests_count|default:0 }}
+                </span>
+            </a>
+
+            <a
+                href="{% url 'eic_deletion_requests' %}"
+                class="workspace-action-card"
+            >
+                <div>
+                    <span class="workspace-action-kicker">Requests</span>
+                    <h3>Deletion Requests</h3>
+                    <p>
+                        Review Editor requests to remove their published
+                        content.
+                    </p>
+                </div>
+                <span class="workspace-action-count">
+                    {{ sidebar_pending_deletion_requests_count|default:0 }}
+                </span>
+            </a>
+
+            <a
+                href="{% url 'eic_content_reports' %}"
+                class="workspace-action-card"
+            >
+                <div>
+                    <span class="workspace-action-kicker">Reports</span>
+                    <h3>Staff Reports</h3>
+                    <p>
+                        Resolve content concerns or require article revision.
+                    </p>
+                </div>
+                <span class="workspace-action-count">
+                    {{ sidebar_active_content_reports_count|default:0 }}
+                </span>
+            </a>
+
         </div>
 
     </section>
 
 
-    <section class="staff-profile-card">
+    <section class="workspace-dashboard-section">
 
-        <h2>
-            Account Details
-        </h2>
-
-        <div class="staff-profile-row">
-            <span class="staff-profile-label">Status</span>
-            <span class="staff-profile-value">
-                {% if request.user.is_active %}
-                    <span class="staff-account-status">
-                        Active
-                    </span>
-                {% else %}
-                    Inactive
-                {% endif %}
-            </span>
+        <div class="workspace-section-heading">
+            <div>
+                <span>Publishing</span>
+                <h2>Editorial tools</h2>
+            </div>
         </div>
 
-        <div class="staff-profile-row">
-            <span class="staff-profile-label">Date Joined</span>
-            <span class="staff-profile-value">
-                {{ request.user.date_joined|date:"M. d, Y - g:i A" }}
-            </span>
+        <div class="workspace-action-grid workspace-action-grid--compact">
+
+            <a href="{% url 'my_drafts' %}" class="workspace-action-card">
+                <div>
+                    <span class="workspace-action-kicker">Writing</span>
+                    <h3>My Drafts</h3>
+                    <p>Continue your own unpublished work.</p>
+                </div>
+                <span class="workspace-action-arrow" aria-hidden="true">→</span>
+            </a>
+
+            <a href="{% url 'published_articles' %}" class="workspace-action-card">
+                <div>
+                    <span class="workspace-action-kicker">Published</span>
+                    <h3>Published Articles</h3>
+                    <p>Manage current publication content.</p>
+                </div>
+                <span class="workspace-action-arrow" aria-hidden="true">→</span>
+            </a>
+
+            <a href="{% url 'archived_articles' %}" class="workspace-action-card">
+                <div>
+                    <span class="workspace-action-kicker">Archive</span>
+                    <h3>Article Archive</h3>
+                    <p>Review and manage archived publication content.</p>
+                </div>
+                <span class="workspace-action-arrow" aria-hidden="true">→</span>
+            </a>
+
+            <a href="{% url 'digital_publication_management' %}" class="workspace-action-card">
+                <div>
+                    <span class="workspace-action-kicker">Showcase</span>
+                    <h3>Digital Publications</h3>
+                    <p>Manage public digital publication releases.</p>
+                </div>
+                <span class="workspace-action-arrow" aria-hidden="true">→</span>
+            </a>
+
         </div>
 
-        <div class="staff-profile-row">
-            <span class="staff-profile-label">Last Login</span>
-            <span class="staff-profile-value">
-                {% if request.user.last_login %}
-                    {{ request.user.last_login|date:"M. d, Y - g:i A" }}
-                {% else %}
-                    No previous login recorded
-                {% endif %}
-            </span>
+    </section>
+
+
+    <section class="workspace-account-panel">
+
+        <div class="workspace-section-heading workspace-section-heading--compact">
+            <div>
+                <span>Account</span>
+                <h2>Editorial access</h2>
+            </div>
+
+            <a href="{% url 'profile' %}" class="workspace-text-link">
+                Manage profile →
+            </a>
+        </div>
+
+        <div class="workspace-account-grid">
+            <div>
+                <span>Account status</span>
+                <strong>{% if request.user.is_active %}Active{% else %}Inactive{% endif %}</strong>
+            </div>
+
+            <div>
+                <span>Email</span>
+                <strong>{{ request.user.email|default:"Not provided" }}</strong>
+            </div>
+
+            <div>
+                <span>Last login</span>
+                <strong>
+                    {% if request.user.last_login %}
+                        {{ request.user.last_login|date:"M. d, Y - g:i A" }}
+                    {% else %}
+                        No previous login
+                    {% endif %}
+                </strong>
+            </div>
         </div>
 
     </section>
 
 </div>
-
-
-<section class="staff-role-summary">
-
-    <h2>
-        Role Overview
-    </h2>
-
-    <p>
-        As Editor in Chief, you oversee the publication workflow, review Editor submissions, manage editorial requests and Staff content reports, and directly manage your own published articles.
-    </p>
-
-</section>
-
 
 {% endblock %}

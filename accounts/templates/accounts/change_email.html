@@ -1,74 +1,130 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Change Email | The Equalizer</title>
+{% extends "staff_base.html" %}
 
-<style>
-    .security-page {
-        width: min(620px, calc(100% - 28px));
-        margin: 48px auto;
-        padding: 30px;
-        border: 1px solid #dce4df;
-        border-top: 4px solid #c9a227;
-        border-radius: 14px;
-        background: #ffffff;
-        box-shadow: 0 10px 30px rgba(14,42,34,.08);
-        color: #17231f;
-        font-family: Arial, sans-serif;
-    }
-    .security-page h1 {
-        margin: 0 0 10px;
-        color: #0e2a22;
-        font-family: Georgia, "Times New Roman", serif;
-        font-size: 34px;
-    }
-    .security-page p { color:#66736d; line-height:1.65; }
-    .security-page form p { margin: 16px 0; }
-    .security-page label { display:block; margin-bottom:6px; font-weight:700; color:#173f32; }
-    .security-page input {
-        width:100%; box-sizing:border-box; min-height:44px;
-        padding:10px 12px; border:1px solid #cbd7d1; border-radius:8px;
-    }
-    .security-page .errorlist { color:#b42318; padding-left:20px; }
-    .security-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:22px; }
-    .security-button {
-        display:inline-flex; align-items:center; justify-content:center;
-        min-height:42px; padding:9px 15px; border-radius:999px;
-        border:1px solid #173f32; background:#173f32; color:#fff;
-        font-weight:800; text-decoration:none; cursor:pointer;
-    }
-    .security-button.secondary { background:#fff; color:#173f32; }
-</style>
+{% block staff_content %}
 
-</head>
-<body style="margin:0;background:#f4f7f5;">
+<div class="credential-page management-suite-page management-suite-page--settings">
 
-<main class="security-page">
-    <p style="color:#c9a227;font-weight:800;text-transform:uppercase;letter-spacing:1px;">Account Security</p>
-    <h1>Change Email</h1>
-    <p>
-        For security, enter your current password first. After the address
-        changes, you will be signed out and must verify the new email before
-        signing in again.
-    </p>
+    <div class="account-workspace-header management-suite-hero">
 
-    <form method="POST">
-        {% csrf_token %}
-        {{ form.as_p }}
+        <div>
+            <p class="workflow-eyebrow">
+                Account Security
+            </p>
 
-        <div class="security-actions">
-            <button class="security-button" type="submit">
+            <h1>
                 Change Email
-            </button>
-            <a class="security-button secondary" href="{% url 'profile' %}">
-                Cancel
-            </a>
-        </div>
-    </form>
-</main>
+            </h1>
 
-</body>
-</html>
+            <p class="section-description">
+                Replace the email address connected to your Equalizer account.
+                You will be signed out after the change and must verify the new
+                address before signing in again.
+            </p>
+        </div>
+
+    </div>
+
+
+    <div class="credential-layout">
+
+        <aside class="credential-summary credential-summary--security">
+
+            <span>
+                Verification required
+            </span>
+
+            <strong>
+                New email verification
+            </strong>
+
+            <p>
+                Your current password is required to confirm this security-sensitive
+                change. The new address will not be trusted until its verification
+                link has been completed.
+            </p>
+
+            <div class="account-guide-note">
+                Make sure you can access the new inbox before continuing.
+            </div>
+
+        </aside>
+
+
+        <section class="account-form-card">
+
+            <form
+                method="POST"
+                class="account-editor-form"
+            >
+
+                {% csrf_token %}
+
+                {{ form.non_field_errors }}
+
+
+                {% for field in form %}
+
+                    <div class="account-form-field">
+
+                        <div class="account-field-label-row">
+                            <label for="{{ field.id_for_label }}">
+                                {{ field.label }}
+                            </label>
+
+                            {% if field.field.required %}
+                                <span class="field-required-badge">
+                                    Required
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        {{ field }}
+
+                        {% if field.help_text %}
+                            <div class="account-field-help">
+                                {{ field.help_text|safe }}
+                            </div>
+                        {% endif %}
+
+                        {% if field.errors %}
+                            <div class="form-errors">
+                                {% for error in field.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                    </div>
+
+                {% endfor %}
+
+
+                <div class="account-form-actions">
+
+                    <a
+                        class="secondary-button"
+                        href="{% url 'profile' %}"
+                    >
+                        Cancel
+                    </a>
+
+                    <button
+                        class="approve-button"
+                        type="submit"
+                    >
+                        Change Email
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
+
+    </div>
+
+</div>
+
+{% include "accounts/_preserve_post_form.html" %}
+
+{% endblock %}

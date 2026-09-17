@@ -2,7 +2,9 @@
 
 {% block staff_content %}
 
-<div class="account-workspace-header">
+<div class="management-suite-page management-suite-page--accounts">
+
+<div class="account-workspace-header management-suite-hero">
 
     <div>
 
@@ -103,6 +105,11 @@
 
     </form>
 
+    <div class="account-result-count">
+        {{ staff_accounts|length }}
+        member{{ staff_accounts|length|pluralize }} shown
+    </div>
+
 </div>
 
 
@@ -201,5 +208,8 @@
     </div>
 
 {% endif %}
+
+
+</div>
 
 {% endblock %}

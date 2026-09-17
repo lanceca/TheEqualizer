@@ -34,8 +34,10 @@
 }
 @media(max-width:850px){.people-edit-layout{grid-template-columns:1fr}.people-preview{position:static}}
 </style>
-<div class="dashboard-header">
-<div><h1>Edit {{ profile.name }}</h1><p class="dashboard-subtitle">{{ section_title }}</p></div>
+
+<div class="management-suite-page management-suite-page--people">
+<div class="dashboard-header management-suite-hero">
+<div><p class="workflow-eyebrow">People &amp; Teams</p><h1>Edit {{ profile.name }}</h1><p class="dashboard-subtitle">{{ section_title }}</p></div>
 <a href="{% url 'people_group_management' section_slug %}" class="secondary-button">Back</a>
 </div>
 <div class="people-edit-layout">
@@ -66,6 +68,9 @@
 <p id="preview-ach">{{ profile.achievements }}</p>
 </aside>
 </div>
+
+</div>
+
 <script>
 document.addEventListener("DOMContentLoaded",function(){
 function initializePeopleCharacterCounters() {

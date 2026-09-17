@@ -2,11 +2,33 @@
 
 {% block staff_content %}
 
-<h1>Revise Submission</h1>
+<div class="editorial-composer-page editorial-composer-page--revision">
 
-<p class="section-description">
-    Make the requested changes and resubmit the article to the Editor in Chief for review.
-</p>
+<header class="editorial-composer-header">
+    <div class="editorial-composer-header-copy">
+        <p class="workflow-eyebrow">Revision Workspace</p>
+        <h1>Revise Submission</h1>
+
+        <p class="section-description">
+            Address the Editor in Chief's feedback, preview your updates, then send the revised story back for review.
+        </p>
+    </div>
+
+    <div class="editorial-composer-header-actions">
+        {% if submission.resubmission_of %}
+            <a
+                href="{% url 'resubmitted_submissions' %}?scope=CURRENT"
+                class="secondary-button"
+            >
+                Back to Resubmissions
+            </a>
+        {% else %}
+            <a href="{% url 'my_submissions' %}" class="secondary-button">
+                Back to Submissions
+            </a>
+        {% endif %}
+    </div>
+</header>
 
 
 {% if submission.reviewer_notes %}
@@ -39,15 +61,17 @@
 {% endif %}
 
 
-<div class="content-panel article-form-panel">
+<div class="content-panel article-form-panel editorial-composer-panel">
 
     <form
         method="POST"
         enctype="multipart/form-data"
-        class="article-form"
+        class="article-form editorial-composer-form"
     >
 
         {% csrf_token %}
+
+        <div class="editorial-composer-main-column">
 
 
         <div class="form-group">
@@ -837,6 +861,22 @@
         </div>
 
 
+
+        </div>
+
+
+        <aside class="editorial-composer-inspector-slot">
+            <div
+                data-react-component="EditorialWorkspaceEnhancer"
+                data-mode="revision"
+                data-role="{{ request.user.role }}"
+                data-status-label="Revision in progress"
+                data-version="{{ article.version_number }}"
+                data-has-featured-image="{% if article.featured_image %}true{% else %}false{% endif %}"
+            ></div>
+        </aside>
+
+
         <div class="form-actions">
 
             
@@ -857,16 +897,27 @@
                 Resubmit for EIC Approval
             </button>
 
-            <a
-                href="{% url 'my_submissions' %}"
-                class="cancel-link"
-            >
-                Cancel
-            </a>
+            {% if submission.resubmission_of %}
+                <a
+                    href="{% url 'resubmitted_submissions' %}?scope=CURRENT"
+                    class="cancel-link"
+                >
+                    Cancel
+                </a>
+            {% else %}
+                <a
+                    href="{% url 'my_submissions' %}"
+                    class="cancel-link"
+                >
+                    Cancel
+                </a>
+            {% endif %}
 
         </div>
 
     </form>
+
+</div>
 
 </div>
 

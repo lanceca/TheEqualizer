@@ -2,7 +2,7 @@
 
 {% block staff_content %}
 
-<div class="editorial-list-page">
+<div class="editorial-list-page editorial-workflow-page">
 
     <div class="editorial-page-header">
 
@@ -256,6 +256,38 @@
                         </div>
 
 
+                        {% if submission.reviewer_notes %}
+
+                            <div class="editorial-review-note editorial-attention-callout editorial-attention-callout--eic">
+                                <strong>
+                                    {% if submission.status == "REVISION" %}
+                                        Latest EIC Revision Notes
+                                    {% else %}
+                                        Latest EIC Review Notes
+                                    {% endif %}
+                                </strong>
+
+                                <div class="editorial-note-attribution">
+                                    <span>Recorded by</span>
+                                    <strong>
+                                        {% if submission.reviewed_by_username %}
+                                            {{ submission.reviewed_by_username }}
+                                        {% elif submission.reviewed_by %}
+                                            {{ submission.reviewed_by.username }}
+                                        {% else %}
+                                            EIC account not captured (legacy record)
+                                        {% endif %}
+                                    </strong>
+                                </div>
+
+                                <p>
+                                    {{ submission.reviewer_notes|linebreaksbr }}
+                                </p>
+                            </div>
+
+                        {% endif %}
+
+
                         {% if submission.resubmission_of.reviewer_notes %}
 
                             <div class="editorial-review-note editorial-attention-callout editorial-attention-callout--eic">
@@ -305,6 +337,18 @@
                             >
                                 Preview Previous Version
                             </button>
+
+                        {% endif %}
+
+
+                        {% if submission.status == "REVISION" and not submission.has_resubmission %}
+
+                            <a
+                                href="{% url 'revise_submission' submission.id %}"
+                                class="revision-button"
+                            >
+                                Continue Revision
+                            </a>
 
                         {% endif %}
 

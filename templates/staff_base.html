@@ -7,7 +7,7 @@
 
 <link
     rel="stylesheet"
-    href="{% static 'css/equalizer.css' %}?v=20260909-qa-reset-2"
+    href="{% static 'css/equalizer.css' %}?v=20260917-premium-workspace-5-ui-qa-1"
 >
 
 
@@ -16,9 +16,39 @@
     <aside
         class="staff-sidebar"
         id="staff-sidebar"
+        data-workspace-role="{{ request.user.role }}"
     >
 
+        <div class="staff-workspace-brand">
+
+            <a
+                href="{% url 'home' %}"
+                class="staff-workspace-brand-link"
+                aria-label="The Equalizer public website"
+            >
+
+                <span class="staff-workspace-brand-mark">
+                    <img
+                        src="{% static 'images/equalizer-logo.jpg' %}"
+                        alt=""
+                    >
+                </span>
+
+                <span class="staff-workspace-brand-copy">
+                    <strong>The Equalizer</strong>
+                    <small>Editorial Workspace</small>
+                </span>
+
+            </a>
+
+        </div>
+
+
         <div class="staff-identity">
+
+            <span class="staff-identity-eyebrow">
+                Signed in as
+            </span>
 
             <div class="staff-identity-avatar">
 
@@ -55,7 +85,7 @@
         </div>
 
 
-        <nav class="staff-nav">
+        <nav class="staff-nav" aria-label="Workspace navigation">
 
             <div class="staff-nav-section">
 
@@ -149,43 +179,6 @@
                 </div>
 
 
-                <div class="staff-nav-section">
-
-                    <p class="staff-nav-label">
-                        Account
-                    </p>
-
-                    <a
-                        href="{% url 'notification_list' %}"
-                        class="staff-notification-link"
-                    >
-                        <span>
-                            Notifications
-                        </span>
-
-                        {% if global_unread_notification_count > 0 %}
-
-                            <span
-                                class="staff-notification-badge"
-                                aria-label="{{ global_unread_notification_count }} unread notifications"
-                            >
-                                {% if global_unread_notification_count > 99 %}
-                                    99+
-                                {% else %}
-                                    {{ global_unread_notification_count }}
-                                {% endif %}
-                            </span>
-
-                        {% endif %}
-                    </a>
-
-                    <a href="{% url 'profile' %}">
-                        Profile
-                    </a>
-
-                </div>
-
-
             {% elif request.user.role == "ADVISER" %}
 
                 <div class="staff-nav-section">
@@ -201,43 +194,6 @@
 
                     <a href="{% url 'staff_directory' %}">
                         Staff Directory
-                    </a>
-
-                </div>
-
-
-                <div class="staff-nav-section">
-
-                    <p class="staff-nav-label">
-                        Account
-                    </p>
-
-                    <a
-                        href="{% url 'notification_list' %}"
-                        class="staff-notification-link"
-                    >
-                        <span>
-                            Notifications
-                        </span>
-
-                        {% if global_unread_notification_count > 0 %}
-
-                            <span
-                                class="staff-notification-badge"
-                                aria-label="{{ global_unread_notification_count }} unread notifications"
-                            >
-                                {% if global_unread_notification_count > 99 %}
-                                    99+
-                                {% else %}
-                                    {{ global_unread_notification_count }}
-                                {% endif %}
-                            </span>
-
-                        {% endif %}
-                    </a>
-
-                    <a href="{% url 'profile' %}">
-                        Profile
                     </a>
 
                 </div>
@@ -377,43 +333,6 @@
                 </div>
 
 
-                <div class="staff-nav-section">
-
-                    <p class="staff-nav-label">
-                        Account
-                    </p>
-
-                    <a
-                        href="{% url 'notification_list' %}"
-                        class="staff-notification-link"
-                    >
-                        <span>
-                            Notifications
-                        </span>
-
-                        {% if global_unread_notification_count > 0 %}
-
-                            <span
-                                class="staff-notification-badge"
-                                aria-label="{{ global_unread_notification_count }} unread notifications"
-                            >
-                                {% if global_unread_notification_count > 99 %}
-                                    99+
-                                {% else %}
-                                    {{ global_unread_notification_count }}
-                                {% endif %}
-                            </span>
-
-                        {% endif %}
-                    </a>
-
-                    <a href="{% url 'profile' %}">
-                        Profile
-                    </a>
-
-                </div>
-
-
             {% elif request.user.role == "EDITOR" %}
 
                 <div class="staff-nav-section">
@@ -514,43 +433,6 @@
                 </div>
 
 
-                <div class="staff-nav-section">
-
-                    <p class="staff-nav-label">
-                        Account
-                    </p>
-
-                    <a
-                        href="{% url 'notification_list' %}"
-                        class="staff-notification-link"
-                    >
-                        <span>
-                            Notifications
-                        </span>
-
-                        {% if global_unread_notification_count > 0 %}
-
-                            <span
-                                class="staff-notification-badge"
-                                aria-label="{{ global_unread_notification_count }} unread notifications"
-                            >
-                                {% if global_unread_notification_count > 99 %}
-                                    99+
-                                {% else %}
-                                    {{ global_unread_notification_count }}
-                                {% endif %}
-                            </span>
-
-                        {% endif %}
-                    </a>
-
-                    <a href="{% url 'profile' %}">
-                        Profile
-                    </a>
-
-                </div>
-
-
             {% elif request.user.role == "STAFF" %}
 
                 <div class="staff-nav-section">
@@ -578,43 +460,6 @@
                                 !
                             </span>
                         {% endif %}
-                    </a>
-
-                </div>
-
-
-                <div class="staff-nav-section">
-
-                    <p class="staff-nav-label">
-                        Account
-                    </p>
-
-                    <a
-                        href="{% url 'notification_list' %}"
-                        class="staff-notification-link"
-                    >
-                        <span>
-                            Notifications
-                        </span>
-
-                        {% if global_unread_notification_count > 0 %}
-
-                            <span
-                                class="staff-notification-badge"
-                                aria-label="{{ global_unread_notification_count }} unread notifications"
-                            >
-                                {% if global_unread_notification_count > 99 %}
-                                    99+
-                                {% else %}
-                                    {{ global_unread_notification_count }}
-                                {% endif %}
-                            </span>
-
-                        {% endif %}
-                    </a>
-
-                    <a href="{% url 'profile' %}">
-                        Profile
                     </a>
 
                 </div>
@@ -647,8 +492,12 @@
                     <button
                         type="submit"
                         class="logout-link"
+                        aria-label="Logout"
+                        title="Logout"
                     >
-                        Logout
+                        <span class="staff-nav-text">
+                            Logout
+                        </span>
                     </button>
 
                 </form>
@@ -668,7 +517,13 @@
             data-role="{{ request.user.get_role_display }}"
         ></div>
 
-        <div class="page-container">
+        <div
+            data-react-component="DashboardEnhancer"
+            class="workspace-dashboard-react-enhancer"
+            hidden
+        ></div>
+
+        <div class="page-container staff-workspace-page">
 
             {% block staff_content %}
             {% endblock %}

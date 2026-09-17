@@ -2,7 +2,7 @@
 
 {% block staff_content %}
 
-<div class="editorial-list-page">
+<div class="editorial-list-page workflow-suite-page workflow-suite-page--tracker">
 
     <div class="editorial-page-header">
 
@@ -149,6 +149,30 @@
 
                         </div>
 
+
+
+                        <div class="workflow-card-progress" aria-label="Content report progress">
+
+                            <span class="is-complete">Reported</span>
+
+                            {% if report.status == "OPEN" %}
+                                <span class="is-current">EIC assessment</span>
+                                <span>Outcome</span>
+
+                            {% elif report.status == "REVISION_REQUIRED" %}
+                                <span class="is-complete">EIC assessment</span>
+                                <span class="is-current">Corrective revision</span>
+
+                            {% elif report.status == "RESOLVED" %}
+                                <span class="is-complete">EIC assessment</span>
+                                <span class="is-complete">Resolved</span>
+
+                            {% else %}
+                                <span class="is-stopped">Cancelled</span>
+                                <span>Outcome</span>
+                            {% endif %}
+
+                        </div>
 
                         <h2>
                             {{ report.article.title }}

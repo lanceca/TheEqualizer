@@ -1111,3 +1111,194 @@
         justify-content: flex-start;
     }
 }
+
+/* ==========================================================
+   PHASE 2 — WORKSPACE VISUAL ALIGNMENT
+   Keeps Adviser Analytics consistent with the shared
+   premium role-dashboard language.
+   ========================================================== */
+
+.staff-shell-body .adviser-analytics-shell {
+    --aa-green:
+        var(--eq-workspace-green, #184536);
+    --aa-green-deep:
+        var(--eq-workspace-sidebar-deep, #0a2119);
+    --aa-gold:
+        var(--eq-workspace-gold, #c69d2a);
+    --aa-ink:
+        var(--eq-workspace-text, #1f2f29);
+    --aa-muted:
+        var(--eq-workspace-muted, #748078);
+    --aa-border:
+        var(--eq-workspace-border, #e2e7e3);
+    --aa-soft: #f7f9f7;
+    --aa-white: #ffffff;
+
+    margin: 0;
+    padding: 0;
+
+    border: 0;
+    border-radius: 0;
+
+    background: transparent;
+
+    box-shadow: none;
+
+    font-family:
+        "Segoe UI",
+        Arial,
+        sans-serif;
+}
+
+.staff-shell-body .aa-metrics-grid {
+    gap: 14px;
+    margin-top: 0;
+}
+
+.staff-shell-body .aa-metric-card,
+.staff-shell-body .aa-panel {
+    border-color:
+        var(--eq-workspace-border, #e2e7e3);
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #fbfcfb 100%
+        );
+
+    box-shadow:
+        0 7px 22px
+        rgba(13, 39, 30, 0.045);
+}
+
+.staff-shell-body .aa-metric-card {
+    position: relative;
+
+    overflow: hidden;
+
+    min-height: 138px;
+
+    padding: 18px;
+
+    border-radius: 17px;
+}
+
+.staff-shell-body .aa-metric-card::before {
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    left: 18px;
+
+    width: 38px;
+    height: 3px;
+
+    border-radius:
+        0
+        0
+        999px
+        999px;
+
+    background:
+        var(--eq-workspace-green, #184536);
+}
+
+.staff-shell-body .aa-metric-eyebrow {
+    color:
+        var(--eq-workspace-muted, #748078);
+
+    font-size: 9px;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+}
+
+.staff-shell-body .aa-metric-value {
+    color: #183f32;
+
+    font-size:
+        clamp(29px, 3vw, 39px);
+    font-weight: 780;
+    letter-spacing: -0.045em;
+}
+
+.staff-shell-body .aa-metric-card p {
+    color:
+        var(--eq-workspace-muted, #748078);
+
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.staff-shell-body .aa-primary-grid,
+.staff-shell-body .aa-secondary-grid {
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.staff-shell-body .aa-panel {
+    padding:
+        clamp(20px, 2.4vw, 26px);
+
+    border-radius: 18px;
+}
+
+.staff-shell-body .aa-section-heading {
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+
+    border-bottom:
+        1px solid
+        #ebefec;
+}
+
+.staff-shell-body .aa-section-heading span {
+    color: #8b6c1d;
+
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+}
+
+.staff-shell-body .aa-section-heading h3 {
+    color: #173f32;
+
+    font-size:
+        clamp(18px, 1.8vw, 24px);
+    font-weight: 760;
+    letter-spacing: -0.025em;
+}
+
+.staff-shell-body .aa-section-heading p,
+.staff-shell-body .aa-panel-note,
+.staff-shell-body .aa-footer-note {
+    color:
+        var(--eq-workspace-muted, #748078);
+}
+
+.staff-shell-body .aa-workflow-card,
+.staff-shell-body .aa-editor-card,
+.staff-shell-body .aa-article-card,
+.staff-shell-body .aa-category-card {
+    border-color:
+        var(--eq-workspace-border, #e2e7e3);
+
+    border-radius: 13px;
+
+    background: #fbfcfb;
+}
+
+.staff-shell-body .aa-footer-note {
+    margin-top: 16px;
+
+    border-top-color:
+        var(--eq-workspace-border, #e2e7e3);
+}
+
+@media (max-width: 780px) {
+    .staff-shell-body .aa-panel {
+        padding: 18px;
+    }
+}
+

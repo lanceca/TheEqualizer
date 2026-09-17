@@ -999,12 +999,6 @@ function AdviserDashboard({
     mountPoint.dataset.periodLabel
     || 'Selected Period'
 
-  const startDate =
-    mountPoint.dataset.startDate || ''
-
-  const endDate =
-    mountPoint.dataset.endDate || ''
-
   const timezone =
     mountPoint.dataset.timezone
     || 'Asia/Manila'
@@ -1072,40 +1066,6 @@ function AdviserDashboard({
 
   return (
     <section className="adviser-analytics-shell">
-      <header className="aa-hero">
-        <div>
-          <span className="aa-hero-kicker">
-            Analytics Workspace
-          </span>
-
-          <h2>
-            Publication intelligence at a glance
-          </h2>
-
-          <p>
-            One consolidated view of reader activity,
-            editorial workflow, content performance,
-            and Editor output.
-          </p>
-        </div>
-
-        <div className="aa-period-card">
-          <span>
-            Reporting period
-          </span>
-
-          <strong>
-            {periodLabel}
-          </strong>
-
-          <small>
-            {startDate && endDate
-              ? `${startDate} → ${endDate}`
-              : timezone}
-          </small>
-        </div>
-      </header>
-
       <div className="aa-metrics-grid">
         <MetricCard
           eyebrow="Articles Published"

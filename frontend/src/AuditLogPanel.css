@@ -1005,3 +1005,11 @@
         transition: none;
     }
 }
+/* Phase 5 QA — log rows keep readable text on hover/expanded state.
+   The global staff button:hover rule must not paint the row trigger dark green. */
+.staff-shell-body .audit-react-log-summary:hover,
+.staff-shell-body .audit-react-log-summary:focus-visible,
+.staff-shell-body .audit-react-log-card.is-expanded .audit-react-log-summary {
+    background: #f5f8f6 !important;
+    color: var(--audit-ink) !important;
+}

@@ -2,7 +2,7 @@
 
 {% block staff_content %}
 
-<div class="editorial-list-page">
+<div class="editorial-list-page workflow-suite-page workflow-suite-page--tracker">
 
     <div class="editorial-page-header">
 
@@ -192,8 +192,50 @@
                                 Edit Request
                             </span>
 
+                            {% if edit_request.status == "APPROVED" and edit_request.draft_has_submission %}
+
+                                <span class="editorial-meta-chip is-special">
+                                    Waiting for EIC Review
+                                </span>
+
+                            {% endif %}
+
                         </div>
 
+
+
+                        <div class="workflow-card-progress" aria-label="Edit request progress">
+
+                            <span class="is-complete">Requested</span>
+
+                            {% if edit_request.status == "PENDING" %}
+                                <span class="is-current">EIC decision</span>
+                                <span>Revision</span>
+                                <span>Complete</span>
+
+                            {% elif edit_request.status == "APPROVED" %}
+                                <span class="is-complete">EIC decision</span>
+
+                                {% if edit_request.draft_has_submission %}
+                                    <span class="is-complete">Revision submitted</span>
+                                {% else %}
+                                    <span class="is-current">Revision workspace</span>
+                                {% endif %}
+
+                                <span>Complete</span>
+
+                            {% elif edit_request.status == "COMPLETED" %}
+                                <span class="is-complete">EIC decision</span>
+                                <span class="is-complete">Revision</span>
+                                <span class="is-complete">Complete</span>
+
+                            {% else %}
+                                <span class="is-stopped">Stopped</span>
+                                <span>Revision</span>
+                                <span>Complete</span>
+                            {% endif %}
+
+                        </div>
 
                         <h2>
                             {{ edit_request.article.title }}
@@ -207,11 +249,6 @@
                             </p>
 
                         {% endif %}
-
-
-                        <p class="editorial-item-summary editorial-item-summary--concern">
-                            {{ edit_request.reason|truncatechars:180 }}
-                        </p>
 
 
                         <div class="editorial-item-meta">
@@ -284,12 +321,6 @@
                             >
                                 Open Edit Draft
                             </a>
-
-                        {% elif edit_request.status == "APPROVED" and edit_request.draft_has_submission %}
-
-                            <span class="editorial-meta-chip is-special">
-                                Waiting for EIC Review
-                            </span>
 
                         {% endif %}
 
