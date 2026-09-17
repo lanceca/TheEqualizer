@@ -1097,8 +1097,10 @@ body.reader-pdf-download-open {
                 </span>
 
                 <span>
-                    <strong>{{ article.reaction_count }}</strong>
-                    like{{ article.reaction_count|pluralize }}
+                    <strong id="article-reaction-count">{{ article.reaction_count }}</strong>
+                    <span id="article-reaction-label">
+                        like{{ article.reaction_count|pluralize }}
+                    </span>
                 </span>
 
                 <span>
@@ -1127,12 +1129,15 @@ body.reader-pdf-download-open {
                 <form
                     method="POST"
                     action="{% url 'react_to_article' article.slug %}"
+                    id="reaction-form"
+                    data-no-page-loader="true"
                 >
 
                     {% csrf_token %}
 
                     <button
                         type="submit"
+                        id="reaction-button"
                         class="reader-action-button{% if not has_reacted %} reader-action-primary{% else %} reader-action-liked{% endif %}"
                         aria-pressed="{% if has_reacted %}true{% else %}false{% endif %}"
                     >
@@ -1746,6 +1751,195 @@ document.addEventListener(
 
             }
         );
+
+
+        const reactionForm = document.getElementById(
+            "reaction-form"
+        );
+
+        const reactionButton = document.getElementById(
+            "reaction-button"
+        );
+
+        const reactionCount = document.getElementById(
+            "article-reaction-count"
+        );
+
+        const reactionLabel = document.getElementById(
+            "article-reaction-label"
+        );
+
+
+        function renderReactionState(
+            hasReacted,
+            count
+        ) {
+
+            const safeCount = Math.max(
+                0,
+                Number(count) || 0
+            );
+
+            if (reactionCount) {
+                reactionCount.textContent = safeCount;
+            }
+
+            if (reactionLabel) {
+                reactionLabel.textContent = (
+                    safeCount === 1
+                        ? "like"
+                        : "likes"
+                );
+            }
+
+            if (reactionButton) {
+                reactionButton.textContent = (
+                    hasReacted
+                        ? "Unlike"
+                        : "Like"
+                );
+
+                reactionButton.setAttribute(
+                    "aria-pressed",
+                    hasReacted
+                        ? "true"
+                        : "false"
+                );
+
+                reactionButton.classList.toggle(
+                    "reader-action-liked",
+                    hasReacted
+                );
+
+                reactionButton.classList.toggle(
+                    "reader-action-primary",
+                    !hasReacted
+                );
+            }
+
+        }
+
+
+        if (
+            reactionForm
+            && reactionButton
+            && reactionCount
+            && window.fetch
+        ) {
+
+            reactionForm.addEventListener(
+                "submit",
+                async function (event) {
+
+                    event.preventDefault();
+
+                    if (
+                        reactionButton.getAttribute(
+                            "aria-busy"
+                        ) === "true"
+                    ) {
+                        return;
+                    }
+
+                    const previousHasReacted = (
+                        reactionButton.getAttribute(
+                            "aria-pressed"
+                        ) === "true"
+                    );
+
+                    const previousCount = Math.max(
+                        0,
+                        Number(
+                            reactionCount.textContent
+                        ) || 0
+                    );
+
+                    const optimisticHasReacted = (
+                        !previousHasReacted
+                    );
+
+                    const optimisticCount = Math.max(
+                        0,
+                        previousCount
+                        + (
+                            optimisticHasReacted
+                                ? 1
+                                : -1
+                        )
+                    );
+
+                    renderReactionState(
+                        optimisticHasReacted,
+                        optimisticCount
+                    );
+
+                    reactionButton.disabled = true;
+                    reactionButton.setAttribute(
+                        "aria-busy",
+                        "true"
+                    );
+
+                    try {
+
+                        const response = await fetch(
+                            reactionForm.action,
+                            {
+                                method: "POST",
+                                body: new FormData(
+                                    reactionForm
+                                ),
+                                credentials: "same-origin",
+                                headers: {
+                                    "Accept": "application/json",
+                                    "X-Requested-With": "XMLHttpRequest",
+                                },
+                            }
+                        );
+
+                        if (!response.ok) {
+                            throw new Error(
+                                `Reaction request failed with status ${response.status}.`
+                            );
+                        }
+
+                        const result = await response.json();
+
+                        renderReactionState(
+                            Boolean(
+                                result.has_reacted
+                            ),
+                            result.reaction_count
+                        );
+
+                    } catch (error) {
+
+                        renderReactionState(
+                            previousHasReacted,
+                            previousCount
+                        );
+
+                        console.error(
+                            "Like update failed.",
+                            error
+                        );
+
+                        alert(
+                            "Your Like could not be updated. Please try again."
+                        );
+
+                    } finally {
+
+                        reactionButton.disabled = false;
+                        reactionButton.removeAttribute(
+                            "aria-busy"
+                        );
+
+                    }
+
+                }
+            );
+
+        }
 
 
         const shareForm = document.getElementById(

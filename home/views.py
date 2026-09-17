@@ -1379,6 +1379,14 @@ def react_to_article(
         is_archived=False,
     )
 
+    wants_json = (
+        request.headers.get(
+            "X-Requested-With",
+            "",
+        )
+        == "XMLHttpRequest"
+    )
+
     reacted_articles = request.session.get(
         "reacted_articles",
         [],
@@ -1397,11 +1405,13 @@ def react_to_article(
         )
     )
 
-    if article.id in reacted_articles:
+    was_reacted = article.id in reacted_articles
+
+    if was_reacted:
         # Remove the Like from both the live article total and the analytics
         # total used by the Adviser dashboard.
         with transaction.atomic():
-            Article.objects.filter(
+            removed = Article.objects.filter(
                 id=article.id,
                 reaction_count__gt=0,
             ).update(
@@ -1410,9 +1420,10 @@ def react_to_article(
                 )
             )
 
-            decrement_article_reaction_analytics(
-                article
-            )
+            if removed:
+                decrement_article_reaction_analytics(
+                    article
+                )
 
         reacted_articles = [
             article_id
@@ -1424,10 +1435,7 @@ def react_to_article(
             "reacted_articles"
         ] = reacted_articles
 
-        messages.info(
-            request,
-            "Your Like was removed.",
-        )
+        has_reacted = False
 
     else:
         with transaction.atomic():
@@ -1452,9 +1460,31 @@ def react_to_article(
             "reacted_articles"
         ] = reacted_articles
 
+        has_reacted = True
+
+    article.refresh_from_db(
+        fields=[
+            "reaction_count",
+        ]
+    )
+
+    if wants_json:
+        return JsonResponse(
+            {
+                "has_reacted": has_reacted,
+                "reaction_count": article.reaction_count,
+            }
+        )
+
+    if has_reacted:
         messages.success(
             request,
             "Your Like was recorded.",
+        )
+    else:
+        messages.info(
+            request,
+            "Your Like was removed.",
         )
 
     return redirect(
