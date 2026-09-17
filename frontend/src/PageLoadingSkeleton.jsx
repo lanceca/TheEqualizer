@@ -27,7 +27,68 @@ function PublicSkeleton() {
   </div>
 }
 function StaffSkeleton() {
-  return <div className="eq-page-staff" aria-hidden="true"><aside className="eq-page-sidebar"><div className="eq-page-identity"><SkeletonBlock className="eq-page-avatar"/><div><SkeletonBlock className="eq-page-user-name"/><SkeletonBlock className="eq-page-user-role"/></div></div>{Array.from({length:8},(_,i)=><SkeletonBlock key={i} className="eq-page-sidebar-link"/>)}</aside><section className="eq-page-staff-content"><SkeletonBlock className="eq-page-kicker"/><SkeletonBlock className="eq-page-title"/><SkeletonBlock className="eq-page-line"/><div className="eq-page-workflow-list">{Array.from({length:4},(_,i)=><div className="eq-page-workflow-card" key={i}><SkeletonBlock className="eq-page-workflow-thumb"/><div><SkeletonBlock className="eq-page-chip"/><SkeletonBlock className="eq-page-card-title"/><SkeletonBlock className="eq-page-line"/><SkeletonBlock className="eq-page-line short"/></div></div>)}</div></section></div>
+  return (
+    <div className="eq-page-staff" aria-hidden="true">
+      <section className="eq-page-staff-content">
+        <SkeletonBlock className="eq-page-kicker"/>
+        <SkeletonBlock className="eq-page-title"/>
+        <SkeletonBlock className="eq-page-line"/>
+
+        <div className="eq-page-workflow-list">
+          {Array.from(
+            { length: 4 },
+            (_, i) => (
+              <div
+                className="eq-page-workflow-card"
+                key={i}
+              >
+                <SkeletonBlock className="eq-page-workflow-thumb"/>
+
+                <div>
+                  <SkeletonBlock className="eq-page-chip"/>
+                  <SkeletonBlock className="eq-page-card-title"/>
+                  <SkeletonBlock className="eq-page-line"/>
+                  <SkeletonBlock className="eq-page-line short"/>
+                </div>
+              </div>
+            ),
+          )}
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function staffLoadingRegionStyle() {
+  const region =
+    document.querySelector(
+      '[data-page-loading-region="staff-content"]',
+    )
+    || document.querySelector('.staff-content')
+
+  if (!region) {
+    return null
+  }
+
+  const rect = region.getBoundingClientRect()
+
+  const top = Math.max(0, rect.top)
+  const left = Math.max(0, rect.left)
+  const right = Math.min(
+    window.innerWidth,
+    rect.right,
+  )
+  const bottom = Math.min(
+    window.innerHeight,
+    rect.bottom,
+  )
+
+  return {
+    top: `${top}px`,
+    left: `${left}px`,
+    width: `${Math.max(0, right - left)}px`,
+    height: `${Math.max(0, bottom - top)}px`,
+  }
 }
 function GenericSkeleton(){return <div className="eq-page-generic" aria-hidden="true"><SkeletonBlock className="eq-page-title"/><SkeletonBlock className="eq-page-line"/><SkeletonBlock className="eq-page-line short"/><SkeletonBlock className="eq-page-generic-panel"/></div>}
 
@@ -43,6 +104,54 @@ export default function PageLoadingSkeleton() {
     document.addEventListener('click',onClick);document.addEventListener('submit',onSubmit);window.addEventListener('pageshow',hide)
     return()=>{document.removeEventListener('click',onClick);document.removeEventListener('submit',onSubmit);window.removeEventListener('pageshow',hide)}
   },[hide,show])
-  if(!visible)return null
-  return <div className={`eq-page-overlay is-${variant}`} role="status" aria-live="polite" aria-label="Loading page"><span className="eq-page-sr">Loading page…</span>{variant==='staff'?<StaffSkeleton/>:variant==='public'?<PublicSkeleton/>:<GenericSkeleton/>}</div>
+  if (!visible) return null
+
+  const staffRegionStyle =
+    variant === 'staff'
+      ? staffLoadingRegionStyle()
+      : null
+
+  /*
+   * Staff pages keep the persistent site header and workspace sidebar
+   * visible while navigation is in progress. Only the changing
+   * .staff-content region receives a loading skeleton.
+   */
+  if (variant === 'staff') {
+    if (!staffRegionStyle) {
+      return null
+    }
+
+    return (
+      <div
+        className="eq-page-overlay is-staff"
+        style={staffRegionStyle}
+        role="status"
+        aria-live="polite"
+        aria-label="Loading workspace content"
+      >
+        <span className="eq-page-sr">
+          Loading workspace content…
+        </span>
+
+        <StaffSkeleton/>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className={`eq-page-overlay is-${variant}`}
+      role="status"
+      aria-live="polite"
+      aria-label="Loading page"
+    >
+      <span className="eq-page-sr">
+        Loading page…
+      </span>
+
+      {variant === 'public'
+        ? <PublicSkeleton/>
+        : <GenericSkeleton/>}
+    </div>
+  )
 }
