@@ -501,10 +501,13 @@
     </style>
 
 
+    {% block extra_head %}{% endblock %}
+
+
     <!-- React/Vite progressive enhancement -->
     <link
         rel="stylesheet"
-        href="{% static 'react-dist/assets/equalizer-react.css' %}?v=20260918-staff-sidebar-persistence-1"
+        href="{% static 'react-dist/assets/equalizer-react.css' %}?v=20260918-sidebar-flash-fix-1"
     >
 
 </head>
@@ -1411,7 +1414,7 @@
     <!-- React/Vite production/watch bundle -->
     <script
         type="module"
-        src="{% static 'react-dist/assets/equalizer-react.js' %}?v=20260918-staff-sidebar-persistence-1"
+        src="{% static 'react-dist/assets/equalizer-react.js' %}?v=20260918-sidebar-flash-fix-1"
     ></script>
 
 </body>

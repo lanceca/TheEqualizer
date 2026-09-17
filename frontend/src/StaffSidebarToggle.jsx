@@ -273,35 +273,47 @@ function StaffSidebarToggle({
 
     function applyLayoutState() {
       const isDesktop = window.innerWidth > 860
+      const desktopCollapsed = isDesktop && isCollapsed
+      const mobileOpen = !isDesktop && isOpen
 
-      sidebar.classList.toggle(
-        'is-mobile-open',
-        !isDesktop && isOpen,
+      /*
+       * Keep all three layers synchronized:
+       * 1) root class = first-paint persistence across Django loads
+       * 2) sidebar class = existing workspace CSS
+       * 3) body class = existing layout helpers
+       */
+      document.documentElement.classList.toggle(
+        'eq-staff-sidebar-collapsed',
+        desktopCollapsed,
       )
 
       sidebar.classList.toggle(
         'is-collapsed',
-        isDesktop && isCollapsed,
+        desktopCollapsed,
       )
 
-      document.body.classList.toggle(
-        'staff-sidebar-open',
-        !isDesktop && isOpen,
+      sidebar.classList.toggle(
+        'is-mobile-open',
+        mobileOpen,
       )
 
       document.body.classList.toggle(
         'staff-sidebar-collapsed',
-        isDesktop && isCollapsed,
+        desktopCollapsed,
+      )
+
+      document.body.classList.toggle(
+        'staff-sidebar-open',
+        mobileOpen,
       )
 
       /*
-       * staff_base.html restores the saved desktop state before React
-       * mounts. Once React has applied the same authoritative state,
-       * release the temporary no-transition guard.
+       * The root class and the real sidebar class now agree.
+       * Releasing the boot guard cannot animate the sidebar because
+       * there is no width difference left to transition between.
        */
-      sidebar.classList.remove('is-restoring-sidebar-state')
-      document.body.classList.remove(
-        'staff-sidebar-state-restoring',
+      document.documentElement.classList.remove(
+        'eq-staff-sidebar-booting',
       )
 
       if (isDesktop && isOpen) {
@@ -316,12 +328,10 @@ function StaffSidebarToggle({
       window.removeEventListener('resize', applyLayoutState)
 
       /*
-       * Do not remove is-collapsed here. A full Django navigation may
-       * destroy this React tree while the old page is still visible;
-       * removing the class during cleanup makes the sidebar visibly
-       * expand for a frame before the next page arrives.
-       *
-       * Mobile-open state is transient, so it is safe to clear.
+       * A full Django navigation destroys this React tree while the
+       * current document may still be visible. Never clear the desktop
+       * collapsed classes during cleanup; the next document restores
+       * the same state in <head> before first paint.
        */
       sidebar.classList.remove('is-mobile-open')
       document.body.classList.remove('staff-sidebar-open')
@@ -372,6 +382,32 @@ function StaffSidebarToggle({
   function toggleCollapsed() {
     setIsCollapsed((current) => {
       const next = !current
+      const isDesktop = window.innerWidth > 860
+      const desktopCollapsed = isDesktop && next
+
+      /*
+       * Update the persistent first-paint class immediately in the
+       * click handler. This prevents a gap between the click and the
+       * React layout effect.
+       */
+      document.documentElement.classList.toggle(
+        'eq-staff-sidebar-collapsed',
+        desktopCollapsed,
+      )
+
+      const sidebar =
+        document.getElementById('staff-sidebar')
+
+      sidebar?.classList.toggle(
+        'is-collapsed',
+        desktopCollapsed,
+      )
+
+      document.body.classList.toggle(
+        'staff-sidebar-collapsed',
+        desktopCollapsed,
+      )
+
       try {
         localStorage.setItem(
           'equalizerWorkspaceSidebarCollapsed',
@@ -380,6 +416,7 @@ function StaffSidebarToggle({
       } catch {
         // Local storage is optional progressive enhancement.
       }
+
       return next
     })
   }

@@ -3,13 +3,141 @@
 
 {% block body_class %}staff-shell-body{% endblock %}
 
-{% block content %}
+{% block extra_head %}
+
+<script>
+/*
+ * FIRST-PAINT SIDEBAR STATE
+ *
+ * This runs in <head>, before staff workspace markup is parsed.
+ * That means the browser already knows the persistent sidebar width
+ * before it can paint the new Django page.
+ */
+(function () {
+    const root = document.documentElement;
+
+    root.classList.add(
+        "eq-staff-sidebar-booting"
+    );
+
+    try {
+        const shouldCollapse = (
+            window.innerWidth > 860
+            && localStorage.getItem(
+                "equalizerWorkspaceSidebarCollapsed"
+            ) === "true"
+        );
+
+        root.classList.toggle(
+            "eq-staff-sidebar-collapsed",
+            shouldCollapse
+        );
+    } catch (error) {
+        root.classList.remove(
+            "eq-staff-sidebar-collapsed"
+        );
+    }
+})();
+</script>
+
+<style>
+/*
+ * Critical sidebar geometry.
+ *
+ * equalizer.css is also loaded in <head> below, but these few rules
+ * guarantee that even the first possible paint uses the persisted
+ * 86px collapsed width.
+ */
+html.eq-staff-sidebar-booting
+body.staff-shell-body
+.staff-sidebar {
+    transition: none !important;
+}
+
+@media (min-width: 861px) {
+
+    html.eq-staff-sidebar-collapsed
+    body.staff-shell-body
+    .staff-sidebar {
+        flex-basis: 86px !important;
+        width: 86px !important;
+        min-width: 86px !important;
+        padding-inline: 10px !important;
+    }
+
+    html.eq-staff-sidebar-collapsed
+    body.staff-shell-body
+    .staff-workspace-brand-copy,
+
+    html.eq-staff-sidebar-collapsed
+    body.staff-shell-body
+    .staff-identity-eyebrow,
+
+    html.eq-staff-sidebar-collapsed
+    body.staff-shell-body
+    .staff-identity-text,
+
+    html.eq-staff-sidebar-collapsed
+    body.staff-shell-body
+    .staff-nav-label,
+
+    html.eq-staff-sidebar-collapsed
+    body.staff-shell-body
+    .staff-nav-text {
+        display: none !important;
+    }
+
+    html.eq-staff-sidebar-collapsed
+    body.staff-shell-body
+    .staff-workspace-brand-link,
+
+    html.eq-staff-sidebar-collapsed
+    body.staff-shell-body
+    .staff-identity {
+        justify-content: center !important;
+    }
+
+    html.eq-staff-sidebar-collapsed
+    body.staff-shell-body
+    .staff-workspace-brand {
+        padding-inline: 0 !important;
+    }
+
+    html.eq-staff-sidebar-collapsed
+    body.staff-shell-body
+    .staff-workspace-brand-link {
+        padding-inline: 0 !important;
+    }
+
+    html.eq-staff-sidebar-collapsed
+    body.staff-shell-body
+    .staff-identity {
+        display: flex !important;
+    }
+
+    html.eq-staff-sidebar-collapsed
+    body.staff-shell-body
+    .staff-nav a,
+
+    html.eq-staff-sidebar-collapsed
+    body.staff-shell-body
+    .staff-nav .logout-link {
+        justify-content: center !important;
+        min-height: 44px !important;
+        padding: 10px 8px !important;
+        font-size: 0 !important;
+    }
+}
+</style>
 
 <link
     rel="stylesheet"
-    href="{% static 'css/equalizer.css' %}?v=20260917-premium-workspace-5-ui-qa-1"
+    href="{% static 'css/equalizer.css' %}?v=20260918-sidebar-flash-fix-1"
 >
 
+{% endblock %}
+
+{% block content %}
 
 <div class="staff-layout">
 
@@ -18,46 +146,6 @@
         id="staff-sidebar"
         data-workspace-role="{{ request.user.role }}"
     >
-
-        <script>
-            /*
-             * Restore the persisted desktop sidebar state synchronously,
-             * before the sidebar's visible children are painted. React
-             * takes over afterward without changing the visual state.
-             */
-            (function () {
-                const sidebar = document.currentScript.parentElement;
-
-                if (!sidebar) {
-                    return;
-                }
-
-                let shouldCollapse = false;
-
-                try {
-                    shouldCollapse = (
-                        window.innerWidth > 860
-                        && localStorage.getItem(
-                            "equalizerWorkspaceSidebarCollapsed"
-                        ) === "true"
-                    );
-                } catch (error) {
-                    shouldCollapse = false;
-                }
-
-                if (shouldCollapse) {
-                    document.body.classList.add(
-                        "staff-sidebar-state-restoring",
-                        "staff-sidebar-collapsed"
-                    );
-
-                    sidebar.classList.add(
-                        "is-restoring-sidebar-state",
-                        "is-collapsed"
-                    );
-                }
-            })();
-        </script>
 
         <div class="staff-workspace-brand">
 
