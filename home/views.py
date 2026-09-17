@@ -319,6 +319,34 @@ def increment_daily_article_analytics(
             )
 
 
+def decrement_article_reaction_analytics(article):
+    """
+    Remove one recorded reaction from the article's analytics history.
+
+    The most recent positive analytics row is reduced so Adviser analytics
+    stays aligned with the article's current Like count after an Unlike.
+    """
+    with transaction.atomic():
+        analytics_row = (
+            ArticleDailyAnalytics.objects
+            .select_for_update()
+            .filter(
+                article=article,
+                reactions__gt=0,
+            )
+            .order_by("-date")
+            .first()
+        )
+
+        if analytics_row:
+            ArticleDailyAnalytics.objects.filter(
+                id=analytics_row.id,
+                reactions__gt=0,
+            ).update(
+                reactions=F("reactions") - 1
+            )
+
+
 # ==========================================================
 # HOME PAGE
 # ==========================================================
@@ -1370,9 +1398,8 @@ def react_to_article(
     )
 
     if article.id in reacted_articles:
-        # Undo only the lifetime Like total. Daily analytics intentionally
-        # remain an event history of reader interactions rather than being
-        # rewritten when a reader removes a Like later.
+        # Remove the Like from both the live article total and the analytics
+        # total used by the Adviser dashboard.
         with transaction.atomic():
             Article.objects.filter(
                 id=article.id,
@@ -1381,6 +1408,10 @@ def react_to_article(
                 reaction_count=(
                     F("reaction_count") - 1
                 )
+            )
+
+            decrement_article_reaction_analytics(
+                article
             )
 
         reacted_articles = [
