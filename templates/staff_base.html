@@ -75,23 +75,7 @@
 
             </div>
 
-
-            {% if request.user.role == "SUPER_ADMIN" %}
-
-                <div class="staff-nav-section">
-
-                    <p class="staff-nav-label">
-                        Administration
-                    </p>
-
-                    <a href="{% url 'manage_admin_accounts' %}">
-                        Manage Admin Accounts
-                    </a>
-
-                </div>
-
-
-                <div class="staff-nav-section">
+            <div class="staff-nav-section">
 
                     <p class="staff-nav-label">
                         Account
@@ -125,8 +109,26 @@
                         Profile
                     </a>
 
+            </div>
+
+
+
+            {% if request.user.role == "SUPER_ADMIN" %}
+
+                <div class="staff-nav-section">
+
+                    <p class="staff-nav-label">
+                        Administration
+                    </p>
+
+                    <a href="{% url 'manage_admin_accounts' %}">
+                        Manage Admin Accounts
+                    </a>
+
                 </div>
 
+
+               
 
             {% elif request.user.role == "ADMIN" %}
 
