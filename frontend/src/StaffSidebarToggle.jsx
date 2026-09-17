@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react'
@@ -265,7 +266,7 @@ function StaffSidebarToggle({
     return undefined
   }, [])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const sidebar = document.getElementById('staff-sidebar')
 
     if (!sidebar) return undefined
@@ -293,6 +294,16 @@ function StaffSidebarToggle({
         isDesktop && isCollapsed,
       )
 
+      /*
+       * staff_base.html restores the saved desktop state before React
+       * mounts. Once React has applied the same authoritative state,
+       * release the temporary no-transition guard.
+       */
+      sidebar.classList.remove('is-restoring-sidebar-state')
+      document.body.classList.remove(
+        'staff-sidebar-state-restoring',
+      )
+
       if (isDesktop && isOpen) {
         setIsOpen(false)
       }
@@ -303,11 +314,17 @@ function StaffSidebarToggle({
 
     return () => {
       window.removeEventListener('resize', applyLayoutState)
-      sidebar.classList.remove('is-mobile-open', 'is-collapsed')
-      document.body.classList.remove(
-        'staff-sidebar-open',
-        'staff-sidebar-collapsed',
-      )
+
+      /*
+       * Do not remove is-collapsed here. A full Django navigation may
+       * destroy this React tree while the old page is still visible;
+       * removing the class during cleanup makes the sidebar visibly
+       * expand for a frame before the next page arrives.
+       *
+       * Mobile-open state is transient, so it is safe to clear.
+       */
+      sidebar.classList.remove('is-mobile-open')
+      document.body.classList.remove('staff-sidebar-open')
     }
   }, [isCollapsed, isOpen])
 

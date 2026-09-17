@@ -19,6 +19,46 @@
         data-workspace-role="{{ request.user.role }}"
     >
 
+        <script>
+            /*
+             * Restore the persisted desktop sidebar state synchronously,
+             * before the sidebar's visible children are painted. React
+             * takes over afterward without changing the visual state.
+             */
+            (function () {
+                const sidebar = document.currentScript.parentElement;
+
+                if (!sidebar) {
+                    return;
+                }
+
+                let shouldCollapse = false;
+
+                try {
+                    shouldCollapse = (
+                        window.innerWidth > 860
+                        && localStorage.getItem(
+                            "equalizerWorkspaceSidebarCollapsed"
+                        ) === "true"
+                    );
+                } catch (error) {
+                    shouldCollapse = false;
+                }
+
+                if (shouldCollapse) {
+                    document.body.classList.add(
+                        "staff-sidebar-state-restoring",
+                        "staff-sidebar-collapsed"
+                    );
+
+                    sidebar.classList.add(
+                        "is-restoring-sidebar-state",
+                        "is-collapsed"
+                    );
+                }
+            })();
+        </script>
+
         <div class="staff-workspace-brand">
 
             <a

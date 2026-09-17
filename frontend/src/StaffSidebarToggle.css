@@ -435,3 +435,18 @@
         animation: none;
     }
 }
+
+/* ==========================================================
+   PERSISTED DESKTOP SIDEBAR STATE
+   ========================================================== */
+
+/*
+ * staff_base.html applies the saved collapsed class while the HTML is
+ * still being parsed. Keep that first-frame restoration instantaneous;
+ * normal user-triggered collapse/expand transitions remain unchanged.
+ */
+body.staff-sidebar-state-restoring .staff-sidebar,
+.staff-sidebar.is-restoring-sidebar-state {
+    transition: none !important;
+}
+
