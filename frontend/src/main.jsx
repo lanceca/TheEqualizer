@@ -7,6 +7,7 @@ import DigitalPublicationViewer from './DigitalPublicationViewer.jsx'
 import FormErrorEnhancer from './FormErrorEnhancer.jsx'
 import HeaderActions from './HeaderActions.jsx'
 import PeopleAndTeams from './PeopleAndTeams.jsx'
+import PageLoadingSkeleton from './PageLoadingSkeleton.jsx'
 import StaffSidebarToggle from './StaffSidebarToggle.jsx'
 
 import './index.css'
@@ -18,6 +19,7 @@ const componentRegistry = {
   FormErrorEnhancer,
   HeaderActions,
   PeopleAndTeams,
+  PageLoadingSkeleton,
   StaffSidebarToggle,
 }
 

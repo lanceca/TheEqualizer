@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Image, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { PeopleSkeleton } from "../../components/SkeletonLayouts";
 import { apiGet } from "../../lib/api";
 import type { PeopleGroup } from "../../lib/types";
 
@@ -8,10 +9,12 @@ type Response = { groups: PeopleGroup[] };
 export default function PeopleScreen() {
   const [groups, setGroups] = useState<PeopleGroup[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("Loading people & teams…");
 
   const load = useCallback(async (refresh = false) => {
     if (refresh) setRefreshing(true);
+    else setLoading(true);
     try {
       const data = await apiGet<Response>("/people/");
       setGroups(data.groups);
@@ -20,10 +23,15 @@ export default function PeopleScreen() {
       setMessage(err instanceof Error ? err.message : "Unable to load people.");
     } finally {
       setRefreshing(false);
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  if (loading && groups.length === 0) {
+    return <PeopleSkeleton />;
+  }
 
   return (
     <ScrollView

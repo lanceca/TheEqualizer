@@ -11,6 +11,7 @@ import {
 import { router } from "expo-router";
 
 import { ScreenState } from "../../components/ScreenState";
+import { DigitalPublicationsSkeleton } from "../../components/SkeletonLayouts";
 import { SiteHeader } from "../../components/SiteHeader";
 import {
   apiGet,
@@ -59,7 +60,7 @@ export default function DigitalPublicationsScreen() {
       <SiteHeader />
 
       {loading && !data ? (
-        <ScreenState loading message="Loading digital publications…" />
+        <DigitalPublicationsSkeleton />
       ) : error && !data ? (
         <ScreenState message={error} onRetry={() => load()} />
       ) : (

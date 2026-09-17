@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './PeopleAndTeams.css'
+import { PeopleAndTeamsSkeleton } from './Skeleton.jsx'
 
 function splitLines(value) {
   return String(value || '')
@@ -348,10 +349,7 @@ function PeopleAndTeams({ apiUrl }) {
       </section>
 
       {status === 'loading' && (
-        <section className="pt-state-card" aria-live="polite">
-          <span className="pt-loader" aria-hidden="true" />
-          <p>Gathering the people behind The Equalizer...</p>
-        </section>
+        <PeopleAndTeamsSkeleton />
       )}
 
       {status === 'error' && (

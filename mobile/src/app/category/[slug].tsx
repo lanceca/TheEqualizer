@@ -15,6 +15,7 @@ import {
   StoryCard,
 } from "../../components/ArticleCards";
 import { ScreenState } from "../../components/ScreenState";
+import { CategorySkeleton } from "../../components/SkeletonLayouts";
 import { SectionHeading } from "../../components/SectionHeading";
 import { SiteHeader } from "../../components/SiteHeader";
 import { apiGet } from "../../lib/api";
@@ -98,7 +99,7 @@ export default function CategoryScreen() {
       <SiteHeader />
 
       {loading && !data ? (
-        <ScreenState loading message={`Loading ${title}…`} />
+        <CategorySkeleton />
       ) : error && !data ? (
         <ScreenState message={error} onRetry={() => load()} />
       ) : (

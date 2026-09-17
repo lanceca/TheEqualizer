@@ -9,6 +9,7 @@ import {
 import { useLocalSearchParams } from "expo-router";
 
 import { ScreenState } from "../../components/ScreenState";
+import { SchoolUpdateDetailSkeleton } from "../../components/SkeletonLayouts";
 import { SiteHeader } from "../../components/SiteHeader";
 import { apiGet } from "../../lib/api";
 import type { SchoolUpdateDetailResponse } from "../../lib/types";
@@ -57,7 +58,7 @@ export default function SchoolUpdateDetailScreen() {
       <SiteHeader />
 
       {loading && !update ? (
-        <ScreenState loading message="Loading school update…" />
+        <SchoolUpdateDetailSkeleton />
       ) : error && !update ? (
         <ScreenState message={error} onRetry={load} />
       ) : !update ? (

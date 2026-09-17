@@ -12,6 +12,7 @@ import { useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 
 import { ScreenState } from "../../components/ScreenState";
+import { DigitalPublicationDetailSkeleton } from "../../components/SkeletonLayouts";
 import { SiteHeader } from "../../components/SiteHeader";
 import {
   SITE_ORIGIN,
@@ -78,7 +79,7 @@ export default function DigitalPublicationDetailScreen() {
       <SiteHeader />
 
       {loading && !publication ? (
-        <ScreenState loading message="Loading publication…" />
+        <DigitalPublicationDetailSkeleton />
       ) : error && !publication ? (
         <ScreenState message={error} onRetry={load} />
       ) : !publication ? (

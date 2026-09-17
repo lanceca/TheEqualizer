@@ -25,6 +25,14 @@ function enhanceImageItem(
     'react-article-media-image',
   )
 
+  if (!image.complete) {
+    image.classList.add('is-media-loading')
+  }
+
+  function markImageReady() {
+    image.classList.remove('is-media-loading')
+  }
+
   function applyOrientation() {
     if (
       !image.naturalWidth
@@ -59,13 +67,14 @@ function enhanceImageItem(
   }
 
   if (image.complete) {
+    markImageReady()
     applyOrientation()
   } else {
-    image.addEventListener(
-      'load',
-      applyOrientation,
-      { once: true },
-    )
+    image.addEventListener('load', () => {
+      markImageReady()
+      applyOrientation()
+    }, { once: true })
+    image.addEventListener('error', markImageReady, { once: true })
   }
 }
 

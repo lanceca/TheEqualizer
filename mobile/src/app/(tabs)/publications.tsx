@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Image, Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { DigitalPublicationsSkeleton } from "../../components/SkeletonLayouts";
 import { apiGet, formatDate } from "../../lib/api";
 import type { DigitalPublication } from "../../lib/types";
 
@@ -9,10 +10,12 @@ type DetailResponse = { digital_publication: DigitalPublication };
 export default function PublicationsScreen() {
   const [items, setItems] = useState<DigitalPublication[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("Loading publications…");
 
   const load = useCallback(async (refresh = false) => {
     if (refresh) setRefreshing(true);
+    else setLoading(true);
     try {
       const data = await apiGet<Response>("/digital-publications/");
       setItems(data.digital_publications);
@@ -21,6 +24,7 @@ export default function PublicationsScreen() {
       setMessage(err instanceof Error ? err.message : "Unable to load publications.");
     } finally {
       setRefreshing(false);
+      setLoading(false);
     }
   }, []);
 
@@ -36,6 +40,10 @@ export default function PublicationsScreen() {
       setMessage(err instanceof Error ? err.message : "Unable to open publication.");
     }
   };
+
+  if (loading && items.length === 0) {
+    return <DigitalPublicationsSkeleton />;
+  }
 
   return (
     <ScrollView

@@ -13,7 +13,8 @@ export default function RootLayout() {
           contentStyle: {
             backgroundColor: colors.white,
           },
-          animation: "slide_from_right",
+          animation: "fade",
+          gestureEnabled: true,
         }}
       />
     </>

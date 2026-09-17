@@ -6,6 +6,7 @@ import {
 } from 'react'
 
 import './AuditLogPanel.css'
+import { AuditLogSkeleton } from './Skeleton.jsx'
 
 
 const EMPTY_FILTERS = {
@@ -790,13 +791,7 @@ function AuditLogPanel({
         </div>
 
         {loading && (
-          <div className="audit-react-state">
-            <span className="audit-react-spinner" />
-
-            <strong>
-              Loading activity…
-            </strong>
-          </div>
+          <AuditLogSkeleton />
         )}
 
         {!loading && error && (

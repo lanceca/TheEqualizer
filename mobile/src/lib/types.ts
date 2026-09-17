@@ -20,6 +20,7 @@ export type Engagement = {
   views: number;
   reactions: number;
   shares: number;
+  downloads?: number;
 };
 
 export type ArticleSummary = {

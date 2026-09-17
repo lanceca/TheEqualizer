@@ -13,6 +13,7 @@ import {
 import { useLocalSearchParams } from "expo-router";
 
 import { ScreenState } from "../../components/ScreenState";
+import { ArticleDetailSkeleton } from "../../components/SkeletonLayouts";
 import { SiteHeader } from "../../components/SiteHeader";
 import {
   SITE_ORIGIN,
@@ -72,7 +73,7 @@ export default function ArticleScreen() {
   const article = data?.article;
 
   const reactArticle = async () => {
-    if (!article || reacting || data?.has_reacted) return;
+    if (!article || reacting) return;
 
     setReacting(true);
 
@@ -85,7 +86,7 @@ export default function ArticleScreen() {
         current
           ? {
               ...current,
-              has_reacted: response.has_reacted ?? true,
+              has_reacted: response.has_reacted ?? false,
               article: {
                 ...current.article,
                 engagement: response.engagement,
@@ -97,7 +98,7 @@ export default function ArticleScreen() {
       setError(
         err instanceof Error
           ? err.message
-          : "Unable to record like."
+          : "Unable to update like."
       );
     } finally {
       setReacting(false);
@@ -155,7 +156,7 @@ export default function ArticleScreen() {
       <SiteHeader />
 
       {loading && !article ? (
-        <ScreenState loading message="Loading article…" />
+        <ArticleDetailSkeleton />
       ) : error && !article ? (
         <ScreenState message={error} onRetry={load} />
       ) : !article ? (
@@ -358,22 +359,27 @@ export default function ArticleScreen() {
                 <Text style={styles.statStrong}>{article.engagement.shares}</Text>{" "}
                 shares
               </Text>
+              <Text style={styles.stat}>
+                <Text style={styles.statStrong}>
+                  {article.engagement.downloads ?? 0}
+                </Text>{" "}
+                PDF {article.engagement.downloads === 1 ? "download" : "downloads"}
+              </Text>
             </View>
 
             <View style={styles.actions}>
               <Pressable
-                style={[
-                  styles.secondaryAction,
-                  data?.has_reacted && styles.actionDisabled,
-                ]}
+                style={styles.secondaryAction}
                 onPress={reactArticle}
-                disabled={reacting || data?.has_reacted}
+                disabled={reacting}
               >
                 <Text style={styles.secondaryActionText}>
-                  {data?.has_reacted
-                    ? "Liked"
-                    : reacting
-                      ? "Liking…"
+                  {reacting
+                    ? data?.has_reacted
+                      ? "Unliking…"
+                      : "Liking…"
+                    : data?.has_reacted
+                      ? "Unlike"
                       : "Like"}
                 </Text>
               </Pressable>

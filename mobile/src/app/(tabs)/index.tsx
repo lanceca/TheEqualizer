@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { router } from "expo-router";
+import { HomeSkeleton } from "../../components/SkeletonLayouts";
 import {
   apiGet,
   formatDate,
@@ -49,7 +50,7 @@ export default function HomeScreen() {
   }, [load]);
 
   if (loading && !data) {
-    return <CenteredMessage text="Loading The Equalizer…" />;
+    return <HomeSkeleton />;
   }
 
   if (error && !data) {

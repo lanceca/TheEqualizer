@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { CategorySkeleton } from "../../components/SkeletonLayouts";
 import { apiGet } from "../../lib/api";
 import type { Category } from "../../lib/types";
 
@@ -8,10 +9,12 @@ type Response = { categories: Category[] };
 export default function CategoriesScreen() {
   const [items, setItems] = useState<Category[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("Loading categories…");
 
   const load = useCallback(async (refresh = false) => {
     if (refresh) setRefreshing(true);
+    else setLoading(true);
     try {
       const data = await apiGet<Response>("/categories/");
       setItems(data.categories);
@@ -20,10 +23,15 @@ export default function CategoriesScreen() {
       setMessage(err instanceof Error ? err.message : "Unable to load categories.");
     } finally {
       setRefreshing(false);
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  if (loading && items.length === 0) {
+    return <CategorySkeleton />;
+  }
 
   return (
     <ScrollView

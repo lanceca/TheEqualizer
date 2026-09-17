@@ -9,6 +9,7 @@ import {
 } from "react-native";
 
 import { ScreenState } from "../components/ScreenState";
+import { AboutSkeleton } from "../components/SkeletonLayouts";
 import { SiteHeader } from "../components/SiteHeader";
 import { apiGet } from "../lib/api";
 import type { AboutResponse } from "../lib/types";
@@ -48,7 +49,7 @@ export default function AboutScreen() {
       <SiteHeader />
 
       {loading && !data ? (
-        <ScreenState loading message="Loading About Us…" />
+        <AboutSkeleton />
       ) : error && !data ? (
         <ScreenState message={error} onRetry={() => load()} />
       ) : (

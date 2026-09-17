@@ -10,6 +10,7 @@ import {
 } from "react-native";
 
 import { ScreenState } from "../components/ScreenState";
+import { PeopleSkeleton } from "../components/SkeletonLayouts";
 import { SiteHeader } from "../components/SiteHeader";
 import { apiGet } from "../lib/api";
 import type { PeopleResponse } from "../lib/types";
@@ -50,7 +51,7 @@ export default function PeopleScreen() {
       <SiteHeader />
 
       {loading && !data ? (
-        <ScreenState loading message="Loading People & Teams…" />
+        <PeopleSkeleton />
       ) : error && !data ? (
         <ScreenState message={error} onRetry={() => load()} />
       ) : (

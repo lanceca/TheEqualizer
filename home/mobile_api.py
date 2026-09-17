@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.db.models import Count, F, Q
+from django.db.models import Count, F, Q, Sum
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 
@@ -55,6 +55,45 @@ def _increment_daily_article_analytics(
             ArticleDailyAnalytics.objects.filter(
                 id=daily_analytics.id
             ).update(**updates)
+
+
+def _article_pdf_download_count(article):
+    """Return the article's existing unique PDF download total."""
+    return (
+        ArticleDailyAnalytics.objects
+        .filter(article=article)
+        .aggregate(total=Sum("downloads"))["total"]
+        or 0
+    )
+
+
+def _decrement_article_reaction_analytics(article):
+    """
+    Remove one recorded reaction from the article's analytics history.
+
+    The most recent positive analytics row is reduced so the aggregate
+    reaction total used by Adviser analytics stays aligned with the
+    article's current like count after an Unlike action.
+    """
+    with transaction.atomic():
+        analytics_row = (
+            ArticleDailyAnalytics.objects
+            .select_for_update()
+            .filter(
+                article=article,
+                reactions__gt=0,
+            )
+            .order_by("-date")
+            .first()
+        )
+
+        if analytics_row:
+            ArticleDailyAnalytics.objects.filter(
+                id=analytics_row.id,
+                reactions__gt=0,
+            ).update(
+                reactions=F("reactions") - 1
+            )
 
 
 def _mobile_engagement_state(request, article):
@@ -172,6 +211,9 @@ def _article_summary_payload(request, article):
 
 def _article_detail_payload(request, article):
     payload = _article_summary_payload(request, article)
+    payload["engagement"]["downloads"] = (
+        _article_pdf_download_count(article)
+    )
 
     payload.update(
         {
@@ -471,7 +513,25 @@ def mobile_article_react(request, slug):
 
     already_reacted = article.id in reacted_articles
 
-    if not already_reacted:
+    if already_reacted:
+        with transaction.atomic():
+            Article.objects.filter(
+                id=article.id,
+                reaction_count__gt=0,
+            ).update(
+                reaction_count=F("reaction_count") - 1
+            )
+
+            _decrement_article_reaction_analytics(
+                article
+            )
+
+        reacted_articles = [
+            article_id
+            for article_id in reacted_articles
+            if article_id != article.id
+        ]
+    else:
         with transaction.atomic():
             Article.objects.filter(
                 id=article.id
@@ -485,7 +545,8 @@ def mobile_article_react(request, slug):
             )
 
         reacted_articles.append(article.id)
-        request.session["mobile_reacted_articles"] = reacted_articles
+
+    request.session["mobile_reacted_articles"] = reacted_articles
 
     article.refresh_from_db(
         fields=[
@@ -497,12 +558,13 @@ def mobile_article_react(request, slug):
 
     return Response(
         {
-            "recorded": not already_reacted,
-            "has_reacted": True,
+            "recorded": True,
+            "has_reacted": not already_reacted,
             "engagement": {
                 "views": article.view_count,
                 "reactions": article.reaction_count,
                 "shares": article.share_count,
+                "downloads": _article_pdf_download_count(article),
             },
         }
     )
@@ -558,6 +620,7 @@ def mobile_article_share(request, slug):
                 "views": article.view_count,
                 "reactions": article.reaction_count,
                 "shares": article.share_count,
+                "downloads": _article_pdf_download_count(article),
             },
         }
     )

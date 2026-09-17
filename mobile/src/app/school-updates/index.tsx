@@ -9,6 +9,7 @@ import {
 
 import { SchoolUpdateCard } from "../../components/SchoolUpdateCard";
 import { ScreenState } from "../../components/ScreenState";
+import { SchoolUpdatesSkeleton } from "../../components/SkeletonLayouts";
 import { SiteHeader } from "../../components/SiteHeader";
 import { apiGet } from "../../lib/api";
 import type { SchoolUpdatesResponse } from "../../lib/types";
@@ -50,7 +51,7 @@ export default function SchoolUpdatesScreen() {
       <SiteHeader />
 
       {loading && !data ? (
-        <ScreenState loading message="Loading school updates…" />
+        <SchoolUpdatesSkeleton />
       ) : error && !data ? (
         <ScreenState message={error} onRetry={() => load()} />
       ) : (

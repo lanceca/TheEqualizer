@@ -15,6 +15,7 @@ import {
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 import './DigitalPublicationViewer.css'
+import { DigitalPublicationSkeleton, PdfPageSkeleton } from './Skeleton.jsx'
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
@@ -44,11 +45,7 @@ const FlipPage = forwardRef(function FlipPage(
         width={pageWidth}
         renderAnnotationLayer
         renderTextLayer={renderTextLayer}
-        loading={
-          <div className="digital-flipbook-page-loading">
-            Loading page {pageNumber}…
-          </div>
-        }
+        loading={<PdfPageSkeleton />}
       />
     </div>
   )
@@ -452,17 +449,7 @@ function DigitalPublicationViewer({
   }
 
   if (loading) {
-    return (
-      <div className="digital-flipbook-state">
-        <div className="digital-flipbook-spinner" />
-        <strong>
-          Loading Digital Publication
-        </strong>
-        <span>
-          Preparing the reader…
-        </span>
-      </div>
-    )
+    return <DigitalPublicationSkeleton />
   }
 
   if (error || !publication) {
@@ -673,17 +660,7 @@ function DigitalPublicationViewer({
           onLoadError={
             handleDocumentLoadError
           }
-          loading={
-            <div className="digital-flipbook-state">
-              <div className="digital-flipbook-spinner" />
-              <strong>
-                Rendering PDF
-              </strong>
-              <span>
-                Large publications may take a moment.
-              </span>
-            </div>
-          }
+          loading={<DigitalPublicationSkeleton stageOnly />}
         >
 
           {numPages > 0 && (

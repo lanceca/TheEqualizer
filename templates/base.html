@@ -504,7 +504,7 @@
     <!-- React/Vite progressive enhancement -->
     <link
         rel="stylesheet"
-        href="{% static 'react-dist/assets/equalizer-react.css' %}?v=20260913-social-header-1"
+        href="{% static 'react-dist/assets/equalizer-react.css' %}?v=20260915-skeleton-loader-1"
     >
 
 </head>
@@ -682,6 +682,11 @@
         {% endblock %}
 
     </main>
+
+
+    <div
+        data-react-component="PageLoadingSkeleton"
+    ></div>
 
 
     <!-- React mounts here without replacing the Django page -->
@@ -1406,7 +1411,7 @@
     <!-- React/Vite production/watch bundle -->
     <script
         type="module"
-        src="{% static 'react-dist/assets/equalizer-react.js' %}?v=20260913-social-header-1"
+        src="{% static 'react-dist/assets/equalizer-react.js' %}?v=20260915-skeleton-loader-1"
     ></script>
 
 </body>

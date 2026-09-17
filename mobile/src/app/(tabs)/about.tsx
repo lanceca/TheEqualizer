@@ -2,16 +2,19 @@ import { useCallback, useEffect, useState } from "react";
 import { Image, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { apiGet } from "../../lib/api";
 import type { AboutPage } from "../../lib/types";
+import { AboutSkeleton } from "../../components/SkeletonLayouts";
 
 type Response = { about: AboutPage | null };
 
 export default function AboutScreen() {
   const [about, setAbout] = useState<AboutPage | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("Loading About Us…");
 
   const load = useCallback(async (refresh = false) => {
     if (refresh) setRefreshing(true);
+    else setLoading(true);
     try {
       const data = await apiGet<Response>("/about-us/");
       setAbout(data.about);
@@ -20,10 +23,15 @@ export default function AboutScreen() {
       setMessage(err instanceof Error ? err.message : "Unable to load About Us.");
     } finally {
       setRefreshing(false);
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  if (loading && !about) {
+    return <AboutSkeleton />;
+  }
 
   return (
     <ScrollView

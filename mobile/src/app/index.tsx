@@ -15,6 +15,7 @@ import {
   StoryCard,
 } from "../components/ArticleCards";
 import { SchoolUpdateCard } from "../components/SchoolUpdateCard";
+import { HomeSkeleton } from "../components/SkeletonLayouts";
 import { ScreenState } from "../components/ScreenState";
 import { SectionHeading } from "../components/SectionHeading";
 import { SiteHeader } from "../components/SiteHeader";
@@ -60,7 +61,7 @@ export default function HomeScreen() {
       <SiteHeader />
 
       {loading && !data ? (
-        <ScreenState loading message="Loading The Equalizer…" />
+        <HomeSkeleton />
       ) : error && !data ? (
         <ScreenState message={error} onRetry={() => load()} />
       ) : (
