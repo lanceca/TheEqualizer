@@ -1,4 +1,4 @@
-export const SITE_ORIGIN = "https://the-equalizer.onrender.com";
+export const SITE_ORIGIN = "https://theequalizermcc.duckdns.org";
 export const API_BASE_URL = `${SITE_ORIGIN}/api/mobile`;
 export const LOGO_URL = `${SITE_ORIGIN}/static/images/equalizer-logo.jpg`;
 
@@ -32,7 +32,7 @@ export async function apiGet<T>(path: string): Promise<T> {
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
       throw new Error(
-        "The server took too long to respond. It may be waking up. Please try again."
+        "The server took too long to respond. Please try again."
       );
     }
 
