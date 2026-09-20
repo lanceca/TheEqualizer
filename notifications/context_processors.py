@@ -119,11 +119,13 @@ def notification_context(request):
             .filter(
                 submitted_by=request.user,
                 resubmission_of__isnull=False,
+                resubmissions__isnull=True,
                 status__in=[
                     Submission.Status.PENDING,
                     Submission.Status.REVISION,
                 ],
             )
+            .distinct()
             .count()
         )
 
