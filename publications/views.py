@@ -3292,12 +3292,18 @@ def resubmitted_submissions(request):
                 )
             )
         )
+        # A revision chain can contain several immutable Submission
+        # snapshots, but only its leaf/latest submission should appear
+        # as a standalone article card. Older nodes remain available
+        # through the latest submission's revision-history context.
+        .filter(
+            has_resubmission=False,
+        )
     )
 
     if selected_scope == "CURRENT":
-        # Only the latest unresolved record in each resubmission chain.
+        # Latest unresolved state for each resubmitted article.
         submissions = submissions.filter(
-            has_resubmission=False,
             status__in=[
                 Submission.Status.PENDING,
                 Submission.Status.REVISION,
@@ -3305,18 +3311,12 @@ def resubmitted_submissions(request):
         )
 
     elif selected_scope == "HISTORY":
-        # Completed records plus older revision records superseded by
-        # a newer resubmission belong to History.
+        # Latest completed state for each resubmitted article.
         submissions = submissions.filter(
-            Q(
-                status__in=[
-                    Submission.Status.APPROVED,
-                    Submission.Status.REJECTED,
-                ]
-            )
-            | Q(
-                has_resubmission=True
-            )
+            status__in=[
+                Submission.Status.APPROVED,
+                Submission.Status.REJECTED,
+            ],
         )
 
     if search_query:
