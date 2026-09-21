@@ -1,0 +1,26 @@
+{% extends "public_base.html" %}
+{% block title %}Archive | The Equalizer{% endblock %}
+{% block public_content %}
+<main class="public-archive">
+    <p class="workflow-eyebrow">The publication record</p>
+    <h1>Archive</h1>
+    <p>Stories from past editions, organized by their original publication month.</p>
+    {% include "publications/_library_filters.html" with clear_route="public_archive" %}
+    <p role="status">{{ result_count }} article{{ result_count|pluralize }}</p>
+    {% for article in articles %}
+        {% ifchanged article.published_at|date:"F Y" %}<h2 class="archive-month">{{ article.published_at|date:"F Y" }}</h2>{% endifchanged %}
+        <article class="archive-story">
+            {% if article.featured_image %}<a href="{% url 'article_detail' article.slug %}" tabindex="-1" aria-hidden="true"><img src="{{ article.featured_image.url }}" alt="" loading="lazy"></a>{% endif %}
+            <div><p class="workflow-eyebrow">{{ article.category.name }} · {{ article.published_at|date:"M. j, Y" }}</p>
+            <h3><a href="{% url 'article_detail' article.slug %}">{{ article.title }}</a></h3>
+            <p>{% if article.excerpt %}{{ article.excerpt|truncatewords:45 }}{% else %}{{ article.content|striptags|truncatewords:45 }}{% endif %}</p>
+            <p>By {{ article.author.get_full_name|default:article.author.username }}</p></div>
+        </article>
+    {% empty %}<p>No archived articles match these filters.</p>{% endfor %}
+    {% if page_obj.has_other_pages %}<nav aria-label="Archive pages" class="library-filters">
+        {% if page_obj.has_previous %}<a href="?{{ page_query }}&amp;page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?{{ page_query }}&amp;page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+    </nav>{% endif %}
+</main>
+{% endblock %}

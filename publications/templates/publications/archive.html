@@ -1,4 +1,5 @@
 {% extends "staff_base.html" %}
+{% load article_text %}
 
 {% block staff_content %}
 
@@ -18,7 +19,7 @@
 
             <p class="section-description">
                 Review articles removed from active publication. Restore an
-                article when it should return to the reader site, or permanently
+                article when it should return to current publication feeds, or permanently
                 delete it when the record is no longer needed.
             </p>
 
@@ -42,49 +43,7 @@
 
     <div class="editorial-toolbar">
 
-        <form
-            method="GET"
-            action="{% url 'archived_articles' %}"
-            class="editorial-search-form"
-        >
-
-            <div class="editorial-search-field">
-
-                <label for="archive-search">
-                    Search Archive
-                </label>
-
-                <input
-                    type="text"
-                    id="archive-search"
-                    name="q"
-                    value="{{ search_query }}"
-                    placeholder="Title, author, category, contributor, tag, or content"
-                >
-
-            </div>
-
-
-            <button
-                type="submit"
-                class="secondary-button"
-            >
-                Search
-            </button>
-
-
-            {% if search_query %}
-
-                <a
-                    href="{% url 'archived_articles' %}"
-                    class="text-action-link"
-                >
-                    Clear
-                </a>
-
-            {% endif %}
-
-        </form>
+        {% include "publications/_library_filters.html" with clear_route="archived_articles" archive_management=True published_library=False %}
 
     </div>
 
@@ -384,7 +343,7 @@
         {% endif %}
 
         <div class="saved-preview-content">
-            {{ article.content|linebreaks }}
+            {{ article.content|rich_article }}
         </div>
 
         {% if article.attachments.all %}

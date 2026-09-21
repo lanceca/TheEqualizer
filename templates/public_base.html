@@ -22,6 +22,7 @@
             <div class="public-navigation-inner">
 
                 <div class="public-navigation-main">
+                    <a href="{% url 'public_archive' %}" class="public-nav-link">Archive</a>
 
                     <a href="{% url 'digital_publications' %}" class="public-nav-link">
                         Digital Publications
@@ -223,6 +224,7 @@
             {% block public_content %}
             {% endblock %}
         </section>
+        {% include "includes/public_footer.html" %}
 
     </div>
 

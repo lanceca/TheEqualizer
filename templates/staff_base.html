@@ -214,6 +214,10 @@ body.staff-shell-body
 
 
         <nav class="staff-nav" aria-label="Workspace navigation">
+            <div class="staff-nav-section">
+                <a href="{% url 'system_update_history' %}" title="What's New"><span class="staff-nav-text">Updates {% if system_update_count %}<span class="sidebar-attention-badge" data-update-count>{{ system_update_count }}</span>{% endif %}</span></a>
+                {% if request.user.role == 'SUPER_ADMIN' %}<a href="{% url 'manage_system_updates' %}" title="System Updates"><span class="staff-nav-text">System Updates</span></a>{% endif %}
+            </div>
 
             <div class="staff-nav-section">
 
@@ -394,13 +398,13 @@ body.staff-shell-body
                         href="{% url 'eic_deletion_requests' %}"
                         class="staff-attention-link"
                     >
-                        <span>Deletion Requests</span>
+                        <span>Archive Requests</span>
 
                         {% if sidebar_pending_deletion_requests_count > 0 %}
                             <span
                                 class="staff-attention-badge"
                                 title="{{ sidebar_pending_deletion_requests_count }} item(s) require attention"
-                                aria-label="{{ sidebar_pending_deletion_requests_count }} deletion requests require attention"
+                                aria-label="{{ sidebar_pending_deletion_requests_count }} archive requests require attention"
                             >
                                 !
                             </span>
@@ -545,13 +549,13 @@ body.staff-shell-body
                         href="{% url 'my_deletion_requests' %}"
                         class="staff-attention-link"
                     >
-                        <span>Deletion Requests</span>
+                        <span>Archive Requests</span>
 
                         {% if sidebar_editor_deletion_requests_count > 0 %}
                             <span
                                 class="staff-attention-badge"
                                 title="{{ sidebar_editor_deletion_requests_count }} item(s) require attention"
-                                aria-label="{{ sidebar_editor_deletion_requests_count }} deletion requests require attention"
+                                aria-label="{{ sidebar_editor_deletion_requests_count }} archive requests require attention"
                             >
                                 !
                             </span>
@@ -656,6 +660,7 @@ body.staff-shell-body
 
         <div class="page-container staff-workspace-page">
 
+            {% if request.resolver_match.url_name != 'system_update_detail' %}<div data-react-component="SystemUpdatePopup" data-api-url="{% url 'system_update_popup' %}"></div>{% endif %}
             {% block staff_content %}
             {% endblock %}
 

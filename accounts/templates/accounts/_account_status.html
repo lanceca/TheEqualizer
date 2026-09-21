@@ -1,0 +1,13 @@
+<section class="account-status-zone {% if managed_user.is_active %}account-status-zone--danger{% endif %}">
+    {% if managed_user.is_active %}
+        <h2>Danger Zone</h2>
+        <p>Deactivating this account will prevent the user from signing in. Existing records and activity associated with the account will remain intact.</p>
+    {% else %}<h2>Account Status / Recovery</h2><p>This account is currently inactive.</p>{% endif %}
+    <form method="post" action="{% url toggle_route managed_user.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="{% if managed_user.is_active %}reject-button{% else %}approve-button{% endif %}"
+            {% if managed_user.is_active %}data-confirm="Deactivate this account? The user will no longer be able to sign in. Existing records will remain intact." data-confirm-title="Deactivate Account"{% else %}data-confirm="Reactivate this account and allow sign in?" data-confirm-title="Reactivate Account"{% endif %}>
+            {% if managed_user.is_active %}Deactivate Account{% else %}Reactivate Account{% endif %}
+        </button>
+    </form>
+</section>

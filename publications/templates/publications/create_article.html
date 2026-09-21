@@ -408,6 +408,7 @@
                 maxlength="30000"
                 data-char-limit="30000"
                 data-char-counter-field="content">{% if request.method == 'POST' %}{{ request.POST.content }}{% endif %}</textarea>
+            <div data-react-component="ArticleRichTextEditor" data-field-id="content"></div>
 
         </div>
 
@@ -960,7 +961,7 @@ document.addEventListener(
                 function updateCharacterCounter() {
 
                     const currentLength =
-                        field.value.length;
+                        Number(field.dataset.visibleLength ?? field.value.length);
 
                     counter.textContent =
                         currentLength.toLocaleString()

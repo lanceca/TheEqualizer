@@ -4,6 +4,7 @@ from html import escape, unescape
 
 from django.contrib import messages
 from django.contrib.staticfiles import finders
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import F, Q, Sum
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
@@ -46,6 +47,8 @@ from analytics.models import (
     ArticleDailyAnalytics,
     ArticlePdfDownloadTracker,
 )
+from publications.filters import filter_article_library, library_filter_context
+from publications.rich_text import article_pdf_html
 from publications.models import (
     AboutUsPage,
     Article,
@@ -74,23 +77,16 @@ def clean_pdf_text(value):
 
 
 def article_content_paragraphs(content):
-    """Convert stored plain text or basic HTML into PDF paragraphs."""
+    """Safe ReportLab formatting, including legacy plain-text paragraphs."""
+    return [article_pdf_html(content)] if content else []
 
-    content = str(content or "")
-    content = re.sub(r"(?i)<br\s*/?>", "\n", content)
-    content = re.sub(
-        r"(?i)</(?:p|div|h[1-6]|li|blockquote)>",
-        "\n\n",
-        content,
+
+def public_readable_articles():
+    """Share the same visibility rule across reader and engagement endpoints."""
+    return Article.objects.filter(draft_type=Article.DraftType.NORMAL).filter(
+        Q(is_published=True, is_archived=False)
+        | Q(is_archived=True, published_at__isnull=False)
     )
-    content = unescape(strip_tags(content))
-    content = content.replace("\r\n", "\n").replace("\r", "\n")
-
-    return [
-        paragraph.strip()
-        for paragraph in re.split(r"\n\s*\n", content)
-        if paragraph.strip()
-    ]
 
 
 def pdf_image_flowable(file_field, max_width, max_height):
@@ -770,7 +766,7 @@ def article_detail(
 ):
 
     article = get_object_or_404(
-        Article.objects
+        public_readable_articles()
         .select_related(
             "category",
             "author",
@@ -784,8 +780,6 @@ def article_detail(
         ),
         slug=slug,
         draft_type=Article.DraftType.NORMAL,
-        is_published=True,
-        is_archived=False,
     )
 
     # ======================================================
@@ -877,10 +871,10 @@ def article_detail(
 
 
 def download_article_pdf(request, slug):
-    """Download the current published article as a branded editorial PDF."""
+    """Download a current or archived public article as a branded editorial PDF."""
 
     article = get_object_or_404(
-        Article.objects
+        public_readable_articles()
         .select_related("category", "author")
         .prefetch_related(
             "tags",
@@ -890,8 +884,6 @@ def download_article_pdf(request, slug):
         ),
         slug=slug,
         draft_type=Article.DraftType.NORMAL,
-        is_published=True,
-        is_archived=False,
     )
 
     pdf_buffer = io.BytesIO()
@@ -1146,10 +1138,7 @@ def download_article_pdf(request, slug):
     ):
         story.append(
             Paragraph(
-                clean_pdf_text(paragraph).replace(
-                    "\n",
-                    "<br/>",
-                ),
+                paragraph,
                 styles["body"],
             )
         )
@@ -1364,7 +1353,7 @@ def react_to_article(
     request,
     slug,
 ):
-    """Toggle the current browser session's Like for a published article."""
+    """Toggle the current browser session's Like for a publicly readable article."""
 
     if request.method != "POST":
         return HttpResponseForbidden(
@@ -1372,11 +1361,8 @@ def react_to_article(
         )
 
     article = get_object_or_404(
-        Article,
+        public_readable_articles(),
         slug=slug,
-        draft_type=Article.DraftType.NORMAL,
-        is_published=True,
-        is_archived=False,
     )
 
     wants_json = (
@@ -1510,11 +1496,8 @@ def share_article(
         )
 
     article = get_object_or_404(
-        Article,
+        public_readable_articles(),
         slug=slug,
-        draft_type=Article.DraftType.NORMAL,
-        is_published=True,
-        is_archived=False,
     )
 
     shared_articles = request.session.get(
@@ -1837,3 +1820,22 @@ def school_advertisement_detail(
         },
     )
 
+
+
+def public_archive(request):
+    articles = Article.objects.filter(
+        is_archived=True, published_at__isnull=False, draft_type=Article.DraftType.NORMAL,
+    ).select_related("category", "author")
+    search = request.GET.get("q", "").strip()
+    if search:
+        articles = articles.filter(Q(title__icontains=search) | Q(content__icontains=search)
+                                   | Q(excerpt__icontains=search) | Q(author__username__icontains=search))
+    articles = filter_article_library(articles, request.GET).order_by("-published_at", "-pk")
+    page = Paginator(articles, 24).get_page(request.GET.get("page"))
+    params = request.GET.copy()
+    params.pop("page", None)
+    return render(request, "home/archive.html", {
+        "articles": page, "page_obj": page, "result_count": page.paginator.count,
+        "search_query": search, "page_query": params.urlencode(),
+        **library_filter_context(request),
+    })

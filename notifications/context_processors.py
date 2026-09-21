@@ -8,11 +8,13 @@ from publications.models import (
 )
 
 from .models import Notification
+from .updates import pending_updates
 
 
 def notification_context(request):
 
     defaults = {
+        "system_update_count": 0,
         "global_unread_notification_count": 0,
 
         "sidebar_pending_submissions_count": 0,
@@ -41,6 +43,8 @@ def notification_context(request):
         )
         .count()
     )
+
+    defaults["system_update_count"] = pending_updates(request.user).count()
 
     role = getattr(
         request.user,

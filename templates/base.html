@@ -501,6 +501,7 @@
     </style>
 
 
+    <link rel="stylesheet" href="{% static 'css/publication-updates.css' %}">
     {% block extra_head %}{% endblock %}
 
 
@@ -514,7 +515,7 @@
 
 
 
-<body class="{% block body_class %}{% endblock %}">
+<body id="page-top" class="{% block body_class %}{% endblock %}">
 
     {% get_mobile_app_settings as mobile_app_settings %}
 

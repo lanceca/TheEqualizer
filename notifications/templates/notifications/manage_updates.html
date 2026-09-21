@@ -1,0 +1,8 @@
+{% extends "staff_base.html" %}
+{% block staff_content %}
+<div class="updates-page"><p class="workflow-eyebrow">Super Admin</p><h1>System Updates</h1><p>Publish permanent release notes. Hiding a popup retains the release in Update History.</p><a class="approve-button" href="{% url 'create_system_update' %}">Create Update</a>
+{% for update in updates %}<article class="update-card"><p class="workflow-eyebrow">{{ update.version }} · {% if update.is_published %}Published {{ update.published_at|date:"M. j, Y" }}{% else %}Draft{% endif %}</p><h2>{{ update.title }}</h2><p>{{ update.summary }}</p><p>Audience: {% if update.target_roles %}{{ update.target_roles|join:", " }}{% else %}All Staff{% endif %}</p>
+{% if not update.is_published %}<a href="{% url 'edit_system_update' update.pk %}">Edit Draft</a><form method="post" action="{% url 'system_update_action' update.pk %}">{% csrf_token %}<button name="action" value="publish" class="approve-button">Publish</button></form>
+{% elif update.show_popup %}<form method="post" action="{% url 'system_update_action' update.pk %}">{% csrf_token %}<button name="action" value="hide_popup" class="secondary-button">Hide Popup · Retain History</button></form>{% else %}<p>Popup hidden · History retained</p>{% endif %}</article>
+{% empty %}<p>No system updates yet.</p>{% endfor %}</div>
+{% endblock %}

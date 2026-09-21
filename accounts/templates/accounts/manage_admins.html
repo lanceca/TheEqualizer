@@ -1,4 +1,5 @@
 {% extends "staff_base.html" %}
+{% load article_text %}
 
 {% block staff_content %}
 
@@ -148,7 +149,7 @@
                         <dt>Email</dt>
                         <dd>
                             {% if admin.email %}
-                                {{ admin.email }}
+                                <span data-react-component="AccountEmailToggle" data-email="{{ admin.email }}">{{ admin.email|masked_email }}</span>
                             {% else %}
                                 Not provided
                             {% endif %}
@@ -183,38 +184,7 @@
                         Edit Account
                     </a>
 
-                    <form
-                        method="POST"
-                        action="{% url 'toggle_admin_account_status' admin.id %}"
-                    >
 
-                        {% csrf_token %}
-
-                        {% if admin.is_active %}
-
-                            <button
-                                type="submit"
-                                class="danger-button"
-                                data-confirm-title="Deactivate Admin"
-                                data-confirm="Are you sure you want to deactivate {{ admin.username }}?"
-                            >
-                                Deactivate
-                            </button>
-
-                        {% else %}
-
-                            <button
-                                type="submit"
-                                class="approve-button"
-                                data-confirm-title="Activate Admin"
-                                data-confirm="Are you sure you want to activate {{ admin.username }}?"
-                            >
-                                Activate
-                            </button>
-
-                        {% endif %}
-
-                    </form>
 
                 </div>
 

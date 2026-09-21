@@ -381,7 +381,6 @@ class AdminAccountEditForm(forms.ModelForm):
             "first_name",
             "last_name",
             "email",
-            "is_active",
         ]
 
     def clean_email(self):
@@ -433,16 +432,8 @@ class StaffAccountEditForm(forms.ModelForm):
             "first_name",
             "last_name",
             "email",
-            "is_active",
         ]
 
-        help_texts = {
-            "is_active": (
-                "Uncheck to deactivate this account. Deactivation is "
-                "blocked while the account has unresolved publication "
-                "workflow responsibilities."
-            ),
-        }
 
     def clean_email(self):
 

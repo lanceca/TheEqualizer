@@ -1,0 +1,7 @@
+{% extends "staff_base.html" %}
+{% block staff_content %}
+<div class="updates-page"><p class="workflow-eyebrow">The Equalizer</p><h1>What's New</h1><p>Release notes and improvements for your workspace.</p>
+{% for update in updates %}
+<article class="update-card"><p class="workflow-eyebrow">{{ update.version }} · {{ update.get_update_type_display }} · {{ update.published_at|date:"F j, Y" }}</p><h2><a href="{% url 'system_update_detail' update.pk %}">{{ update.title }}</a></h2><p>{{ update.summary }}</p><div class="update-notes">{{ update.change_notes|linebreaks }}</div>{% if not update.acknowledged %}<form method="post" action="{% url 'acknowledge_system_update' update.pk %}">{% csrf_token %}<button class="approve-button">Got it</button></form>{% else %}<p>Acknowledged</p>{% endif %}</article>
+{% empty %}<p>No published updates for your role yet.</p>{% endfor %}</div>
+{% endblock %}

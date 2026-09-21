@@ -1,0 +1,4 @@
+{% extends "staff_base.html" %}
+{% block staff_content %}
+<article class="updates-page update-card"><a href="{% url 'system_update_history' %}">All Updates</a><p class="workflow-eyebrow">{{ update.version }} · {{ update.get_update_type_display }} · {{ update.published_at|date:"F j, Y" }}</p><h1>{{ update.title }}</h1><p>{{ update.summary }}</p><div class="update-notes">{{ update.change_notes|linebreaks }}</div>{% if not update.acknowledged %}<form method="post" action="{% url 'acknowledge_system_update' update.pk %}">{% csrf_token %}<button class="approve-button">Got it</button></form>{% endif %}</article>
+{% endblock %}

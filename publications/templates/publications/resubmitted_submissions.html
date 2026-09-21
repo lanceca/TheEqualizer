@@ -1,4 +1,5 @@
 {% extends "staff_base.html" %}
+{% load article_text %}
 
 {% block staff_content %}
 
@@ -518,9 +519,9 @@
         <div class="saved-preview-content">
 
             {% if submission.snapshot_content %}
-                {{ submission.snapshot_content|linebreaks }}
+                {{ submission.snapshot_content|rich_article }}
             {% else %}
-                {{ submission.article.content|linebreaks }}
+                {{ submission.article.content|rich_article }}
             {% endif %}
 
         </div>
@@ -751,9 +752,9 @@
         <div class="saved-preview-content">
 
             {% if submission.resubmission_of.snapshot_content %}
-                {{ submission.resubmission_of.snapshot_content|linebreaks }}
+                {{ submission.resubmission_of.snapshot_content|rich_article }}
             {% else %}
-                {{ submission.resubmission_of.article.content|linebreaks }}
+                {{ submission.resubmission_of.article.content|rich_article }}
             {% endif %}
 
         </div>

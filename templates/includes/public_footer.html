@@ -1,0 +1,9 @@
+{% load static %}
+<footer class="publication-footer">
+    <div class="publication-footer-grid">
+        <div><img src="{% static 'images/equalizer-logo.jpg' %}" alt="The Equalizer logo" width="64" height="64"><h2>The Equalizer</h2><p>The Official Student Publication of Mabalacat City College</p><p>Student voices. Campus stories. A lasting record.</p></div>
+        <nav aria-label="Footer navigation"><h3>Explore</h3><a href="{% url 'home' %}">Home</a><a href="{% url 'public_archive' %}">Archive</a><a href="{% url 'digital_publications' %}">Digital Publications</a><a href="{% url 'school_updates' %}">School Updates</a><a href="{% url 'about_us' %}">About Us</a><a href="{% url 'people_and_teams' %}">People &amp; Teams</a></nav>
+        <nav aria-label="Social links"><h3>Follow the publication</h3><a href="https://www.facebook.com/mcctheequalizer">Facebook</a><a href="https://www.instagram.com/mcctheequalizer/">Instagram</a><a href="https://x.com/mcctheequalizer">X / Twitter</a></nav>
+    </div>
+    <div class="publication-footer-bottom"><span>© {% now "Y" %} The Equalizer — Mabalacat City College</span><a href="{% url 'people_and_teams' %}">Developed by: The Equalizer project team</a><a href="#page-top">Back to Top ↑</a></div>
+</footer>

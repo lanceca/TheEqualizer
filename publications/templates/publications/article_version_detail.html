@@ -1,4 +1,5 @@
 {% extends "staff_base.html" %}
+{% load article_text %}
 
 {% block staff_content %}
 
@@ -179,7 +180,8 @@
             {% if version_changes.content %}
                 <span class="version-changed-badge version-body-change-badge">Article body changed</span>
             {% endif %}
-            {{ version_diff.content_html|safe }}
+            {{ article_version.content|rich_article }}
+            {% if version_changes.content %}<details><summary>Text changes</summary>{{ version_diff.content_html|safe }}</details>{% endif %}
         </section>
 
 

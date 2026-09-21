@@ -100,7 +100,7 @@
         </article>
 
         <article class="workspace-metric-card">
-            <span class="workspace-metric-label">Deletion Requests</span>
+            <span class="workspace-metric-label">Archive Requests</span>
             <strong
                 class="workspace-metric-value"
                 data-dashboard-metric-value
@@ -108,7 +108,7 @@
             >
                 {{ sidebar_editor_deletion_requests_count|default:0 }}
             </strong>
-            <p>Your active published-article deletion requests</p>
+            <p>Your active published-article archive requests</p>
         </article>
 
     </section>
@@ -207,7 +207,7 @@
             <a href="{% url 'my_deletion_requests' %}" class="workspace-action-card">
                 <div>
                     <span class="workspace-action-kicker">Removal</span>
-                    <h3>Deletion Requests</h3>
+                    <h3>Archive Requests</h3>
                     <p>Track requests to remove your published articles.</p>
                 </div>
                 <span class="workspace-action-count">

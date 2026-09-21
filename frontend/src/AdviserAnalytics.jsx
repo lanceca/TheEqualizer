@@ -1051,7 +1051,7 @@ function AdviserDashboard({
       value: pendingEditRequests,
     },
     {
-      label: 'Pending Deletion Requests',
+      label: 'Pending Archive Requests',
       value: pendingDeletionRequests,
     },
     {

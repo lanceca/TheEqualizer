@@ -1,0 +1,4 @@
+{% extends "staff_base.html" %}
+{% block staff_content %}
+<div class="updates-page"><p class="workflow-eyebrow">Super Admin</p><h1>{% if update %}Edit{% else %}Create{% endif %} Update Draft</h1><p>Change notes are plain text. Use NEW, IMPROVED, and FIXED labels with one change per line.</p><form method="post" class="update-editor">{% csrf_token %}{{ form.as_p }}<button type="submit" class="approve-button">Save Draft</button> <a href="{% url 'manage_system_updates' %}">Cancel</a></form></div>
+{% endblock %}

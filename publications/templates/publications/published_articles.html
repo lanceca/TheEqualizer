@@ -1,4 +1,5 @@
 {% extends "staff_base.html" %}
+{% load article_text %}
 
 {% block staff_content %}
 
@@ -34,7 +35,7 @@
 
                 <p class="section-description">
                     Browse your currently published articles and manage
-                    edit or deletion requests.
+                    edit or archive requests.
                 </p>
 
             {% endif %}
@@ -58,48 +59,7 @@
 
     <div class="editorial-toolbar">
 
-        <form
-            method="GET"
-            action="{% url 'published_articles' %}"
-            class="editorial-search-form"
-        >
-
-            <div class="editorial-search-field">
-
-                <label for="published-search">
-                    Search Published Articles
-                </label>
-
-                <input
-                    type="text"
-                    id="published-search"
-                    name="q"
-                    value="{{ search_query }}"
-                    placeholder="Title, category, tag, author, or content"
-                >
-
-            </div>
-
-            <button
-                type="submit"
-                class="secondary-button"
-            >
-                Search
-            </button>
-
-
-            {% if search_query %}
-
-                <a
-                    href="{% url 'published_articles' %}"
-                    class="text-action-link"
-                >
-                    Clear
-                </a>
-
-            {% endif %}
-
-        </form>
+        {% include "publications/_library_filters.html" with clear_route="published_articles" archive_management=False published_library=True %}
 
     </div>
 
@@ -286,7 +246,7 @@
                                 href="{% url 'request_article_deletion' article.id %}"
                                 class="danger-link"
                             >
-                                Request Deletion
+                                Request Archive
                             </a>
 
 
@@ -394,7 +354,7 @@
         {% endif %}
 
         <div class="saved-preview-content">
-            {{ article.content|linebreaks }}
+            {{ article.content|rich_article }}
         </div>
 
         {% if article.attachments.all %}

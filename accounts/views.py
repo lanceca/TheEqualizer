@@ -2340,7 +2340,7 @@ def download_adviser_analytics_pdf(request):
                     ],
                 ],
                 [
-                    "Deletion requests",
+                    "Archive requests",
                     deletion_request_counts[
                         DeletionRequest.Status.PENDING
                     ],
@@ -3629,7 +3629,7 @@ def get_staff_deactivation_blockers(staff_user):
         if pending_deletion_requests:
             blockers.append(
                 (
-                    f"{pending_deletion_requests} pending deletion "
+                    f"{pending_deletion_requests} pending archive "
                     f"request{'s' if pending_deletion_requests != 1 else ''} "
                     "still require a decision."
                 )
@@ -3878,7 +3878,7 @@ def edit_staff_account(
                 staff_user.is_active
                 and not form.cleaned_data.get(
                     "is_active",
-                    False,
+                    staff_user.is_active,
                 )
             )
 

@@ -4,6 +4,7 @@ from . import mobile_app_views, views
 
 
 urlpatterns = [
+    path("archive/", views.public_archive, name="public_archive"),
 
     # ======================================================
     # HOME

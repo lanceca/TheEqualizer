@@ -1,4 +1,5 @@
 {% extends "staff_base.html" %}
+{% load article_text %}
 
 {% block staff_content %}
 
@@ -13,7 +14,7 @@
             </p>
 
             <h1>
-                Request Article Deletion
+                Request Article Archive
             </h1>
 
             <p class="section-description">
@@ -27,7 +28,7 @@
 
 
 
-    <div class="workflow-process-strip workflow-process-strip--danger" aria-label="Deletion request workflow">
+    <div class="workflow-process-strip workflow-process-strip--danger" aria-label="Archive request workflow">
 
         <div class="workflow-process-step is-current">
             <span class="workflow-process-index">1</span>
@@ -151,18 +152,19 @@
             <div class="request-form-heading-modern">
 
                 <p class="workflow-eyebrow">
-                    Deletion Request
+                    Archive Request
                 </p>
 
                 <h2>
-                    Why should this article be removed?
+                    Why should this article be archived?
                 </h2>
 
                 <p>
                     The EIC will review your explanation before deciding whether
                     the article should be removed from the active publication.
-                    An approved request archives the article rather than
-                    permanently deleting its database record.
+                    An approved request moves the article to the public Archive,
+                    where readers can still open it. Permanent deletion is a
+                    separate EIC operation.
                 </p>
 
             </div>
@@ -181,7 +183,7 @@
                     <div class="field-label-row">
 
                         <label for="reason">
-                            Reason for Deletion Request
+                            Reason for Archive Request
                         </label>
 
                         <span class="field-required-badge">
@@ -233,10 +235,10 @@
                     <button
                         type="submit"
                         class="danger-button"
-                        data-confirm-title="Submit Deletion Request"
-                        data-confirm="Submit this deletion request to the Editor in Chief? The article will remain published until the request is approved."
+                        data-confirm-title="Submit Archive Request"
+                        data-confirm="Submit this archive request to the Editor in Chief? The article will remain published until the request is approved."
                     >
-                        Submit Deletion Request
+                        Submit Archive Request
                     </button>
 
                 </div>
@@ -336,7 +338,7 @@
         {% endif %}
 
         <div class="saved-preview-content">
-            {{ article.content|linebreaks }}
+            {{ article.content|rich_article }}
         </div>
 
         {% if article.attachments.all %}

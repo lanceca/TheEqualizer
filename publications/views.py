@@ -23,6 +23,9 @@ from django.views.decorators.http import require_POST
 
 from notifications.models import Notification
 
+from .filters import filter_article_library, library_filter_context
+from .rich_text import sanitize_article_content, article_plain_text
+
 from .models import (
     AboutUsPage,
     Article,
@@ -1280,7 +1283,7 @@ def resolve_reports_after_eic_archive(
     """
     Resolve active Staff reports when an EIC archives their own
     published article. The concern is closed because the reported
-    content is no longer publicly published.
+    content has left the current publication feed but remains in the public archive.
     """
 
     reports = (
@@ -1305,7 +1308,7 @@ def resolve_reports_after_eic_archive(
         closure_note = (
             "The article was archived by the Editor in Chief. "
             "This report was resolved because the reported "
-            "content is no longer publicly published."
+            "content has left the current publication feed. It remains available in the public archive."
         )
 
         if report.staff_notes:
@@ -1413,10 +1416,10 @@ def create_article(request):
             "category"
         )
 
-        content = request.POST.get(
+        content = sanitize_article_content(request.POST.get(
             "content",
             "",
-        ).strip()
+        ).strip())
 
         tag_ids = request.POST.getlist(
             "tags"
@@ -2810,10 +2813,10 @@ def revise_submission(
             "category"
         )
 
-        content = request.POST.get(
+        content = sanitize_article_content(request.POST.get(
             "content",
             "",
-        ).strip()
+        ).strip())
 
         tag_ids = request.POST.getlist(
             "tags"
@@ -3597,10 +3600,10 @@ def edit_draft(
             "category"
         )
 
-        content = request.POST.get(
+        content = sanitize_article_content(request.POST.get(
             "content",
             "",
-        ).strip()
+        ).strip())
 
         tag_ids = request.POST.getlist(
             "tags"
@@ -4317,6 +4320,8 @@ def published_articles(request):
             )
         )
 
+    articles = filter_article_library(articles, request.GET, date_field="published_at", candidates=True)
+
     articles = (
         articles
         .order_by(
@@ -4331,6 +4336,7 @@ def published_articles(request):
         {
             "articles": articles,
             "search_query": search_query,
+            **library_filter_context(request),
         },
     )
 
@@ -4742,8 +4748,8 @@ def build_article_version_diff_context(
             article_version.excerpt,
         ),
         "content_html": build_version_inline_diff(
-            previous_content,
-            article_version.content,
+            article_plain_text(previous_content),
+            article_plain_text(article_version.content),
         ),
     }
 
@@ -4978,10 +4984,10 @@ def edit_published_article(
             "category"
         )
 
-        content = request.POST.get(
+        content = sanitize_article_content(request.POST.get(
             "content",
             "",
-        ).strip()
+        ).strip())
 
         tag_ids = request.POST.getlist(
             "tags"
@@ -5667,7 +5673,7 @@ def request_article_edit(
                     messages.warning(
                         request,
                         (
-                            "A deletion request is currently "
+                            "An archive request is currently "
                             "pending for this article."
                         ),
                     )
@@ -6010,7 +6016,7 @@ def review_edit_request(
                     request,
                     (
                         "This edit request cannot be approved "
-                        "while a deletion request is pending."
+                        "while an archive request is pending."
                     ),
                 )
 
@@ -6215,7 +6221,7 @@ def request_article_deletion(
         messages.warning(
             request,
             (
-                "You already have a pending deletion "
+                "You already have a pending archive "
                 "request for this article."
             ),
         )
@@ -6240,7 +6246,7 @@ def request_article_deletion(
         messages.warning(
             request,
             (
-                "You cannot request deletion while an edit "
+                "You cannot request archive while an edit "
                 "request is active for this article."
             ),
         )
@@ -6262,7 +6268,7 @@ def request_article_deletion(
                 request,
                 (
                     "Please provide a reason "
-                    "for the deletion request."
+                    "for the archive request."
                 ),
             )
 
@@ -6288,7 +6294,7 @@ def request_article_deletion(
                         request,
                         (
                             "This article is no longer available "
-                            "for a deletion request."
+                            "for an archive request."
                         ),
                     )
 
@@ -6311,7 +6317,7 @@ def request_article_deletion(
                     messages.warning(
                         request,
                         (
-                            "You already have a pending deletion "
+                            "You already have a pending archive "
                             "request for this article."
                         ),
                     )
@@ -6367,7 +6373,7 @@ def request_article_deletion(
             messages.success(
                 request,
                 (
-                    f'Your deletion request for '
+                    f'Your archive request for '
                     f'"{locked_article.title}" was submitted.'
                 ),
             )
@@ -6555,7 +6561,7 @@ def review_deletion_request(
 
         messages.error(
             request,
-            "Invalid deletion request action.",
+            "Invalid archive request action.",
         )
 
         return redirect(
@@ -6582,7 +6588,7 @@ def review_deletion_request(
             messages.warning(
                 request,
                 (
-                    "This deletion request has already "
+                    "This archive request has already "
                     "been reviewed."
                 ),
             )
@@ -6641,7 +6647,7 @@ def review_deletion_request(
                 messages.warning(
                     request,
                     (
-                        "This deletion request cannot be "
+                        "This archive request cannot be "
                         "approved while an edit request "
                         "is active for the article."
                     ),
@@ -6695,7 +6701,7 @@ def review_deletion_request(
                 deletion_request.requested_by,
                 Notification.Type.DELETION_REQUEST,
                 (
-                    f'Your deletion request for '
+                    f'Your archive request for '
                     f'"{article.title}" was approved. '
                     f'The article has been archived.'
                 ),
@@ -6745,7 +6751,7 @@ def review_deletion_request(
                 deletion_request.requested_by,
                 Notification.Type.DELETION_REQUEST,
                 (
-                    f'Your deletion request for '
+                    f'Your archive request for '
                     f'"{article.title}" was rejected.'
                 ),
                 reverse(
@@ -6756,7 +6762,7 @@ def review_deletion_request(
             messages.warning(
                 request,
                 (
-                    f'The deletion request for '
+                    f'The archive request for '
                     f'"{article.title}" was rejected.'
                 ),
             )
@@ -7487,7 +7493,7 @@ def require_revision_from_report(
             messages.warning(
                 request,
                 (
-                    "A deletion request is currently "
+                    "An archive request is currently "
                     "pending for this article."
                 ),
             )
@@ -7740,6 +7746,8 @@ def archived_articles(request):
             )
         )
 
+    articles = filter_article_library(articles, request.GET, date_field="archived_at", candidates=False)
+
     articles = (
         articles
         .order_by(
@@ -7755,6 +7763,7 @@ def archived_articles(request):
         {
             "articles": articles,
             "search_query": search_query,
+            **library_filter_context(request),
         },
     )
 
@@ -7804,13 +7813,18 @@ def restore_archived_article(
             ).exists()
         )
 
-        if active_edit_request:
+        active_content_report = ContentReport.objects.filter(
+            article=article,
+            status__in=[ContentReport.Status.OPEN, ContentReport.Status.REVISION_REQUIRED],
+        ).exists()
+
+        if active_edit_request or active_content_report:
 
             messages.warning(
                 request,
                 (
                     "This archived article cannot be restored "
-                    "while an edit request is active."
+                    "while an edit request or content report is active."
                 ),
             )
 

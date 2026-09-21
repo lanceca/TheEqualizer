@@ -1,4 +1,5 @@
 {% extends "staff_base.html" %}
+{% load article_text %}
 
 {% block staff_content %}
 
@@ -470,7 +471,7 @@
         {% endif %}
 
         <div class="saved-preview-content">
-            {{ report.article.content|linebreaks }}
+            {{ report.article.content|rich_article }}
         </div>
 
         {% if report.article.attachments.all %}
