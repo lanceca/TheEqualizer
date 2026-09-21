@@ -989,7 +989,19 @@ body.reader-lightbox-open {
 
             <div class="reader-engagement-actions">
 
-                <span data-react-component="InlineDownloadButton" data-url="{% url 'download_article_pdf' article.slug %}" data-filename="{{ article.slug }}.pdf"><a href="{% url 'download_article_pdf' article.slug %}" class="reader-action-button">Download PDF</a></span>
+                <span
+                    class="reader-pdf-download-mount"
+                    data-react-component="InlineDownloadButton"
+                    data-url="{% url 'download_article_pdf' article.slug %}"
+                    data-filename="{{ article.slug }}.pdf"
+                >
+                    <a
+                        href="{% url 'download_article_pdf' article.slug %}"
+                        class="reader-action-button"
+                    >
+                        Download PDF
+                    </a>
+                </span>
 
                 <form
                     method="POST"

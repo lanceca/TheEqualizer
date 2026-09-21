@@ -21,7 +21,7 @@
 
         <a
             href="{% url 'article_version_history' article.id %}"
-            class="secondary-button"
+            class="eq-action-button eq-action-button--secondary"
         >
             Back to Version History
         </a>
@@ -181,7 +181,23 @@
                 <span class="version-changed-badge version-body-change-badge">Article body changed</span>
             {% endif %}
             {{ article_version.content|rich_article }}
-            {% if version_changes.content %}<details><summary>Text changes</summary>{{ version_diff.content_html|safe }}</details>{% endif %}
+            {% if version_changes.content %}
+                <details class="version-text-diff">
+                    <summary>
+                        <span>
+                            <strong>Review text-only changes</strong>
+                            <small>
+                                Added or replaced text is highlighted for quick comparison.
+                            </small>
+                        </span>
+                        <span class="version-text-diff-toggle" aria-hidden="true">＋</span>
+                    </summary>
+
+                    <div class="version-text-diff-body">
+                        {{ version_diff.content_html|safe }}
+                    </div>
+                </details>
+            {% endif %}
         </section>
 
 

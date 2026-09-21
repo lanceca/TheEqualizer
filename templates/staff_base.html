@@ -117,11 +117,7 @@ body.staff-shell-body
 
     html.eq-staff-sidebar-collapsed
     body.staff-shell-body
-    .staff-nav a,
-
-    html.eq-staff-sidebar-collapsed
-    body.staff-shell-body
-    .staff-nav .logout-link {
+    .staff-nav a {
         justify-content: center !important;
         min-height: 44px !important;
         padding: 10px 8px !important;
@@ -215,8 +211,34 @@ body.staff-shell-body
 
         <nav class="staff-nav" aria-label="Workspace navigation">
             <div class="staff-nav-section">
-                <a href="{% url 'system_update_history' %}" title="What's New"><span class="staff-nav-text">Updates {% if system_update_count %}<span class="sidebar-attention-badge" data-update-count>{{ system_update_count }}</span>{% endif %}</span></a>
-                {% if request.user.role == 'SUPER_ADMIN' %}<a href="{% url 'manage_system_updates' %}" title="System Updates"><span class="staff-nav-text">System Updates</span></a>{% endif %}
+                <a
+                    href="{% url 'system_update_history' %}"
+                    title="What's New"
+                    class="staff-attention-link"
+                >
+                    <span class="staff-nav-text">Updates</span>
+
+                    {% if system_update_count > 0 %}
+                        <span
+                            class="staff-attention-badge"
+                            data-update-attention
+                            data-pending-count="{{ system_update_count }}"
+                            title="{{ system_update_count }} system update{{ system_update_count|pluralize }} require acknowledgement"
+                            aria-label="{{ system_update_count }} system update{{ system_update_count|pluralize }} require acknowledgement"
+                        >
+                            !
+                        </span>
+                    {% endif %}
+                </a>
+
+                {% if request.user.role == 'SUPER_ADMIN' %}
+                    <a
+                        href="{% url 'manage_system_updates' %}"
+                        title="System Updates"
+                    >
+                        <span class="staff-nav-text">System Updates</span>
+                    </a>
+                {% endif %}
             </div>
 
             <div class="staff-nav-section">
@@ -236,44 +258,6 @@ body.staff-shell-body
                 {% endif %}
 
             </div>
-
-            <div class="staff-nav-section">
-
-                    <p class="staff-nav-label">
-                        Account
-                    </p>
-
-                    <a
-                        href="{% url 'notification_list' %}"
-                        class="staff-notification-link"
-                    >
-                        <span>
-                            Notifications
-                        </span>
-
-                        {% if global_unread_notification_count > 0 %}
-
-                            <span
-                                class="staff-notification-badge"
-                                aria-label="{{ global_unread_notification_count }} unread notifications"
-                            >
-                                {% if global_unread_notification_count > 99 %}
-                                    99+
-                                {% else %}
-                                    {{ global_unread_notification_count }}
-                                {% endif %}
-                            </span>
-
-                        {% endif %}
-                    </a>
-
-                    <a href="{% url 'profile' %}">
-                        Profile
-                    </a>
-
-            </div>
-
-
 
             {% if request.user.role == "SUPER_ADMIN" %}
 
@@ -612,30 +596,6 @@ body.staff-shell-body
             </div>
 
 
-            <div class="staff-nav-section staff-nav-bottom">
-
-                <form
-                    method="POST"
-                    action="{% url 'logout' %}"
-                >
-
-                    {% csrf_token %}
-
-                    <button
-                        type="submit"
-                        class="logout-link"
-                        aria-label="Logout"
-                        title="Logout"
-                    >
-                        <span class="staff-nav-text">
-                            Logout
-                        </span>
-                    </button>
-
-                </form>
-
-            </div>
-
         </nav>
 
     </aside>
@@ -650,6 +610,12 @@ body.staff-shell-body
             data-react-component="StaffSidebarToggle"
             data-username="{{ request.user.username }}"
             data-role="{{ request.user.get_role_display }}"
+            data-home-url="{% url 'home' %}"
+            data-notification-url="{% url 'notification_list' %}"
+            data-profile-url="{% url 'profile' %}"
+            data-logout-url="{% url 'logout' %}"
+            data-notification-count="{{ global_unread_notification_count }}"
+            data-csrf-token="{{ csrf_token }}"
         ></div>
 
         <div

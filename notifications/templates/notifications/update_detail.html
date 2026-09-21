@@ -1,4 +1,64 @@
 {% extends "staff_base.html" %}
+
 {% block staff_content %}
-<article class="updates-page update-card"><a href="{% url 'system_update_history' %}">All Updates</a><p class="workflow-eyebrow">{{ update.version }} · {{ update.get_update_type_display }} · {{ update.published_at|date:"F j, Y" }}</p><h1>{{ update.title }}</h1><p>{{ update.summary }}</p><div class="update-notes">{{ update.change_notes|linebreaks }}</div>{% if not update.acknowledged %}<form method="post" action="{% url 'acknowledge_system_update' update.pk %}">{% csrf_token %}<button class="approve-button">Got it</button></form>{% endif %}</article>
+<div data-react-component="SystemUpdatesEnhancer" data-mode="detail"></div>
+
+<div class="system-updates-shell system-updates-shell--detail" data-system-updates-root>
+    <a class="system-update-back-link" href="{% url 'system_update_history' %}">
+        <span aria-hidden="true">←</span>
+        All Updates
+    </a>
+
+    <article
+        class="system-update-detail-card system-update-detail-card--{{ update.update_type|lower }}"
+        data-system-update-reveal
+    >
+        <header class="system-update-detail-header">
+            <div class="system-update-card-badges">
+                <span class="system-update-version">
+                    {% if update.version %}{{ update.version }}{% else %}Release{% endif %}
+                </span>
+                <span class="system-update-type system-update-type--{{ update.update_type|lower }}">
+                    {{ update.get_update_type_display }}
+                </span>
+            </div>
+
+            <time datetime="{{ update.published_at|date:'c' }}">
+                {{ update.published_at|date:"F j, Y" }}
+            </time>
+        </header>
+
+        <div class="system-update-detail-copy">
+            <span class="system-updates-kicker">The Equalizer · What's New</span>
+            <h1>{{ update.title }}</h1>
+            <p class="system-update-detail-summary">{{ update.summary }}</p>
+
+            <div class="system-update-detail-divider" aria-hidden="true"></div>
+
+            <div class="system-update-detail-notes">
+                {{ update.change_notes|linebreaks }}
+            </div>
+        </div>
+
+        <footer class="system-update-detail-footer">
+            {% if not update.acknowledged %}
+                <form
+                    method="post"
+                    action="{% url 'acknowledge_system_update' update.pk %}"
+                    data-update-action-form
+                >
+                    {% csrf_token %}
+                    <button type="submit" class="system-update-primary-button">
+                        Got it
+                    </button>
+                </form>
+            {% else %}
+                <span class="system-update-acknowledged">
+                    <span aria-hidden="true">✓</span>
+                    You acknowledged this update
+                </span>
+            {% endif %}
+        </footer>
+    </article>
+</div>
 {% endblock %}

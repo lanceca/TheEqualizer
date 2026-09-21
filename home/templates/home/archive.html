@@ -1,26 +1,207 @@
 {% extends "public_base.html" %}
+{% load article_text %}
+
 {% block title %}Archive | The Equalizer{% endblock %}
+
 {% block public_content %}
-<main class="public-archive">
-    <p class="workflow-eyebrow">The publication record</p>
-    <h1>Archive</h1>
-    <p>Stories from past editions, organized by their original publication month.</p>
-    {% include "publications/_library_filters.html" with clear_route="public_archive" %}
-    <p role="status">{{ result_count }} article{{ result_count|pluralize }}</p>
-    {% for article in articles %}
-        {% ifchanged article.published_at|date:"F Y" %}<h2 class="archive-month">{{ article.published_at|date:"F Y" }}</h2>{% endifchanged %}
-        <article class="archive-story">
-            {% if article.featured_image %}<a href="{% url 'article_detail' article.slug %}" tabindex="-1" aria-hidden="true"><img src="{{ article.featured_image.url }}" alt="" loading="lazy"></a>{% endif %}
-            <div><p class="workflow-eyebrow">{{ article.category.name }} · {{ article.published_at|date:"M. j, Y" }}</p>
-            <h3><a href="{% url 'article_detail' article.slug %}">{{ article.title }}</a></h3>
-            <p>{% if article.excerpt %}{{ article.excerpt|truncatewords:45 }}{% else %}{{ article.content|striptags|truncatewords:45 }}{% endif %}</p>
-            <p>By {{ article.author.get_full_name|default:article.author.username }}</p></div>
-        </article>
-    {% empty %}<p>No archived articles match these filters.</p>{% endfor %}
-    {% if page_obj.has_other_pages %}<nav aria-label="Archive pages" class="library-filters">
-        {% if page_obj.has_previous %}<a href="?{{ page_query }}&amp;page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
-        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-        {% if page_obj.has_next %}<a href="?{{ page_query }}&amp;page={{ page_obj.next_page_number }}">Next</a>{% endif %}
-    </nav>{% endif %}
+<div
+    data-react-component="PublicArchiveEnhancer"
+></div>
+
+<main
+    class="public-archive archive-experience"
+    data-archive-root
+>
+    <section class="archive-hero" aria-labelledby="archive-page-title">
+        <div class="archive-hero-copy">
+            <span class="archive-hero-kicker">The publication record</span>
+
+            <h1 id="archive-page-title">Archive</h1>
+
+            <p>
+                Revisit stories, campus moments, and student voices from
+                previous publication periods of The Equalizer.
+            </p>
+
+            <div class="archive-hero-meta" aria-label="Archive summary">
+                <span>
+                    <strong>{{ result_count }}</strong>
+                    archived article{{ result_count|pluralize }}
+                </span>
+                <span aria-hidden="true">•</span>
+                <span>Organized by original publication month</span>
+            </div>
+        </div>
+
+        <div class="archive-hero-mark" aria-hidden="true">
+            <span class="archive-hero-mark-ring"></span>
+            <strong>EQ</strong>
+            <small>Archive</small>
+        </div>
+    </section>
+
+    <section class="archive-filter-panel" aria-labelledby="archive-filter-title">
+        <div class="archive-filter-heading">
+            <div>
+                <span>Find a story</span>
+                <h2 id="archive-filter-title">Search the publication record</h2>
+            </div>
+            <p>
+                Narrow the archive by keyword, category, month, or a custom
+                publication date range.
+            </p>
+        </div>
+
+        {% include "publications/_library_filters.html" with clear_route="public_archive" %}
+
+        <div
+            class="archive-active-filters"
+            data-archive-active-filters
+            aria-live="polite"
+        ></div>
+    </section>
+
+    <section class="archive-results" aria-labelledby="archive-results-title">
+        <header class="archive-results-heading">
+            <div>
+                <span>Historical stories</span>
+                <h2 id="archive-results-title">
+                    {% if result_count %}
+                        {{ result_count }} result{{ result_count|pluralize }}
+                    {% else %}
+                        No matching stories
+                    {% endif %}
+                </h2>
+            </div>
+
+            {% if result_count %}
+                <p>Newest publication month first</p>
+            {% endif %}
+        </header>
+
+        {% for article in articles %}
+            {% ifchanged article.published_at|date:"F Y" %}
+                <div class="archive-month-heading" data-archive-reveal>
+                    <span class="archive-month-line" aria-hidden="true"></span>
+                    <div>
+                        <span>Publication month</span>
+                        <h2>{{ article.published_at|date:"F Y" }}</h2>
+                    </div>
+                </div>
+            {% endifchanged %}
+
+            <article class="archive-story" data-archive-reveal>
+                <a
+                    class="archive-story-media{% if not article.featured_image %} archive-story-media--empty{% endif %}"
+                    href="{% url 'article_detail' article.slug %}"
+                    tabindex="-1"
+                    aria-hidden="true"
+                >
+                    {% if article.featured_image %}
+                        <img
+                            src="{{ article.featured_image.url }}"
+                            alt=""
+                            loading="lazy"
+                        >
+                    {% else %}
+                        <span class="archive-story-placeholder">
+                            <strong>EQ</strong>
+                            <small>{{ article.category.name }}</small>
+                        </span>
+                    {% endif %}
+
+                    <span class="archive-story-media-badge">Archived</span>
+                </a>
+
+                <div class="archive-story-body">
+                    <div class="archive-story-meta">
+                        <span class="archive-category-chip">
+                            {{ article.category.name }}
+                        </span>
+                        <span>{{ article.published_at|date:"M. j, Y" }}</span>
+                    </div>
+
+                    <h3>
+                        <a href="{% url 'article_detail' article.slug %}">
+                            {{ article.title }}
+                        </a>
+                    </h3>
+
+                    {% if article.excerpt %}
+                        <p class="archive-story-summary">
+                            {{ article.excerpt|truncatewords:42 }}
+                        </p>
+                    {% else %}
+                        <div class="archive-story-summary reader-rich-preview reader-rich-preview--archive">
+                            {{ article.content|rich_article_preview:42 }}
+                        </div>
+                    {% endif %}
+
+                    <div class="archive-story-footer">
+                        <span>
+                            By
+                            <strong>
+                                {{ article.author.get_full_name|default:article.author.username }}
+                            </strong>
+                        </span>
+
+                        <a
+                            class="archive-read-link"
+                            href="{% url 'article_detail' article.slug %}"
+                        >
+                            Read archived story
+                            <span aria-hidden="true">→</span>
+                        </a>
+                    </div>
+                </div>
+            </article>
+        {% empty %}
+            <div class="archive-empty-state" data-archive-reveal>
+                <div class="archive-empty-icon" aria-hidden="true">⌕</div>
+                <span>Nothing found</span>
+                <h3>No archived articles match these filters.</h3>
+                <p>
+                    Try a broader keyword, another category, or clear the
+                    current date filters to explore the full publication record.
+                </p>
+                <a href="{% url 'public_archive' %}" class="archive-primary-link">
+                    View all archived stories
+                </a>
+            </div>
+        {% endfor %}
+
+        {% if page_obj.has_other_pages %}
+            <nav class="archive-pagination" aria-label="Archive pages">
+                <div class="archive-pagination-side">
+                    {% if page_obj.has_previous %}
+                        <a
+                            href="?{{ page_query }}&amp;page={{ page_obj.previous_page_number }}"
+                            rel="prev"
+                        >
+                            <span aria-hidden="true">←</span>
+                            Previous
+                        </a>
+                    {% endif %}
+                </div>
+
+                <span class="archive-pagination-status">
+                    Page <strong>{{ page_obj.number }}</strong>
+                    of {{ page_obj.paginator.num_pages }}
+                </span>
+
+                <div class="archive-pagination-side archive-pagination-side--end">
+                    {% if page_obj.has_next %}
+                        <a
+                            href="?{{ page_query }}&amp;page={{ page_obj.next_page_number }}"
+                            rel="next"
+                        >
+                            Next
+                            <span aria-hidden="true">→</span>
+                        </a>
+                    {% endif %}
+                </div>
+            </nav>
+        {% endif %}
+    </section>
 </main>
 {% endblock %}

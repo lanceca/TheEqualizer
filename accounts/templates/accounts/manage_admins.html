@@ -24,7 +24,7 @@
 
     <a
         href="{% url 'create_admin_account' %}"
-        class="approve-button"
+        class="eq-action-button eq-action-button--primary"
     >
         + Create Admin
     </a>
@@ -58,7 +58,7 @@
 
         <button
             type="submit"
-            class="secondary-button"
+            class="eq-action-button eq-action-button--secondary"
         >
             Search
         </button>
@@ -89,7 +89,7 @@
 
         {% for admin in admins %}
 
-            <article class="account-management-card">
+            <article class="account-management-card{% if admin.is_active %}{% else %} is-inactive-account{% endif %}">
 
                 <div class="account-card-top">
 
@@ -179,7 +179,7 @@
 
                     <a
                         href="{% url 'edit_admin_account' admin.id %}"
-                        class="secondary-button"
+                        class="eq-action-button eq-action-button--secondary"
                     >
                         Edit Account
                     </a>

@@ -2698,3 +2698,169 @@ body.reader-lightbox-open {
         width: min(430px, calc(100vw - 28px));
     }
 }
+
+/* ==========================================================
+   ARTICLE RICH-TEXT LISTS
+   ========================================================== */
+
+.reader-article-body ul,
+.reader-article-body ol {
+    margin:
+        0
+        0
+        1.35em;
+
+    padding-left: 1.7em;
+}
+
+.reader-article-body li {
+    margin: 0.3em 0;
+    padding-left: 0.18em;
+}
+
+.reader-article-body ul {
+    list-style-type: disc;
+}
+
+.reader-article-body ol {
+    list-style-type: decimal;
+}
+
+.reader-article-body ul[data-list-style="dash"] {
+    padding-left: 1.45em;
+    list-style: none;
+}
+
+.reader-article-body ul[data-list-style="dash"] > li {
+    position: relative;
+    padding-left: 0.55em;
+}
+
+.reader-article-body ul[data-list-style="dash"] > li::before {
+    content: "—";
+
+    position: absolute;
+    right: calc(100% + 0.28em);
+
+    color: #5e7267;
+
+    font-weight: 700;
+}
+
+.reader-article-body ul ul,
+.reader-article-body ol ol,
+.reader-article-body ul ol,
+.reader-article-body ol ul {
+    margin-top: 0.35em;
+    margin-bottom: 0.35em;
+}
+
+/* ==========================================================
+   COMPACT RICH-TEXT ARTICLE PREVIEWS
+   Homepage, category cards and public archive cards.
+   ========================================================== */
+
+.reader-rich-preview {
+    min-width: 0;
+
+    color: inherit;
+
+    overflow-wrap: anywhere;
+}
+
+.reader-rich-preview > :first-child {
+    margin-top: 0 !important;
+}
+
+.reader-rich-preview > :last-child {
+    margin-bottom: 0 !important;
+}
+
+.reader-rich-preview p {
+    margin: 0 0 0.58em;
+}
+
+.reader-rich-preview strong,
+.reader-rich-preview b {
+    font-weight: 800;
+}
+
+.reader-rich-preview em,
+.reader-rich-preview i {
+    font-style: italic;
+}
+
+.reader-rich-preview u {
+    text-decoration: underline;
+    text-underline-offset: 0.12em;
+}
+
+.reader-rich-preview s,
+.reader-rich-preview strike {
+    text-decoration: line-through;
+}
+
+.reader-rich-preview ul,
+.reader-rich-preview ol {
+    margin: 0.38em 0 0.66em;
+    padding-left: 1.42em;
+}
+
+.reader-rich-preview li {
+    margin: 0.12em 0;
+    padding-left: 0.08em;
+}
+
+.reader-rich-preview ul {
+    list-style-type: disc;
+}
+
+.reader-rich-preview ol {
+    list-style-type: decimal;
+}
+
+.reader-rich-preview ul[data-list-style="dash"] {
+    padding-left: 1.18em;
+    list-style: none;
+}
+
+.reader-rich-preview ul[data-list-style="dash"] > li {
+    position: relative;
+    padding-left: 0.5em;
+}
+
+.reader-rich-preview ul[data-list-style="dash"] > li::before {
+    content: "—";
+
+    position: absolute;
+    right: calc(100% + 0.22em);
+
+    color: #63766c;
+
+    font-weight: 700;
+}
+
+.reader-story-excerpt.reader-rich-preview,
+.category-featured-excerpt.reader-rich-preview,
+.archive-story-summary.reader-rich-preview {
+    font-family: inherit;
+}
+
+.reader-story-card-excerpt.reader-rich-preview,
+.category-article-card-excerpt.reader-rich-preview {
+    font-size: inherit;
+    line-height: inherit;
+}
+
+.reader-rich-preview--card ul,
+.reader-rich-preview--card ol {
+    margin-top: 0.28em;
+    margin-bottom: 0.45em;
+}
+
+@media (max-width: 560px) {
+    .reader-rich-preview ul,
+    .reader-rich-preview ol {
+        padding-left: 1.28em;
+    }
+}

@@ -24,7 +24,7 @@
 
     <a
         href="{% url 'create_staff_account' %}"
-        class="approve-button"
+        class="eq-action-button eq-action-button--primary"
     >
         + Create Staff Account
     </a>
@@ -92,7 +92,7 @@
 
         <button
             type="submit"
-            class="secondary-button"
+            class="eq-action-button eq-action-button--secondary"
         >
             Apply Filters
         </button>
@@ -125,7 +125,7 @@
 
         {% for account in staff_accounts %}
 
-            <article class="account-management-card">
+            <article class="account-management-card{% if account.is_active %}{% else %} is-inactive-account{% endif %}">
 
                 <div class="account-card-top">
 
@@ -215,7 +215,7 @@
 
                     <a
                         href="{% url 'edit_staff_account' account.id %}"
-                        class="secondary-button"
+                        class="eq-action-button eq-action-button--secondary"
                     >
                         Edit Account
                     </a>

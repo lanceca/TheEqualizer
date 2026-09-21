@@ -65,7 +65,8 @@
 .staff-workspace-menu-button:focus-visible,
 .staff-workspace-action:focus-visible,
 .staff-workspace-user-trigger:focus-visible,
-.staff-workspace-user-popover a:focus-visible {
+.staff-workspace-user-popover a:focus-visible,
+.staff-workspace-user-popover button:focus-visible {
     outline: 3px solid rgba(198, 157, 42, 0.26);
     outline-offset: 2px;
 }
@@ -324,6 +325,44 @@
 .staff-workspace-user-popover a:hover {
     background: #f3f7f4;
     color: #173f32;
+}
+
+.staff-workspace-logout-form {
+    margin: 4px 0 0;
+    padding-top: 5px;
+    border-top: 1px solid #edf0ee;
+}
+
+.staff-workspace-logout-button {
+    display: flex;
+    align-items: center;
+
+    width: 100%;
+    gap: 9px;
+    min-height: 40px;
+    padding: 8px 9px;
+
+    border: 0;
+    border-radius: 9px;
+
+    background: transparent;
+    color: #9a3939;
+
+    font: inherit;
+    font-size: 12px;
+    font-weight: 760;
+    text-align: left;
+
+    cursor: pointer;
+
+    transition:
+        background 0.16s ease,
+        color 0.16s ease;
+}
+
+.staff-workspace-logout-button:hover {
+    background: #fff2f2;
+    color: #792b2b;
 }
 
 .staff-workspace-user-popover svg {

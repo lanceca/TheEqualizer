@@ -1,4 +1,5 @@
 {% extends "public_base.html" %}
+{% load article_text %}
 
 {% block title %}
 {{ category.name }} | The Equalizer
@@ -248,15 +249,19 @@
 
                 </p>
 
-                <p class="category-featured-excerpt">
+                {% if lead_article.excerpt %}
 
-                    {% if lead_article.excerpt %}
+                    <p class="category-featured-excerpt">
                         {{ lead_article.excerpt|truncatewords:52 }}
-                    {% else %}
-                        {{ lead_article.content|striptags|truncatewords:52 }}
-                    {% endif %}
+                    </p>
 
-                </p>
+                {% else %}
+
+                    <div class="category-featured-excerpt reader-rich-preview reader-rich-preview--featured">
+                        {{ lead_article.content|rich_article_preview:52 }}
+                    </div>
+
+                {% endif %}
 
                 <a
                     href="{% url 'article_detail' lead_article.slug %}"
@@ -346,15 +351,19 @@
 
                                 </p>
 
-                                <p class="category-article-card-excerpt">
+                                {% if article.excerpt %}
 
-                                    {% if article.excerpt %}
+                                    <p class="category-article-card-excerpt">
                                         {{ article.excerpt|truncatewords:28 }}
-                                    {% else %}
-                                        {{ article.content|striptags|truncatewords:28 }}
-                                    {% endif %}
+                                    </p>
 
-                                </p>
+                                {% else %}
+
+                                    <div class="category-article-card-excerpt reader-rich-preview reader-rich-preview--card">
+                                        {{ article.content|rich_article_preview:28 }}
+                                    </div>
+
+                                {% endif %}
 
                                 <a
                                     href="{% url 'article_detail' article.slug %}"

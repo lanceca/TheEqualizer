@@ -1,13 +1,124 @@
-<section class="account-status-zone {% if managed_user.is_active %}account-status-zone--danger{% endif %}">
+<section
+    class="account-status-panel {% if managed_user.is_active %}is-active-account{% else %}is-inactive-account{% endif %}"
+    aria-labelledby="account-status-heading"
+>
+    <div class="account-status-panel__header">
+        <div>
+            <span class="account-status-panel__eyebrow">
+                Account access
+            </span>
+
+            <h2 id="account-status-heading">
+                {% if managed_user.is_active %}
+                    Deactivate account
+                {% else %}
+                    Reactivate account
+                {% endif %}
+            </h2>
+        </div>
+
+        {% if managed_user.is_active %}
+            <span class="account-status-pill is-active">
+                Active
+            </span>
+        {% else %}
+            <span class="account-status-pill is-inactive">
+                Inactive
+            </span>
+        {% endif %}
+    </div>
+
     {% if managed_user.is_active %}
-        <h2>Danger Zone</h2>
-        <p>Deactivating this account will prevent the user from signing in. Existing records and activity associated with the account will remain intact.</p>
-    {% else %}<h2>Account Status / Recovery</h2><p>This account is currently inactive.</p>{% endif %}
-    <form method="post" action="{% url toggle_route managed_user.pk %}">
-        {% csrf_token %}
-        <button type="submit" class="{% if managed_user.is_active %}reject-button{% else %}approve-button{% endif %}"
-            {% if managed_user.is_active %}data-confirm="Deactivate this account? The user will no longer be able to sign in. Existing records will remain intact." data-confirm-title="Deactivate Account"{% else %}data-confirm="Reactivate this account and allow sign in?" data-confirm-title="Reactivate Account"{% endif %}>
-            {% if managed_user.is_active %}Deactivate Account{% else %}Reactivate Account{% endif %}
-        </button>
-    </form>
+        <div class="account-status-panel__body">
+            <p>
+                Deactivation immediately prevents this user from signing in to
+                The Equalizer workspace. Existing articles, submissions, reports,
+                audit history, and other records remain preserved.
+            </p>
+
+            <ul class="account-status-impact-list">
+                <li>Workspace sign-in will be disabled.</li>
+                <li>Existing publication records will not be deleted.</li>
+                <li>The account can be reactivated later.</li>
+            </ul>
+
+            {% if deactivation_blockers %}
+                <div class="account-status-blockers" role="alert">
+                    <strong>Deactivation is currently blocked.</strong>
+                    <p>
+                        Resolve the following workflow responsibilities before
+                        deactivating this account:
+                    </p>
+                    <ul>
+                        {% for blocker in deactivation_blockers %}
+                            <li>{{ blocker }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="account-status-panel__action">
+            <div>
+                <strong>Danger zone</strong>
+                <span>
+                    Use this only when the account should no longer have workspace access.
+                </span>
+            </div>
+
+            <form method="post" action="{% url toggle_route managed_user.pk %}">
+                {% csrf_token %}
+                <button
+                    type="submit"
+                    class="eq-action-button eq-action-button--danger"
+                    {% if deactivation_blockers %}disabled aria-disabled="true"{% endif %}
+                    data-confirm="Deactivate this account? The user will no longer be able to sign in. Existing records will remain intact."
+                    data-confirm-title="Deactivate Account"
+                    data-loading-label="Deactivating…"
+                >
+                    Deactivate Account
+                </button>
+            </form>
+        </div>
+    {% else %}
+        <div class="account-status-panel__body account-status-panel__body--recovery">
+            <p>
+                This account is inactive and cannot currently sign in. Its
+                publication records and activity are still preserved.
+            </p>
+
+            <div class="account-recovery-note">
+                <span aria-hidden="true">↻</span>
+                <div>
+                    <strong>Recovery available</strong>
+                    <p>
+                        Reactivating restores workspace sign-in without creating
+                        a new account or changing existing records.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="account-status-panel__action account-status-panel__action--recovery">
+            <div>
+                <strong>Restore access</strong>
+                <span>
+                    Re-enable this account when the user should return to the workspace.
+                </span>
+            </div>
+
+            <form method="post" action="{% url toggle_route managed_user.pk %}">
+                {% csrf_token %}
+                <button
+                    type="submit"
+                    class="eq-action-button eq-action-button--recovery"
+                    data-confirm="Reactivate this account and allow sign in?"
+                    data-confirm-title="Reactivate Account"
+                    data-loading-label="Reactivating…"
+                >
+                    Reactivate Account
+                </button>
+            </form>
+        </div>
+    {% endif %}
 </section>

@@ -186,7 +186,7 @@
 
                         <button
                             type="button"
-                            class="secondary-button"
+                            class="eq-action-button eq-action-button--secondary"
                             data-saved-article-preview
                             data-preview-template-id="published-preview-{{ article.id }}"
                         >
@@ -195,7 +195,7 @@
 
                         <a
                             href="{% url 'article_version_history' article.id %}"
-                            class="secondary-button"
+                            class="eq-action-button eq-action-button--secondary eq-action-button--compact"
                         >
                             Version History
                         </a>
@@ -207,7 +207,7 @@
 
                                 <a
                                     href="{% url 'edit_published_article' article.id %}"
-                                    class="edit-link"
+                                    class="eq-action-button eq-action-button--secondary eq-action-button--compact"
                                 >
                                     Edit Directly
                                 </a>
@@ -221,7 +221,7 @@
 
                                     <button
                                         type="submit"
-                                        class="danger-button"
+                                        class="eq-action-button eq-action-button--archive eq-action-button--compact"
                                         data-confirm-title="Archive Published Article"
                                         data-confirm="Are you sure you want to remove '{{ article.title }}' from publication? The article will be moved to the archive."
                                     >
@@ -237,14 +237,14 @@
 
                             <a
                                 href="{% url 'request_article_edit' article.id %}"
-                                class="edit-link"
+                                class="eq-action-button eq-action-button--secondary eq-action-button--compact"
                             >
                                 Request Edit
                             </a>
 
                             <a
                                 href="{% url 'request_article_deletion' article.id %}"
-                                class="danger-link"
+                                class="eq-action-button eq-action-button--archive-outline eq-action-button--compact"
                             >
                                 Request Archive
                             </a>
@@ -254,7 +254,7 @@
 
                             <a
                                 href="{% url 'report_article_content' article.id %}"
-                                class="danger-link"
+                                class="eq-action-button eq-action-button--danger-outline eq-action-button--compact"
                             >
                                 Report Content
                             </a>

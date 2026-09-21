@@ -13474,3 +13474,1087 @@ a {
     background: #f5f8f6 !important;
     color: #1d2924 !important;
 }
+
+/* ==========================================================
+   2026 ACCOUNT STATUS + WORKSPACE ACTION SYSTEM
+   Scoped replacement styles for account administration and the
+   newer archive/workflow actions.
+   ========================================================== */
+
+.eq-action-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    min-height: 40px;
+    padding: 9px 14px;
+
+    border: 1px solid transparent;
+    border-radius: 10px;
+
+    font: inherit;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.2;
+
+    text-align: center;
+    text-decoration: none;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.16s ease,
+        background 0.16s ease,
+        border-color 0.16s ease,
+        color 0.16s ease,
+        box-shadow 0.16s ease,
+        opacity 0.16s ease;
+}
+
+.eq-action-button:hover {
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+.eq-action-button:focus-visible {
+    outline: 3px solid rgba(214, 173, 50, 0.28);
+    outline-offset: 2px;
+}
+
+.eq-action-button:disabled,
+.eq-action-button[aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.52;
+    transform: none;
+    box-shadow: none;
+}
+
+.eq-action-button--compact {
+    min-height: 36px;
+    padding: 7px 11px;
+    border-radius: 9px;
+    font-size: 10px;
+}
+
+.eq-action-button--primary {
+    background: var(--eq-green-dark);
+    border-color: var(--eq-green-dark);
+    color: #ffffff;
+    box-shadow: 0 7px 16px rgba(15, 45, 36, 0.12);
+}
+
+.eq-action-button--primary:hover {
+    background: var(--eq-green-deep);
+    border-color: var(--eq-green-deep);
+    color: #ffffff;
+    box-shadow: 0 10px 20px rgba(15, 45, 36, 0.16);
+}
+
+.eq-action-button--secondary {
+    background: #ffffff;
+    border-color: #cfdad3;
+    color: var(--eq-green-dark);
+}
+
+.eq-action-button--secondary:hover {
+    background: #f3f7f4;
+    border-color: #afc3b7;
+    color: var(--eq-green-deep);
+}
+
+.eq-action-button--archive {
+    background: #9a7416;
+    border-color: #9a7416;
+    color: #ffffff;
+    box-shadow: 0 7px 16px rgba(111, 82, 12, 0.12);
+}
+
+.eq-action-button--archive:hover {
+    background: #785a10;
+    border-color: #785a10;
+    color: #ffffff;
+}
+
+.eq-action-button--archive-outline {
+    background: #fffaf0;
+    border-color: #d6b85e;
+    color: #785d17;
+}
+
+.eq-action-button--archive-outline:hover {
+    background: #f7edcd;
+    border-color: #bc9834;
+    color: #654d11;
+}
+
+.eq-action-button--danger {
+    background: #9f3737;
+    border-color: #9f3737;
+    color: #ffffff;
+    box-shadow: 0 7px 16px rgba(126, 34, 34, 0.12);
+}
+
+.eq-action-button--danger:hover {
+    background: #7d2929;
+    border-color: #7d2929;
+    color: #ffffff;
+}
+
+.eq-action-button--danger-outline {
+    background: #ffffff;
+    border-color: #d9a7a7;
+    color: #913838;
+}
+
+.eq-action-button--danger-outline:hover {
+    background: #fff1f1;
+    border-color: #bd7373;
+    color: #792b2b;
+}
+
+.eq-action-button--recovery {
+    background: #1f6548;
+    border-color: #1f6548;
+    color: #ffffff;
+    box-shadow: 0 7px 16px rgba(24, 79, 56, 0.12);
+}
+
+.eq-action-button--recovery:hover {
+    background: #174f38;
+    border-color: #174f38;
+    color: #ffffff;
+}
+
+/* Account list cards */
+
+.account-management-card {
+    transition:
+        transform 0.17s ease,
+        border-color 0.17s ease,
+        box-shadow 0.17s ease,
+        opacity 0.17s ease;
+}
+
+.account-management-card:hover {
+    transform: translateY(-2px);
+    border-color: #c9d6ce;
+    box-shadow: 0 12px 28px rgba(13, 39, 30, 0.075);
+}
+
+.account-management-card.is-inactive-account {
+    border-color: #e2d3d3;
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #fdf9f9 100%
+        );
+}
+
+.account-management-card.is-inactive-account .account-card-avatar {
+    filter: saturate(0.7);
+    opacity: 0.8;
+}
+
+.account-card-actions .eq-action-button {
+    width: 100%;
+}
+
+.managed-account-current-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    margin: -5px 0 17px;
+}
+
+.managed-account-current-status > span {
+    color: var(--eq-muted);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+/* Account status / danger / recovery panel */
+
+.account-status-panel {
+    margin-top: 30px;
+    overflow: hidden;
+
+    border: 1px solid #dce5df;
+    border-radius: 16px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 1px 2px rgba(13, 39, 30, 0.02),
+        0 8px 24px rgba(13, 39, 30, 0.045);
+}
+
+.account-status-panel.is-active-account {
+    border-color: #e6caca;
+}
+
+.account-status-panel.is-inactive-account {
+    border-color: #c9ddd1;
+}
+
+.account-status-panel__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+
+    padding: 20px 22px;
+
+    border-bottom: 1px solid #edf0ee;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff,
+            #fbfcfb
+        );
+}
+
+.account-status-panel__eyebrow {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #8a9690;
+
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.account-status-panel__header h2 {
+    margin: 0;
+    padding: 0;
+    border: 0;
+
+    color: #2b4137;
+
+    font-size: 19px;
+    font-weight: 780;
+    letter-spacing: -0.02em;
+}
+
+.account-status-panel.is-active-account .account-status-panel__header h2 {
+    color: #7d3030;
+}
+
+.account-status-panel__body {
+    padding: 20px 22px;
+}
+
+.account-status-panel__body > p {
+    max-width: 760px;
+
+    margin: 0;
+
+    color: #67756e;
+
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+.account-status-impact-list {
+    display: grid;
+    gap: 8px;
+
+    margin: 16px 0 0;
+    padding: 0;
+
+    list-style: none;
+}
+
+.account-status-impact-list li {
+    position: relative;
+
+    padding-left: 20px;
+
+    color: #4f6057;
+
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.account-status-impact-list li::before {
+    content: "•";
+
+    position: absolute;
+    left: 5px;
+
+    color: #a54a4a;
+
+    font-weight: 900;
+}
+
+.account-status-blockers {
+    margin-top: 18px;
+    padding: 14px 16px;
+
+    border: 1px solid #efc9c9;
+    border-radius: 11px;
+
+    background: #fff6f6;
+}
+
+.account-status-blockers > strong {
+    color: #8a3030;
+    font-size: 11px;
+}
+
+.account-status-blockers p,
+.account-status-blockers li {
+    color: #765858;
+    font-size: 10px;
+    line-height: 1.55;
+}
+
+.account-status-blockers p {
+    margin: 5px 0 8px;
+}
+
+.account-status-blockers ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.account-status-panel__action {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+
+    padding: 17px 22px;
+
+    border-top: 1px solid #ecdcdc;
+
+    background: #fff8f8;
+}
+
+.account-status-panel__action--recovery {
+    border-top-color: #dbe9df;
+    background: #f5faf7;
+}
+
+.account-status-panel__action > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    min-width: 0;
+}
+
+.account-status-panel__action > div strong {
+    color: #8a3030;
+
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.account-status-panel__action--recovery > div strong {
+    color: #286348;
+}
+
+.account-status-panel__action > div span {
+    color: #806868;
+    font-size: 9.5px;
+    line-height: 1.45;
+}
+
+.account-status-panel__action--recovery > div span {
+    color: #5f7468;
+}
+
+.account-status-panel__action form {
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.account-recovery-note {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+
+    margin-top: 17px;
+    padding: 13px 14px;
+
+    border: 1px solid #d7e7dd;
+    border-radius: 11px;
+
+    background: #f5faf7;
+}
+
+.account-recovery-note > span {
+    display: grid;
+    place-items: center;
+
+    width: 38px;
+    height: 38px;
+
+    border-radius: 10px;
+
+    background: #dfeee5;
+    color: #286348;
+
+    font-size: 19px;
+    font-weight: 800;
+}
+
+.account-recovery-note strong {
+    color: #285a43;
+    font-size: 11px;
+}
+
+.account-recovery-note p {
+    margin: 2px 0 0;
+    color: #607369;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+/* Targeted workflow button layout */
+
+.editorial-item-actions .eq-action-button {
+    width: 100%;
+}
+
+.review-actions .eq-action-button {
+    min-width: 126px;
+}
+
+.form-actions .eq-action-button {
+    min-width: 132px;
+}
+
+.permanent-delete-button.eq-action-button {
+    border-color: #762626 !important;
+    background: #762626 !important;
+}
+
+.permanent-delete-button.eq-action-button:hover {
+    background: #5f1c1c !important;
+    border-color: #5f1c1c !important;
+}
+
+@media (max-width: 760px) {
+    .account-status-panel__header,
+    .account-status-panel__action {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .account-status-panel__action form,
+    .account-status-panel__action .eq-action-button {
+        width: 100%;
+    }
+
+    .account-status-panel__header .account-status-pill {
+        align-self: flex-start;
+    }
+
+    .form-actions .eq-action-button,
+    .review-actions .eq-action-button {
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .eq-action-button,
+    .account-management-card {
+        transition: none;
+    }
+
+    .eq-action-button:hover,
+    .account-management-card:hover {
+        transform: none;
+    }
+}
+
+/* ==========================================================
+   2026 RICH TEXT LIST RENDERING + REVISION/VERSION POLISH
+   ========================================================== */
+
+/* Rich article lists inside staff previews and version snapshots */
+
+.staff-reader-preview-content ul,
+.staff-reader-preview-content ol,
+.saved-preview-content ul,
+.saved-preview-content ol,
+.version-reader-body ul,
+.version-reader-body ol {
+    margin: 0 0 1.25em;
+    padding-left: 1.65em;
+}
+
+.staff-reader-preview-content li,
+.saved-preview-content li,
+.version-reader-body li {
+    margin: 0.28em 0;
+    padding-left: 0.15em;
+}
+
+.staff-reader-preview-content ul[data-list-style="dash"],
+.saved-preview-content ul[data-list-style="dash"],
+.version-reader-body ul[data-list-style="dash"] {
+    padding-left: 1.45em;
+    list-style: none;
+}
+
+.staff-reader-preview-content ul[data-list-style="dash"] > li,
+.saved-preview-content ul[data-list-style="dash"] > li,
+.version-reader-body ul[data-list-style="dash"] > li {
+    position: relative;
+    padding-left: 0.55em;
+}
+
+.staff-reader-preview-content ul[data-list-style="dash"] > li::before,
+.saved-preview-content ul[data-list-style="dash"] > li::before,
+.version-reader-body ul[data-list-style="dash"] > li::before {
+    content: "—";
+    position: absolute;
+    right: calc(100% + 0.28em);
+    color: #61756a;
+    font-weight: 700;
+}
+
+/* Revision workspace */
+
+.revision-workflow-strip {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1fr)
+        34px
+        minmax(0, 1fr)
+        34px
+        minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+
+    margin: 18px 0 22px;
+    padding: 15px 17px;
+
+    border: 1px solid #dce5df;
+    border-radius: 14px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #f8faf8 100%
+        );
+
+    box-shadow:
+        0 1px 2px rgba(13, 39, 30, 0.02);
+}
+
+.revision-workflow-step {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.revision-workflow-index {
+    display: grid;
+    place-items: center;
+
+    width: 32px;
+    height: 32px;
+
+    border: 1px solid #d1ddd5;
+    border-radius: 50%;
+
+    background: #ffffff;
+    color: #748078;
+
+    font-size: 10px;
+    font-weight: 900;
+}
+
+.revision-workflow-step strong,
+.revision-workflow-step small {
+    display: block;
+}
+
+.revision-workflow-step strong {
+    color: #40534a;
+    font-size: 10px;
+    font-weight: 850;
+}
+
+.revision-workflow-step small {
+    margin-top: 2px;
+    color: #859089;
+    font-size: 8.5px;
+    line-height: 1.4;
+}
+
+.revision-workflow-step.is-complete
+.revision-workflow-index {
+    border-color: #b9d3c3;
+    background: #edf6f0;
+    color: #2c664b;
+}
+
+.revision-workflow-step.is-current
+.revision-workflow-index {
+    border-color: var(--eq-green-dark);
+    background: var(--eq-green-dark);
+    color: #ffffff;
+
+    box-shadow:
+        0 0 0 4px rgba(24, 69, 54, 0.08);
+}
+
+.revision-workflow-step.is-current strong {
+    color: var(--eq-green-dark);
+}
+
+.revision-workflow-connector {
+    height: 1px;
+    background:
+        linear-gradient(
+            90deg,
+            #d9e2dc,
+            #c1d0c7
+        );
+}
+
+.revision-tracker-guide {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+
+    margin: 0 0 18px;
+    padding: 14px 16px;
+
+    border: 1px solid #e0e6e2;
+    border-radius: 12px;
+
+    background: #f8faf8;
+}
+
+.revision-tracker-guide > div {
+    min-width: 0;
+}
+
+.revision-tracker-guide-kicker {
+    display: block;
+    margin-bottom: 3px;
+
+    color: #8c701e;
+
+    font-size: 7.5px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.revision-tracker-guide strong {
+    color: #2f493e;
+    font-size: 11px;
+}
+
+.revision-tracker-guide p {
+    max-width: 590px;
+    margin: 0;
+
+    color: #718078;
+
+    font-size: 9.5px;
+    line-height: 1.5;
+    text-align: right;
+}
+
+.editorial-item-card--revision {
+    border-color: #ded7ba;
+}
+
+.editorial-item-card--revision:hover {
+    border-color: #cdbd7f;
+}
+
+/* Version history overview + timeline */
+
+.version-history-overview {
+    display: grid;
+    grid-template-columns:
+        minmax(120px, 0.45fr)
+        minmax(150px, 0.55fr)
+        minmax(0, 1.7fr);
+    gap: 12px;
+
+    margin-bottom: 20px;
+}
+
+.version-history-overview > div {
+    min-width: 0;
+    padding: 15px 16px;
+
+    border: 1px solid #e0e6e2;
+    border-radius: 13px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 1px 2px rgba(13, 39, 30, 0.02);
+}
+
+.version-history-overview > div > span {
+    display: block;
+
+    color: #8a9690;
+
+    font-size: 7.5px;
+    font-weight: 900;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.version-history-overview > div > strong {
+    display: block;
+    margin-top: 5px;
+
+    color: var(--eq-green-dark);
+
+    font-size: 23px;
+    line-height: 1;
+}
+
+.version-history-overview-copy p {
+    margin: 5px 0 0;
+
+    color: #68776f;
+
+    font-size: 9.5px;
+    line-height: 1.5;
+}
+
+.version-history-timeline {
+    position: relative;
+    padding-left: 21px;
+}
+
+.version-history-timeline::before {
+    content: "";
+
+    position: absolute;
+    top: 20px;
+    bottom: 20px;
+    left: 7px;
+
+    width: 2px;
+
+    border-radius: 999px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #c4d3ca,
+            #e2e8e4
+        );
+}
+
+.version-history-timeline
+.version-history-card {
+    overflow: visible;
+}
+
+.version-history-timeline-node {
+    position: absolute;
+    left: -22px;
+    top: 27px;
+    z-index: 2;
+
+    width: 11px;
+    height: 11px;
+
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+
+    background: #aebdb5;
+
+    box-shadow:
+        0 0 0 2px #cbd7d0;
+}
+
+.version-history-card.current
+.version-history-timeline-node {
+    background: var(--eq-green-dark);
+
+    box-shadow:
+        0 0 0 2px #9fc0ae,
+        0 0 0 6px rgba(24, 69, 54, 0.07);
+}
+
+.version-history-action
+.eq-action-button {
+    white-space: nowrap;
+}
+
+/* Version text comparison drawer */
+
+.version-text-diff {
+    margin-top: 22px;
+    overflow: hidden;
+
+    border: 1px solid #e1d29d;
+    border-radius: 12px;
+
+    background: #fffdf7;
+}
+
+.version-text-diff summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+
+    padding: 13px 15px;
+
+    cursor: pointer;
+    list-style: none;
+}
+
+.version-text-diff summary::-webkit-details-marker {
+    display: none;
+}
+
+.version-text-diff summary > span:first-child {
+    min-width: 0;
+}
+
+.version-text-diff summary strong,
+.version-text-diff summary small {
+    display: block;
+}
+
+.version-text-diff summary strong {
+    color: #65521c;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 10px;
+}
+
+.version-text-diff summary small {
+    margin-top: 2px;
+
+    color: #8a7d59;
+
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 8.5px;
+    line-height: 1.4;
+}
+
+.version-text-diff-toggle {
+    display: grid;
+    place-items: center;
+
+    width: 27px;
+    height: 27px;
+
+    flex: 0 0 27px;
+
+    border: 1px solid #e1d29d;
+    border-radius: 8px;
+
+    color: #816a23;
+
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-weight: 800;
+
+    transition:
+        transform 0.16s ease,
+        background 0.16s ease;
+}
+
+.version-text-diff[open]
+.version-text-diff-toggle {
+    transform: rotate(45deg);
+    background: #f7edcc;
+}
+
+.version-text-diff-body {
+    padding: 15px;
+
+    border-top: 1px solid #eadfb8;
+
+    background: #ffffff;
+
+    color: #34463d;
+
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 14px;
+    line-height: 1.75;
+}
+
+@media (max-width: 860px) {
+    .revision-workflow-strip {
+        grid-template-columns: 1fr;
+        gap: 9px;
+    }
+
+    .revision-workflow-connector {
+        width: 1px;
+        height: 16px;
+        margin-left: 15px;
+    }
+
+    .revision-tracker-guide {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .revision-tracker-guide p {
+        max-width: none;
+        text-align: left;
+    }
+
+    .version-history-overview {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .version-history-overview-copy {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 560px) {
+    .version-history-overview {
+        grid-template-columns: 1fr;
+    }
+
+    .version-history-overview-copy {
+        grid-column: auto;
+    }
+
+    .version-history-timeline {
+        padding-left: 15px;
+    }
+
+    .version-history-timeline::before {
+        left: 4px;
+    }
+
+    .version-history-timeline-node {
+        left: -17px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .version-text-diff-toggle {
+        transition: none;
+    }
+}
+
+/* ==========================================================
+   ATTACHMENT TYPE SEGMENTED CONTROL — READABILITY SAFEGUARD
+   Ensures Image / Video attachment choices remain legible on
+   every Editorial Composer page.
+   ========================================================== */
+
+.editorial-composer-page .media-type-toggle {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 5px;
+
+    border: 1px solid #d6e0da;
+    border-radius: 11px;
+
+    background: #f3f7f4;
+}
+
+.editorial-composer-page .media-type-button {
+    min-height: 38px;
+    padding: 8px 13px;
+
+    border: 1px solid #ccd8d1 !important;
+    border-radius: 8px;
+
+    background: #ffffff !important;
+    color: var(--eq-green-dark) !important;
+
+    font: inherit;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.2;
+
+    box-shadow: none !important;
+
+    transition:
+        background 0.16s ease,
+        border-color 0.16s ease,
+        color 0.16s ease,
+        box-shadow 0.16s ease,
+        transform 0.16s ease;
+}
+
+.editorial-composer-page .media-type-button:hover:not([aria-pressed="true"]) {
+    transform: translateY(-1px);
+
+    border-color: #91ad9d !important;
+
+    background: #edf5f0 !important;
+    color: var(--eq-green-deep) !important;
+}
+
+.editorial-composer-page .media-type-button.is-active,
+.editorial-composer-page .media-type-button[aria-pressed="true"] {
+    border-color: var(--eq-green-dark) !important;
+
+    background: var(--eq-green-dark) !important;
+    color: #ffffff !important;
+
+    box-shadow:
+        0 5px 12px rgba(15, 45, 36, 0.13) !important;
+}
+
+.editorial-composer-page .media-type-button.is-active:hover,
+.editorial-composer-page .media-type-button[aria-pressed="true"]:hover {
+    border-color: var(--eq-green-deep) !important;
+
+    background: var(--eq-green-deep) !important;
+    color: #ffffff !important;
+}
+
+.editorial-composer-page .media-type-button:focus-visible {
+    outline: 3px solid rgba(214, 173, 50, 0.28);
+    outline-offset: 2px;
+}
+
+@media (max-width: 560px) {
+    .editorial-composer-page .media-type-toggle {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        width: 100%;
+    }
+
+    .editorial-composer-page .media-type-button {
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .editorial-composer-page .media-type-button {
+        transition: none !important;
+    }
+
+    .editorial-composer-page .media-type-button:hover {
+        transform: none !important;
+    }
+}
