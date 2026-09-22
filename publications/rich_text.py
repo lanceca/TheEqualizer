@@ -29,6 +29,22 @@ HTML_TAG = re.compile(
 )
 
 
+# Normalize only non-breaking-space spellings, including content that was
+# accidentally escaped more than once (for example &amp;amp;nbsp;).
+# Arbitrary HTML entities are intentionally NOT decoded here.
+NBSP_ENTITY = re.compile(
+    r"(?:&(?:amp;)*nbsp;|&(?:amp;)*#0*160;|&(?:amp;)*#x0*a0;|\u00a0)",
+    re.IGNORECASE,
+)
+
+
+def normalize_article_spacing(value):
+    return NBSP_ENTITY.sub(
+        " ",
+        str(value or ""),
+    )
+
+
 def _allowed_attribute(
     tag,
     name,
@@ -48,7 +64,7 @@ def _allowed_attribute(
 
 def sanitize_article_content(value):
     value = (
-        str(value or "")
+        normalize_article_spacing(value)
         .replace("\r\n", "\n")
         .replace("\r", "\n")
     )
@@ -76,7 +92,7 @@ def sanitize_article_content(value):
 
 
 def article_html(value):
-    value = str(value or "")
+    value = normalize_article_spacing(value)
 
     if not HTML_TAG.search(value):
         return (
@@ -188,7 +204,9 @@ class _PlainTextConverter(HTMLParser):
 
 
 def article_plain_text(value):
-    value = str(value or "")
+    # Keep version comparisons / plain-text consumers aligned with the
+    # reader renderer so legacy nested NBSP entities never leak literally.
+    value = normalize_article_spacing(value)
 
     if not HTML_TAG.search(value):
         return value

@@ -222,6 +222,7 @@
                                 class="secondary-button"
                                 data-saved-article-preview
                                 data-preview-template-id="draft-preview-{{ article.id }}"
+                                data-preview-url="{% url 'staff_reader_article_preview' article.id %}"
                             >
                                 Preview Article
                             </button>
@@ -618,6 +619,7 @@
                                     class="secondary-button"
                                     data-saved-article-preview
                                     data-preview-template-id="edit-draft-preview-{{ article.id }}"
+                                    data-preview-url="{% url 'staff_reader_article_preview' article.id %}"
                                 >
                                     Preview Article
                                 </button>

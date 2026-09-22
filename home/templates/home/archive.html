@@ -12,33 +12,7 @@
     class="public-archive archive-experience"
     data-archive-root
 >
-    <section class="archive-hero" aria-labelledby="archive-page-title">
-        <div class="archive-hero-copy">
-            <span class="archive-hero-kicker">The publication record</span>
-
-            <h1 id="archive-page-title">Archive</h1>
-
-            <p>
-                Revisit stories, campus moments, and student voices from
-                previous publication periods of The Equalizer.
-            </p>
-
-            <div class="archive-hero-meta" aria-label="Archive summary">
-                <span>
-                    <strong>{{ result_count }}</strong>
-                    archived article{{ result_count|pluralize }}
-                </span>
-                <span aria-hidden="true">•</span>
-                <span>Organized by original publication month</span>
-            </div>
-        </div>
-
-        <div class="archive-hero-mark" aria-hidden="true">
-            <span class="archive-hero-mark-ring"></span>
-            <strong>EQ</strong>
-            <small>Archive</small>
-        </div>
-    </section>
+    {% include "home/includes/_compact_section_hero.html" with hero_id="archive-page-title" hero_kicker="The publication record" hero_title="Archive" hero_description="Revisit stories, campus moments, and student voices from previous publication periods of The Equalizer." hero_show_count=True hero_count=result_count hero_count_label="archived article" hero_meta_text="Organized by original publication month" %}
 
     <section class="archive-filter-panel" aria-labelledby="archive-filter-title">
         <div class="archive-filter-heading">

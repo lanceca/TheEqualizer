@@ -13,19 +13,32 @@ const allowed = new Set([
   'LI',
 ])
 
+const NBSP_ENTITY = /&(?:amp;)*(?:nbsp;|#0*160;|#x0*a0;)|\u00a0/gi
+
+export function normalizeArticleSpacing(value) {
+  return String(value ?? '').replace(
+    NBSP_ENTITY,
+    ' ',
+  )
+}
+
 // Rebuild nodes instead of trusting arbitrary attributes or pasted HTML.
 // Server sanitization remains authoritative; this also protects unsaved
 // previews in the browser.
 export function cleanArticleHTML(value) {
+  const normalized = normalizeArticleSpacing(
+    value,
+  )
+
   const source = document.createElement(
     'template',
   )
 
   if (
-    !/<\/?[a-z][^>]*>/i.test(value)
+    !/<\/?[a-z][^>]*>/i.test(normalized)
   ) {
     source.content.append(
-      document.createTextNode(value),
+      document.createTextNode(normalized),
     )
 
     return source.innerHTML.replace(
@@ -34,7 +47,7 @@ export function cleanArticleHTML(value) {
     )
   }
 
-  source.innerHTML = value
+  source.innerHTML = normalized
 
   const output = document.createElement(
     'div',

@@ -52,6 +52,7 @@ from publications.rich_text import article_pdf_html
 from publications.models import (
     AboutUsPage,
     Article,
+    ArticleVersion,
     Category,
     DigitalPublication,
     PeopleProfile,
@@ -86,6 +87,23 @@ def public_readable_articles():
     return Article.objects.filter(draft_type=Article.DraftType.NORMAL).filter(
         Q(is_published=True, is_archived=False)
         | Q(is_archived=True, published_at__isnull=False)
+    )
+
+
+def public_version_label(article_version):
+    """Return a reader-facing label without exposing internal workflow details."""
+
+    labels = {
+        ArticleVersion.ChangeType.INITIAL_PUBLICATION: "Initial Publication",
+        ArticleVersion.ChangeType.DIRECT_EDIT: "Published Update",
+        ArticleVersion.ChangeType.APPROVED_REVISION: "Published Revision",
+        ArticleVersion.ChangeType.CORRECTIVE_REVISION: "Corrective Update",
+        ArticleVersion.ChangeType.BASELINE: "Historical Baseline",
+    }
+
+    return labels.get(
+        article_version.change_type,
+        "Published Version",
     )
 
 
@@ -860,6 +878,99 @@ def article_detail(
 
             "pdf_download_count": (
                 pdf_download_count
+            ),
+        },
+    )
+
+
+# ==========================================================
+# PUBLIC ARTICLE VERSION HISTORY
+# ==========================================================
+
+
+def reader_article_version_history(
+    request,
+    slug,
+):
+    """Show official published snapshots to readers in read-only form."""
+
+    article = get_object_or_404(
+        public_readable_articles()
+        .select_related(
+            "category",
+            "author",
+        ),
+        slug=slug,
+        draft_type=Article.DraftType.NORMAL,
+    )
+
+    versions = list(
+        article.versions
+        .all()
+        .prefetch_related(
+            "image_attachments",
+            "video_attachments",
+        )
+        .order_by(
+            "-version_number",
+            "-created_at",
+        )
+    )
+
+    for version in versions:
+        version.public_change_label = (
+            public_version_label(version)
+        )
+
+    return render(
+        request,
+        "home/article_version_history.html",
+        {
+            "article": article,
+            "versions": versions,
+        },
+    )
+
+
+def reader_article_version_detail(
+    request,
+    slug,
+    version_number,
+):
+    """Show one historical official article snapshot to readers."""
+
+    article = get_object_or_404(
+        public_readable_articles()
+        .select_related(
+            "category",
+            "author",
+        ),
+        slug=slug,
+        draft_type=Article.DraftType.NORMAL,
+    )
+
+    article_version = get_object_or_404(
+        ArticleVersion.objects
+        .filter(
+            article=article,
+        )
+        .prefetch_related(
+            "image_attachments",
+            "video_attachments",
+        ),
+        version_number=version_number,
+    )
+
+    return render(
+        request,
+        "home/article_version_detail.html",
+        {
+            "article": article,
+            "article_version": article_version,
+            "public_change_label": (
+                public_version_label(
+                    article_version
+                )
             ),
         },
     )

@@ -168,6 +168,7 @@
                             class="eq-action-button eq-action-button--secondary eq-action-button--compact"
                             data-saved-article-preview
                             data-preview-template-id="eic-deletion-preview-{{ deletion_request.id }}"
+                            data-preview-url="{% url 'staff_reader_article_preview' deletion_request.article.id %}"
                         >
                             Preview Article
                         </button>

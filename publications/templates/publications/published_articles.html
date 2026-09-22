@@ -189,6 +189,7 @@
                             class="eq-action-button eq-action-button--secondary"
                             data-saved-article-preview
                             data-preview-template-id="published-preview-{{ article.id }}"
+                            data-preview-url="{% url 'staff_reader_article_preview' article.id %}"
                         >
                             Preview Article
                         </button>

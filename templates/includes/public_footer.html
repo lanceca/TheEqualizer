@@ -40,6 +40,25 @@
                 <p class="publication-footer-statement">
                     Student voices. Campus stories. A lasting record.
                 </p>
+
+                <div
+                    class="publication-footer-institution-logos"
+                    aria-label="Mabalacat City College and Institute of Computing Studies"
+                >
+                    <img
+                        src="{% static 'images/mcc-logo-footer.jpg' %}"
+                        alt="Mabalacat City College logo"
+                        class="publication-footer-institution-logo"
+                        loading="lazy"
+                    >
+
+                    <img
+                        src="{% static 'images/ics-logo-footer.jpg' %}"
+                        alt="Institute of Computing Studies logo"
+                        class="publication-footer-institution-logo"
+                        loading="lazy"
+                    >
+                </div>
             </section>
 
             <nav class="publication-footer-column" aria-label="Explore The Equalizer">
@@ -189,7 +208,7 @@
             </span>
 
             <a href="{% url 'people_and_teams' %}" class="publication-footer-credit">
-                Developed by The Equalizer project team
+                Developed by Group 1 - ICS Dev Team
             </a>
 
             <a href="#page-top" class="publication-footer-top">
@@ -199,3 +218,38 @@
         </div>
     </div>
 </footer>
+
+
+<style>
+.publication-footer-institution-logos {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.publication-footer-institution-logo {
+    display: block;
+    width: 66px;
+    height: 66px;
+    object-fit: cover;
+    border-radius: 50%;
+    /* The supplied source files have white square canvases.
+       Circular clipping removes only that outer white background
+       while preserving the official circular logo artwork. */
+    clip-path: circle(50% at 50% 50%);
+    background: transparent;
+    box-shadow: 0 5px 16px rgba(0, 0, 0, 0.18);
+}
+
+@media (max-width: 720px) {
+    .publication-footer-institution-logos {
+        justify-content: flex-start;
+    }
+
+    .publication-footer-institution-logo {
+        width: 58px;
+        height: 58px;
+    }
+}
+</style>

@@ -2,7 +2,7 @@
 {% load article_text %}
 
 {% block title %}
-{{ article.title }} | The Equalizer
+{{ article.title|article_display_text }} | The Equalizer
 {% endblock %}
 
 
@@ -105,46 +105,340 @@
 }
 
 .reader-article-byline {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(245px, 300px);
+    align-items: start;
 
-    gap: 24px;
+    gap: 22px;
 
-    margin-top: 23px;
+    margin-top: 25px;
 
     color: var(--article-muted);
-
-    font-size: 14px;
 }
 
-.reader-article-byline p {
-    margin: 0;
+.reader-article-credits {
+    min-width: 0;
 }
 
-.reader-article-byline strong {
+.reader-author-card {
+    display: flex;
+    align-items: center;
+
+    gap: 13px;
+
+    min-width: 0;
+}
+
+.reader-credit-avatar {
+    display: grid;
+    place-items: center;
+
+    flex: 0 0 auto;
+
+    width: 56px;
+    height: 56px;
+
+    overflow: hidden;
+
+    border: 2px solid #d8e4dd;
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            145deg,
+            #edf4f0,
+            #dce8e1
+        );
+
     color: var(--article-green-dark);
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 21px;
+    font-weight: 700;
+
+    box-shadow:
+        0 4px 12px
+        rgba(15, 45, 36, 0.08);
+}
+
+.reader-credit-avatar img {
+    display: block;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+}
+
+.reader-credit-avatar--contributor {
+    width: 40px;
+    height: 40px;
+
+    border-width: 1px;
+
+    font-size: 15px;
+}
+
+.reader-credit-copy {
+    display: flex;
+    flex-direction: column;
+
+    min-width: 0;
+}
+
+.reader-credit-label,
+.reader-contributor-section-label,
+.reader-publication-kicker {
+    color: #8b762e;
+
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 0.10em;
+    line-height: 1.3;
+
+    text-transform: uppercase;
+}
+
+.reader-credit-name {
+    margin-top: 2px;
+
+    color: var(--article-green-dark);
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 19px;
+    font-weight: 700;
+    line-height: 1.2;
+
+    overflow-wrap: anywhere;
+}
+
+.reader-credit-handle {
+    margin-top: 2px;
+
+    color: #78847e;
+
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+.reader-contributor-section {
+    margin-top: 17px;
+    padding-top: 14px;
+
+    border-top:
+        1px solid
+        #edf1ee;
 }
 
 .reader-contributor-list {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(185px, 1fr)
+        );
 
-    gap: 5px 14px;
+    gap: 8px;
 
     margin-top: 8px;
+}
 
-    color: var(--article-muted);
+.reader-contributor-card {
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    min-width: 0;
+    padding: 8px 10px;
+
+    border:
+        1px solid
+        #e0e7e3;
+    border-radius: 10px;
+
+    background: #fafcfb;
+}
+
+.reader-contributor-card .reader-credit-copy {
+    flex: 1 1 auto;
+}
+
+.reader-contributor-role {
+    color: #8b762e;
+
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: 0.07em;
+    line-height: 1.25;
+
+    text-transform: uppercase;
+}
+
+.reader-contributor-name {
+    margin-top: 2px;
+
+    color: var(--article-green-dark);
 
     font-size: 12px;
+    font-weight: 800;
+    line-height: 1.25;
+
+    overflow-wrap: anywhere;
 }
+
+.reader-contributor-handle {
+    margin-top: 1px;
+
+    color: #7b8781;
+
+    font-size: 9px;
+    line-height: 1.25;
+}
+
+
+/* ------------------------------
+   PUBLICATION DETAILS / VERSION TRANSPARENCY
+   ------------------------------ */
 
 .reader-article-date {
-    flex-shrink: 0;
+    align-self: start;
 
-    text-align: right;
+    width: 100%;
+    min-width: 0;
 }
 
+.reader-publication-card {
+    box-sizing: border-box;
+
+    width: 100%;
+    height: 172px;
+    min-height: 172px;
+    max-height: 172px;
+
+    padding: 16px 17px;
+
+    border:
+        1px solid
+        #d8e2dc;
+    border-left:
+        4px solid
+        var(--article-gold);
+    border-radius: 12px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #fbfcfb 100%
+        );
+
+    box-shadow:
+        0 7px 20px
+        rgba(15, 45, 36, 0.055);
+}
+
+.reader-publication-date {
+    display: block;
+
+    margin-top: 4px;
+
+    color: var(--article-green-dark);
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.reader-publication-time {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #6e7b75;
+
+    font-size: 11px;
+    font-weight: 650;
+}
+
+.reader-publication-divider {
+    height: 1px;
+
+    margin: 13px 0 11px;
+
+    background: #edf0ee;
+}
+
+.reader-article-version-panel {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+
+    gap: 7px;
+}
+
+.reader-article-version-badge,
+.reader-article-version-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 32px;
+
+    padding: 6px 10px;
+
+    border-radius: 999px;
+
+    font-size: 10px;
+    font-weight: 850;
+    line-height: 1.1;
+
+    white-space: nowrap;
+}
+
+.reader-article-version-badge {
+    border: 1px solid #d9c36f;
+
+    background: #fffaf0;
+    color: #6d5717;
+}
+
+.reader-article-version-link {
+    border: 1px solid #cfdad4;
+
+    background: #ffffff;
+    color: var(--article-green);
+
+    text-decoration: none;
+}
+
+.reader-article-version-link:hover,
+.reader-article-version-link:focus-visible {
+    border-color: var(--article-green);
+
+    background: #f2f7f4;
+    color: var(--article-green-dark);
+}
+
+.reader-article-version-link:focus-visible {
+    outline:
+        3px solid
+        rgba(201, 162, 39, 0.28);
+    outline-offset: 2px;
+}
 
 /* ------------------------------
    FEATURED IMAGE
@@ -608,13 +902,17 @@ body.reader-lightbox-open {
     }
 
     .reader-article-byline {
-        flex-direction: column;
+        grid-template-columns: 1fr;
 
-        gap: 10px;
+        gap: 16px;
     }
 
-    .reader-article-date {
-        text-align: left;
+    .reader-publication-card {
+        padding: 14px 15px;
+    }
+
+    .reader-contributor-list {
+        grid-template-columns: 1fr;
     }
 
     .reader-featured-image {
@@ -655,18 +953,18 @@ body.reader-lightbox-open {
         <header class="reader-article-header">
 
             <p class="reader-article-category">
-                {{ article.category.name }}
+                {{ article.category.name|article_display_text }}
             </p>
 
             <h1>
-                {{ article.title }}
+                {{ article.title|article_display_text }}
             </h1>
 
 
             {% if article.subtitle %}
 
                 <p class="reader-article-subtitle">
-                    {{ article.subtitle }}
+                    {{ article.subtitle|article_display_text }}
                 </p>
 
             {% endif %}
@@ -674,30 +972,102 @@ body.reader-lightbox-open {
 
             <div class="reader-article-byline">
 
-                <div>
+                <div class="reader-article-credits">
 
-                    <p>
+                    <div class="reader-author-card">
 
-                        By
-                        <strong>
-                            {{ article.author.username }}
-                        </strong>
+                        <div class="reader-credit-avatar">
 
-                    </p>
+                            {% if article.author.profile_picture %}
+
+                                <img
+                                    src="{{ article.author.profile_picture.url }}"
+                                    alt="{{ article.author.username }} profile picture"
+                                >
+
+                            {% else %}
+
+                                <span aria-hidden="true">
+                                    {{ article.author.username|slice:":1"|upper }}
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+                        <div class="reader-credit-copy">
+
+                            <span class="reader-credit-label">
+                                Written by
+                            </span>
+
+                            <strong class="reader-credit-name">
+                                {{ article.author.get_full_name|default:article.author.username }}
+                            </strong>
+
+                            <span class="reader-credit-handle">
+                                @{{ article.author.username }}
+                            </span>
+
+                        </div>
+
+                    </div>
 
 
                     {% if article.contributors.all %}
 
-                        <div class="reader-contributor-list">
+                        <div class="reader-contributor-section">
 
-                            {% for contributor in article.contributors.all %}
+                            <span class="reader-contributor-section-label">
+                                Contributors
+                            </span>
 
-                                <span>
-                                    {{ contributor.get_role_display }}:
-                                    {{ contributor.user.username }}
-                                </span>
+                            <div class="reader-contributor-list">
 
-                            {% endfor %}
+                                {% for contributor in article.contributors.all %}
+
+                                    <div class="reader-contributor-card">
+
+                                        <div class="reader-credit-avatar reader-credit-avatar--contributor">
+
+                                            {% if contributor.user.profile_picture %}
+
+                                                <img
+                                                    src="{{ contributor.user.profile_picture.url }}"
+                                                    alt="{{ contributor.user.username }} profile picture"
+                                                >
+
+                                            {% else %}
+
+                                                <span aria-hidden="true">
+                                                    {{ contributor.user.username|slice:":1"|upper }}
+                                                </span>
+
+                                            {% endif %}
+
+                                        </div>
+
+                                        <div class="reader-credit-copy">
+
+                                            <span class="reader-contributor-role">
+                                                {{ contributor.get_role_display }}
+                                            </span>
+
+                                            <strong class="reader-contributor-name">
+                                                {{ contributor.user.get_full_name|default:contributor.user.username }}
+                                            </strong>
+
+                                            <span class="reader-contributor-handle">
+                                                @{{ contributor.user.username }}
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+                                {% endfor %}
+
+                            </div>
 
                         </div>
 
@@ -706,16 +1076,71 @@ body.reader-lightbox-open {
                 </div>
 
 
-                <div class="reader-article-date">
+                <aside
+                    class="reader-article-date"
+                    aria-label="Publication details"
+                >
 
-                    {% if article.published_at %}
+                    <div class="reader-publication-card">
 
-                        Published
-                        {{ article.published_at|date:"M. d, Y - g:i A" }}
+                        <span class="reader-publication-kicker">
+                            {% if staff_preview_mode %}
+                                Reader Preview
+                            {% else %}
+                                Published
+                            {% endif %}
+                        </span>
 
-                    {% endif %}
+                        {% if article.published_at %}
 
-                </div>
+                            <time
+                                class="reader-publication-date"
+                                datetime="{{ article.published_at|date:'c' }}"
+                            >
+                                {{ article.published_at|date:"M. d, Y" }}
+                            </time>
+
+                            <span class="reader-publication-time">
+                                {{ article.published_at|date:"g:i A" }}
+                            </span>
+
+                        {% else %}
+
+                            <strong class="reader-publication-date">
+                                {% if staff_preview_mode %}
+                                    Not yet published
+                                {% else %}
+                                    Date unavailable
+                                {% endif %}
+                            </strong>
+
+                        {% endif %}
+
+                        <div
+                            class="reader-publication-divider"
+                            aria-hidden="true"
+                        ></div>
+
+                        <div class="reader-article-version-panel">
+
+                            <span class="reader-article-version-badge">
+                                Version {{ article.version_number }}
+                            </span>
+
+                            {% if not staff_preview_mode %}
+                                <a
+                                    href="{% url 'reader_article_version_history' article.slug %}"
+                                    class="reader-article-version-link"
+                                >
+                                    View Version History
+                                </a>
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                </aside>
 
             </div>
 
@@ -732,7 +1157,7 @@ body.reader-lightbox-open {
 
                 <img
                     src="{{ article.featured_image.url }}"
-                    alt="{{ article.title }}"
+                    alt="{{ article.title|article_display_text }}"
                     class="reader-featured-image reader-lightbox-trigger"
                     tabindex="0"
                     role="button"
@@ -748,7 +1173,7 @@ body.reader-lightbox-open {
                         {% if article.featured_image_caption %}
 
                             <span>
-                                {{ article.featured_image_caption }}
+                                {{ article.featured_image_caption|article_display_text }}
                             </span>
 
                         {% endif %}
@@ -757,7 +1182,7 @@ body.reader-lightbox-open {
                         {% if article.featured_image_credit %}
 
                             <span class="reader-media-credit">
-                                {{ article.featured_image_credit }}
+                                {{ article.featured_image_credit|article_display_text }}
                             </span>
 
                         {% endif %}
@@ -778,7 +1203,7 @@ body.reader-lightbox-open {
         {% if article.excerpt %}
 
             <p class="reader-article-standfirst">
-                {{ article.excerpt }}
+                {{ article.excerpt|article_display_text }}
             </p>
 
         {% endif %}
@@ -819,7 +1244,7 @@ body.reader-lightbox-open {
 
                             <img
                                 src="{{ attachment.image.url }}"
-                                alt="{{ attachment.alt_text|default:attachment.caption|default:'Article attachment' }}"
+                                alt="{{ attachment.alt_text|default:attachment.caption|default:'Article attachment'|article_display_text }}"
                                 class="reader-lightbox-trigger"
                                 tabindex="0"
                                 role="button"
@@ -835,7 +1260,7 @@ body.reader-lightbox-open {
                                     {% if attachment.caption %}
 
                                         <span>
-                                            {{ attachment.caption }}
+                                            {{ attachment.caption|article_display_text }}
                                         </span>
 
                                     {% endif %}
@@ -844,7 +1269,7 @@ body.reader-lightbox-open {
                                     {% if attachment.credit %}
 
                                         <span class="reader-media-credit">
-                                            {{ attachment.credit }}
+                                            {{ attachment.credit|article_display_text }}
                                         </span>
 
                                     {% endif %}
@@ -904,7 +1329,7 @@ body.reader-lightbox-open {
                                     {% if attachment.caption %}
 
                                         <span>
-                                            {{ attachment.caption }}
+                                            {{ attachment.caption|article_display_text }}
                                         </span>
 
                                     {% endif %}
@@ -913,7 +1338,7 @@ body.reader-lightbox-open {
                                     {% if attachment.credit %}
 
                                         <span class="reader-media-credit">
-                                            {{ attachment.credit }}
+                                            {{ attachment.credit|article_display_text }}
                                         </span>
 
                                     {% endif %}
@@ -944,7 +1369,7 @@ body.reader-lightbox-open {
                 {% for tag in article.tags.all %}
 
                     <span>
-                        {{ tag.name }}
+                        {{ tag.name|article_display_text }}
                     </span>
 
                 {% endfor %}
@@ -953,6 +1378,8 @@ body.reader-lightbox-open {
 
         {% endif %}
 
+
+        {% if not staff_preview_mode %}
 
         <!-- ==================================================
              ENGAGEMENT
@@ -1063,6 +1490,8 @@ body.reader-lightbox-open {
         >
             &larr; Back to homepage
         </a>
+
+        {% endif %}
 
     </article>
 

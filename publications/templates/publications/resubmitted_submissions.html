@@ -336,6 +336,7 @@
                             class="secondary-button"
                             data-saved-article-preview
                             data-preview-template-id="resubmission-preview-{{ submission.id }}"
+                            data-preview-url="{% url 'staff_reader_submission_preview' submission.id %}"
                         >
                             Preview Resubmitted Version
                         </button>
@@ -348,6 +349,7 @@
                                 class="secondary-button"
                                 data-saved-article-preview
                                 data-preview-template-id="previous-submission-preview-{{ submission.id }}"
+                                data-preview-url="{% url 'staff_reader_submission_preview' submission.resubmission_of.id %}"
                             >
                                 Preview Previous Version
                             </button>

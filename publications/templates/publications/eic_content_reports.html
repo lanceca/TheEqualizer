@@ -221,6 +221,7 @@
                             class="secondary-button"
                             data-saved-article-preview
                             data-preview-template-id="eic-report-preview-{{ report.id }}"
+                            data-preview-url="{% url 'staff_reader_article_preview' report.article.id %}"
                         >
                             Preview Article
                         </button>

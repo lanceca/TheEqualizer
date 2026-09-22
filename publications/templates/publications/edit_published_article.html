@@ -222,341 +222,6 @@
 
         </div>
 
-<div class="form-group">
-
-            <label for="content">
-                Article Content
-            </label>
-
-            <textarea
-                id="content"
-                name="content"
-                class="article-content-input"
-                required
-            
-                maxlength="30000"
-                data-char-limit="30000"
-                data-char-counter-field="content">{% if request.method == 'POST' %}{{ request.POST.content }}{% else %}{{ article.content }}{% endif %}</textarea>
-            <div data-react-component="ArticleRichTextEditor" data-field-id="content"></div>
-
-        </div>
-
-<div class="form-group">
-
-            <label>
-                Contributors
-            </label>
-
-            <p class="form-help">
-                Credit publication members who contributed to this article.
-                The primary author does not need to be added again.
-            </p>
-
-
-            {% if available_contributors %}
-
-                <div
-                    id="contributor-list"
-                    class="contributor-list"
-                >
-
-                    {% if article.contributors.all %}
-
-                        {% for contributor in article.contributors.all %}
-
-                            <div class="contributor-row">
-
-                                <div class="contributor-field">
-
-                                    <label>
-                                        Role
-                                    </label>
-
-                                    <select name="contributor_roles">
-
-                                        <option value="">
-                                            Select Role
-                                        </option>
-
-                                        {% for role_value, role_label in contributor_role_choices %}
-
-                                            <option
-                                                value="{{ role_value }}"
-                                                {% if contributor.role == role_value %}
-                                                    selected
-                                                {% endif %}
-                                            >
-                                                {{ role_label }}
-                                            </option>
-
-                                        {% endfor %}
-
-                                    </select>
-
-                                </div>
-
-
-                                <div class="contributor-field">
-
-                                    <label>
-                                        Name
-                                    </label>
-
-                                    <select name="contributor_users">
-
-                                        <option value="">
-                                            Select Publication Member
-                                        </option>
-
-                                        {% for contributor_user in available_contributors %}
-
-                                            <option
-                                                value="{{ contributor_user.id }}"
-                                                {% if contributor.user_id == contributor_user.id %}
-                                                    selected
-                                                {% endif %}
-                                            >
-                                                {{ contributor_user.username }}
-                                            </option>
-
-                                        {% endfor %}
-
-                                    </select>
-
-                                </div>
-
-
-                                <div class="contributor-remove-field">
-
-                                    <button
-                                        type="button"
-                                        class="danger-button contributor-remove-button"
-                                    >
-                                        Remove
-                                    </button>
-
-                                </div>
-
-                            </div>
-
-                        {% endfor %}
-
-                    {% else %}
-
-                        <div class="contributor-row">
-
-                            <div class="contributor-field">
-
-                                <label>
-                                    Role
-                                </label>
-
-                                <select name="contributor_roles">
-
-                                    <option value="">
-                                        Select Role
-                                    </option>
-
-                                    {% for role_value, role_label in contributor_role_choices %}
-
-                                        <option value="{{ role_value }}">
-                                            {{ role_label }}
-                                        </option>
-
-                                    {% endfor %}
-
-                                </select>
-
-                            </div>
-
-
-                            <div class="contributor-field">
-
-                                <label>
-                                    Name
-                                </label>
-
-                                <select name="contributor_users">
-
-                                    <option value="">
-                                        Select Publication Member
-                                    </option>
-
-                                    {% for contributor_user in available_contributors %}
-
-                                        <option value="{{ contributor_user.id }}">
-                                            {{ contributor_user.username }}
-                                        </option>
-
-                                    {% endfor %}
-
-                                </select>
-
-                            </div>
-
-
-                            <div class="contributor-remove-field">
-
-                                <button
-                                    type="button"
-                                    class="danger-button contributor-remove-button"
-                                >
-                                    Remove
-                                </button>
-
-                            </div>
-
-                        </div>
-
-                    {% endif %}
-
-                </div>
-
-
-                <button
-                    type="button"
-                    id="add-contributor-button"
-                    class="secondary-action-button"
-                >
-                    + Add Contributor
-                </button>
-
-
-                <template id="contributor-row-template">
-
-                    <div class="contributor-row">
-
-                        <div class="contributor-field">
-
-                            <label>
-                                Role
-                            </label>
-
-                            <select name="contributor_roles">
-
-                                <option value="">
-                                    Select Role
-                                </option>
-
-                                {% for role_value, role_label in contributor_role_choices %}
-
-                                    <option value="{{ role_value }}">
-                                        {{ role_label }}
-                                    </option>
-
-                                {% endfor %}
-
-                            </select>
-
-                        </div>
-
-
-                        <div class="contributor-field">
-
-                            <label>
-                                Name
-                            </label>
-
-                            <select name="contributor_users">
-
-                                <option value="">
-                                    Select Publication Member
-                                </option>
-
-                                {% for contributor_user in available_contributors %}
-
-                                    <option value="{{ contributor_user.id }}">
-                                        {{ contributor_user.username }}
-                                    </option>
-
-                                {% endfor %}
-
-                            </select>
-
-                        </div>
-
-
-                        <div class="contributor-remove-field">
-
-                            <button
-                                type="button"
-                                class="danger-button contributor-remove-button"
-                            >
-                                Remove
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                </template>
-
-            {% else %}
-
-                <p class="form-help">
-                    No additional publication users are currently available as contributors.
-                </p>
-
-            {% endif %}
-
-        </div>
-
-<div class="form-group">
-
-            <label>
-                Tags
-            </label>
-
-            <div class="tag-checkbox-grid">
-
-                {% for tag in tags %}
-
-                    <label class="tag-checkbox-option">
-
-                        <input
-                            type="checkbox"
-                            name="tags"
-                            value="{{ tag.id }}"
-                            {% if tag in article.tags.all %}
-                                checked
-                            {% endif %}
-                        >
-
-                        <span>
-                            {{ tag.name }}
-                        </span>
-
-                    </label>
-
-                {% endfor %}
-
-            </div>
-
-
-
-            <div class="custom-tag-entry">
-
-                <label for="custom_tags">
-                    Add Custom Tags
-                </label>
-
-                <textarea
-                    id="custom_tags"
-                    name="custom_tags"
-                    rows="2"
-                    maxlength="1100"
-                    placeholder="Example: Enrollment, Intramurals, Student Council"
-                >{% if request.method == 'POST' %}{{ request.POST.custom_tags }}{% endif %}</textarea>
-
-                <p class="form-help">
-                    Separate multiple tags with commas or new lines. New tags are saved and can be reused on future articles.
-                </p>
-
-            </div>
-        </div>
-
-
-
 
         <div class="form-group">
 
@@ -904,13 +569,338 @@
              CONTRIBUTORS
              ================================================== -->
 
-        
+        <div class="form-group">
+
+            <label>
+                Contributors
+            </label>
+
+            <p class="form-help">
+                Credit publication members who contributed to this article.
+                The primary author does not need to be added again.
+            </p>
 
 
-        
+            {% if available_contributors %}
+
+                <div
+                    id="contributor-list"
+                    class="contributor-list"
+                >
+
+                    {% if article.contributors.all %}
+
+                        {% for contributor in article.contributors.all %}
+
+                            <div class="contributor-row">
+
+                                <div class="contributor-field">
+
+                                    <label>
+                                        Role
+                                    </label>
+
+                                    <select name="contributor_roles">
+
+                                        <option value="">
+                                            Select Role
+                                        </option>
+
+                                        {% for role_value, role_label in contributor_role_choices %}
+
+                                            <option
+                                                value="{{ role_value }}"
+                                                {% if contributor.role == role_value %}
+                                                    selected
+                                                {% endif %}
+                                            >
+                                                {{ role_label }}
+                                            </option>
+
+                                        {% endfor %}
+
+                                    </select>
+
+                                </div>
 
 
-        
+                                <div class="contributor-field">
+
+                                    <label>
+                                        Name
+                                    </label>
+
+                                    <select name="contributor_users">
+
+                                        <option value="">
+                                            Select Publication Member
+                                        </option>
+
+                                        {% for contributor_user in available_contributors %}
+
+                                            <option
+                                                value="{{ contributor_user.id }}"
+                                                {% if contributor.user_id == contributor_user.id %}
+                                                    selected
+                                                {% endif %}
+                                            >
+                                                {{ contributor_user.username }}
+                                            </option>
+
+                                        {% endfor %}
+
+                                    </select>
+
+                                </div>
+
+
+                                <div class="contributor-remove-field">
+
+                                    <button
+                                        type="button"
+                                        class="danger-button contributor-remove-button"
+                                    >
+                                        Remove
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        {% endfor %}
+
+                    {% else %}
+
+                        <div class="contributor-row">
+
+                            <div class="contributor-field">
+
+                                <label>
+                                    Role
+                                </label>
+
+                                <select name="contributor_roles">
+
+                                    <option value="">
+                                        Select Role
+                                    </option>
+
+                                    {% for role_value, role_label in contributor_role_choices %}
+
+                                        <option value="{{ role_value }}">
+                                            {{ role_label }}
+                                        </option>
+
+                                    {% endfor %}
+
+                                </select>
+
+                            </div>
+
+
+                            <div class="contributor-field">
+
+                                <label>
+                                    Name
+                                </label>
+
+                                <select name="contributor_users">
+
+                                    <option value="">
+                                        Select Publication Member
+                                    </option>
+
+                                    {% for contributor_user in available_contributors %}
+
+                                        <option value="{{ contributor_user.id }}">
+                                            {{ contributor_user.username }}
+                                        </option>
+
+                                    {% endfor %}
+
+                                </select>
+
+                            </div>
+
+
+                            <div class="contributor-remove-field">
+
+                                <button
+                                    type="button"
+                                    class="danger-button contributor-remove-button"
+                                >
+                                    Remove
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <button
+                    type="button"
+                    id="add-contributor-button"
+                    class="secondary-action-button"
+                >
+                    + Add Contributor
+                </button>
+
+
+                <template id="contributor-row-template">
+
+                    <div class="contributor-row">
+
+                        <div class="contributor-field">
+
+                            <label>
+                                Role
+                            </label>
+
+                            <select name="contributor_roles">
+
+                                <option value="">
+                                    Select Role
+                                </option>
+
+                                {% for role_value, role_label in contributor_role_choices %}
+
+                                    <option value="{{ role_value }}">
+                                        {{ role_label }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="contributor-field">
+
+                            <label>
+                                Name
+                            </label>
+
+                            <select name="contributor_users">
+
+                                <option value="">
+                                    Select Publication Member
+                                </option>
+
+                                {% for contributor_user in available_contributors %}
+
+                                    <option value="{{ contributor_user.id }}">
+                                        {{ contributor_user.username }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="contributor-remove-field">
+
+                            <button
+                                type="button"
+                                class="danger-button contributor-remove-button"
+                            >
+                                Remove
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </template>
+
+            {% else %}
+
+                <p class="form-help">
+                    No additional publication users are currently available as contributors.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                Tags
+            </label>
+
+            <div class="tag-checkbox-grid">
+
+                {% for tag in tags %}
+
+                    <label class="tag-checkbox-option">
+
+                        <input
+                            type="checkbox"
+                            name="tags"
+                            value="{{ tag.id }}"
+                            {% if tag in article.tags.all %}
+                                checked
+                            {% endif %}
+                        >
+
+                        <span>
+                            {{ tag.name }}
+                        </span>
+
+                    </label>
+
+                {% endfor %}
+
+            </div>
+
+
+
+            <div class="custom-tag-entry">
+
+                <label for="custom_tags">
+                    Add Custom Tags
+                </label>
+
+                <textarea
+                    id="custom_tags"
+                    name="custom_tags"
+                    rows="2"
+                    maxlength="1100"
+                    placeholder="Example: Enrollment, Intramurals, Student Council"
+                >{% if request.method == 'POST' %}{{ request.POST.custom_tags }}{% endif %}</textarea>
+
+                <p class="form-help">
+                    Separate multiple tags with commas or new lines. New tags are saved and can be reused on future articles.
+                </p>
+
+            </div>
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="content">
+                Article Content
+            </label>
+
+            <textarea
+                id="content"
+                name="content"
+                class="article-content-input"
+                required
+            
+                maxlength="30000">{% if request.method == 'POST' %}{{ request.POST.content }}{% else %}{{ article.content }}{% endif %}</textarea>
+            <div data-react-component="ArticleRichTextEditor" data-field-id="content"></div>
+
+        </div>
 
 
 
@@ -936,6 +926,8 @@
                 type="button"
                 class="secondary-button article-preview-button"
                 data-article-preview-button
+                data-preview-url="{% url 'staff_reader_live_preview' %}"
+                data-preview-article-id="{{ article.id }}"
             >
                 Preview Article
             </button>

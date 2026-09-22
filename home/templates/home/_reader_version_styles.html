@@ -1,0 +1,303 @@
+<style>
+.reader-version-page {
+    width: min(980px, 100%);
+    margin: 0 auto;
+    padding: 42px 18px 72px;
+    color: #1d2924;
+}
+
+.reader-version-hero {
+    padding-bottom: 22px;
+    border-bottom: 3px solid #c9a227;
+}
+
+.reader-version-kicker {
+    margin: 0 0 6px;
+    color: #c9a227;
+    font-size: 11px;
+    font-weight: 850;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.reader-version-hero h1 {
+    margin: 0;
+    color: #0e2a22;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(34px, 5vw, 56px);
+    line-height: 1.05;
+}
+
+.reader-version-hero p:last-child {
+    max-width: 760px;
+    margin: 12px 0 0;
+    color: #66736d;
+    line-height: 1.65;
+}
+
+.reader-version-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.reader-version-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 8px 12px;
+    border: 1px solid #cbd8d1;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #173f32;
+    font-size: 12px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.reader-version-button:hover {
+    border-color: #173f32;
+    background: #f2f7f4;
+}
+
+.reader-version-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 22px;
+}
+
+.reader-version-summary > div {
+    padding: 16px;
+    border: 1px solid #dce4df;
+    border-radius: 12px;
+    background: #f8faf9;
+}
+
+.reader-version-summary span {
+    display: block;
+    color: #728078;
+    font-size: 9px;
+    font-weight: 850;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.reader-version-summary strong {
+    display: block;
+    margin-top: 4px;
+    color: #173f32;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 22px;
+}
+
+.reader-version-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.reader-version-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: center;
+    padding: 18px;
+    border: 1px solid #dce4df;
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+.reader-version-card.is-current {
+    border-color: #d8bf5d;
+    background: #fffdf7;
+}
+
+.reader-version-number {
+    display: grid;
+    place-items: center;
+    min-width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #173f32;
+    color: #ffffff;
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 700;
+}
+
+.reader-version-card h2 {
+    margin: 0;
+    color: #173f32;
+    font-size: 18px;
+}
+
+.reader-version-card p {
+    margin: 5px 0 0;
+    color: #708078;
+    font-size: 12px;
+}
+
+.reader-version-current {
+    display: inline-flex;
+    margin-left: 6px;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: #f3e7b7;
+    color: #6e5716;
+    font-size: 8px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.reader-version-empty {
+    margin-top: 24px;
+    padding: 28px;
+    border: 1px dashed #c9d6cf;
+    border-radius: 14px;
+    background: #f8faf9;
+    color: #66736d;
+    text-align: center;
+}
+
+.reader-version-snapshot {
+    margin-top: 28px;
+}
+
+.reader-version-snapshot header {
+    padding-bottom: 20px;
+    border-bottom: 1px solid #dce4df;
+}
+
+.reader-version-category {
+    color: #c9a227;
+    font-size: 11px;
+    font-weight: 850;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+.reader-version-snapshot h2 {
+    margin: 8px 0 0;
+    color: #0e2a22;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(32px, 5vw, 54px);
+    line-height: 1.05;
+}
+
+.reader-version-subtitle {
+    margin: 13px 0 0;
+    color: #4d5953;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 21px;
+    line-height: 1.45;
+}
+
+.reader-version-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    margin-top: 16px;
+    color: #6d7973;
+    font-size: 12px;
+}
+
+.reader-version-featured {
+    width: min(820px, 100%);
+    margin: 26px auto 0;
+}
+
+.reader-version-featured img,
+.reader-version-media img,
+.reader-version-media video {
+    display: block;
+    width: 100%;
+    max-height: 540px;
+    object-fit: contain;
+    border: 1px solid #dce4df;
+    border-radius: 10px;
+    background: #f5f8f6;
+}
+
+.reader-version-featured figcaption,
+.reader-version-media figcaption {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 7px;
+    color: #6d7973;
+    font-size: 11px;
+}
+
+.reader-version-excerpt {
+    width: min(720px, 100%);
+    margin: 28px auto 0;
+    color: #38453f;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.55;
+}
+
+.reader-version-content {
+    width: min(720px, 100%);
+    margin: 26px auto 0;
+    color: #202a25;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 18px;
+    line-height: 1.82;
+}
+
+.reader-version-media-section {
+    width: min(820px, 100%);
+    margin: 38px auto 0;
+    padding-top: 20px;
+    border-top: 1px solid #dce4df;
+}
+
+.reader-version-media-section h3 {
+    margin: 0 0 14px;
+    color: #173f32;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 24px;
+}
+
+.reader-version-media-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.reader-version-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    width: min(720px, 100%);
+    margin: 30px auto 0;
+}
+
+.reader-version-tags span {
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: #f2f6f4;
+    color: #315f4b;
+    font-size: 11px;
+    font-weight: 750;
+}
+
+@media (max-width: 680px) {
+    .reader-version-card {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .reader-version-card .reader-version-button {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    .reader-version-summary {
+        grid-template-columns: 1fr;
+    }
+}
+</style>

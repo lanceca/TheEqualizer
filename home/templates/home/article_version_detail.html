@@ -1,0 +1,133 @@
+{% extends "public_base.html" %}
+{% load article_text %}
+
+{% block title %}Version {{ article_version.version_number }} | {{ article.title }} | The Equalizer{% endblock %}
+
+{% block public_content %}
+{% include "home/_reader_version_styles.html" %}
+
+<main class="reader-version-page">
+    <header class="reader-version-hero">
+        <p class="reader-version-kicker">Reader-access historical snapshot</p>
+        <h1>Version {{ article_version.version_number }}</h1>
+        <p>
+            {{ public_change_label }} · Official snapshot stored
+            {{ article_version.created_at|date:"M. d, Y - g:i A" }}.
+        </p>
+
+        <div class="reader-version-toolbar">
+            <a
+                href="{% url 'reader_article_version_history' article.slug %}"
+                class="reader-version-button"
+            >
+                Back to Version History
+            </a>
+            <a
+                href="{% url 'article_detail' article.slug %}"
+                class="reader-version-button"
+            >
+                View Current Article
+            </a>
+        </div>
+    </header>
+
+    <article class="reader-version-snapshot">
+        <header>
+            <span class="reader-version-category">
+                {{ article_version.category_name|default:"Uncategorized" }}
+            </span>
+
+            <h2>{{ article_version.title }}</h2>
+
+            {% if article_version.subtitle %}
+                <p class="reader-version-subtitle">{{ article_version.subtitle }}</p>
+            {% endif %}
+
+            <div class="reader-version-meta">
+                <span>By <strong>{{ article_version.author_name|default:"Unavailable" }}</strong></span>
+                <span>Version {{ article_version.version_number }}</span>
+                <span>{{ public_change_label }}</span>
+            </div>
+
+            {% if article_version.contributors %}
+                <div class="reader-version-meta">
+                    {% for contributor in article_version.contributors %}
+                        <span>{{ contributor.role_display }}: {{ contributor.username }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </header>
+
+        {% if article_version.featured_image %}
+            <figure class="reader-version-featured">
+                <img src="{{ article_version.featured_image_url }}" alt="{{ article_version.title }}">
+                {% if article_version.featured_image_caption or article_version.featured_image_credit %}
+                    <figcaption>
+                        <span>{{ article_version.featured_image_caption }}</span>
+                        <span>{{ article_version.featured_image_credit }}</span>
+                    </figcaption>
+                {% endif %}
+            </figure>
+        {% endif %}
+
+        {% if article_version.excerpt %}
+            <p class="reader-version-excerpt">{{ article_version.excerpt }}</p>
+        {% endif %}
+
+        <div class="reader-version-content">
+            {{ article_version.content|rich_article }}
+        </div>
+
+        {% if article_version.image_attachments.all %}
+            <section class="reader-version-media-section">
+                <h3>Article Images</h3>
+                <div class="reader-version-media-grid">
+                    {% for attachment in article_version.image_attachments.all %}
+                        <figure class="reader-version-media">
+                            <img
+                                src="{{ attachment.image_url }}"
+                                alt="{{ attachment.alt_text|default:attachment.caption|default:'Historical article image' }}"
+                            >
+                            {% if attachment.caption or attachment.credit %}
+                                <figcaption>
+                                    <span>{{ attachment.caption }}</span>
+                                    <span>{{ attachment.credit }}</span>
+                                </figcaption>
+                            {% endif %}
+                        </figure>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+
+        {% if article_version.video_attachments.all %}
+            <section class="reader-version-media-section">
+                <h3>Article Videos</h3>
+                <div class="reader-version-media-grid">
+                    {% for attachment in article_version.video_attachments.all %}
+                        <figure class="reader-version-media">
+                            <video controls preload="metadata">
+                                <source src="{{ attachment.video_url }}">
+                            </video>
+                            {% if attachment.caption or attachment.credit %}
+                                <figcaption>
+                                    <span>{{ attachment.caption }}</span>
+                                    <span>{{ attachment.credit }}</span>
+                                </figcaption>
+                            {% endif %}
+                        </figure>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+
+        {% if article_version.tags %}
+            <div class="reader-version-tags" aria-label="Version tags">
+                {% for tag in article_version.tags %}
+                    <span>{{ tag.name|default:tag }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </article>
+</main>
+{% endblock %}

@@ -19,6 +19,9 @@
         <p class="section-description">
             View the currently active Adviser, Editor in Chief, Editors,
             and Staff members of The Equalizer.
+            {% if not can_view_staff_emails %}
+                Contact email addresses are hidden for staff privacy.
+            {% endif %}
         </p>
 
     </div>
@@ -45,7 +48,7 @@
                 id="directory-search"
                 name="q"
                 value="{{ search_query }}"
-                placeholder="Name, username, or email"
+                placeholder="{% if can_view_staff_emails %}Name, username, or email{% else %}Name or username{% endif %}"
             >
 
         </div>
@@ -165,10 +168,19 @@
                         <div>
                             <dt>Email</dt>
                             <dd>
-                                {% if account.email %}
-                                    {{ account.email }}
+                                {% if can_view_staff_emails %}
+                                    {% if account.email %}
+                                        <span
+                                            data-react-component="AccountEmailToggle"
+                                            data-email="{{ account.email }}"
+                                        ></span>
+                                    {% else %}
+                                        Not provided
+                                    {% endif %}
                                 {% else %}
-                                    Not provided
+                                    <span class="staff-directory-private-email">
+                                        Private · Adviser access only
+                                    </span>
                                 {% endif %}
                             </dd>
                         </div>

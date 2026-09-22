@@ -14558,3 +14558,286 @@ a {
         transform: none !important;
     }
 }
+
+/* ==========================================================
+   SEARCH / FILTER ACTION BUTTON STANDARDIZATION
+   Search, Apply, Clear and Reset controls should read as real
+   controls rather than underlined text links.
+   ========================================================== */
+
+.staff-shell-body .editorial-search-form > button[type="submit"],
+.staff-shell-body .editorial-search-form > .secondary-button,
+.staff-shell-body .editorial-search-form > .eq-action-button,
+.staff-shell-body .editorial-search-form > .text-action-link,
+.staff-shell-body .account-filter-form > button[type="submit"],
+.staff-shell-body .account-filter-form > .secondary-button,
+.staff-shell-body .account-filter-form > .eq-action-button,
+.staff-shell-body .account-filter-form > .text-action-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 88px;
+    min-height: 40px;
+
+    padding: 8px 13px;
+
+    border: 1px solid #c9d6cf !important;
+    border-radius: 9px;
+
+    background: #ffffff;
+    color: var(--eq-green-dark);
+
+    font: inherit;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.2;
+
+    text-align: center;
+    text-decoration: none !important;
+    white-space: nowrap;
+
+    cursor: pointer;
+
+    box-shadow: none;
+
+    transition:
+        background 0.16s ease,
+        border-color 0.16s ease,
+        color 0.16s ease,
+        box-shadow 0.16s ease,
+        transform 0.16s ease;
+}
+
+.staff-shell-body .editorial-search-form > button[type="submit"]:hover,
+.staff-shell-body .editorial-search-form > .secondary-button:hover,
+.staff-shell-body .editorial-search-form > .eq-action-button:hover,
+.staff-shell-body .account-filter-form > button[type="submit"]:hover,
+.staff-shell-body .account-filter-form > .secondary-button:hover,
+.staff-shell-body .account-filter-form > .eq-action-button:hover {
+    transform: translateY(-1px);
+
+    border-color: var(--eq-green-dark) !important;
+
+    background: var(--eq-green-dark);
+    color: #ffffff;
+}
+
+.staff-shell-body .editorial-search-form > .text-action-link:hover,
+.staff-shell-body .account-filter-form > .text-action-link:hover {
+    transform: translateY(-1px);
+
+    border-color: #aebfb5 !important;
+
+    background: #f1f6f3;
+    color: var(--eq-green-deep);
+
+    text-decoration: none !important;
+}
+
+.staff-shell-body .editorial-search-form > button:focus-visible,
+.staff-shell-body .editorial-search-form > a:focus-visible,
+.staff-shell-body .account-filter-form > button:focus-visible,
+.staff-shell-body .account-filter-form > a:focus-visible {
+    outline: 3px solid rgba(214, 173, 50, 0.28);
+    outline-offset: 2px;
+}
+
+.staff-shell-body .editorial-search-form > button:disabled,
+.staff-shell-body .account-filter-form > button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    transform: none;
+}
+
+
+/* Shared Article Library filter form */
+
+.staff-shell-body .library-filters {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    width: 100%;
+    margin: 0;
+}
+
+.staff-shell-body .library-filters > label {
+    display: flex;
+    flex: 1 1 155px;
+    flex-direction: column;
+
+    gap: 5px;
+
+    min-width: 140px;
+
+    color: var(--eq-muted);
+
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.staff-shell-body .library-filters > label:first-child {
+    flex: 2 1 240px;
+}
+
+.staff-shell-body .library-filters input:not([type="checkbox"]),
+.staff-shell-body .library-filters select {
+    width: 100%;
+    min-height: 40px;
+
+    padding: 8px 10px;
+
+    border: 1px solid #bcc9c1;
+    border-radius: 8px;
+
+    background: #ffffff;
+    color: var(--eq-charcoal);
+
+    font: inherit;
+    font-size: 12px;
+
+    text-transform: none;
+}
+
+.staff-shell-body .library-filters input:not([type="checkbox"]):focus,
+.staff-shell-body .library-filters select:focus {
+    outline: none;
+
+    border-color: var(--eq-green);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(79, 174, 105, 0.12);
+}
+
+.staff-shell-body .library-filters .filter-check {
+    flex: 0 0 auto;
+    flex-direction: row;
+    align-items: center;
+
+    min-width: 0;
+    min-height: 40px;
+
+    padding: 0 4px;
+
+    text-transform: none;
+}
+
+.staff-shell-body .library-filters .filter-check input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+}
+
+.staff-shell-body .library-filter-actions {
+    display: flex;
+    align-items: center;
+    flex: 0 0 100%;
+    flex-wrap: wrap;
+
+    gap: 8px;
+
+    margin-top: 2px;
+}
+
+.staff-shell-body .library-filter-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 112px;
+    min-height: 40px;
+
+    padding: 8px 13px;
+
+    border: 1px solid #c9d6cf !important;
+    border-radius: 9px;
+
+    background: #ffffff;
+    color: var(--eq-green-dark);
+
+    font: inherit;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.2;
+
+    text-decoration: none !important;
+    white-space: nowrap;
+
+    cursor: pointer;
+
+    transition:
+        background 0.16s ease,
+        border-color 0.16s ease,
+        color 0.16s ease,
+        transform 0.16s ease;
+}
+
+.staff-shell-body .library-filter-button--apply:hover {
+    transform: translateY(-1px);
+
+    border-color: var(--eq-green-dark) !important;
+
+    background: var(--eq-green-dark);
+    color: #ffffff;
+}
+
+.staff-shell-body .library-filter-button--clear:hover {
+    transform: translateY(-1px);
+
+    border-color: #aebfb5 !important;
+
+    background: #f1f6f3;
+    color: var(--eq-green-deep);
+}
+
+.staff-shell-body .library-filter-button:focus-visible {
+    outline: 3px solid rgba(214, 173, 50, 0.28);
+    outline-offset: 2px;
+}
+
+@media (max-width: 620px) {
+    .staff-shell-body .editorial-search-form > button[type="submit"],
+    .staff-shell-body .editorial-search-form > .secondary-button,
+    .staff-shell-body .editorial-search-form > .eq-action-button,
+    .staff-shell-body .editorial-search-form > .text-action-link,
+    .staff-shell-body .account-filter-form > button[type="submit"],
+    .staff-shell-body .account-filter-form > .secondary-button,
+    .staff-shell-body .account-filter-form > .eq-action-button,
+    .staff-shell-body .account-filter-form > .text-action-link,
+    .staff-shell-body .library-filter-button {
+        width: 100%;
+    }
+
+    .staff-shell-body .library-filter-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .staff-shell-body .editorial-search-form > button,
+    .staff-shell-body .editorial-search-form > a,
+    .staff-shell-body .account-filter-form > button,
+    .staff-shell-body .account-filter-form > a,
+    .staff-shell-body .library-filter-button {
+        transition: none !important;
+    }
+
+    .staff-shell-body .editorial-search-form > button:hover,
+    .staff-shell-body .editorial-search-form > a:hover,
+    .staff-shell-body .account-filter-form > button:hover,
+    .staff-shell-body .account-filter-form > a:hover,
+    .staff-shell-body .library-filter-button:hover {
+        transform: none !important;
+    }
+}

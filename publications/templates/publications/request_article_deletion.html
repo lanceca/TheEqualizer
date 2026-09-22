@@ -135,9 +135,10 @@
 
                 <button
                     type="button"
-                    class="eq-action-button eq-action-button--secondary request-reference-preview"
+                    class="secondary-button request-reference-preview"
                     data-saved-article-preview
                     data-preview-template-id="request-deletion-preview"
+                    data-preview-url="{% url 'staff_reader_article_preview' article.id %}"
                 >
                     Preview Full Article
                 </button>
@@ -227,14 +228,14 @@
 
                     <a
                         href="{% url 'published_articles' %}"
-                        class="eq-action-button eq-action-button--secondary"
+                        class="secondary-button"
                     >
                         Cancel
                     </a>
 
                     <button
                         type="submit"
-                        class="eq-action-button eq-action-button--archive"
+                        class="danger-button"
                         data-confirm-title="Submit Archive Request"
                         data-confirm="Submit this archive request to the Editor in Chief? The article will remain published until the request is approved."
                     >

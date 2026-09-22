@@ -164,6 +164,7 @@ function enhanceNavigation(sidebar) {
       link.title = label
     })
 
+
 }
 
 function StaffSidebarToggle({
@@ -172,9 +173,7 @@ function StaffSidebarToggle({
   homeUrl,
   notificationUrl,
   profileUrl,
-  logoutUrl,
   notificationCount = 0,
-  csrfToken,
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -189,6 +188,7 @@ function StaffSidebarToggle({
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [pageTitle, setPageTitle] = useState('Workspace')
   const [avatarUrl, setAvatarUrl] = useState('')
+  const [loggingOut, setLoggingOut] = useState(false)
 
   const userMenuRef = useRef(null)
 
@@ -368,6 +368,34 @@ function StaffSidebarToggle({
     })
   }
 
+  function handleLogout() {
+    if (loggingOut) return
+
+    const form = document.getElementById(
+      'staff-workspace-native-logout-form',
+    )
+
+    if (!form) {
+      return
+    }
+
+    setLoggingOut(true)
+    setUserMenuOpen(false)
+
+    /*
+     * This form is rendered by Django and already contains the
+     * correct CSRF token. Native prototype submission intentionally
+     * bypasses generic submit listeners that show the global loader.
+     */
+    window.requestAnimationFrame(() => {
+      try {
+        HTMLFormElement.prototype.submit.call(form)
+      } catch {
+        setLoggingOut(false)
+      }
+    })
+  }
+
   const initial = (
     username?.trim()?.slice(0, 1) || 'E'
   ).toUpperCase()
@@ -490,33 +518,44 @@ function StaffSidebarToggle({
                   <span>Profile settings</span>
                 </a>
 
-                                <form
-                  method="post"
-                  action={logoutUrl || '#'}
-                  className="staff-workspace-logout-form"
-                  onSubmit={() => setUserMenuOpen(false)}
+                <button
+                  type="button"
+                  className="staff-workspace-logout-button"
+                  role="menuitem"
+                  onClick={handleLogout}
+                  disabled={loggingOut}
                 >
-                  <input
-                    type="hidden"
-                    name="csrfmiddlewaretoken"
-                    value={csrfToken || ''}
-                  />
-
-                  <button
-                    type="submit"
-                    className="staff-workspace-logout-button"
-                    role="menuitem"
-                  >
-                    <LogoutIcon />
-                    <span>Logout</span>
-                  </button>
-                </form>
-
+                  <LogoutIcon />
+                  <span>
+                    {loggingOut ? 'Logging out…' : 'Logout'}
+                  </span>
+                </button>
               </div>
             )}
           </div>
         </div>
       </header>
+
+      {loggingOut && (
+        <div
+          className="staff-logout-loading-overlay"
+          role="status"
+          aria-live="polite"
+          aria-label="Logging out"
+        >
+          <div className="staff-logout-loading-card">
+            <span
+              className="staff-logout-loading-spinner"
+              aria-hidden="true"
+            />
+
+            <div>
+              <strong>Logging out…</strong>
+              <span>Securely ending your session.</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isOpen && (
         <button

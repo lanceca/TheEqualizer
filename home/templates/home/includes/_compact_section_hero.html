@@ -1,0 +1,44 @@
+<section
+    class="eq-section-hero"
+    aria-labelledby="{{ hero_id }}"
+>
+    <div class="eq-section-hero__copy">
+        <p class="eq-section-hero__kicker">
+            {{ hero_kicker }}
+        </p>
+
+        <h1 id="{{ hero_id }}">
+            {{ hero_title }}
+        </h1>
+
+        {% if hero_description %}
+            <p class="eq-section-hero__description">
+                {{ hero_description }}
+            </p>
+        {% endif %}
+
+        {% if hero_show_count or hero_meta_text %}
+            <div class="eq-section-hero__meta" aria-label="{{ hero_title }} summary">
+                {% if hero_show_count %}
+                    <span>
+                        <strong>{{ hero_count }}</strong>
+                        {{ hero_count_label }}{{ hero_count|pluralize }}
+                    </span>
+                {% endif %}
+
+                {% if hero_show_count and hero_meta_text %}
+                    <span class="eq-section-hero__meta-dot" aria-hidden="true">•</span>
+                {% endif %}
+
+                {% if hero_meta_text %}
+                    <span>{{ hero_meta_text }}</span>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="eq-section-hero__explore" aria-hidden="true">
+        <span>Explore</span>
+        <i></i>
+    </div>
+</section>

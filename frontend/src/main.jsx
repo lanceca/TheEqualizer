@@ -91,18 +91,12 @@ function getComponentProps(
       profileUrl:
         mountPoint.dataset.profileUrl
         || '#',
-      logoutUrl:
-        mountPoint.dataset.logoutUrl
-        || '#',
       notificationCount:
         Number.parseInt(
           mountPoint.dataset.notificationCount
           || '0',
           10,
         ) || 0,
-      csrfToken:
-        mountPoint.dataset.csrfToken
-        || '',
     }
   }
 

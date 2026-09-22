@@ -255,26 +255,7 @@ Digital Publications | The Equalizer
 
 <main class="digital-reader-page">
 
-    <header class="digital-reader-header">
-
-        <div class="digital-reader-header-copy">
-            <p class="digital-reader-kicker">
-                The Equalizer
-            </p>
-
-            <h1>Digital Publications</h1>
-
-            <p class="digital-reader-header-description">
-                Browse complete PDF issues of The Equalizer student publication
-                and open any issue in the interactive page-flipping reader.
-            </p>
-        </div>
-
-        <p class="digital-reader-count">
-            {{ digital_publications|length }} publication{{ digital_publications|length|pluralize }}
-        </p>
-
-    </header>
+    {% include "home/includes/_compact_section_hero.html" with hero_id="digital-publications-title" hero_kicker="The Equalizer library" hero_title="Digital Publications" hero_description="Browse complete PDF issues of The Equalizer student publication and open any issue in the interactive page-flipping reader." hero_show_count=True hero_count=digital_publications|length hero_count_label="publication" hero_meta_text="Complete issues • Interactive reader" %}
 
 
     <section class="digital-reader-grid">

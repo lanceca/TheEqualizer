@@ -501,3 +501,52 @@
     animation: none !important;
   }
 }
+
+
+/* ==========================================================
+   STAFF DIRECTORY EMAIL PRIVACY TOGGLE
+   ========================================================== */
+.account-email-toggle {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.account-email-toggle-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.account-email-toggle button {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 32px;
+
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+
+  border: 1px solid #d6e0da;
+  border-radius: 9px;
+
+  background: #fff;
+  color: #315f4b;
+
+  cursor: pointer;
+}
+
+.account-email-toggle button:hover {
+  background: #f1f6f3;
+  border-color: #b9cdc1;
+  color: #173e30;
+}
+
+.account-email-toggle button svg {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+}

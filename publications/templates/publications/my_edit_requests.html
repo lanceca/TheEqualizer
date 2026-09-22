@@ -309,6 +309,7 @@
                             class="secondary-button"
                             data-saved-article-preview
                             data-preview-template-id="edit-request-preview-{{ edit_request.id }}"
+                            data-preview-url="{% url 'staff_reader_article_preview' edit_request.article.id %}"
                         >
                             Preview Article
                         </button>

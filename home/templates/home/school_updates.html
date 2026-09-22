@@ -8,15 +8,7 @@ School Updates | The Equalizer
 
 <main class="school-updates-page">
 
-    <header class="school-updates-intro">
-        <p class="reader-section-kicker">
-            Exclusive Showcase
-        </p>
-
-        <h1>
-            School Updates
-        </h1>
-    </header>
+    {% include "home/includes/_compact_section_hero.html" with hero_id="school-updates-title" hero_kicker="Campus bulletin" hero_title="School Updates" hero_description="Browse campus announcements, event notices, and featured updates shared through The Equalizer." hero_show_count=True hero_count=advertisements|length hero_count_label="school update" hero_meta_text="Campus notices • Events • Announcements" %}
 
     {% if advertisements %}
 

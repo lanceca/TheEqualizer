@@ -5,6 +5,19 @@
     <label>From <input type="date" name="start" value="{{ filters.start }}"></label>
     <label>Through <input type="date" name="end" value="{{ filters.end }}"></label>
     {% if published_library %}<label class="filter-check"><input type="checkbox" name="older" value="30" {% if filters.older == '30' %}checked{% endif %}>30+ Days Old</label>{% endif %}
-    <button type="submit" class="secondary-button">Apply Filters</button>
-    <a href="{% url clear_route %}">Clear Filters</a>
+    <div class="library-filter-actions">
+        <button
+            type="submit"
+            class="secondary-button library-filter-button library-filter-button--apply"
+        >
+            Apply Filters
+        </button>
+
+        <a
+            href="{% url clear_route %}"
+            class="library-filter-button library-filter-button--clear"
+        >
+            Clear Filters
+        </a>
+    </div>
 </form>

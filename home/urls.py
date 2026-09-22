@@ -85,6 +85,18 @@ urlpatterns = [
     ),
 
     path(
+        "articles/<slug:slug>/history/",
+        views.reader_article_version_history,
+        name="reader_article_version_history",
+    ),
+
+    path(
+        "articles/<slug:slug>/history/<int:version_number>/",
+        views.reader_article_version_detail,
+        name="reader_article_version_detail",
+    ),
+
+    path(
         "articles/<slug:slug>/download-pdf/",
         views.download_article_pdf,
         name="download_article_pdf",

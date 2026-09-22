@@ -1,12 +1,22 @@
-import re
-
 from django import template
 from django.template.defaultfilters import truncatewords_html
 from django.utils.safestring import mark_safe
 
-from publications.rich_text import article_html
+from publications.rich_text import article_html, normalize_article_spacing
 
 register = template.Library()
+
+
+@register.filter
+def article_display_text(value):
+    """Render plain article metadata without leaking nested NBSP entities.
+
+    This deliberately normalizes only the known whitespace entity forms handled
+    by the central rich-text pipeline. The return value is *not* marked safe,
+    so Django auto-escaping remains active for titles, captions, credits, tags,
+    alt text, and other plain-text article fields.
+    """
+    return normalize_article_spacing(value)
 
 
 @register.filter
@@ -30,17 +40,10 @@ def rich_article_preview(value, words=40):
     except (TypeError, ValueError):
         limit = 40
 
+    # article_html() already applies the central whitespace normalizer
+    # before escaping/sanitizing, so card previews share the exact same
+    # entity handling as the reader article and staff reader preview.
     html = article_html(value)
-
-    # Normalize both normal and accidentally double-escaped NBSP entities.
-    # Only NBSP spellings are touched; arbitrary entities are not decoded.
-    html = re.sub(
-        r"(?:&amp;)?(?:&nbsp;|&#160;|&#x0*a0;)",
-        " ",
-        html,
-        flags=re.IGNORECASE,
-    )
-    html = html.replace("\u00a0", " ")
 
     return mark_safe(
         truncatewords_html(

@@ -520,6 +520,8 @@
     {% get_mobile_app_settings as mobile_app_settings %}
 
 
+    {% if not staff_preview_mode %}
+
     <header class="site-header">
 
         <div class="site-header-inner">
@@ -590,6 +592,8 @@
         </div>
 
     </header>
+
+    {% endif %}
 
 
 
