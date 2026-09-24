@@ -1,0 +1,513 @@
+{% load static %}
+
+<link
+    rel="stylesheet"
+    href="{% static 'react-dist/assets/equalizer-react.css' %}?v=20260924-people-profile-alignment-2"
+>
+
+<style>
+.people-form-section {
+    margin: 0 0 22px;
+    padding: 0 0 20px;
+    border-bottom: 1px solid var(--eq-border);
+}
+
+.people-form-section:last-of-type {
+    margin-bottom: 12px;
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.people-form-section-heading {
+    margin: 0 0 15px;
+}
+
+.people-form-section-heading span {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--eq-gold);
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+}
+
+.people-form-section-heading h3 {
+    margin: 0;
+    color: var(--eq-green-dark);
+    font-size: 17px;
+}
+
+.people-entry-help {
+    display: block;
+    margin-top: 6px;
+    color: var(--eq-muted);
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.people-entry-preview {
+    margin-top: 9px;
+}
+
+.people-entry-preview:empty {
+    display: none;
+}
+
+.people-reader-preview-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.people-reader-preview-heading > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+    text-align: left;
+}
+
+.people-reader-preview-heading .workflow-eyebrow {
+    display: block;
+    width: fit-content;
+    margin: 0 0 5px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    align-self: flex-start;
+    justify-self: start;
+    text-align: left !important;
+}
+
+.people-reader-preview-heading h2 {
+    margin: 0;
+    text-align: left;
+}
+
+.people-reader-preview-heading > p {
+    flex: 0 0 auto;
+    margin: 0;
+    color: var(--eq-muted);
+    font-size: 11px;
+    text-align: right;
+}
+
+.people-reader-preview.pt-page {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.people-reader-preview .people-reader-preview-modal {
+    width: 100%;
+    height: auto;
+    min-height: 500px;
+    max-height: none;
+    grid-template-columns: minmax(230px, .82fr) minmax(0, 1.18fr);
+    border: 1px solid rgba(16, 44, 35, .14);
+    border-radius: 18px;
+    box-shadow: 0 18px 46px rgba(9, 41, 31, .14);
+    animation: none;
+}
+
+.people-reader-preview .pt-modal-portrait-wrap {
+    min-height: 500px;
+    padding: 30px;
+}
+
+.people-reader-preview .pt-modal-portrait-frame {
+    width: min(84%, 300px);
+}
+
+.people-reader-preview .pt-modal-content {
+    height: auto;
+    text-align: left;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+    padding: 34px;
+    scrollbar-gutter: auto;
+}
+
+.people-reader-preview .pt-modal-content h2 {
+    font-size: clamp(30px, 3.4vw, 46px);
+}
+
+.people-reader-preview .pt-profile-details {
+    margin-top: 24px;
+}
+
+.people-reader-preview-panel {
+    min-width: 0;
+}
+
+.people-group-side {
+    display: grid;
+    gap: 22px;
+    min-width: 0;
+}
+
+@media (max-width: 1180px) {
+    .people-reader-preview .people-reader-preview-modal {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(280px, 340px) auto;
+    }
+
+    .people-reader-preview .pt-modal-portrait-wrap {
+        min-height: 280px;
+    }
+}
+
+@media (max-width: 620px) {
+    .people-reader-preview-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .people-reader-preview-heading p {
+        text-align: left;
+    }
+
+    .people-reader-preview .people-reader-preview-modal {
+        min-height: 0;
+        grid-template-rows: minmax(220px, 280px) auto;
+    }
+
+    .people-reader-preview .pt-modal-content {
+        padding: 26px 20px 30px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    function initializePeopleCharacterCounters() {
+        document.querySelectorAll("[data-people-counter]").forEach(function (field) {
+            const counter = document.getElementById(
+                field.getAttribute("data-people-counter")
+            );
+
+            if (!counter) {
+                return;
+            }
+
+            const maximum = Number(field.getAttribute("maxlength")) || 0;
+
+            function updateCounter() {
+                const current = field.value.length;
+
+                counter.textContent = current + "/" + maximum;
+
+                counter.classList.toggle(
+                    "is-near-limit",
+                    maximum > 0
+                    && current >= maximum * 0.9
+                    && current < maximum
+                );
+
+                counter.classList.toggle(
+                    "is-at-limit",
+                    maximum > 0
+                    && current >= maximum
+                );
+            }
+
+            field.addEventListener("input", updateCounter);
+            updateCounter();
+        });
+    }
+
+    function splitPeopleEntries(value) {
+        return String(value || "")
+            .split(/[,\\r\\n]+/)
+            .map(function (entry) {
+                return entry.replace(/\\s+/g, " ").trim();
+            })
+            .filter(Boolean);
+    }
+
+    function renderPeopleChips(container, entries) {
+        if (!container) {
+            return;
+        }
+
+        container.innerHTML = "";
+
+        entries.forEach(function (entry) {
+            const chip = document.createElement("span");
+            chip.className = "pt-profile-chip";
+            chip.textContent = entry;
+            container.appendChild(chip);
+        });
+    }
+
+    function getFormValue(form, name) {
+        const field = form.elements.namedItem(name);
+
+        if (!field || typeof field.value !== "string") {
+            return "";
+        }
+
+        return field.value.trim();
+    }
+
+    function setPreviewRow(preview, name, hasValue) {
+        const row = preview.querySelector(
+            '[data-people-preview-row="' + name + '"]'
+        );
+
+        if (row) {
+            row.hidden = !hasValue;
+        }
+    }
+
+    function updatePeoplePreview(form, preview) {
+        if (!form || !preview) {
+            return;
+        }
+
+        const name = getFormValue(form, "name");
+        const role = getFormValue(form, "role_title");
+        const position = getFormValue(form, "school_position");
+        const department = getFormValue(form, "institute_department");
+        const courses = splitPeopleEntries(
+            getFormValue(form, "courses_handled")
+        );
+        const achievements = splitPeopleEntries(
+            getFormValue(form, "achievements")
+        );
+        const additional = getFormValue(
+            form,
+            "additional_information"
+        );
+
+        const nameTarget = preview.querySelector(
+            "[data-people-preview-name]"
+        );
+        const roleTarget = preview.querySelector(
+            "[data-people-preview-role]"
+        );
+        const positionTarget = preview.querySelector(
+            "[data-people-preview-position]"
+        );
+        const departmentTarget = preview.querySelector(
+            "[data-people-preview-department]"
+        );
+        const additionalTarget = preview.querySelector(
+            "[data-people-preview-additional]"
+        );
+
+        if (nameTarget) {
+            nameTarget.textContent = name || "Profile Name";
+        }
+
+        if (roleTarget) {
+            roleTarget.textContent = role;
+            roleTarget.hidden = !role;
+        }
+
+        if (positionTarget) {
+            positionTarget.textContent = position;
+        }
+
+        if (departmentTarget) {
+            departmentTarget.textContent = department;
+        }
+
+        if (additionalTarget) {
+            additionalTarget.textContent = additional;
+        }
+
+        setPreviewRow(preview, "school_position", Boolean(position));
+        setPreviewRow(preview, "institute_department", Boolean(department));
+        setPreviewRow(preview, "courses_handled", courses.length > 0);
+        setPreviewRow(preview, "achievements", achievements.length > 0);
+        setPreviewRow(preview, "additional_information", Boolean(additional));
+
+        renderPeopleChips(
+            preview.querySelector("[data-people-preview-courses]"),
+            courses
+        );
+
+        renderPeopleChips(
+            preview.querySelector("[data-people-preview-achievements]"),
+            achievements
+        );
+
+        const placeholder = preview.querySelector(
+            "[data-people-preview-placeholder]"
+        );
+
+        if (placeholder) {
+            placeholder.textContent = (
+                name ? name.slice(0, 1).toUpperCase() : "?"
+            );
+        }
+
+        document.querySelectorAll(
+            "[data-people-entry-feedback]"
+        ).forEach(function (container) {
+            const fieldName = container.getAttribute(
+                "data-people-entry-feedback"
+            );
+
+            const entries = splitPeopleEntries(
+                getFormValue(form, fieldName)
+            );
+
+            renderPeopleChips(container, entries);
+        });
+    }
+
+    function initializePeopleLivePreview() {
+        const form = document.querySelector(
+            "[data-people-profile-form]"
+        );
+        const preview = document.querySelector(
+            "[data-people-live-preview]"
+        );
+
+        if (!form || !preview) {
+            return;
+        }
+
+        const imageInput = form.elements.namedItem("image");
+        const removeImageInput = form.elements.namedItem("remove_image");
+        const previewImage = preview.querySelector(
+            "[data-people-preview-image]"
+        );
+        const previewPlaceholder = preview.querySelector(
+            "[data-people-preview-placeholder]"
+        );
+
+        function showPeopleImagePlaceholder() {
+            if (!previewImage || !previewPlaceholder) {
+                return;
+            }
+
+            previewImage.hidden = true;
+            previewPlaceholder.hidden = false;
+        }
+
+        function restoreOriginalPeopleImage() {
+            if (!previewImage || !previewPlaceholder) {
+                return;
+            }
+
+            const originalSource = (
+                previewImage.getAttribute("data-original-src")
+                || ""
+            );
+
+            if (originalSource) {
+                previewImage.src = originalSource;
+                previewImage.hidden = false;
+                previewPlaceholder.hidden = true;
+            } else {
+                showPeopleImagePlaceholder();
+            }
+        }
+
+        function syncPeoplePreviewImage() {
+            if (!previewImage || !previewPlaceholder) {
+                return;
+            }
+
+            if (removeImageInput && removeImageInput.checked) {
+                if (imageInput) {
+                    imageInput.value = "";
+                }
+
+                showPeopleImagePlaceholder();
+                return;
+            }
+
+            const file = (
+                imageInput
+                && imageInput.files
+                && imageInput.files.length
+            ) ? imageInput.files[0] : null;
+
+            if (!file) {
+                restoreOriginalPeopleImage();
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = function () {
+                previewImage.src = reader.result;
+                previewImage.hidden = false;
+                previewPlaceholder.hidden = true;
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        form.addEventListener("input", function () {
+            updatePeoplePreview(form, preview);
+        });
+
+        form.addEventListener("change", function () {
+            updatePeoplePreview(form, preview);
+        });
+
+        if (imageInput) {
+            imageInput.addEventListener("change", function () {
+                const hasReplacement = (
+                    imageInput.files
+                    && imageInput.files.length
+                );
+
+                if (
+                    hasReplacement
+                    && removeImageInput
+                ) {
+                    removeImageInput.checked = false;
+                }
+
+                syncPeoplePreviewImage();
+            });
+        }
+
+        if (removeImageInput) {
+            removeImageInput.addEventListener("change", function () {
+                if (
+                    removeImageInput.checked
+                    && imageInput
+                ) {
+                    imageInput.value = "";
+                }
+
+                syncPeoplePreviewImage();
+            });
+        }
+
+        updatePeoplePreview(form, preview);
+        syncPeoplePreviewImage();
+    }
+
+    initializePeopleCharacterCounters();
+    initializePeopleLivePreview();
+});
+</script>
+
+<style>
+.people-reader-preview .pt-kicker,
+.people-reader-preview .pt-modal-content h2,
+.people-reader-preview .pt-modal-role,
+.people-reader-preview .pt-profile-details dt,
+.people-reader-preview .pt-profile-details dd {
+    text-align: left;
+}
+
+.people-reader-preview .pt-profile-chip-list {
+    justify-content: flex-start;
+}
+
+.people-reader-preview .pt-modal-portrait-frame > [hidden] {
+    display: none !important;
+}
+</style>

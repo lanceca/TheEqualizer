@@ -1814,6 +1814,7 @@ class PeopleProfile(models.Model):
     name = models.CharField(max_length=180)
     image = models.ImageField(
         upload_to="people_profiles/",
+        blank=True,
         validators=[validate_article_image],
     )
     role_title = models.CharField(max_length=180, blank=True)

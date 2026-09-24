@@ -1,0 +1,116 @@
+{% comment %}
+Shared People & Teams live preview.
+Uses the same pt-* class system as the public React Profile Spotlight modal.
+The management-side JS updates this preview directly from the current form.
+{% endcomment %}
+
+<div
+    class="people-reader-preview pt-page"
+    data-people-live-preview
+>
+    <section
+        class="pt-modal people-reader-preview-modal"
+        aria-label="Live reader profile preview"
+    >
+        <div class="pt-modal-portrait-wrap">
+            <div class="pt-modal-portrait-frame">
+                <img
+                    class="pt-modal-portrait"
+                    data-people-preview-image
+                    {% if profile.image %}
+                        src="{{ profile.image.url }}"
+                        data-original-src="{{ profile.image.url }}"
+                        alt="{{ profile.name }}"
+                    {% else %}
+                        src=""
+                        data-original-src=""
+                        alt=""
+                        hidden
+                    {% endif %}
+                >
+
+                <div
+                    class="pt-modal-portrait pt-image-placeholder"
+                    data-people-preview-placeholder
+                    aria-hidden="true"
+                    {% if profile.image %}hidden{% endif %}
+                >
+                    {% if profile.name %}{{ profile.name|slice:":1" }}{% else %}?{% endif %}
+                </div>
+
+                <div class="pt-modal-image-glow" aria-hidden="true"></div>
+            </div>
+        </div>
+
+        <div class="pt-modal-content">
+            <p class="pt-kicker">Profile Spotlight</p>
+
+            <h2 data-people-preview-name>
+                {{ profile.name|default:"Profile Name" }}
+            </h2>
+
+            <p
+                class="pt-modal-role"
+                data-people-preview-role
+                {% if not profile.role_title %}hidden{% endif %}
+            >
+                {{ profile.role_title }}
+            </p>
+
+            <dl class="pt-profile-details">
+                <div
+                    data-people-preview-row="school_position"
+                    {% if not profile.school_position %}hidden{% endif %}
+                >
+                    <dt>Position</dt>
+                    <dd data-people-preview-position>{{ profile.school_position }}</dd>
+                </div>
+
+                <div
+                    data-people-preview-row="institute_department"
+                    {% if not profile.institute_department %}hidden{% endif %}
+                >
+                    <dt>Institute / Department</dt>
+                    <dd data-people-preview-department>{{ profile.institute_department }}</dd>
+                </div>
+
+                <div
+                    data-people-preview-row="courses_handled"
+                    {% if not profile.courses_handled %}hidden{% endif %}
+                >
+                    <dt>Courses Handled</dt>
+                    <dd>
+                        <span
+                            class="pt-profile-chip-list"
+                            data-people-preview-courses
+                        ></span>
+                    </dd>
+                </div>
+
+                <div
+                    data-people-preview-row="achievements"
+                    {% if not profile.achievements %}hidden{% endif %}
+                >
+                    <dt>Achievements / Contributions</dt>
+                    <dd>
+                        <span
+                            class="pt-profile-chip-list pt-profile-chip-list--wide"
+                            data-people-preview-achievements
+                        ></span>
+                    </dd>
+                </div>
+
+                <div
+                    data-people-preview-row="additional_information"
+                    {% if not profile.additional_information %}hidden{% endif %}
+                >
+                    <dt>Additional Information</dt>
+                    <dd
+                        class="pt-profile-prose"
+                        data-people-preview-additional
+                    >{{ profile.additional_information }}</dd>
+                </div>
+            </dl>
+        </div>
+    </section>
+</div>

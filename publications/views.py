@@ -9723,13 +9723,38 @@ def can_manage_people_section(user, config):
     return bool(config and user.role == config["role"])
 
 
+def normalize_people_entry_list(value):
+    """Normalize comma/newline-separated profile entries for consistent display."""
+
+    raw_entries = re.split(
+        r"[,\\r\\n]+",
+        str(value or ""),
+    )
+
+    entries = []
+
+    for raw_entry in raw_entries:
+        entry = " ".join(
+            raw_entry.split()
+        ).strip()
+
+        if entry:
+            entries.append(entry)
+
+    return ", ".join(entries)
+
+
 def read_people_form(request):
     name = request.POST.get("name", "").strip()
     role_title = request.POST.get("role_title", "").strip()
-    courses_handled = request.POST.get("courses_handled", "").strip()
+    courses_handled = normalize_people_entry_list(
+        request.POST.get("courses_handled", "")
+    )
     school_position = request.POST.get("school_position", "").strip()
     institute_department = request.POST.get("institute_department", "").strip()
-    achievements = request.POST.get("achievements", "").strip()
+    achievements = normalize_people_entry_list(
+        request.POST.get("achievements", "")
+    )
     additional_information = request.POST.get("additional_information", "").strip()
 
     validate_management_text_limit(name, "Name", 40)
@@ -9894,9 +9919,15 @@ def edit_people_profile(request, section_slug, profile_id):
     if request.method == "POST":
         old_image_name = profile.image.name if profile.image else ""
         replacement_image = request.FILES.get("image")
+        remove_image = request.POST.get("remove_image") == "1"
 
         try:
             data = read_people_form(request)
+
+            if replacement_image and remove_image:
+                raise ValidationError(
+                    "Choose either a replacement photo or remove the current photo, not both."
+                )
 
             if replacement_image:
                 validate_article_image(replacement_image)
@@ -9908,20 +9939,28 @@ def edit_people_profile(request, section_slug, profile_id):
 
             if replacement_image:
                 profile.image = replacement_image
+            elif remove_image:
+                profile.image = ""
 
             profile.full_clean()
             profile.save()
 
         except ValidationError as error:
+            # Keep the persisted image available while re-rendering a failed edit.
+            # The Remove Photo checkbox itself remains preserved from request.POST
+            # and the live preview will still show the intended placeholder state.
+            profile.image = old_image_name
+
             messages.error(
                 request,
                 get_validation_error_message(error),
             )
         else:
+            new_image_name = profile.image.name if profile.image else ""
+
             if (
-                replacement_image
-                and old_image_name
-                and old_image_name != profile.image.name
+                old_image_name
+                and old_image_name != new_image_name
             ):
                 delete_storage_file_safely(
                     old_image_name
