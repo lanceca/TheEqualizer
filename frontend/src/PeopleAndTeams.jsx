@@ -9,16 +9,40 @@ function splitLines(value) {
     .filter(Boolean)
 }
 
-function ProfileDetails({ profile }) {
-  const details = [
-    ['Position', profile.school_position],
-    ['Institute / Department', profile.institute_department],
-    ['Courses Handled', profile.courses_handled],
-    ['Achievements / Contributions', profile.achievements],
-    ['Additional Information', profile.additional_information],
-  ].filter(([, value]) => String(value || '').trim())
+function splitEntries(value) {
+  return String(value || '')
+    .split(/[,\r\n]+/)
+    .map((entry) => entry.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+}
 
-  if (!details.length) {
+function ProfileChipList({ value, wide = false }) {
+  const entries = splitEntries(value)
+
+  if (!entries.length) return null
+
+  return (
+    <span className={`pt-profile-chip-list${wide ? ' pt-profile-chip-list--wide' : ''}`}>
+      {entries.map((entry, index) => (
+        <span
+          className="pt-profile-chip"
+          key={`${entry}-${index}`}
+        >
+          {entry}
+        </span>
+      ))}
+    </span>
+  )
+}
+
+function ProfileDetails({ profile }) {
+  const hasPosition = String(profile.school_position || '').trim()
+  const hasDepartment = String(profile.institute_department || '').trim()
+  const hasCourses = splitEntries(profile.courses_handled).length > 0
+  const hasAchievements = splitEntries(profile.achievements).length > 0
+  const hasAdditional = splitLines(profile.additional_information).length > 0
+
+  if (!hasPosition && !hasDepartment && !hasCourses && !hasAchievements && !hasAdditional) {
     return (
       <p className="pt-profile-empty-copy">
         More profile details will be added soon.
@@ -28,16 +52,48 @@ function ProfileDetails({ profile }) {
 
   return (
     <dl className="pt-profile-details">
-      {details.map(([label, value]) => (
-        <div key={label}>
-          <dt>{label}</dt>
+      {hasPosition && (
+        <div>
+          <dt>Position</dt>
+          <dd>{profile.school_position}</dd>
+        </div>
+      )}
+
+      {hasDepartment && (
+        <div>
+          <dt>Institute / Department</dt>
+          <dd>{profile.institute_department}</dd>
+        </div>
+      )}
+
+      {hasCourses && (
+        <div>
+          <dt>Courses Handled</dt>
           <dd>
-            {splitLines(value).map((line, index) => (
-              <span key={`${label}-${index}`}>{line}</span>
+            <ProfileChipList value={profile.courses_handled} />
+          </dd>
+        </div>
+      )}
+
+      {hasAchievements && (
+        <div>
+          <dt>Achievements / Contributions</dt>
+          <dd>
+            <ProfileChipList value={profile.achievements} wide />
+          </dd>
+        </div>
+      )}
+
+      {hasAdditional && (
+        <div>
+          <dt>Additional Information</dt>
+          <dd className="pt-profile-prose">
+            {splitLines(profile.additional_information).map((line, index) => (
+              <span key={`additional-${index}`}>{line}</span>
             ))}
           </dd>
         </div>
-      ))}
+      )}
     </dl>
   )
 }
@@ -120,18 +176,20 @@ function ProfileModal({ profile, onClose }) {
         </button>
 
         <div className="pt-modal-portrait-wrap">
-          {profile.image_url ? (
-            <img
-              src={profile.image_url}
-              alt={profile.name}
-              className="pt-modal-portrait"
-            />
-          ) : (
-            <div className="pt-modal-portrait pt-image-placeholder" aria-hidden="true">
-              {profile.name?.slice(0, 1) || '?'}
-            </div>
-          )}
-          <div className="pt-modal-image-glow" aria-hidden="true" />
+          <div className="pt-modal-portrait-frame">
+            {profile.image_url ? (
+              <img
+                src={profile.image_url}
+                alt={profile.name}
+                className="pt-modal-portrait"
+              />
+            ) : (
+              <div className="pt-modal-portrait pt-image-placeholder" aria-hidden="true">
+                {profile.name?.slice(0, 1) || '?'}
+              </div>
+            )}
+            <div className="pt-modal-image-glow" aria-hidden="true" />
+          </div>
         </div>
 
         <div
