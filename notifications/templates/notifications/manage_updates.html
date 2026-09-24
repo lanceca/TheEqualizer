@@ -1,0 +1,180 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+<div data-react-component="SystemUpdatesEnhancer" data-mode="manage"></div>
+
+<div class="system-updates-shell system-updates-shell--manage" data-system-updates-root>
+    <section class="system-updates-hero">
+        <div class="system-updates-hero-copy">
+            <span class="system-updates-kicker">Super Admin controls</span>
+            <h1>System Updates</h1>
+            <p>
+                Prepare release notes, target the right staff roles, and keep a
+                permanent record of changes across The Equalizer workspace.
+            </p>
+
+            <div class="system-updates-hero-actions">
+                <a
+                    class="system-update-hero-button"
+                    href="{% url 'create_system_update' %}"
+                >
+                    <span aria-hidden="true">＋</span>
+                    Create Update
+                </a>
+            </div>
+        </div>
+
+        <div class="system-updates-hero-summary">
+            <span>Release storage</span>
+            <strong>{{ updates|length }}</strong>
+            <small>draft{{ updates|length|pluralize }} and published release{{ updates|length|pluralize }}</small>
+        </div>
+    </section>
+
+    <section class="system-updates-content">
+        <header class="system-updates-section-heading">
+            <div>
+                <span>Update storage</span>
+                <h2>Manage releases</h2>
+            </div>
+            <p>
+                Draft, publish, and control popup visibility without removing release history.
+            </p>
+        </header>
+
+        <div class="system-update-list system-update-list--management">
+            {% for update in updates %}
+                <article
+                    class="system-update-card system-update-card--management system-update-card--{{ update.update_type|lower }}"
+                    data-system-update-reveal
+                >
+                    <div class="system-update-card-rail" aria-hidden="true"></div>
+
+                    <div class="system-update-card-header">
+                        <div class="system-update-card-badges">
+                            <span class="system-update-version">
+                                {% if update.version %}{{ update.version }}{% else %}Unversioned{% endif %}
+                            </span>
+
+                            <span class="system-update-type system-update-type--{{ update.update_type|lower }}">
+                                {{ update.get_update_type_display }}
+                            </span>
+
+                            {% if update.is_published %}
+                                <span class="system-update-status system-update-status--published">
+                                    Published
+                                </span>
+                            {% else %}
+                                <span class="system-update-status system-update-status--draft">
+                                    Draft
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        {% if update.is_published %}
+                            <time datetime="{{ update.published_at|date:'c' }}">
+                                {{ update.published_at|date:"M. j, Y" }}
+                            </time>
+                        {% else %}
+                            <span class="system-update-draft-date">Not published yet</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="system-update-card-copy system-update-card-copy--compact">
+                        <h2>{{ update.title }}</h2>
+                        <p class="system-update-summary">{{ update.summary }}</p>
+                    </div>
+
+                    <div class="system-update-compact-meta" aria-label="Release settings">
+                        <span class="system-update-audience-line">
+                            <span>Audience</span>
+                            <strong>
+                                {% if update.target_roles %}
+                                    {{ update.target_roles|join:", " }}
+                                {% else %}
+                                    All Staff
+                                {% endif %}
+                            </strong>
+                        </span>
+
+                        <span class="system-update-setting-chip{% if update.show_popup %} is-enabled{% endif %}">
+                            {% if update.show_popup %}Popup enabled{% else %}Popup hidden{% endif %}
+                        </span>
+
+                        {% if update.require_acknowledgement %}
+                            <span class="system-update-setting-chip is-required">
+                                Acknowledgement required
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <footer class="system-update-card-footer system-update-card-footer--management">
+                        {% if not update.is_published %}
+                            <a
+                                class="system-update-secondary-button"
+                                href="{% url 'edit_system_update' update.pk %}"
+                            >
+                                Edit Draft
+                            </a>
+
+                            <form
+                                method="post"
+                                action="{% url 'system_update_action' update.pk %}"
+                                data-update-action-form
+                            >
+                                {% csrf_token %}
+                                <button
+                                    name="action"
+                                    value="publish"
+                                    class="system-update-primary-button"
+                                    type="submit"
+                                    data-loading-label="Publishing…"
+                                >
+                                    Publish Update
+                                </button>
+                            </form>
+                        {% elif update.show_popup %}
+                            <form
+                                method="post"
+                                action="{% url 'system_update_action' update.pk %}"
+                                data-update-action-form
+                            >
+                                {% csrf_token %}
+                                <button
+                                    name="action"
+                                    value="hide_popup"
+                                    class="system-update-secondary-button"
+                                    type="submit"
+                                    data-loading-label="Hiding…"
+                                >
+                                    Hide Popup
+                                </button>
+                            </form>
+                        {% else %}
+                            <span class="system-update-acknowledged">
+                                <span aria-hidden="true">✓</span>
+                                Popup hidden · History retained
+                            </span>
+                        {% endif %}
+                    </footer>
+                </article>
+            {% empty %}
+                <div class="system-updates-empty" data-system-update-reveal>
+                    <span aria-hidden="true">＋</span>
+                    <h2>No system updates yet.</h2>
+                    <p>
+                        Create the first release note to start the permanent
+                        update history for your staff workspace.
+                    </p>
+                    <a
+                        class="system-update-primary-button"
+                        href="{% url 'create_system_update' %}"
+                    >
+                        Create first update
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

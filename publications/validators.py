@@ -6,6 +6,8 @@ from PIL import Image, UnidentifiedImageError
 from pypdf import PdfReader
 from pypdf.errors import PdfReadError
 
+from .rich_text import article_plain_text
+
 
 def validate_article_image(uploaded_file):
     """
@@ -494,7 +496,7 @@ def validate_article_text_fields(
             ARTICLE_TEXT_LIMITS["excerpt"],
         ),
         (
-            content,
+            article_plain_text(content),
             "Article content",
             ARTICLE_TEXT_LIMITS["content"],
         ),

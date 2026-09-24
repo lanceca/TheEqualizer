@@ -1,4 +1,5 @@
 {% extends "staff_base.html" %}
+{% load article_text %}
 
 {% block staff_content %}
 
@@ -332,6 +333,7 @@
                             class="secondary-button"
                             data-saved-article-preview
                             data-preview-template-id="my-submission-preview-{{ submission.id }}"
+                            data-preview-url="{% url 'staff_reader_submission_preview' submission.id %}"
                         >
                             Preview Submitted Version
                         </button>
@@ -493,9 +495,9 @@
         <div class="saved-preview-content">
 
             {% if submission.snapshot_content %}
-                {{ submission.snapshot_content|linebreaks }}
+                {{ submission.snapshot_content|rich_article }}
             {% else %}
-                {{ submission.article.content|linebreaks }}
+                {{ submission.article.content|rich_article }}
             {% endif %}
 
         </div>

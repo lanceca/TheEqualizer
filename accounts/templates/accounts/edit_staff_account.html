@@ -52,6 +52,15 @@
             {{ managed_user.get_role_display }}
         </p>
 
+        <div class="managed-account-current-status">
+            <span>Account status</span>
+            {% if managed_user.is_active %}
+                <strong class="account-status-pill is-active">Active</strong>
+            {% else %}
+                <strong class="account-status-pill is-inactive">Inactive</strong>
+            {% endif %}
+        </div>
+
         <dl class="managed-account-meta">
 
             <div>
@@ -200,14 +209,15 @@
 
                 <a
                     href="{% url 'manage_staff_accounts' %}"
-                    class="secondary-button"
+                    class="eq-action-button eq-action-button--secondary"
                 >
                     Cancel
                 </a>
 
                 <button
                     type="submit"
-                    class="approve-button"
+                    class="eq-action-button eq-action-button--primary"
+                    data-loading-label="Saving…"
                 >
                     Save Changes
                 </button>
@@ -215,6 +225,8 @@
             </div>
 
         </form>
+
+        {% include "accounts/_account_status.html" with toggle_route="toggle_staff_account_status" %}
 
     </section>
 

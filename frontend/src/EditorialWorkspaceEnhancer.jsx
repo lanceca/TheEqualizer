@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { articleText } from './articleRichText'
 
 function textValue(selector) {
   const element = document.querySelector(selector)
@@ -7,7 +8,7 @@ function textValue(selector) {
     return ''
   }
 
-  return String(element.value || '').trim()
+  return (selector === '#content' ? articleText(element.value || '') : String(element.value || '')).trim()
 }
 
 function selectedLabel(selector) {

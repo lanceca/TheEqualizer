@@ -67,6 +67,29 @@ urlpatterns = [
         name="delete_draft",
     ),
 
+
+    # =========================
+    # STAFF READER-PARITY PREVIEW
+    # =========================
+
+    path(
+        "preview/article/<int:article_id>/",
+        views.staff_reader_article_preview,
+        name="staff_reader_article_preview",
+    ),
+
+    path(
+        "preview/submission/<int:submission_id>/",
+        views.staff_reader_submission_preview,
+        name="staff_reader_submission_preview",
+    ),
+
+    path(
+        "preview/live/",
+        views.staff_reader_live_preview,
+        name="staff_reader_live_preview",
+    ),
+
     # =========================
     # PUBLISHED ARTICLES
     # =========================

@@ -1,0 +1,160 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+<div data-react-component="SystemUpdatesEnhancer" data-mode="form"></div>
+
+<div class="system-updates-shell system-updates-shell--form" data-system-updates-root>
+    <section class="system-updates-hero system-updates-hero--compact">
+        <div class="system-updates-hero-copy">
+            <span class="system-updates-kicker">Super Admin controls</span>
+            <h1>{% if update %}Edit Update Draft{% else %}Create Update Draft{% endif %}</h1>
+            <p>
+                Prepare a focused release note for staff. Drafts remain private
+                until you publish them from System Updates.
+            </p>
+        </div>
+
+        <a
+            class="system-update-hero-back"
+            href="{% url 'manage_system_updates' %}"
+        >
+            <span aria-hidden="true">←</span>
+            Back to System Updates
+        </a>
+    </section>
+
+    <div class="system-update-form-layout">
+        <section class="system-update-form-panel">
+            <header class="system-update-form-heading">
+                <span>Release composer</span>
+                <h2>Update information</h2>
+                <p>
+                    Change notes are plain text. Keep each change concise and
+                    easy to scan in the popup and permanent history.
+                </p>
+            </header>
+
+            <form method="post" class="system-update-editor" data-system-update-form>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="system-update-form-errors" role="alert">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <div class="system-update-field-grid system-update-field-grid--two">
+                    <div class="system-update-field">
+                        <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+                        {{ form.title }}
+                        {{ form.title.errors }}
+                    </div>
+
+                    <div class="system-update-field">
+                        <label for="{{ form.version.id_for_label }}">{{ form.version.label }}</label>
+                        {{ form.version }}
+                        {{ form.version.errors }}
+                        <small>Example: v1.5, Alpha 0.9, September Update</small>
+                    </div>
+                </div>
+
+                <div class="system-update-field">
+                    <label for="{{ form.summary.id_for_label }}">{{ form.summary.label }}</label>
+                    {{ form.summary }}
+                    {{ form.summary.errors }}
+                    <small>Shown prominently in the popup and Update History.</small>
+                </div>
+
+                <div class="system-update-field-grid system-update-field-grid--two">
+                    <div class="system-update-field">
+                        <label for="{{ form.update_type.id_for_label }}">{{ form.update_type.label }}</label>
+                        {{ form.update_type }}
+                        {{ form.update_type.errors }}
+                    </div>
+
+                    <div class="system-update-option-card">
+                        <span>Popup behavior</span>
+                        <label class="system-update-switch-row">
+                            {{ form.show_popup }}
+                            <span>
+                                <strong>Show What's New popup</strong>
+                                <small>Display this release to its target audience after publishing.</small>
+                            </span>
+                        </label>
+
+                        <label class="system-update-switch-row">
+                            {{ form.require_acknowledgement }}
+                            <span>
+                                <strong>Require acknowledgement</strong>
+                                <small>Keep the update pending until the user explicitly confirms it.</small>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="system-update-field system-update-field--notes">
+                    <label for="{{ form.change_notes.id_for_label }}">{{ form.change_notes.label }}</label>
+                    {{ form.change_notes }}
+                    {{ form.change_notes.errors }}
+                    <small>
+                        Suggested format: one change per line. Prefix lines with
+                        NEW:, IMPROVED:, FIXED:, IMPORTANT:, or MAINTENANCE: when useful.
+                    </small>
+                </div>
+
+                <fieldset class="system-update-audience-fieldset">
+                    <legend>Target audience</legend>
+                    <p>
+                        Select one or more staff roles. Leave every role unchecked
+                        to publish the update to All Staff.
+                    </p>
+
+                    <div class="system-update-role-grid">
+                        {% for checkbox in form.target_roles %}
+                            <label class="system-update-role-option">
+                                {{ checkbox.tag }}
+                                <span>{{ checkbox.choice_label }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+
+                    {{ form.target_roles.errors }}
+                    <div class="system-update-audience-summary" data-update-audience-summary>
+                        All Staff
+                    </div>
+                </fieldset>
+
+                <div class="system-update-form-actions">
+                    <a
+                        class="system-update-secondary-button"
+                        href="{% url 'manage_system_updates' %}"
+                    >
+                        Cancel
+                    </a>
+                    <button
+                        type="submit"
+                        class="system-update-primary-button"
+                        data-loading-label="Saving draft…"
+                    >
+                        Save Draft
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <aside class="system-update-form-guide">
+            <div class="system-update-guide-card">
+                <span class="system-update-guide-kicker">Release-note guide</span>
+                <h2>Keep updates useful at a glance.</h2>
+                <ul>
+                    <li>Lead with what changed, not implementation details.</li>
+                    <li>Use a short version or release label consistently.</li>
+                    <li>Choose the narrowest audience that needs the update.</li>
+                    <li>Reserve Important for changes staff should not miss.</li>
+                    <li>Use acknowledgement only when confirmation matters.</li>
+                </ul>
+            </div>
+        </aside>
+    </div>
+</div>
+{% endblock %}

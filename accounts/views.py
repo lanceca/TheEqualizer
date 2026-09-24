@@ -2340,7 +2340,7 @@ def download_adviser_analytics_pdf(request):
                     ],
                 ],
                 [
-                    "Deletion requests",
+                    "Archive requests",
                     deletion_request_counts[
                         DeletionRequest.Status.PENDING
                     ],
@@ -3241,6 +3241,11 @@ def change_username(request):
 )
 def staff_directory(request):
 
+    can_view_staff_emails = (
+        request.user.role
+        == User.Role.ADVISER
+    )
+
     search_query = request.GET.get(
         "q",
         "",
@@ -3276,20 +3281,29 @@ def staff_directory(request):
 
     if search_query:
 
+        directory_search = (
+            Q(
+                username__icontains=search_query
+            )
+            | Q(
+                first_name__icontains=search_query
+            )
+            | Q(
+                last_name__icontains=search_query
+            )
+        )
+
+        # Email is intentionally searchable only by the Adviser.
+        # EIC users do not receive email values in rendered directory
+        # markup and cannot infer them through the search endpoint.
+        if can_view_staff_emails:
+            directory_search |= Q(
+                email__icontains=search_query
+            )
+
         staff_accounts = (
             staff_accounts.filter(
-                Q(
-                    username__icontains=search_query
-                )
-                | Q(
-                    first_name__icontains=search_query
-                )
-                | Q(
-                    last_name__icontains=search_query
-                )
-                | Q(
-                    email__icontains=search_query
-                )
+                directory_search
             )
         )
 
@@ -3320,6 +3334,9 @@ def staff_directory(request):
             ),
             "search_query": search_query,
             "selected_role": selected_role,
+            "can_view_staff_emails": (
+                can_view_staff_emails
+            ),
             "role_choices": [
                 (
                     User.Role.ADVISER,
@@ -3629,7 +3646,7 @@ def get_staff_deactivation_blockers(staff_user):
         if pending_deletion_requests:
             blockers.append(
                 (
-                    f"{pending_deletion_requests} pending deletion "
+                    f"{pending_deletion_requests} pending archive "
                     f"request{'s' if pending_deletion_requests != 1 else ''} "
                     "still require a decision."
                 )
@@ -3878,7 +3895,7 @@ def edit_staff_account(
                 staff_user.is_active
                 and not form.cleaned_data.get(
                     "is_active",
-                    False,
+                    staff_user.is_active,
                 )
             )
 

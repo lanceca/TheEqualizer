@@ -1,5 +1,5 @@
 {% extends "public_base.html" %}
-{% load static mobile_app_tags %}
+{% load static mobile_app_tags article_text %}
 
 {% block title %}
 The Equalizer
@@ -171,19 +171,19 @@ The Equalizer
                     </p>
 
 
-                    <p class="reader-story-excerpt">
+                    {% if lead_article.excerpt %}
 
-                        {% if lead_article.excerpt %}
-
+                        <p class="reader-story-excerpt">
                             {{ lead_article.excerpt|truncatewords:48 }}
+                        </p>
 
-                        {% else %}
+                    {% else %}
 
-                            {{ lead_article.content|striptags|truncatewords:48 }}
+                        <div class="reader-story-excerpt reader-rich-preview reader-rich-preview--lead">
+                            {{ lead_article.content|rich_article_preview:48 }}
+                        </div>
 
-                        {% endif %}
-
-                    </p>
+                    {% endif %}
 
 
                     <a
@@ -358,19 +358,19 @@ The Equalizer
 
                                 </p>
 
-                                <p class="reader-story-card-excerpt">
+                                {% if article.excerpt %}
 
-                                    {% if article.excerpt %}
-
+                                    <p class="reader-story-card-excerpt">
                                         {{ article.excerpt|truncatewords:28 }}
+                                    </p>
 
-                                    {% else %}
+                                {% else %}
 
-                                        {{ article.content|striptags|truncatewords:28 }}
+                                    <div class="reader-story-card-excerpt reader-rich-preview reader-rich-preview--card">
+                                        {{ article.content|rich_article_preview:28 }}
+                                    </div>
 
-                                    {% endif %}
-
-                                </p>
+                                {% endif %}
 
                             </div>
 

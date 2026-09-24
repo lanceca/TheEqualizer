@@ -1,4 +1,5 @@
 {% extends "staff_base.html" %}
+{% load article_text %}
 
 {% block staff_content %}
 
@@ -221,6 +222,7 @@
                                 class="secondary-button"
                                 data-saved-article-preview
                                 data-preview-template-id="draft-preview-{{ article.id }}"
+                                data-preview-url="{% url 'staff_reader_article_preview' article.id %}"
                             >
                                 Preview Article
                             </button>
@@ -343,7 +345,7 @@
         {% endif %}
 
         <div class="saved-preview-content">
-            {{ article.content|linebreaks }}
+            {{ article.content|rich_article }}
         </div>
 
         {% if article.attachments.all %}
@@ -617,6 +619,7 @@
                                     class="secondary-button"
                                     data-saved-article-preview
                                     data-preview-template-id="edit-draft-preview-{{ article.id }}"
+                                    data-preview-url="{% url 'staff_reader_article_preview' article.id %}"
                                 >
                                     Preview Article
                                 </button>
@@ -721,7 +724,7 @@
         {% endif %}
 
         <div class="saved-preview-content">
-            {{ article.content|linebreaks }}
+            {{ article.content|rich_article }}
         </div>
 
         {% if article.attachments.all %}

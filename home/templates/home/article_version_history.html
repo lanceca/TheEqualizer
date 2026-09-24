@@ -1,0 +1,66 @@
+{% extends "public_base.html" %}
+
+{% block title %}Version History | {{ article.title }} | The Equalizer{% endblock %}
+
+{% block public_content %}
+{% include "home/_reader_version_styles.html" %}
+
+<main class="reader-version-page">
+    <header class="reader-version-hero">
+        <p class="reader-version-kicker">Reader-access history</p>
+        <h1>Version History</h1>
+        <p>
+            Official published snapshots for <strong>{{ article.title }}</strong>.
+            This page is read-only and is provided for publication transparency.
+        </p>
+
+        <div class="reader-version-toolbar">
+            <a href="{% url 'article_detail' article.slug %}" class="reader-version-button">
+                Back to Article
+            </a>
+        </div>
+    </header>
+
+    <section class="reader-version-summary" aria-label="Version summary">
+        <div>
+            <span>Current version</span>
+            <strong>V{{ article.version_number }}</strong>
+        </div>
+        <div>
+            <span>Stored official snapshots</span>
+            <strong>{{ versions|length }}</strong>
+        </div>
+    </section>
+
+    {% if versions %}
+        <section class="reader-version-list" aria-label="Official article versions">
+            {% for version in versions %}
+                <article class="reader-version-card{% if version.version_number == article.version_number %} is-current{% endif %}">
+                    <div class="reader-version-number">V{{ version.version_number }}</div>
+
+                    <div>
+                        <h2>
+                            {{ version.public_change_label }}
+                            {% if version.version_number == article.version_number %}
+                                <span class="reader-version-current">Current</span>
+                            {% endif %}
+                        </h2>
+                        <p>{{ version.created_at|date:"M. d, Y - g:i A" }}</p>
+                    </div>
+
+                    <a
+                        href="{% url 'reader_article_version_detail' article.slug version.version_number %}"
+                        class="reader-version-button"
+                    >
+                        View Version
+                    </a>
+                </article>
+            {% endfor %}
+        </section>
+    {% else %}
+        <div class="reader-version-empty">
+            No stored historical snapshot is available for this article yet.
+        </div>
+    {% endif %}
+</main>
+{% endblock %}

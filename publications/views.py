@@ -1,5 +1,7 @@
 from difflib import SequenceMatcher
 from functools import wraps
+from types import SimpleNamespace
+import base64
 import logging
 import re
 
@@ -22,6 +24,9 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from notifications.models import Notification
+
+from .filters import filter_article_library, library_filter_context
+from .rich_text import sanitize_article_content, article_plain_text
 
 from .models import (
     AboutUsPage,
@@ -1280,7 +1285,7 @@ def resolve_reports_after_eic_archive(
     """
     Resolve active Staff reports when an EIC archives their own
     published article. The concern is closed because the reported
-    content is no longer publicly published.
+    content has left the current publication feed but remains in the public archive.
     """
 
     reports = (
@@ -1305,7 +1310,7 @@ def resolve_reports_after_eic_archive(
         closure_note = (
             "The article was archived by the Editor in Chief. "
             "This report was resolved because the reported "
-            "content is no longer publicly published."
+            "content has left the current publication feed. It remains available in the public archive."
         )
 
         if report.staff_notes:
@@ -1413,10 +1418,10 @@ def create_article(request):
             "category"
         )
 
-        content = request.POST.get(
+        content = sanitize_article_content(request.POST.get(
             "content",
             "",
-        ).strip()
+        ).strip())
 
         tag_ids = request.POST.getlist(
             "tags"
@@ -2810,10 +2815,10 @@ def revise_submission(
             "category"
         )
 
-        content = request.POST.get(
+        content = sanitize_article_content(request.POST.get(
             "content",
             "",
-        ).strip()
+        ).strip())
 
         tag_ids = request.POST.getlist(
             "tags"
@@ -3597,10 +3602,10 @@ def edit_draft(
             "category"
         )
 
-        content = request.POST.get(
+        content = sanitize_article_content(request.POST.get(
             "content",
             "",
-        ).strip()
+        ).strip())
 
         tag_ids = request.POST.getlist(
             "tags"
@@ -4317,6 +4322,8 @@ def published_articles(request):
             )
         )
 
+    articles = filter_article_library(articles, request.GET, date_field="published_at", candidates=True)
+
     articles = (
         articles
         .order_by(
@@ -4331,8 +4338,614 @@ def published_articles(request):
         {
             "articles": articles,
             "search_query": search_query,
+            **library_filter_context(request),
         },
     )
+
+
+
+# ==========================================================
+# STAFF READER-PARITY ARTICLE PREVIEW
+# ==========================================================
+
+
+class _PreviewCollection(list):
+    """Template-friendly list that supports Django's related_manager .all."""
+
+    def all(self):
+        return self
+
+
+def _preview_file_data_url(uploaded_file, *, max_bytes=12 * 1024 * 1024):
+    """
+    Create a temporary in-response data URL for reasonably-sized preview media.
+    Nothing is saved to storage.
+    """
+
+    if not uploaded_file:
+        return ""
+
+    if getattr(uploaded_file, "size", 0) > max_bytes:
+        return ""
+
+    try:
+        data = uploaded_file.read()
+        uploaded_file.seek(0)
+    except Exception:
+        return ""
+
+    content_type = (
+        getattr(uploaded_file, "content_type", "")
+        or "application/octet-stream"
+    )
+
+    return (
+        f"data:{content_type};base64,"
+        + base64.b64encode(data).decode("ascii")
+    )
+
+
+def _preview_media_file(url):
+    if not url:
+        return None
+    return SimpleNamespace(url=url)
+
+
+def _preview_contributor(user, role_value="", role_display="Contributor"):
+    def get_role_display():
+        return role_display or "Contributor"
+
+    return SimpleNamespace(
+        user=user,
+        role=role_value,
+        get_role_display=get_role_display,
+    )
+
+
+def _preview_article_queryset():
+    return (
+        Article.objects
+        .select_related(
+            "category",
+            "author",
+        )
+        .prefetch_related(
+            "tags",
+            "attachments",
+            "video_attachments",
+            "contributors",
+            "contributors__user",
+        )
+    )
+
+
+def _staff_can_preview_article(user, article):
+    if user.role == User.Role.EIC:
+        return True
+
+    if (
+        article.is_published
+        or article.is_archived
+    ):
+        return True
+
+    if article.author_id == user.id:
+        return True
+
+    return article.contributors.filter(
+        user=user
+    ).exists()
+
+
+def _staff_can_preview_submission(user, submission):
+    if user.role == User.Role.EIC:
+        return True
+
+    return (
+        submission.submitted_by_id == user.id
+        or submission.article.author_id == user.id
+    )
+
+
+def _snapshot_preview_article(submission):
+    source_article = submission.article
+
+    author = source_article.author
+    if submission.snapshot_author_name:
+        author = (
+            User.objects
+            .filter(
+                username=submission.snapshot_author_name
+            )
+            .first()
+            or author
+        )
+
+    contributors = _PreviewCollection()
+    for item in submission.snapshot_contributors or []:
+        contributor_user = None
+
+        user_id = item.get("user_id")
+        if user_id:
+            contributor_user = (
+                User.objects
+                .filter(pk=user_id)
+                .first()
+            )
+
+        if contributor_user is None and item.get("username"):
+            contributor_user = (
+                User.objects
+                .filter(
+                    username=item.get("username")
+                )
+                .first()
+            )
+
+        if contributor_user is None:
+            username = (
+                item.get("username")
+                or "Former publication member"
+            )
+
+            contributor_user = SimpleNamespace(
+                username=username,
+                profile_picture=None,
+                get_full_name=lambda: "",
+            )
+
+        contributors.append(
+            _preview_contributor(
+                contributor_user,
+                item.get("role", ""),
+                item.get("role_display", "Contributor"),
+            )
+        )
+
+    attachments = _PreviewCollection(
+        [
+            SimpleNamespace(
+                image=_preview_media_file(
+                    attachment.image_url
+                ),
+                caption=attachment.caption or "",
+                alt_text=attachment.alt_text or "",
+                credit=attachment.credit or "",
+            )
+            for attachment in submission.snapshot_attachments.all()
+            if attachment.image_url
+        ]
+    )
+
+    video_attachments = _PreviewCollection(
+        [
+            SimpleNamespace(
+                video=_preview_media_file(
+                    attachment.video_url
+                ),
+                caption=attachment.caption or "",
+                credit=attachment.credit or "",
+            )
+            for attachment in submission.snapshot_video_attachments.all()
+            if attachment.video_url
+        ]
+    )
+
+    tags = _PreviewCollection(
+        [
+            SimpleNamespace(name=name)
+            for name in (submission.snapshot_tags or [])
+        ]
+    )
+
+    return SimpleNamespace(
+        id=source_article.id,
+        pk=source_article.pk,
+        slug=source_article.slug,
+        title=(
+            submission.snapshot_title
+            or source_article.title
+        ),
+        subtitle=(
+            submission.snapshot_subtitle
+            or ""
+        ),
+        excerpt=(
+            submission.snapshot_excerpt
+            or ""
+        ),
+        content=(
+            submission.snapshot_content
+            or source_article.content
+        ),
+        category=SimpleNamespace(
+            name=(
+                submission.snapshot_category_name
+                or source_article.category.name
+            )
+        ),
+        author=author,
+        contributors=contributors,
+        featured_image=(
+            _preview_media_file(
+                submission.snapshot_featured_image_url
+            )
+            if submission.snapshot_featured_image
+            else None
+        ),
+        featured_image_caption=(
+            submission.snapshot_featured_image_caption
+            or ""
+        ),
+        featured_image_credit=(
+            submission.snapshot_featured_image_credit
+            or ""
+        ),
+        attachments=attachments,
+        video_attachments=video_attachments,
+        tags=tags,
+        published_at=source_article.published_at,
+        archived_at=source_article.archived_at,
+        is_archived=source_article.is_archived,
+        version_number=(
+            submission.snapshot_version_number
+            or source_article.version_number
+            or 1
+        ),
+    )
+
+
+def _live_preview_article(request):
+    article_id = (
+        request.POST.get("preview_article_id", "")
+        .strip()
+    )
+
+    base_article = None
+
+    if article_id.isdigit():
+        base_article = get_object_or_404(
+            _preview_article_queryset(),
+            pk=int(article_id),
+        )
+
+        if not _staff_can_preview_article(
+            request.user,
+            base_article,
+        ):
+            raise PermissionError
+
+    category = None
+    category_id = (
+        request.POST.get("category", "")
+        .strip()
+    )
+
+    if category_id.isdigit():
+        category = (
+            Category.objects
+            .filter(pk=int(category_id))
+            .first()
+        )
+
+    if category is None and base_article:
+        category = base_article.category
+
+    if category is None:
+        category = SimpleNamespace(
+            name="Uncategorized"
+        )
+
+    author = (
+        base_article.author
+        if base_article
+        else request.user
+    )
+
+    role_labels = dict(
+        ArticleContributor.Role.choices
+    )
+
+    contributor_roles = request.POST.getlist(
+        "contributor_roles"
+    )
+    contributor_users = request.POST.getlist(
+        "contributor_users"
+    )
+
+    contributors = _PreviewCollection()
+
+    for role_value, user_id in zip(
+        contributor_roles,
+        contributor_users,
+    ):
+        if (
+            not role_value
+            or not str(user_id).isdigit()
+        ):
+            continue
+
+        user = (
+            User.objects
+            .filter(pk=int(user_id))
+            .first()
+        )
+
+        if not user:
+            continue
+
+        contributors.append(
+            _preview_contributor(
+                user,
+                role_value,
+                role_labels.get(
+                    role_value,
+                    "Contributor",
+                ),
+            )
+        )
+
+    tag_ids = [
+        int(value)
+        for value in request.POST.getlist("tags")
+        if str(value).isdigit()
+    ]
+
+    tags = _PreviewCollection(
+        list(
+            Tag.objects
+            .filter(pk__in=tag_ids)
+            .order_by("name")
+        )
+    )
+
+    # Featured image: new upload wins, otherwise use current stored image.
+    featured_image = None
+    new_featured = request.FILES.get(
+        "featured_image"
+    )
+
+    if new_featured:
+        featured_url = _preview_file_data_url(
+            new_featured
+        )
+        if featured_url:
+            featured_image = _preview_media_file(
+                featured_url
+            )
+    elif (
+        base_article
+        and base_article.featured_image
+    ):
+        featured_image = base_article.featured_image
+
+    removed_image_ids = {
+        int(value)
+        for value in request.POST.getlist(
+            "remove_attachments"
+        )
+        if str(value).isdigit()
+    }
+
+    attachments = _PreviewCollection()
+
+    if base_article:
+        for attachment in base_article.attachments.all():
+            if attachment.id in removed_image_ids:
+                continue
+            attachments.append(attachment)
+
+    for uploaded in request.FILES.getlist(
+        "attachments"
+    ):
+        url = _preview_file_data_url(uploaded)
+        if not url:
+            continue
+        attachments.append(
+            SimpleNamespace(
+                image=_preview_media_file(url),
+                caption="",
+                alt_text=uploaded.name,
+                credit="",
+            )
+        )
+
+    removed_video_ids = {
+        int(value)
+        for value in request.POST.getlist(
+            "remove_video_attachments"
+        )
+        if str(value).isdigit()
+    }
+
+    video_attachments = _PreviewCollection()
+
+    if base_article:
+        for attachment in base_article.video_attachments.all():
+            if attachment.id in removed_video_ids:
+                continue
+            video_attachments.append(attachment)
+
+    for uploaded in request.FILES.getlist(
+        "video_attachments"
+    ):
+        url = _preview_file_data_url(uploaded)
+        if not url:
+            continue
+        video_attachments.append(
+            SimpleNamespace(
+                video=_preview_media_file(url),
+                caption="",
+                credit="",
+            )
+        )
+
+    return SimpleNamespace(
+        id=(base_article.id if base_article else 0),
+        pk=(base_article.pk if base_article else 0),
+        slug=(
+            base_article.slug
+            if base_article
+            else "reader-preview"
+        ),
+        title=(
+            request.POST.get("title", "").strip()
+            or "Untitled Article"
+        ),
+        subtitle=request.POST.get(
+            "subtitle",
+            "",
+        ).strip(),
+        excerpt=request.POST.get(
+            "excerpt",
+            "",
+        ).strip(),
+        content=request.POST.get(
+            "content",
+            "",
+        ),
+        category=category,
+        author=author,
+        contributors=contributors,
+        featured_image=featured_image,
+        featured_image_caption=request.POST.get(
+            "featured_image_caption",
+            "",
+        ).strip(),
+        featured_image_credit=request.POST.get(
+            "featured_image_credit",
+            "",
+        ).strip(),
+        attachments=attachments,
+        video_attachments=video_attachments,
+        tags=tags,
+        published_at=(
+            base_article.published_at
+            if base_article
+            else None
+        ),
+        archived_at=(
+            base_article.archived_at
+            if base_article
+            else None
+        ),
+        is_archived=(
+            base_article.is_archived
+            if base_article
+            else False
+        ),
+        version_number=(
+            base_article.version_number
+            if base_article
+            else 1
+        ),
+    )
+
+
+def _reader_preview_context(article):
+    return {
+        "article": article,
+        "staff_preview_mode": True,
+        "has_reacted": False,
+        "has_shared": False,
+        "pdf_download_count": 0,
+    }
+
+
+@publication_role_required(
+    User.Role.EIC,
+    User.Role.EDITOR,
+    User.Role.STAFF,
+)
+def staff_reader_article_preview(
+    request,
+    article_id,
+):
+    article = get_object_or_404(
+        _preview_article_queryset(),
+        pk=article_id,
+    )
+
+    if not _staff_can_preview_article(
+        request.user,
+        article,
+    ):
+        return HttpResponseForbidden(
+            "You do not have permission to preview this article."
+        )
+
+    return render(
+        request,
+        "home/article_detail.html",
+        _reader_preview_context(article),
+    )
+
+
+@publication_role_required(
+    User.Role.EIC,
+    User.Role.EDITOR,
+    User.Role.STAFF,
+)
+def staff_reader_submission_preview(
+    request,
+    submission_id,
+):
+    submission = get_object_or_404(
+        Submission.objects
+        .select_related(
+            "article",
+            "article__author",
+            "article__category",
+            "submitted_by",
+        )
+        .prefetch_related(
+            "snapshot_attachments",
+            "snapshot_video_attachments",
+        ),
+        pk=submission_id,
+    )
+
+    if not _staff_can_preview_submission(
+        request.user,
+        submission,
+    ):
+        return HttpResponseForbidden(
+            "You do not have permission to preview this submission."
+        )
+
+    article = _snapshot_preview_article(
+        submission
+    )
+
+    return render(
+        request,
+        "home/article_detail.html",
+        _reader_preview_context(article),
+    )
+
+
+@require_POST
+@publication_role_required(
+    User.Role.EIC,
+    User.Role.EDITOR,
+    User.Role.STAFF,
+)
+def staff_reader_live_preview(request):
+    try:
+        article = _live_preview_article(
+            request
+        )
+    except PermissionError:
+        return HttpResponseForbidden(
+            "You do not have permission to preview this article."
+        )
+
+    return render(
+        request,
+        "home/article_detail.html",
+        _reader_preview_context(article),
+    )
+
 
 
 # ==========================================================
@@ -4742,8 +5355,8 @@ def build_article_version_diff_context(
             article_version.excerpt,
         ),
         "content_html": build_version_inline_diff(
-            previous_content,
-            article_version.content,
+            article_plain_text(previous_content),
+            article_plain_text(article_version.content),
         ),
     }
 
@@ -4978,10 +5591,10 @@ def edit_published_article(
             "category"
         )
 
-        content = request.POST.get(
+        content = sanitize_article_content(request.POST.get(
             "content",
             "",
-        ).strip()
+        ).strip())
 
         tag_ids = request.POST.getlist(
             "tags"
@@ -5667,7 +6280,7 @@ def request_article_edit(
                     messages.warning(
                         request,
                         (
-                            "A deletion request is currently "
+                            "An archive request is currently "
                             "pending for this article."
                         ),
                     )
@@ -6010,7 +6623,7 @@ def review_edit_request(
                     request,
                     (
                         "This edit request cannot be approved "
-                        "while a deletion request is pending."
+                        "while an archive request is pending."
                     ),
                 )
 
@@ -6215,7 +6828,7 @@ def request_article_deletion(
         messages.warning(
             request,
             (
-                "You already have a pending deletion "
+                "You already have a pending archive "
                 "request for this article."
             ),
         )
@@ -6240,7 +6853,7 @@ def request_article_deletion(
         messages.warning(
             request,
             (
-                "You cannot request deletion while an edit "
+                "You cannot request archive while an edit "
                 "request is active for this article."
             ),
         )
@@ -6262,7 +6875,7 @@ def request_article_deletion(
                 request,
                 (
                     "Please provide a reason "
-                    "for the deletion request."
+                    "for the archive request."
                 ),
             )
 
@@ -6288,7 +6901,7 @@ def request_article_deletion(
                         request,
                         (
                             "This article is no longer available "
-                            "for a deletion request."
+                            "for an archive request."
                         ),
                     )
 
@@ -6311,7 +6924,7 @@ def request_article_deletion(
                     messages.warning(
                         request,
                         (
-                            "You already have a pending deletion "
+                            "You already have a pending archive "
                             "request for this article."
                         ),
                     )
@@ -6367,7 +6980,7 @@ def request_article_deletion(
             messages.success(
                 request,
                 (
-                    f'Your deletion request for '
+                    f'Your archive request for '
                     f'"{locked_article.title}" was submitted.'
                 ),
             )
@@ -6555,7 +7168,7 @@ def review_deletion_request(
 
         messages.error(
             request,
-            "Invalid deletion request action.",
+            "Invalid archive request action.",
         )
 
         return redirect(
@@ -6582,7 +7195,7 @@ def review_deletion_request(
             messages.warning(
                 request,
                 (
-                    "This deletion request has already "
+                    "This archive request has already "
                     "been reviewed."
                 ),
             )
@@ -6641,7 +7254,7 @@ def review_deletion_request(
                 messages.warning(
                     request,
                     (
-                        "This deletion request cannot be "
+                        "This archive request cannot be "
                         "approved while an edit request "
                         "is active for the article."
                     ),
@@ -6695,7 +7308,7 @@ def review_deletion_request(
                 deletion_request.requested_by,
                 Notification.Type.DELETION_REQUEST,
                 (
-                    f'Your deletion request for '
+                    f'Your archive request for '
                     f'"{article.title}" was approved. '
                     f'The article has been archived.'
                 ),
@@ -6745,7 +7358,7 @@ def review_deletion_request(
                 deletion_request.requested_by,
                 Notification.Type.DELETION_REQUEST,
                 (
-                    f'Your deletion request for '
+                    f'Your archive request for '
                     f'"{article.title}" was rejected.'
                 ),
                 reverse(
@@ -6756,7 +7369,7 @@ def review_deletion_request(
             messages.warning(
                 request,
                 (
-                    f'The deletion request for '
+                    f'The archive request for '
                     f'"{article.title}" was rejected.'
                 ),
             )
@@ -7487,7 +8100,7 @@ def require_revision_from_report(
             messages.warning(
                 request,
                 (
-                    "A deletion request is currently "
+                    "An archive request is currently "
                     "pending for this article."
                 ),
             )
@@ -7740,6 +8353,8 @@ def archived_articles(request):
             )
         )
 
+    articles = filter_article_library(articles, request.GET, date_field="archived_at", candidates=False)
+
     articles = (
         articles
         .order_by(
@@ -7755,6 +8370,7 @@ def archived_articles(request):
         {
             "articles": articles,
             "search_query": search_query,
+            **library_filter_context(request),
         },
     )
 
@@ -7804,13 +8420,18 @@ def restore_archived_article(
             ).exists()
         )
 
-        if active_edit_request:
+        active_content_report = ContentReport.objects.filter(
+            article=article,
+            status__in=[ContentReport.Status.OPEN, ContentReport.Status.REVISION_REQUIRED],
+        ).exists()
+
+        if active_edit_request or active_content_report:
 
             messages.warning(
                 request,
                 (
                     "This archived article cannot be restored "
-                    "while an edit request is active."
+                    "while an edit request or content report is active."
                 ),
             )
 

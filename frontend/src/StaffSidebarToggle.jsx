@@ -66,13 +66,18 @@ function UserIcon() {
   )
 }
 
+function LogoutIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M10 5H5v14h5" />
+      <path d="m13 8 4 4-4 4M17 12H9" />
+    </svg>
+  )
+}
+
 const NAV_ICON_PATHS = {
   dashboard:
     '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
-  notifications:
-    '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/>',
-  profile:
-    '<circle cx="12" cy="8" r="4"/><path d="M4.5 20c.8-4 3.3-6 7.5-6s6.7 2 7.5 6"/>',
   accounts:
     '<circle cx="9" cy="8" r="3"/><path d="M3.5 19c.5-3.5 2.4-5.5 5.5-5.5s5 2 5.5 5.5"/><path d="M16 7h5M18.5 4.5v5"/>',
   people:
@@ -115,8 +120,6 @@ function iconKeyForLabel(label) {
   const value = label.toLowerCase()
 
   if (value.includes('dashboard')) return 'dashboard'
-  if (value.includes('notification')) return 'notifications'
-  if (value === 'profile') return 'profile'
   if (value.includes('admin account') || value.includes('staff account')) return 'accounts'
   if (value.includes('people')) return 'people'
   if (value.includes('analytics')) return 'analytics'
@@ -161,27 +164,16 @@ function enhanceNavigation(sidebar) {
       link.title = label
     })
 
-  const logoutButton = sidebar.querySelector('.logout-link')
 
-  if (
-    logoutButton
-    && !logoutButton.querySelector('.staff-nav-icon')
-  ) {
-    const icon = document.createElement('span')
-    icon.className = 'staff-nav-icon'
-    icon.setAttribute('aria-hidden', 'true')
-    icon.innerHTML = `
-      <svg viewBox="0 0 24 24" focusable="false">
-        ${NAV_ICON_PATHS.logout}
-      </svg>
-    `
-    logoutButton.prepend(icon)
-  }
 }
 
 function StaffSidebarToggle({
   username,
   role,
+  homeUrl,
+  notificationUrl,
+  profileUrl,
+  notificationCount = 0,
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -196,12 +188,7 @@ function StaffSidebarToggle({
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [pageTitle, setPageTitle] = useState('Workspace')
   const [avatarUrl, setAvatarUrl] = useState('')
-  const [notificationCount, setNotificationCount] = useState(0)
-  const [links, setLinks] = useState({
-    home: '/',
-    notifications: '#',
-    profile: '#',
-  })
+  const [loggingOut, setLoggingOut] = useState(false)
 
   const userMenuRef = useRef(null)
 
@@ -223,45 +210,6 @@ function StaffSidebarToggle({
     if (avatarImage?.src) {
       setAvatarUrl(avatarImage.src)
     }
-
-    const homeLink = document.querySelector('.site-brand')
-    const notificationLink = sidebar.querySelector(
-      '.staff-notification-link',
-    )
-    const profileLink = Array.from(
-      sidebar.querySelectorAll('.staff-nav a[href]'),
-    ).find(
-      (link) => (
-        link.textContent || ''
-      ).replace(/\s+/g, ' ').trim() === 'Profile',
-    )
-
-    const badge = notificationLink?.querySelector(
-      '.staff-notification-badge',
-    )
-
-    const badgeText = (
-      badge?.textContent || '0'
-    ).trim()
-
-    const parsedCount = Number.parseInt(
-      badgeText.replace(/\D/g, ''),
-      10,
-    )
-
-    setNotificationCount(
-      badgeText.includes('+')
-        ? 100
-        : Number.isFinite(parsedCount)
-          ? parsedCount
-          : 0,
-    )
-
-    setLinks({
-      home: homeLink?.href || '/',
-      notifications: notificationLink?.href || '#',
-      profile: profileLink?.href || '#',
-    })
 
     return undefined
   }, [])
@@ -345,9 +293,8 @@ function StaffSidebarToggle({
 
     function handleSidebarClick(event) {
       const link = event.target.closest('a')
-      const button = event.target.closest('.logout-link')
 
-      if (link || button) {
+      if (link) {
         setIsOpen(false)
       }
     }
@@ -421,6 +368,34 @@ function StaffSidebarToggle({
     })
   }
 
+  function handleLogout() {
+    if (loggingOut) return
+
+    const form = document.getElementById(
+      'staff-workspace-native-logout-form',
+    )
+
+    if (!form) {
+      return
+    }
+
+    setLoggingOut(true)
+    setUserMenuOpen(false)
+
+    /*
+     * This form is rendered by Django and already contains the
+     * correct CSRF token. Native prototype submission intentionally
+     * bypasses generic submit listeners that show the global loader.
+     */
+    window.requestAnimationFrame(() => {
+      try {
+        HTMLFormElement.prototype.submit.call(form)
+      } catch {
+        setLoggingOut(false)
+      }
+    })
+  }
+
   const initial = (
     username?.trim()?.slice(0, 1) || 'E'
   ).toUpperCase()
@@ -467,7 +442,7 @@ function StaffSidebarToggle({
 
         <div className="staff-workspace-toolbar-actions">
           <a
-            href={links.home}
+            href={homeUrl || '/'}
             className="staff-workspace-action is-site-link"
             title="View public website"
           >
@@ -476,7 +451,7 @@ function StaffSidebarToggle({
           </a>
 
           <a
-            href={links.notifications}
+            href={notificationUrl || '#'}
             className="staff-workspace-action is-icon-only"
             aria-label={
               notificationCount > 0
@@ -535,7 +510,7 @@ function StaffSidebarToggle({
                 </div>
 
                 <a
-                  href={links.profile}
+                  href={profileUrl || '#'}
                   role="menuitem"
                   onClick={() => setUserMenuOpen(false)}
                 >
@@ -543,19 +518,44 @@ function StaffSidebarToggle({
                   <span>Profile settings</span>
                 </a>
 
-                <a
-                  href={links.home}
+                <button
+                  type="button"
+                  className="staff-workspace-logout-button"
                   role="menuitem"
-                  onClick={() => setUserMenuOpen(false)}
+                  onClick={handleLogout}
+                  disabled={loggingOut}
                 >
-                  <ExternalIcon />
-                  <span>View public website</span>
-                </a>
+                  <LogoutIcon />
+                  <span>
+                    {loggingOut ? 'Logging out…' : 'Logout'}
+                  </span>
+                </button>
               </div>
             )}
           </div>
         </div>
       </header>
+
+      {loggingOut && (
+        <div
+          className="staff-logout-loading-overlay"
+          role="status"
+          aria-live="polite"
+          aria-label="Logging out"
+        >
+          <div className="staff-logout-loading-card">
+            <span
+              className="staff-logout-loading-spinner"
+              aria-hidden="true"
+            />
+
+            <div>
+              <strong>Logging out…</strong>
+              <span>Securely ending your session.</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isOpen && (
         <button

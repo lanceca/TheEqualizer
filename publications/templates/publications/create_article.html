@@ -405,9 +405,8 @@
                 class="article-content-input"
                 required
             
-                maxlength="30000"
-                data-char-limit="30000"
-                data-char-counter-field="content">{% if request.method == 'POST' %}{{ request.POST.content }}{% endif %}</textarea>
+                maxlength="30000">{% if request.method == 'POST' %}{{ request.POST.content }}{% endif %}</textarea>
+            <div data-react-component="ArticleRichTextEditor" data-field-id="content"></div>
 
         </div>
 
@@ -653,6 +652,7 @@
                 type="button"
                 class="secondary-button article-preview-button"
                 data-article-preview-button
+                data-preview-url="{% url 'staff_reader_live_preview' %}"
             >
                 Preview Article
             </button>
@@ -960,7 +960,7 @@ document.addEventListener(
                 function updateCharacterCounter() {
 
                     const currentLength =
-                        field.value.length;
+                        Number(field.dataset.visibleLength ?? field.value.length);
 
                     counter.textContent =
                         currentLength.toLocaleString()

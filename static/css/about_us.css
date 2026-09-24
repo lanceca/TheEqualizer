@@ -110,7 +110,8 @@
     text-align: center;
 }
 
-.about-unavailable h1 {
+.about-unavailable h1,
+.about-unavailable h2 {
     margin: 0 0 10px;
     color: var(--reader-green-dark);
     font-family: Georgia, "Times New Roman", serif;

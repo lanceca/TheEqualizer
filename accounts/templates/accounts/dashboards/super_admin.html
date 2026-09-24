@@ -22,6 +22,7 @@
             </p>
 
             <div class="workspace-dashboard-hero-actions">
+                <a href="{% url 'manage_system_updates' %}" class="workspace-hero-button workspace-hero-button--secondary">System Updates</a>
                 <a
                     href="{% url 'manage_admin_accounts' %}"
                     class="workspace-hero-button workspace-hero-button--primary"
@@ -342,7 +343,7 @@
         </form>
 
         <p class="workspace-panel-note">
-            The APK itself remains outside Render and Supabase storage. This
+            The APK itself remains outside the deployment server and storage. This
             setting only controls which hosted APK the website presents to
             readers.
         </p>

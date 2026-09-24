@@ -1,4 +1,5 @@
 {% extends "staff_base.html" %}
+{% load article_text %}
 
 {% block staff_content %}
 
@@ -255,6 +256,7 @@
                             class="secondary-button"
                             data-saved-article-preview
                             data-preview-template-id="my-report-preview-{{ report.id }}"
+                            data-preview-url="{% url 'staff_reader_article_preview' report.article.id %}"
                         >
                             Preview Article
                         </button>
@@ -470,7 +472,7 @@
         {% endif %}
 
         <div class="saved-preview-content">
-            {{ report.article.content|linebreaks }}
+            {{ report.article.content|rich_article }}
         </div>
 
         {% if report.article.attachments.all %}

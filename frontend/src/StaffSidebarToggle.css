@@ -65,7 +65,8 @@
 .staff-workspace-menu-button:focus-visible,
 .staff-workspace-action:focus-visible,
 .staff-workspace-user-trigger:focus-visible,
-.staff-workspace-user-popover a:focus-visible {
+.staff-workspace-user-popover a:focus-visible,
+.staff-workspace-user-popover button:focus-visible {
     outline: 3px solid rgba(198, 157, 42, 0.26);
     outline-offset: 2px;
 }
@@ -326,6 +327,46 @@
     color: #173f32;
 }
 
+.staff-workspace-logout-button {
+    display: flex;
+    align-items: center;
+
+    width: 100%;
+    gap: 9px;
+    min-height: 40px;
+    margin-top: 5px;
+    padding: 8px 9px;
+
+    border: 0;
+    border-top: 1px solid #edf0ee;
+    border-radius: 9px;
+
+    background: transparent;
+    color: #9a3939;
+
+    font: inherit;
+    font-size: 12px;
+    font-weight: 760;
+    text-align: left;
+
+    cursor: pointer;
+
+    transition:
+        background 0.16s ease,
+        color 0.16s ease,
+        opacity 0.16s ease;
+}
+
+.staff-workspace-logout-button:hover:not(:disabled) {
+    background: #fff2f2;
+    color: #792b2b;
+}
+
+.staff-workspace-logout-button:disabled {
+    cursor: wait;
+    opacity: 0.68;
+}
+
 .staff-workspace-user-popover svg {
     width: 17px;
     height: 17px;
@@ -441,3 +482,89 @@
    ========================================================== */
 
 
+
+
+/* ==========================================================
+   LOGOUT PROGRESS
+   ========================================================== */
+
+.staff-logout-loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9800;
+
+    display: grid;
+    place-items: center;
+
+    padding: 24px;
+
+    background: rgba(7, 28, 21, 0.48);
+    backdrop-filter: blur(4px);
+
+    cursor: wait;
+}
+
+.staff-logout-loading-card {
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+
+    min-width: min(330px, calc(100vw - 40px));
+    padding: 18px 20px;
+
+    border: 1px solid rgba(214, 173, 50, 0.28);
+    border-radius: 16px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 24px 60px
+        rgba(7, 28, 21, 0.24);
+}
+
+.staff-logout-loading-spinner {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+
+    border: 3px solid #dce7e1;
+    border-top-color: #184536;
+    border-radius: 50%;
+
+    animation:
+        eq-logout-spin
+        0.8s
+        linear
+        infinite;
+}
+
+.staff-logout-loading-card > div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.staff-logout-loading-card strong {
+    color: #173f32;
+    font-size: 14px;
+    font-weight: 850;
+}
+
+.staff-logout-loading-card span:not(.staff-logout-loading-spinner) {
+    color: #728078;
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+@keyframes eq-logout-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .staff-logout-loading-spinner {
+        animation: none;
+    }
+}

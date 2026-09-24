@@ -4,6 +4,7 @@ from . import mobile_app_views, views
 
 
 urlpatterns = [
+    path("archive/", views.public_archive, name="public_archive"),
 
     # ======================================================
     # HOME
@@ -81,6 +82,18 @@ urlpatterns = [
         "articles/<slug:slug>/",
         views.article_detail,
         name="article_detail",
+    ),
+
+    path(
+        "articles/<slug:slug>/history/",
+        views.reader_article_version_history,
+        name="reader_article_version_history",
+    ),
+
+    path(
+        "articles/<slug:slug>/history/<int:version_number>/",
+        views.reader_article_version_detail,
+        name="reader_article_version_detail",
     ),
 
     path(

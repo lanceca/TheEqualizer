@@ -9,30 +9,14 @@ About Us | The Equalizer
 
 <link
     rel="stylesheet"
-    href="{% static 'css/about_us.css' %}?v=20260905-about-us-restore-1"
+    href="{% static 'css/about_us.css' %}?v=20260922-compact-section-hero-1"
 >
 
 {% if about_page %}
 
 <main class="about-page">
 
-    <header class="about-page-header">
-
-        <p class="reader-section-kicker">
-            The Equalizer
-        </p>
-
-        <h1>
-            {{ about_page.title }}
-        </h1>
-
-        {% if about_page.subtitle %}
-            <p class="about-page-subtitle">
-                {{ about_page.subtitle }}
-            </p>
-        {% endif %}
-
-    </header>
+    {% include "home/includes/_compact_section_hero.html" with hero_id="about-us-title" hero_kicker="The publication" hero_title=about_page.title hero_description=about_page.subtitle hero_meta_text="Identity • History • Mission • Vision" %}
 
     {% if about_page.hero_image %}
         <img
@@ -90,12 +74,16 @@ About Us | The Equalizer
 
 {% else %}
 
-<section class="about-unavailable">
-    <h1>About The Equalizer</h1>
-    <p>
-        This page is currently being prepared by the publication team.
-    </p>
-</section>
+<main class="about-page">
+    {% include "home/includes/_compact_section_hero.html" with hero_id="about-us-title" hero_kicker="The publication" hero_title="About Us" hero_description="Learn about The Equalizer, its purpose, history, mission, and role in the Mabalacat City College community." hero_meta_text="Identity • History • Mission • Vision" %}
+
+    <section class="about-unavailable">
+        <h2>About The Equalizer</h2>
+        <p>
+            This page is currently being prepared by the publication team.
+        </p>
+    </section>
+</main>
 
 {% endif %}
 

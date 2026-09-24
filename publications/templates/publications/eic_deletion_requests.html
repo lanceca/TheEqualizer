@@ -1,4 +1,5 @@
 {% extends "staff_base.html" %}
+{% load article_text %}
 
 {% block staff_content %}
 
@@ -13,7 +14,7 @@
             </p>
 
             <h1>
-                Deletion Requests
+                Archive Requests
             </h1>
 
             <p class="section-description">
@@ -58,7 +59,7 @@
 
             <button
                 type="submit"
-                class="secondary-button"
+                class="eq-action-button eq-action-button--secondary"
             >
                 Search
             </button>
@@ -121,7 +122,7 @@
                             </span>
 
                             <span class="editorial-meta-chip is-danger">
-                                Deletion Request
+                                Archive Request
                             </span>
 
                         </div>
@@ -164,9 +165,10 @@
 
                         <button
                             type="button"
-                            class="secondary-button"
+                            class="eq-action-button eq-action-button--secondary eq-action-button--compact"
                             data-saved-article-preview
                             data-preview-template-id="eic-deletion-preview-{{ deletion_request.id }}"
+                            data-preview-url="{% url 'staff_reader_article_preview' deletion_request.article.id %}"
                         >
                             Preview Article
                         </button>
@@ -177,20 +179,20 @@
                     <details class="editorial-review-drawer">
 
                         <summary>
-                            Review Deletion Request
+                            Review Archive Request
                         </summary>
 
                         <div class="editorial-review-panel">
 
                         <div class="workflow-decision-heading">
-                            <span>Deletion request</span>
+                            <span>Archive request</span>
                             <strong>Decision Center</strong>
                         </div>
 
                             <div class="request-detail-block editorial-attention-callout editorial-attention-callout--concern">
 
                                 <span>
-                                    Reason for Deletion
+                                    Reason for Archive
                                 </span>
 
                                 <p>
@@ -238,8 +240,8 @@
                                         type="submit"
                                         name="action"
                                         value="approve"
-                                        class="danger-button"
-                                        data-confirm-title="Approve Deletion Request"
+                                        class="eq-action-button eq-action-button--archive"
+                                        data-confirm-title="Approve Archive Request"
                                         data-confirm="Approve this request and move the article into the archive?"
                                     >
                                         Approve & Archive
@@ -250,9 +252,9 @@
                                         type="submit"
                                         name="action"
                                         value="reject"
-                                        class="revision-button"
-                                        data-confirm-title="Reject Deletion Request"
-                                        data-confirm="Reject this article deletion request?"
+                                        class="eq-action-button eq-action-button--secondary"
+                                        data-confirm-title="Reject Archive Request"
+                                        data-confirm="Reject this article archive request?"
                                     >
                                         Reject Request
                                     </button>
@@ -362,7 +364,7 @@
         {% endif %}
 
         <div class="saved-preview-content">
-            {{ deletion_request.article.content|linebreaks }}
+            {{ deletion_request.article.content|rich_article }}
         </div>
 
         {% if deletion_request.article.attachments.all %}
@@ -489,9 +491,9 @@
 
             <strong>
                 {% if search_query %}
-                    No pending deletion requests matched your search.
+                    No pending archive requests matched your search.
                 {% else %}
-                    There are currently no pending deletion requests.
+                    There are currently no pending archive requests.
                 {% endif %}
             </strong>
 

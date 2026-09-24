@@ -31,6 +31,40 @@
 </header>
 
 
+<section
+    class="revision-workflow-strip"
+    aria-label="Revision workflow"
+>
+    <div class="revision-workflow-step is-complete">
+        <span class="revision-workflow-index">1</span>
+        <div>
+            <strong>Review EIC feedback</strong>
+            <small>Understand the requested changes.</small>
+        </div>
+    </div>
+
+    <span class="revision-workflow-connector" aria-hidden="true"></span>
+
+    <div class="revision-workflow-step is-current">
+        <span class="revision-workflow-index">2</span>
+        <div>
+            <strong>Revise article</strong>
+            <small>Update the story and preview the result.</small>
+        </div>
+    </div>
+
+    <span class="revision-workflow-connector" aria-hidden="true"></span>
+
+    <div class="revision-workflow-step">
+        <span class="revision-workflow-index">3</span>
+        <div>
+            <strong>Resubmit for review</strong>
+            <small>Send the revised version back to the EIC.</small>
+        </div>
+    </div>
+</section>
+
+
 {% if submission.reviewer_notes %}
 
     <div class="editorial-attention-callout editorial-attention-callout--eic">
@@ -512,9 +546,8 @@
                 class="article-content-input"
                 required
             
-                maxlength="30000"
-                data-char-limit="30000"
-                data-char-counter-field="content">{% if request.method == 'POST' %}{{ request.POST.content }}{% else %}{{ article.content }}{% endif %}</textarea>
+                maxlength="30000">{% if request.method == 'POST' %}{{ request.POST.content }}{% else %}{{ article.content }}{% endif %}</textarea>
+            <div data-react-component="ArticleRichTextEditor" data-field-id="content"></div>
 
         </div>
 
@@ -884,6 +917,8 @@
                 type="button"
                 class="secondary-button article-preview-button"
                 data-article-preview-button
+                data-preview-url="{% url 'staff_reader_live_preview' %}"
+                data-preview-article-id="{{ submission.article.id }}"
             >
                 Preview Article
             </button>
@@ -1076,7 +1111,7 @@ document.addEventListener(
                 function updateCharacterCounter() {
 
                     const currentLength =
-                        field.value.length;
+                        Number(field.dataset.visibleLength ?? field.value.length);
 
                     counter.textContent =
                         currentLength.toLocaleString()

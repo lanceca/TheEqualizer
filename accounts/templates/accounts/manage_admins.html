@@ -1,4 +1,5 @@
 {% extends "staff_base.html" %}
+{% load article_text %}
 
 {% block staff_content %}
 
@@ -23,7 +24,7 @@
 
     <a
         href="{% url 'create_admin_account' %}"
-        class="approve-button"
+        class="eq-action-button eq-action-button--primary"
     >
         + Create Admin
     </a>
@@ -57,7 +58,7 @@
 
         <button
             type="submit"
-            class="secondary-button"
+            class="eq-action-button eq-action-button--secondary"
         >
             Search
         </button>
@@ -88,7 +89,7 @@
 
         {% for admin in admins %}
 
-            <article class="account-management-card">
+            <article class="account-management-card{% if admin.is_active %}{% else %} is-inactive-account{% endif %}">
 
                 <div class="account-card-top">
 
@@ -148,7 +149,7 @@
                         <dt>Email</dt>
                         <dd>
                             {% if admin.email %}
-                                {{ admin.email }}
+                                <span data-react-component="AccountEmailToggle" data-email="{{ admin.email }}">{{ admin.email|masked_email }}</span>
                             {% else %}
                                 Not provided
                             {% endif %}
@@ -178,43 +179,12 @@
 
                     <a
                         href="{% url 'edit_admin_account' admin.id %}"
-                        class="secondary-button"
+                        class="eq-action-button eq-action-button--secondary"
                     >
                         Edit Account
                     </a>
 
-                    <form
-                        method="POST"
-                        action="{% url 'toggle_admin_account_status' admin.id %}"
-                    >
 
-                        {% csrf_token %}
-
-                        {% if admin.is_active %}
-
-                            <button
-                                type="submit"
-                                class="danger-button"
-                                data-confirm-title="Deactivate Admin"
-                                data-confirm="Are you sure you want to deactivate {{ admin.username }}?"
-                            >
-                                Deactivate
-                            </button>
-
-                        {% else %}
-
-                            <button
-                                type="submit"
-                                class="approve-button"
-                                data-confirm-title="Activate Admin"
-                                data-confirm="Are you sure you want to activate {{ admin.username }}?"
-                            >
-                                Activate
-                            </button>
-
-                        {% endif %}
-
-                    </form>
 
                 </div>
 

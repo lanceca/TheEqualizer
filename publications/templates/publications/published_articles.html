@@ -1,4 +1,5 @@
 {% extends "staff_base.html" %}
+{% load article_text %}
 
 {% block staff_content %}
 
@@ -34,7 +35,7 @@
 
                 <p class="section-description">
                     Browse your currently published articles and manage
-                    edit or deletion requests.
+                    edit or archive requests.
                 </p>
 
             {% endif %}
@@ -58,48 +59,7 @@
 
     <div class="editorial-toolbar">
 
-        <form
-            method="GET"
-            action="{% url 'published_articles' %}"
-            class="editorial-search-form"
-        >
-
-            <div class="editorial-search-field">
-
-                <label for="published-search">
-                    Search Published Articles
-                </label>
-
-                <input
-                    type="text"
-                    id="published-search"
-                    name="q"
-                    value="{{ search_query }}"
-                    placeholder="Title, category, tag, author, or content"
-                >
-
-            </div>
-
-            <button
-                type="submit"
-                class="secondary-button"
-            >
-                Search
-            </button>
-
-
-            {% if search_query %}
-
-                <a
-                    href="{% url 'published_articles' %}"
-                    class="text-action-link"
-                >
-                    Clear
-                </a>
-
-            {% endif %}
-
-        </form>
+        {% include "publications/_library_filters.html" with clear_route="published_articles" archive_management=False published_library=True %}
 
     </div>
 
@@ -226,16 +186,17 @@
 
                         <button
                             type="button"
-                            class="secondary-button"
+                            class="eq-action-button eq-action-button--secondary"
                             data-saved-article-preview
                             data-preview-template-id="published-preview-{{ article.id }}"
+                            data-preview-url="{% url 'staff_reader_article_preview' article.id %}"
                         >
                             Preview Article
                         </button>
 
                         <a
                             href="{% url 'article_version_history' article.id %}"
-                            class="secondary-button"
+                            class="eq-action-button eq-action-button--secondary eq-action-button--compact"
                         >
                             Version History
                         </a>
@@ -247,7 +208,7 @@
 
                                 <a
                                     href="{% url 'edit_published_article' article.id %}"
-                                    class="edit-link"
+                                    class="eq-action-button eq-action-button--secondary eq-action-button--compact"
                                 >
                                     Edit Directly
                                 </a>
@@ -261,7 +222,7 @@
 
                                     <button
                                         type="submit"
-                                        class="danger-button"
+                                        class="eq-action-button eq-action-button--archive eq-action-button--compact"
                                         data-confirm-title="Archive Published Article"
                                         data-confirm="Are you sure you want to remove '{{ article.title }}' from publication? The article will be moved to the archive."
                                     >
@@ -277,16 +238,16 @@
 
                             <a
                                 href="{% url 'request_article_edit' article.id %}"
-                                class="edit-link"
+                                class="eq-action-button eq-action-button--secondary eq-action-button--compact"
                             >
                                 Request Edit
                             </a>
 
                             <a
                                 href="{% url 'request_article_deletion' article.id %}"
-                                class="danger-link"
+                                class="eq-action-button eq-action-button--archive-outline eq-action-button--compact"
                             >
-                                Request Deletion
+                                Request Archive
                             </a>
 
 
@@ -294,7 +255,7 @@
 
                             <a
                                 href="{% url 'report_article_content' article.id %}"
-                                class="danger-link"
+                                class="eq-action-button eq-action-button--danger-outline eq-action-button--compact"
                             >
                                 Report Content
                             </a>
@@ -394,7 +355,7 @@
         {% endif %}
 
         <div class="saved-preview-content">
-            {{ article.content|linebreaks }}
+            {{ article.content|rich_article }}
         </div>
 
         {% if article.attachments.all %}

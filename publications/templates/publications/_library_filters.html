@@ -1,0 +1,23 @@
+<form method="get" class="library-filters">
+    <label>Search <input type="search" name="q" value="{{ search_query }}" placeholder="Title, author, or content"></label>
+    <label>Category <select name="category"><option value="">All categories</option>{% for category in filter_categories %}<option value="{{ category.pk }}" {% if filters.category == category.pk|stringformat:'s' %}selected{% endif %}>{{ category.name }}</option>{% endfor %}</select></label>
+    <label>{% if archive_management %}Archive{% else %}Publication{% endif %} month <input type="month" name="month" value="{{ filters.month }}"></label>
+    <label>From <input type="date" name="start" value="{{ filters.start }}"></label>
+    <label>Through <input type="date" name="end" value="{{ filters.end }}"></label>
+    {% if published_library %}<label class="filter-check"><input type="checkbox" name="older" value="30" {% if filters.older == '30' %}checked{% endif %}>30+ Days Old</label>{% endif %}
+    <div class="library-filter-actions">
+        <button
+            type="submit"
+            class="secondary-button library-filter-button library-filter-button--apply"
+        >
+            Apply Filters
+        </button>
+
+        <a
+            href="{% url clear_route %}"
+            class="library-filter-button library-filter-button--clear"
+        >
+            Clear Filters
+        </a>
+    </div>
+</form>

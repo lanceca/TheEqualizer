@@ -117,11 +117,7 @@ body.staff-shell-body
 
     html.eq-staff-sidebar-collapsed
     body.staff-shell-body
-    .staff-nav a,
-
-    html.eq-staff-sidebar-collapsed
-    body.staff-shell-body
-    .staff-nav .logout-link {
+    .staff-nav a {
         justify-content: center !important;
         min-height: 44px !important;
         padding: 10px 8px !important;
@@ -214,6 +210,36 @@ body.staff-shell-body
 
 
         <nav class="staff-nav" aria-label="Workspace navigation">
+            <div class="staff-nav-section">
+                <a
+                    href="{% url 'system_update_history' %}"
+                    title="What's New"
+                    class="staff-attention-link"
+                >
+                    <span class="staff-nav-text">Updates</span>
+
+                    {% if system_update_count > 0 %}
+                        <span
+                            class="staff-attention-badge"
+                            data-update-attention
+                            data-pending-count="{{ system_update_count }}"
+                            title="{{ system_update_count }} system update{{ system_update_count|pluralize }} require acknowledgement"
+                            aria-label="{{ system_update_count }} system update{{ system_update_count|pluralize }} require acknowledgement"
+                        >
+                            !
+                        </span>
+                    {% endif %}
+                </a>
+
+                {% if request.user.role == 'SUPER_ADMIN' %}
+                    <a
+                        href="{% url 'manage_system_updates' %}"
+                        title="System Updates"
+                    >
+                        <span class="staff-nav-text">System Updates</span>
+                    </a>
+                {% endif %}
+            </div>
 
             <div class="staff-nav-section">
 
@@ -232,44 +258,6 @@ body.staff-shell-body
                 {% endif %}
 
             </div>
-
-            <div class="staff-nav-section">
-
-                    <p class="staff-nav-label">
-                        Account
-                    </p>
-
-                    <a
-                        href="{% url 'notification_list' %}"
-                        class="staff-notification-link"
-                    >
-                        <span>
-                            Notifications
-                        </span>
-
-                        {% if global_unread_notification_count > 0 %}
-
-                            <span
-                                class="staff-notification-badge"
-                                aria-label="{{ global_unread_notification_count }} unread notifications"
-                            >
-                                {% if global_unread_notification_count > 99 %}
-                                    99+
-                                {% else %}
-                                    {{ global_unread_notification_count }}
-                                {% endif %}
-                            </span>
-
-                        {% endif %}
-                    </a>
-
-                    <a href="{% url 'profile' %}">
-                        Profile
-                    </a>
-
-            </div>
-
-
 
             {% if request.user.role == "SUPER_ADMIN" %}
 
@@ -394,13 +382,13 @@ body.staff-shell-body
                         href="{% url 'eic_deletion_requests' %}"
                         class="staff-attention-link"
                     >
-                        <span>Deletion Requests</span>
+                        <span>Archive Requests</span>
 
                         {% if sidebar_pending_deletion_requests_count > 0 %}
                             <span
                                 class="staff-attention-badge"
                                 title="{{ sidebar_pending_deletion_requests_count }} item(s) require attention"
-                                aria-label="{{ sidebar_pending_deletion_requests_count }} deletion requests require attention"
+                                aria-label="{{ sidebar_pending_deletion_requests_count }} archive requests require attention"
                             >
                                 !
                             </span>
@@ -545,13 +533,13 @@ body.staff-shell-body
                         href="{% url 'my_deletion_requests' %}"
                         class="staff-attention-link"
                     >
-                        <span>Deletion Requests</span>
+                        <span>Archive Requests</span>
 
                         {% if sidebar_editor_deletion_requests_count > 0 %}
                             <span
                                 class="staff-attention-badge"
                                 title="{{ sidebar_editor_deletion_requests_count }} item(s) require attention"
-                                aria-label="{{ sidebar_editor_deletion_requests_count }} deletion requests require attention"
+                                aria-label="{{ sidebar_editor_deletion_requests_count }} archive requests require attention"
                             >
                                 !
                             </span>
@@ -608,30 +596,6 @@ body.staff-shell-body
             </div>
 
 
-            <div class="staff-nav-section staff-nav-bottom">
-
-                <form
-                    method="POST"
-                    action="{% url 'logout' %}"
-                >
-
-                    {% csrf_token %}
-
-                    <button
-                        type="submit"
-                        class="logout-link"
-                        aria-label="Logout"
-                        title="Logout"
-                    >
-                        <span class="staff-nav-text">
-                            Logout
-                        </span>
-                    </button>
-
-                </form>
-
-            </div>
-
         </nav>
 
     </aside>
@@ -646,7 +610,21 @@ body.staff-shell-body
             data-react-component="StaffSidebarToggle"
             data-username="{{ request.user.username }}"
             data-role="{{ request.user.get_role_display }}"
+            data-home-url="{% url 'home' %}"
+            data-notification-url="{% url 'notification_list' %}"
+            data-profile-url="{% url 'profile' %}"
+            data-notification-count="{{ global_unread_notification_count }}"
         ></div>
+
+        <form
+            id="staff-workspace-native-logout-form"
+            method="POST"
+            action="{% url 'logout' %}"
+            data-no-loading
+            hidden
+        >
+            {% csrf_token %}
+        </form>
 
         <div
             data-react-component="DashboardEnhancer"
@@ -656,6 +634,7 @@ body.staff-shell-body
 
         <div class="page-container staff-workspace-page">
 
+            {% if request.resolver_match.url_name != 'system_update_detail' %}<div data-react-component="SystemUpdatePopup" data-api-url="{% url 'system_update_popup' %}"></div>{% endif %}
             {% block staff_content %}
             {% endblock %}
 
@@ -842,7 +821,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 <!-- ======================================================
-     SAVED / SUBMITTED ARTICLE READER PREVIEW
+     UNIFIED STAFF / SUBMITTED ARTICLE READER PREVIEW
      ====================================================== -->
 
 <div
@@ -884,14 +863,50 @@ document.addEventListener("DOMContentLoaded", function () {
         </div>
 
 
-        <div
-            class="saved-article-preview-scroll"
-            id="saved-article-preview-content"
-        ></div>
+        <iframe
+            class="saved-reader-preview-frame"
+            id="saved-article-preview-frame"
+            title="Reader article preview"
+            src="about:blank"
+        ></iframe>
 
     </section>
 
 </div>
+
+
+<style>
+.saved-reader-preview-frame {
+    display: block;
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 70vh;
+    height: calc(92vh - 66px);
+    border: 0;
+    background: #ffffff;
+}
+
+.saved-article-preview-dialog {
+    width: min(1180px, 97vw);
+}
+
+@media (max-width: 720px) {
+    .saved-article-preview-overlay {
+        padding: 8px;
+    }
+
+    .saved-article-preview-dialog {
+        width: 100%;
+        max-height: 97vh;
+        border-radius: 10px;
+    }
+
+    .saved-reader-preview-frame {
+        height: calc(97vh - 64px);
+        min-height: 78vh;
+    }
+}
+</style>
 
 <!-- ======================================================
      GLOBAL ACTION CONFIRMATION DIALOG
@@ -986,925 +1001,11 @@ document.addEventListener("DOMContentLoaded", function () {
 </div>
 
 <!-- ======================================================
-     STAFF ARTICLE PREVIEW MODAL
+     ARTICLE PREVIEW NOTE
+     The old staff-only preview layout was removed. Both saved/submitted
+     previews and live composer previews now use the unified reader iframe
+     above, backed by home/article_detail.html.
      ====================================================== -->
-
-<div
-    class="staff-article-preview-overlay"
-    id="staff-article-preview-overlay"
-    aria-hidden="true"
->
-
-    <section
-        class="staff-article-preview-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="staff-preview-title"
-    >
-
-        <div class="staff-article-preview-toolbar">
-
-            <div>
-                <span class="staff-preview-label">
-                    Reader Preview
-                </span>
-
-                <strong>
-                    This preview is not published.
-                </strong>
-            </div>
-
-            <button
-                type="button"
-                class="staff-preview-close"
-                id="staff-article-preview-close"
-                aria-label="Close article preview"
-            >
-                &times;
-            </button>
-
-        </div>
-
-
-        <div class="staff-preview-scroll">
-
-            <article class="staff-reader-preview">
-
-                <p
-                    class="staff-reader-preview-category"
-                    id="staff-preview-category"
-                ></p>
-
-                <h1 id="staff-preview-title">
-                    Untitled Article
-                </h1>
-
-                <p
-                    class="staff-reader-preview-subtitle"
-                    id="staff-preview-subtitle"
-                    hidden
-                ></p>
-
-
-                <div class="staff-reader-preview-byline">
-
-                    <span>
-                        By
-                        <strong>
-                            {{ request.user.username }}
-                        </strong>
-                    </span>
-
-                    <span id="staff-preview-contributors"></span>
-
-                </div>
-
-
-                <figure
-                    class="staff-reader-preview-featured"
-                    id="staff-preview-featured-wrap"
-                    hidden
-                >
-
-                    <img
-                        id="staff-preview-featured"
-                        src=""
-                        alt="Article preview featured image"
-                    >
-
-                    <figcaption
-                        id="staff-preview-featured-caption"
-                    ></figcaption>
-
-                </figure>
-
-
-                <p
-                    class="staff-reader-preview-excerpt"
-                    id="staff-preview-excerpt"
-                    hidden
-                ></p>
-
-
-                <div
-                    class="staff-reader-preview-content"
-                    id="staff-preview-content"
-                ></div>
-
-
-                <div
-                    class="staff-reader-preview-tags"
-                    id="staff-preview-tags"
-                ></div>
-
-
-                <section
-                    class="staff-reader-preview-media"
-                    id="staff-preview-media"
-                    hidden
-                >
-
-                    <h2>
-                        Selected / Existing Media
-                    </h2>
-
-                    <div
-                        class="staff-reader-preview-media-grid"
-                        id="staff-preview-media-grid"
-                    ></div>
-
-                </section>
-
-            </article>
-
-        </div>
-
-    </section>
-
-</div>
-
-
-<script>
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
-
-        const overlay = document.getElementById(
-            "staff-article-preview-overlay"
-        );
-
-        const closeButton = document.getElementById(
-            "staff-article-preview-close"
-        );
-
-        if (!overlay) {
-            return;
-        }
-
-
-        function setText(
-            id,
-            value,
-            fallback=""
-        ) {
-
-            const element = document.getElementById(
-                id
-            );
-
-            if (!element) {
-                return;
-            }
-
-            const finalValue =
-                value
-                ? String(value).trim()
-                : fallback;
-
-            element.textContent = finalValue;
-
-            if (
-                element.hasAttribute("hidden")
-            ) {
-                element.hidden = !finalValue;
-            }
-
-        }
-
-
-        function getSelectedText(select) {
-
-            if (
-                !select
-                || select.selectedIndex < 0
-            ) {
-                return "";
-            }
-
-            return (
-                select.options[
-                    select.selectedIndex
-                ].textContent
-                || ""
-            ).trim();
-
-        }
-
-
-        function buildContributors(form) {
-
-            const rows = form.querySelectorAll(
-                ".contributor-row"
-            );
-
-            const credits = [];
-
-            rows.forEach(
-                function (row) {
-
-                    const role = row.querySelector(
-                        'select[name="contributor_roles"]'
-                    );
-
-                    const person = row.querySelector(
-                        'select[name="contributor_users"]'
-                    );
-
-                    const roleText =
-                        getSelectedText(role);
-
-                    const personText =
-                        getSelectedText(person);
-
-                    if (
-                        role
-                        && role.value
-                        && person
-                        && person.value
-                    ) {
-                        credits.push(
-                            roleText
-                            + ": "
-                            + personText
-                        );
-                    }
-
-                }
-            );
-
-            return credits.join(" • ");
-
-        }
-
-
-        function buildTags(form) {
-
-            const checked = form.querySelectorAll(
-                'input[name="tags"]:checked'
-            );
-
-            const tags = Array.from(
-                checked
-            ).map(
-                function (input) {
-
-                    const label = input.closest(
-                        "label"
-                    );
-
-                    return label
-                        ? label.textContent.trim()
-                        : "";
-
-                }
-            ).filter(Boolean);
-
-            const customTagField =
-                form.querySelector(
-                    '[name="custom_tags"]'
-                );
-
-            if (customTagField) {
-                const customTags = customTagField.value
-                    .replace(/\r\n?/g, "\n")
-                    .split(/[\n,]+/)
-                    .map(
-                        function (tag) {
-                            return tag
-                                .trim()
-                                .replace(/\s+/g, " ");
-                        }
-                    )
-                    .filter(Boolean);
-
-                customTags.forEach(
-                    function (tag) {
-                        const alreadyIncluded = tags.some(
-                            function (existingTag) {
-                                return (
-                                    existingTag.toLocaleLowerCase()
-                                    === tag.toLocaleLowerCase()
-                                );
-                            }
-                        );
-
-                        if (!alreadyIncluded) {
-                            tags.push(tag);
-                        }
-                    }
-                );
-            }
-
-            return tags;
-
-        }
-
-
-        function clearMediaGrid() {
-
-            const mediaGrid = document.getElementById(
-                "staff-preview-media-grid"
-            );
-
-            if (!mediaGrid) {
-                return;
-            }
-
-            mediaGrid.innerHTML = "";
-
-        }
-
-
-        function appendPreviewImage(
-            mediaGrid,
-            src,
-            label
-        ) {
-
-            const card = document.createElement(
-                "figure"
-            );
-
-            card.className =
-                "staff-reader-preview-media-card";
-
-            const image = document.createElement(
-                "img"
-            );
-
-            image.src = src;
-            image.alt = label || "Article image";
-
-            card.appendChild(
-                image
-            );
-
-            if (label) {
-
-                const caption =
-                    document.createElement(
-                        "figcaption"
-                    );
-
-                caption.textContent = label;
-
-                card.appendChild(
-                    caption
-                );
-
-            }
-
-            mediaGrid.appendChild(
-                card
-            );
-
-        }
-
-
-        function appendPreviewVideo(
-            mediaGrid,
-            src,
-            label
-        ) {
-
-            const card = document.createElement(
-                "figure"
-            );
-
-            card.className =
-                "staff-reader-preview-media-card";
-
-            const video = document.createElement(
-                "video"
-            );
-
-            video.controls = true;
-            video.preload = "metadata";
-            video.src = src;
-
-            card.appendChild(
-                video
-            );
-
-            if (label) {
-
-                const caption =
-                    document.createElement(
-                        "figcaption"
-                    );
-
-                caption.textContent = label;
-
-                card.appendChild(
-                    caption
-                );
-
-            }
-
-            mediaGrid.appendChild(
-                card
-            );
-
-        }
-
-
-        function populateMediaPreview(form) {
-
-            const mediaSection =
-                document.getElementById(
-                    "staff-preview-media"
-                );
-
-            const mediaGrid =
-                document.getElementById(
-                    "staff-preview-media-grid"
-                );
-
-            if (
-                !mediaSection
-                || !mediaGrid
-            ) {
-                return;
-            }
-
-            clearMediaGrid();
-
-            let mediaCount = 0;
-
-
-            form.querySelectorAll(
-                ".editable-attachment-card"
-            ).forEach(
-                function (card) {
-
-                    const remove = card.querySelector(
-                        'input[name="remove_attachments"]'
-                    );
-
-                    const image = card.querySelector(
-                        "img"
-                    );
-
-                    if (
-                        image
-                        && !(remove && remove.checked)
-                    ) {
-
-                        appendPreviewImage(
-                            mediaGrid,
-                            image.src,
-                            "Existing image"
-                        );
-
-                        mediaCount += 1;
-
-                    }
-
-                }
-            );
-
-
-            form.querySelectorAll(
-                ".video-attachment-card"
-            ).forEach(
-                function (card) {
-
-                    const remove = card.querySelector(
-                        'input[name="remove_video_attachments"]'
-                    );
-
-                    const video = card.querySelector(
-                        "video"
-                    );
-
-                    if (
-                        video
-                        && !(remove && remove.checked)
-                    ) {
-
-                        const source = video.querySelector(
-                            "source"
-                        );
-
-                        appendPreviewVideo(
-                            mediaGrid,
-                            source
-                                ? source.src
-                                : video.src,
-                            "Existing video"
-                        );
-
-                        mediaCount += 1;
-
-                    }
-
-                }
-            );
-
-
-            const imageInput = form.querySelector(
-                'input[name="attachments"]'
-            );
-
-            if (
-                imageInput
-                && imageInput.files
-            ) {
-
-                Array.from(
-                    imageInput.files
-                ).forEach(
-                    function (file) {
-
-                        appendPreviewImage(
-                            mediaGrid,
-                            URL.createObjectURL(file),
-                            file.name
-                        );
-
-                        mediaCount += 1;
-
-                    }
-                );
-
-            }
-
-
-            const videoInput = form.querySelector(
-                'input[name="video_attachments"]'
-            );
-
-            if (
-                videoInput
-                && videoInput.files
-            ) {
-
-                Array.from(
-                    videoInput.files
-                ).forEach(
-                    function (file) {
-
-                        appendPreviewVideo(
-                            mediaGrid,
-                            URL.createObjectURL(file),
-                            file.name
-                        );
-
-                        mediaCount += 1;
-
-                    }
-                );
-
-            }
-
-
-            mediaSection.hidden =
-                mediaCount === 0;
-
-        }
-
-
-        function populateFeaturedImage(form) {
-
-            const wrap = document.getElementById(
-                "staff-preview-featured-wrap"
-            );
-
-            const image = document.getElementById(
-                "staff-preview-featured"
-            );
-
-            const caption = document.getElementById(
-                "staff-preview-featured-caption"
-            );
-
-            if (
-                !wrap
-                || !image
-                || !caption
-            ) {
-                return;
-            }
-
-            const featuredInput =
-                form.querySelector(
-                    'input[name="featured_image"]'
-                );
-
-            const captionInput =
-                form.querySelector(
-                    'input[name="featured_image_caption"]'
-                );
-
-            const creditInput =
-                form.querySelector(
-                    'input[name="featured_image_credit"]'
-                );
-
-            let src = "";
-
-            if (
-                featuredInput
-                && featuredInput.files
-                && featuredInput.files[0]
-            ) {
-
-                src = URL.createObjectURL(
-                    featuredInput.files[0]
-                );
-
-            } else {
-
-                const currentImage =
-                    form.querySelector(
-                        ".edit-draft-featured-preview, "
-                        + ".current-image, "
-                        + ".featured-image"
-                    );
-
-                if (currentImage) {
-                    src = currentImage.src;
-                }
-
-            }
-
-            if (!src) {
-                wrap.hidden = true;
-                image.src = "";
-                caption.textContent = "";
-                return;
-            }
-
-            image.src = src;
-
-            const captionText =
-                captionInput
-                ? captionInput.value.trim()
-                : "";
-
-            const creditText =
-                creditInput
-                ? creditInput.value.trim()
-                : "";
-
-            caption.textContent = [
-                captionText,
-                creditText
-            ].filter(Boolean).join(" • ");
-
-            wrap.hidden = false;
-
-        }
-
-
-        function populateArticlePreview(form) {
-
-            const title =
-                form.querySelector(
-                    '[name="title"]'
-                );
-
-            const subtitle =
-                form.querySelector(
-                    '[name="subtitle"]'
-                );
-
-            const excerpt =
-                form.querySelector(
-                    '[name="excerpt"]'
-                );
-
-            const content =
-                form.querySelector(
-                    '[name="content"]'
-                );
-
-            const category =
-                form.querySelector(
-                    '[name="category"]'
-                );
-
-            setText(
-                "staff-preview-title",
-                title ? title.value : "",
-                "Untitled Article"
-            );
-
-            setText(
-                "staff-preview-subtitle",
-                subtitle ? subtitle.value : ""
-            );
-
-            setText(
-                "staff-preview-excerpt",
-                excerpt ? excerpt.value : ""
-            );
-
-            setText(
-                "staff-preview-category",
-                getSelectedText(category)
-            );
-
-            setText(
-                "staff-preview-contributors",
-                buildContributors(form)
-            );
-
-
-            const contentElement =
-                document.getElementById(
-                    "staff-preview-content"
-                );
-
-            if (contentElement) {
-
-                contentElement.innerHTML = "";
-
-                const contentValue =
-                    content
-                    ? content.value.trim()
-                    : "";
-
-                const paragraphs =
-                    contentValue
-                    ? contentValue.split(
-                        /\n\s*\n/
-                    )
-                    : [
-                        "Article content will appear here."
-                    ];
-
-                paragraphs.forEach(
-                    function (paragraphText) {
-
-                        const paragraph =
-                            document.createElement(
-                                "p"
-                            );
-
-                        paragraph.textContent =
-                            paragraphText;
-
-                        contentElement.appendChild(
-                            paragraph
-                        );
-
-                    }
-                );
-
-            }
-
-
-            const tagContainer =
-                document.getElementById(
-                    "staff-preview-tags"
-                );
-
-            if (tagContainer) {
-
-                tagContainer.innerHTML = "";
-
-                buildTags(form).forEach(
-                    function (tag) {
-
-                        const item =
-                            document.createElement(
-                                "span"
-                            );
-
-                        item.textContent = tag;
-
-                        tagContainer.appendChild(
-                            item
-                        );
-
-                    }
-                );
-
-            }
-
-            populateFeaturedImage(
-                form
-            );
-
-            populateMediaPreview(
-                form
-            );
-
-        }
-
-
-        function openPreview(form) {
-
-            populateArticlePreview(
-                form
-            );
-
-            overlay.classList.add(
-                "is-open"
-            );
-
-            overlay.setAttribute(
-                "aria-hidden",
-                "false"
-            );
-
-            document.body.classList.add(
-                "staff-preview-open"
-            );
-
-            if (closeButton) {
-                closeButton.focus();
-            }
-
-        }
-
-
-        function closePreview() {
-
-            overlay.classList.remove(
-                "is-open"
-            );
-
-            overlay.setAttribute(
-                "aria-hidden",
-                "true"
-            );
-
-            document.body.classList.remove(
-                "staff-preview-open"
-            );
-
-        }
-
-
-        document.querySelectorAll(
-            "[data-article-preview-button]"
-        ).forEach(
-            function (button) {
-
-                button.addEventListener(
-                    "click",
-                    function () {
-
-                        const form = button.closest(
-                            "form"
-                        );
-
-                        if (form) {
-                            openPreview(
-                                form
-                            );
-                        }
-
-                    }
-                );
-
-            }
-        );
-
-
-        if (closeButton) {
-
-            closeButton.addEventListener(
-                "click",
-                closePreview
-            );
-
-        }
-
-
-        overlay.addEventListener(
-            "click",
-            function (event) {
-
-                if (event.target === overlay) {
-                    closePreview();
-                }
-
-            }
-        );
-
-
-        document.addEventListener(
-            "keydown",
-            function (event) {
-
-                if (
-                    event.key === "Escape"
-                    && overlay.classList.contains(
-                        "is-open"
-                    )
-                ) {
-                    closePreview();
-                }
-
-            }
-        );
-
-    }
-);
-</script>
 
 
 <script>
@@ -2284,80 +1385,130 @@ document.addEventListener(
     "DOMContentLoaded",
     function () {
 
-        const overlay =
-            document.getElementById(
-                "saved-article-preview-overlay"
-            );
+        const overlay = document.getElementById(
+            "saved-article-preview-overlay"
+        );
 
-        const dialogContent =
-            document.getElementById(
-                "saved-article-preview-content"
-            );
+        const frame = document.getElementById(
+            "saved-article-preview-frame"
+        );
 
-        const closeButton =
-            document.getElementById(
-                "saved-article-preview-close"
-            );
+        const closeButton = document.getElementById(
+            "saved-article-preview-close"
+        );
 
-        if (
-            !overlay
-            || !dialogContent
-        ) {
+        const heading = document.getElementById(
+            "saved-article-preview-heading"
+        );
+
+        if (!overlay || !frame) {
             return;
         }
 
 
-        function stopPreviewMedia() {
+        function loadingDocument(message) {
+            const safeMessage = String(
+                message || "Loading reader preview…"
+            )
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;");
 
-            dialogContent
-                .querySelectorAll(
-                    "video, audio"
-                )
-                .forEach(
-                    function (media) {
-
-                        try {
-                            media.pause();
-                        } catch (error) {
-                            // Ignore unsupported media pause failures.
-                        }
-
-                    }
-                );
-
+            return `
+                <!doctype html>
+                <html>
+                    <head>
+                        <meta charset="utf-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1">
+                        <style>
+                            body {
+                                display: grid;
+                                place-items: center;
+                                min-height: 100vh;
+                                margin: 0;
+                                background: #f7f9f7;
+                                color: #173f32;
+                                font-family: Arial, sans-serif;
+                            }
+                            .preview-loading {
+                                display: flex;
+                                align-items: center;
+                                gap: 12px;
+                                padding: 18px 20px;
+                                border: 1px solid #d8e2dc;
+                                border-radius: 12px;
+                                background: #fff;
+                                box-shadow: 0 10px 28px rgba(15,45,36,.08);
+                            }
+                            .preview-loading::before {
+                                content: "";
+                                width: 22px;
+                                height: 22px;
+                                border: 3px solid #dfe8e3;
+                                border-top-color: #184536;
+                                border-radius: 50%;
+                                animation: spin .75s linear infinite;
+                            }
+                            @keyframes spin { to { transform: rotate(360deg); } }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="preview-loading">${safeMessage}</div>
+                    </body>
+                </html>
+            `;
         }
 
 
-        function openSavedPreview(
-            templateId
-        ) {
+        function errorDocument(message) {
+            const safeMessage = String(
+                message || "Unable to load the preview."
+            )
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;");
 
-            const template =
-                document.getElementById(
-                    templateId
-                );
+            return `
+                <!doctype html>
+                <html>
+                    <head>
+                        <meta charset="utf-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1">
+                        <style>
+                            body {
+                                display: grid;
+                                place-items: center;
+                                min-height: 100vh;
+                                margin: 0;
+                                padding: 24px;
+                                background: #f7f9f7;
+                                color: #173f32;
+                                font-family: Arial, sans-serif;
+                            }
+                            div {
+                                max-width: 520px;
+                                padding: 20px;
+                                border: 1px solid #e0c5c5;
+                                border-radius: 12px;
+                                background: #fffafa;
+                                line-height: 1.6;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div>${safeMessage}</div>
+                    </body>
+                </html>
+            `;
+        }
 
-            if (!template) {
-                return;
-            }
 
-            dialogContent.innerHTML = "";
-
-            dialogContent.appendChild(
-                template.content.cloneNode(
-                    true
-                )
-            );
-
-            overlay.classList.add(
-                "is-open"
-            );
-
+        function showPreview() {
+            overlay.classList.add("is-open");
             overlay.setAttribute(
                 "aria-hidden",
                 "false"
             );
-
             document.body.classList.add(
                 "saved-article-preview-open"
             );
@@ -2365,29 +1516,124 @@ document.addEventListener(
             if (closeButton) {
                 closeButton.focus();
             }
-
         }
 
 
-        function closeSavedPreview() {
-
-            stopPreviewMedia();
-
-            overlay.classList.remove(
-                "is-open"
-            );
-
+        function closePreview() {
+            overlay.classList.remove("is-open");
             overlay.setAttribute(
                 "aria-hidden",
                 "true"
             );
-
             document.body.classList.remove(
                 "saved-article-preview-open"
             );
 
-            dialogContent.innerHTML = "";
+            frame.src = "about:blank";
+            frame.removeAttribute("srcdoc");
+        }
 
+
+        async function renderResponse(response) {
+            const html = await response.text();
+
+            if (!response.ok) {
+                throw new Error(
+                    html
+                    ? "The reader preview could not be loaded."
+                    : "The preview request failed."
+                );
+            }
+
+            frame.src = "about:blank";
+            frame.srcdoc = html;
+        }
+
+
+        async function openSavedPreview(button) {
+            const url = button.dataset.previewUrl;
+
+            if (!url) {
+                return;
+            }
+
+            if (heading) {
+                heading.textContent = "Article Preview";
+            }
+
+            frame.srcdoc = loadingDocument(
+                "Loading the exact reader view…"
+            );
+            showPreview();
+
+            try {
+                const response = await fetch(
+                    url,
+                    {
+                        method: "GET",
+                        credentials: "same-origin",
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest",
+                        },
+                    }
+                );
+
+                await renderResponse(response);
+            } catch (error) {
+                frame.srcdoc = errorDocument(
+                    "The reader preview could not be loaded. "
+                    + "Close this window and try again."
+                );
+            }
+        }
+
+
+        async function openLivePreview(button) {
+            const form = button.closest("form");
+            const url = button.dataset.previewUrl;
+
+            if (!form || !url) {
+                return;
+            }
+
+            if (heading) {
+                heading.textContent = "Live Reader Preview";
+            }
+
+            const formData = new FormData(form);
+
+            if (button.dataset.previewArticleId) {
+                formData.set(
+                    "preview_article_id",
+                    button.dataset.previewArticleId
+                );
+            }
+
+            frame.srcdoc = loadingDocument(
+                "Building the exact reader view…"
+            );
+            showPreview();
+
+            try {
+                const response = await fetch(
+                    url,
+                    {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest",
+                        },
+                        body: formData,
+                    }
+                );
+
+                await renderResponse(response);
+            } catch (error) {
+                frame.srcdoc = errorDocument(
+                    "The live reader preview could not be built. "
+                    + "Check the form and try again."
+                );
+            }
         }
 
 
@@ -2395,41 +1641,44 @@ document.addEventListener(
             "[data-saved-article-preview]"
         ).forEach(
             function (button) {
-
                 button.addEventListener(
                     "click",
                     function () {
-
-                        openSavedPreview(
-                            button.dataset
-                                .previewTemplateId
-                        );
-
+                        openSavedPreview(button);
                     }
                 );
+            }
+        );
 
+
+        document.querySelectorAll(
+            "[data-article-preview-button]"
+        ).forEach(
+            function (button) {
+                button.addEventListener(
+                    "click",
+                    function () {
+                        openLivePreview(button);
+                    }
+                );
             }
         );
 
 
         if (closeButton) {
-
             closeButton.addEventListener(
                 "click",
-                closeSavedPreview
+                closePreview
             );
-
         }
 
 
         overlay.addEventListener(
             "click",
             function (event) {
-
                 if (event.target === overlay) {
-                    closeSavedPreview();
+                    closePreview();
                 }
-
             }
         );
 
@@ -2437,16 +1686,14 @@ document.addEventListener(
         document.addEventListener(
             "keydown",
             function (event) {
-
                 if (
                     event.key === "Escape"
                     && overlay.classList.contains(
                         "is-open"
                     )
                 ) {
-                    closeSavedPreview();
+                    closePreview();
                 }
-
             }
         );
 

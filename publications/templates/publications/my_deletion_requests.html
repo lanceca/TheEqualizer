@@ -1,4 +1,5 @@
 {% extends "staff_base.html" %}
+{% load article_text %}
 
 {% block staff_content %}
 
@@ -13,7 +14,7 @@
             </p>
 
             <h1>
-                My Deletion Requests
+                My Archive Requests
             </h1>
 
             <p class="section-description">
@@ -74,7 +75,7 @@
             <div class="editorial-search-field">
 
                 <label for="deletion-request-search">
-                    Search Deletion Requests
+                    Search Archive Requests
                 </label>
 
                 <input
@@ -89,7 +90,7 @@
 
             <button
                 type="submit"
-                class="secondary-button"
+                class="eq-action-button eq-action-button--secondary"
             >
                 Search
             </button>
@@ -167,14 +168,14 @@
                             </span>
 
                             <span class="editorial-meta-chip is-danger">
-                                Deletion Request
+                                Archive Request
                             </span>
 
                         </div>
 
 
 
-                        <div class="workflow-card-progress" aria-label="Deletion request progress">
+                        <div class="workflow-card-progress" aria-label="Archive request progress">
 
                             <span class="is-complete">Requested</span>
 
@@ -265,9 +266,10 @@
 
                         <button
                             type="button"
-                            class="secondary-button"
+                            class="eq-action-button eq-action-button--secondary eq-action-button--compact"
                             data-saved-article-preview
                             data-preview-template-id="deletion-request-preview-{{ deletion_request.id }}"
+                            data-preview-url="{% url 'staff_reader_article_preview' deletion_request.article.id %}"
                         >
                             Preview Article
                         </button>
@@ -285,7 +287,7 @@
 
                             <div class="request-detail-block editorial-attention-callout editorial-attention-callout--concern">
 
-                                <span>Reason for Deletion</span>
+                                <span>Reason for Archive</span>
 
                                 <p>
                                     {{ deletion_request.reason|linebreaksbr }}
@@ -298,7 +300,7 @@
 
                                 <div class="request-state-message is-pending">
                                     The article remains published while the EIC
-                                    reviews this deletion request.
+                                    reviews this archive request.
                                 </div>
 
                             {% elif deletion_request.status == "APPROVED" %}
@@ -312,7 +314,7 @@
                             {% else %}
 
                                 <div class="request-state-message is-danger">
-                                    The deletion request was rejected. The article
+                                    The archive request was rejected. The article
                                     remains in the publication unless another
                                     workflow action changes its status.
                                 </div>
@@ -412,7 +414,7 @@
         {% endif %}
 
         <div class="saved-preview-content">
-            {{ deletion_request.article.content|linebreaks }}
+            {{ deletion_request.article.content|rich_article }}
         </div>
 
         {% if deletion_request.article.attachments.all %}
@@ -536,13 +538,13 @@
             <strong>
 
                 {% if search_query %}
-                    No deletion requests matched your search in this view.
+                    No archive requests matched your search in this view.
                 {% elif selected_scope == "CURRENT" %}
-                    You currently have no pending deletion requests.
+                    You currently have no pending archive requests.
                 {% elif selected_scope == "HISTORY" %}
-                    You do not have any deletion request history yet.
+                    You do not have any archive request history yet.
                 {% else %}
-                    You have not submitted any deletion requests yet.
+                    You have not submitted any archive requests yet.
                 {% endif %}
 
             </strong>

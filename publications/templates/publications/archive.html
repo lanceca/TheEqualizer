@@ -1,4 +1,5 @@
 {% extends "staff_base.html" %}
+{% load article_text %}
 
 {% block staff_content %}
 
@@ -18,7 +19,7 @@
 
             <p class="section-description">
                 Review articles removed from active publication. Restore an
-                article when it should return to the reader site, or permanently
+                article when it should return to current publication feeds, or permanently
                 delete it when the record is no longer needed.
             </p>
 
@@ -42,49 +43,7 @@
 
     <div class="editorial-toolbar">
 
-        <form
-            method="GET"
-            action="{% url 'archived_articles' %}"
-            class="editorial-search-form"
-        >
-
-            <div class="editorial-search-field">
-
-                <label for="archive-search">
-                    Search Archive
-                </label>
-
-                <input
-                    type="text"
-                    id="archive-search"
-                    name="q"
-                    value="{{ search_query }}"
-                    placeholder="Title, author, category, contributor, tag, or content"
-                >
-
-            </div>
-
-
-            <button
-                type="submit"
-                class="secondary-button"
-            >
-                Search
-            </button>
-
-
-            {% if search_query %}
-
-                <a
-                    href="{% url 'archived_articles' %}"
-                    class="text-action-link"
-                >
-                    Clear
-                </a>
-
-            {% endif %}
-
-        </form>
+        {% include "publications/_library_filters.html" with clear_route="archived_articles" archive_management=True published_library=False %}
 
     </div>
 
@@ -228,7 +187,7 @@
 
                         <button
                             type="button"
-                            class="secondary-button"
+                            class="eq-action-button eq-action-button--secondary"
                             data-saved-article-preview
                             data-preview-template-id="archive-preview-{{ article.id }}"
                         >
@@ -238,7 +197,7 @@
 
                         <a
                             href="{% url 'article_version_history' article.id %}"
-                            class="secondary-button"
+                            class="eq-action-button eq-action-button--secondary eq-action-button--compact"
                         >
                             Version History
                         </a>
@@ -253,7 +212,7 @@
 
                             <button
                                 type="submit"
-                                class="approve-button"
+                                class="eq-action-button eq-action-button--recovery eq-action-button--compact"
                                 data-confirm-title="Restore Article"
                                 data-confirm="Restore '{{ article.title }}' and publish it again on the reader site?"
                                 data-loading-title="Restoring Article"
@@ -274,7 +233,7 @@
 
                             <button
                                 type="submit"
-                                class="danger-button permanent-delete-button"
+                                class="eq-action-button eq-action-button--danger eq-action-button--compact permanent-delete-button"
                                 data-confirm-title="Permanently Delete Article"
                                 data-confirm="Permanently delete '{{ article.title }}'? This removes the archived article and its related stored records. This action cannot be undone."
                                 data-loading-title="Deleting Permanently"
@@ -384,7 +343,7 @@
         {% endif %}
 
         <div class="saved-preview-content">
-            {{ article.content|linebreaks }}
+            {{ article.content|rich_article }}
         </div>
 
         {% if article.attachments.all %}

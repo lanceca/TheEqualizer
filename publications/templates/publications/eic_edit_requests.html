@@ -1,4 +1,5 @@
 {% extends "staff_base.html" %}
+{% load article_text %}
 
 {% block staff_content %}
 
@@ -169,6 +170,7 @@
                             class="secondary-button"
                             data-saved-article-preview
                             data-preview-template-id="eic-edit-preview-{{ edit_request.id }}"
+                            data-preview-url="{% url 'staff_reader_article_preview' edit_request.article.id %}"
                         >
                             Preview Article
                         </button>
@@ -358,7 +360,7 @@
         {% endif %}
 
         <div class="saved-preview-content">
-            {{ edit_request.article.content|linebreaks }}
+            {{ edit_request.article.content|rich_article }}
         </div>
 
         {% if edit_request.article.attachments.all %}

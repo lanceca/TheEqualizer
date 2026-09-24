@@ -13,13 +13,13 @@
             <p class="version-history-summary">
                 <strong>{{ article.title }}</strong>
                 &middot;
-                Current published version: {{ article.version_number }}
+                Every official published snapshot is preserved below.
             </p>
         </div>
 
         <a
             href="{% url 'published_articles' %}"
-            class="secondary-button"
+            class="eq-action-button eq-action-button--secondary"
         >
             Back to Published Articles
         </a>
@@ -27,25 +27,37 @@
     </div>
 
 
-    <div class="version-history-guide">
-        <strong>Quick change identification</strong>
-        <p>
-            Each official version lists the article sections changed from the
-            immediately previous published version. Open a version to preview it
-            like a reader article with the edited text and media clearly marked.
-        </p>
+    <div class="version-history-overview" aria-label="Version history summary">
+        <div>
+            <span>Stored versions</span>
+            <strong>{{ versions|length }}</strong>
+        </div>
+
+        <div>
+            <span>Current published</span>
+            <strong>V{{ article.version_number }}</strong>
+        </div>
+
+        <div class="version-history-overview-copy">
+            <span>How comparison works</span>
+            <p>
+                Each version is compared with the immediately previous official
+                version, so changed fields are easy to identify.
+            </p>
+        </div>
     </div>
 
 
     {% if versions %}
 
-        <div class="version-history-list">
+        <div class="version-history-list version-history-timeline">
 
             {% for version in versions %}
 
                 <article
                     class="version-history-card{% if version.version_number == article.version_number %} current{% endif %}"
                 >
+                    <span class="version-history-timeline-node" aria-hidden="true"></span>
 
                     <div class="version-number-badge">
                         V{{ version.version_number }}
@@ -65,6 +77,7 @@
 
                         <p class="version-history-meta">
                             <span>{{ version.created_at|date:"M. d, Y - g:i A" }}</span>
+
                             <span>
                                 By
                                 {% if version.created_by_name %}
@@ -73,6 +86,7 @@
                                     System / pre-history baseline
                                 {% endif %}
                             </span>
+
                             {% if version.category_name %}
                                 <span>{{ version.category_name }}</span>
                             {% endif %}
@@ -97,7 +111,10 @@
                         {% else %}
                             <div class="version-history-change-summary is-baseline">
                                 <span class="version-history-change-label">Baseline</span>
-                                <small>First official snapshot; there is no earlier version to compare.</small>
+                                <small>
+                                    First official snapshot; there is no earlier
+                                    version to compare.
+                                </small>
                             </div>
                         {% endif %}
 
@@ -106,9 +123,9 @@
                     <div class="version-history-action">
                         <a
                             href="{% url 'article_version_detail' article.id version.version_number %}"
-                            class="secondary-button"
+                            class="eq-action-button eq-action-button--secondary eq-action-button--compact"
                         >
-                            Preview & Compare
+                            Preview &amp; Compare
                         </a>
                     </div>
 
