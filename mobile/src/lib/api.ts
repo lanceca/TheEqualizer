@@ -8,63 +8,47 @@ export async function apiGet<T>(path: string): Promise<T> {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const controller = new AbortController();
 
-  const timeout = setTimeout(() => {
-    controller.abort();
-  }, REQUEST_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
     const response = await fetch(`${API_BASE_URL}${normalizedPath}`, {
       method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
+      headers: { Accept: "application/json" },
       credentials: "include",
       signal: controller.signal,
     });
 
     if (!response.ok) {
-      throw new Error(
-        `The Equalizer server returned HTTP ${response.status}.`
-      );
+      throw new Error(`The Equalizer server returned HTTP ${response.status}.`);
     }
 
     return (await response.json()) as T;
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      throw new Error(
-        "The server took too long to respond. Please try again."
-      );
+      throw new Error("The server took too long to respond. Please try again.");
     }
-
     throw error;
   } finally {
     clearTimeout(timeout);
   }
 }
 
-
 export async function apiPost<T>(path: string): Promise<T> {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const controller = new AbortController();
 
-  const timeout = setTimeout(() => {
-    controller.abort();
-  }, REQUEST_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
     const response = await fetch(`${API_BASE_URL}${normalizedPath}`, {
       method: "POST",
-      headers: {
-        Accept: "application/json",
-      },
+      headers: { Accept: "application/json" },
       credentials: "include",
       signal: controller.signal,
     });
 
     if (!response.ok) {
-      throw new Error(
-        `The Equalizer server returned HTTP ${response.status}.`
-      );
+      throw new Error(`The Equalizer server returned HTTP ${response.status}.`);
     }
 
     return (await response.json()) as T;
@@ -74,28 +58,56 @@ export async function apiPost<T>(path: string): Promise<T> {
         "The server took too long to respond. It may be waking up. Please try again."
       );
     }
-
     throw error;
   } finally {
     clearTimeout(timeout);
   }
 }
 
-export function formatDate(value?: string | null): string {
-  if (!value) {
-    return "";
-  }
+export function buildQueryString(params: Record<string, string>): string {
+  return Object.entries(params)
+    .filter(([, value]) => Boolean(value))
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join("&");
+}
 
+function parseDate(value?: string | null): Date | null {
+  if (!value) return null;
   const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
 
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
+export function formatDate(value?: string | null): string {
+  const date = parseDate(value);
+  if (!date) return "";
 
   return new Intl.DateTimeFormat("en-PH", {
     year: "numeric",
     month: "short",
     day: "2-digit",
+    timeZone: "Asia/Manila",
+  }).format(date);
+}
+
+export function formatTime(value?: string | null): string {
+  const date = parseDate(value);
+  if (!date) return "";
+
+  return new Intl.DateTimeFormat("en-PH", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "Asia/Manila",
+  }).format(date);
+}
+
+export function formatMonthYear(value?: string | null): string {
+  const date = parseDate(value);
+  if (!date) return "Unknown publication date";
+
+  return new Intl.DateTimeFormat("en-PH", {
+    month: "long",
+    year: "numeric",
+    timeZone: "Asia/Manila",
   }).format(date);
 }
 
@@ -121,10 +133,6 @@ export function truncateWords(value = "", maxWords = 28): string {
   if (!plain) return "";
 
   const words = plain.split(/\s+/);
-
-  if (words.length <= maxWords) {
-    return plain;
-  }
-
+  if (words.length <= maxWords) return plain;
   return `${words.slice(0, maxWords).join(" ")}…`;
 }

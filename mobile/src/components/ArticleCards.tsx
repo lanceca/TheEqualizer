@@ -44,9 +44,12 @@ export function LeadStory({ article }: { article: ArticleSummary }) {
 
   return (
     <View style={styles.leadStory}>
-      <Pressable onPress={() => openArticle(article.slug)}>
-        <StoryImage article={article} style={styles.leadImage} />
-      </Pressable>
+      <View style={styles.mediaWrap}>
+        <Pressable onPress={() => openArticle(article.slug)}>
+          <StoryImage article={article} style={styles.leadImage} />
+        </Pressable>
+        {article.is_archived ? <ArchiveBadge /> : null}
+      </View>
 
       <View style={styles.leadContent}>
         <Text style={styles.category}>{article.category.name}</Text>
@@ -88,7 +91,10 @@ export function SecondaryStory({ article }: { article: ArticleSummary }) {
       style={styles.secondaryStory}
       onPress={() => openArticle(article.slug)}
     >
-      <StoryImage article={article} style={styles.secondaryImage} />
+      <View style={styles.secondaryMediaWrap}>
+        <StoryImage article={article} style={styles.secondaryImage} />
+        {article.is_archived ? <ArchiveBadge compact /> : null}
+      </View>
 
       <View style={styles.secondaryContent}>
         <Text style={styles.category}>{article.category.name}</Text>
@@ -109,9 +115,12 @@ export function SecondaryStory({ article }: { article: ArticleSummary }) {
 export function StoryCard({ article }: { article: ArticleSummary }) {
   return (
     <View style={styles.storyCard}>
-      <Pressable onPress={() => openArticle(article.slug)}>
-        <StoryImage article={article} style={styles.storyCardImage} />
-      </Pressable>
+      <View style={styles.mediaWrap}>
+        <Pressable onPress={() => openArticle(article.slug)}>
+          <StoryImage article={article} style={styles.storyCardImage} />
+        </Pressable>
+        {article.is_archived ? <ArchiveBadge /> : null}
+      </View>
 
       <View style={styles.storyCardBody}>
         <Text style={styles.category}>{article.category.name}</Text>
@@ -144,9 +153,12 @@ export function CategoryFeaturedStory({
 }) {
   return (
     <View style={styles.categoryFeatured}>
-      <Pressable onPress={() => openArticle(article.slug)}>
-        <StoryImage article={article} style={styles.categoryFeaturedImage} />
-      </Pressable>
+      <View style={styles.mediaWrap}>
+        <Pressable onPress={() => openArticle(article.slug)}>
+          <StoryImage article={article} style={styles.categoryFeaturedImage} />
+        </Pressable>
+        {article.is_archived ? <ArchiveBadge /> : null}
+      </View>
 
       <View style={styles.categoryFeaturedCopy}>
         <Text style={styles.category}>{article.category.name}</Text>
@@ -184,7 +196,25 @@ export function CategoryFeaturedStory({
   );
 }
 
+
+function ArchiveBadge({ compact = false }: { compact?: boolean }) {
+  return (
+    <View style={[styles.archiveBadge, compact && styles.archiveBadgeCompact]}>
+      <Text style={styles.archiveBadgeText}>ARCHIVED</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  mediaWrap: { position: "relative" },
+  secondaryMediaWrap: { position: "relative", width: 118, height: 88 },
+  archiveBadge: {
+    position: "absolute", top: 10, left: 10, paddingHorizontal: 9,
+    paddingVertical: 5, borderRadius: 999,
+    backgroundColor: "rgba(14, 42, 34, 0.90)",
+  },
+  archiveBadgeCompact: { top: 6, left: 6, paddingHorizontal: 7, paddingVertical: 4 },
+  archiveBadgeText: { color: colors.white, fontSize: 9, fontWeight: "900", letterSpacing: 0.8 },
   placeholder: {
     alignItems: "center",
     justifyContent: "center",

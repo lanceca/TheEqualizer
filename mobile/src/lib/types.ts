@@ -9,6 +9,7 @@ export type Category = {
 export type Author = {
   username: string;
   display_name: string;
+  profile_picture_url: string;
 };
 
 export type Tag = {
@@ -37,6 +38,9 @@ export type ArticleSummary = {
   author: Author;
   published_at: string | null;
   updated_at: string;
+  version_number: number;
+  is_archived: boolean;
+  archived_at: string | null;
   attachment_mode: string;
   hero_image_url: string;
   featured_image_caption: string;
@@ -48,6 +52,7 @@ export type ArticleSummary = {
 export type ArticleContributor = {
   username: string;
   display_name: string;
+  profile_picture_url: string;
   role: string;
   role_display: string;
 };
@@ -73,6 +78,20 @@ export type ArticleDetail = ArticleSummary & {
   contributors: ArticleContributor[];
   image_attachments: ArticleImageAttachment[];
   video_attachments: ArticleVideoAttachment[];
+  version_history_url: string;
+  pdf_url: string;
+};
+
+export type ArticleFilterState = {
+  query: string;
+  start: string;
+  end: string;
+  filter_error: string;
+};
+
+export type ArchiveFilterState = ArticleFilterState & {
+  category: string;
+  month: string;
 };
 
 export type SchoolUpdate = {
@@ -141,6 +160,13 @@ export type CategoriesResponse = {
 export type ArticlesResponse = {
   count: number;
   articles: ArticleSummary[];
+  filters?: ArticleFilterState;
+};
+
+export type ArchiveResponse = {
+  count: number;
+  articles: ArticleSummary[];
+  filters: ArchiveFilterState;
 };
 
 export type ArticleDetailResponse = {

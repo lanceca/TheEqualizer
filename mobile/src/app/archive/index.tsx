@@ -8,40 +8,38 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
 
-import {
-  CategoryFeaturedStory,
-  StoryCard,
-} from "../../components/ArticleCards";
+import { ArticleCard } from "../../components/ArticleCard";
 import { ScreenState } from "../../components/ScreenState";
-import { CategorySkeleton } from "../../components/SkeletonLayouts";
-import { SectionHeading } from "../../components/SectionHeading";
+import { ArchiveSkeleton } from "../../components/SkeletonLayouts";
 import { SiteHeader } from "../../components/SiteHeader";
-import { apiGet, buildQueryString } from "../../lib/api";
-import type { ArticlesResponse, CategoriesResponse } from "../../lib/types";
+import { apiGet, buildQueryString, formatMonthYear } from "../../lib/api";
+import type {
+  ArchiveResponse,
+  ArticleSummary,
+  CategoriesResponse,
+} from "../../lib/types";
 import { colors, typography } from "../../theme";
 
 type AppliedFilters = {
   query: string;
+  category: string;
   start: string;
   end: string;
 };
 
 const emptyFilters: AppliedFilters = {
   query: "",
+  category: "",
   start: "",
   end: "",
 };
 
-export default function CategoryScreen() {
-  const params = useLocalSearchParams<{ slug: string; title?: string }>();
-  const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
-  const titleParam = Array.isArray(params.title) ? params.title[0] : params.title;
-
-  const [data, setData] = useState<ArticlesResponse | null>(null);
+export default function ArchiveScreen() {
+  const [data, setData] = useState<ArchiveResponse | null>(null);
   const [categories, setCategories] = useState<CategoriesResponse | null>(null);
   const [query, setQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [applied, setApplied] = useState<AppliedFilters>(emptyFilters);
@@ -49,47 +47,38 @@ export default function CategoryScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
-  const category = useMemo(
-    () => categories?.categories.find((item) => item.slug === slug),
-    [categories, slug]
-  );
-
-  const title = titleParam || category?.name || "Article Category";
-
   const load = useCallback(
     async (refresh = false, filters = applied) => {
-      if (!slug) return;
-
       refresh ? setRefreshing(true) : setLoading(true);
       setError("");
 
       try {
         const queryString = buildQueryString({
-          category: slug,
-          limit: "100",
+          limit: "200",
           q: filters.query,
+          category: filters.category,
           start: filters.start,
           end: filters.end,
         });
 
-        const [articlesResponse, categoriesResponse] = await Promise.all([
-          apiGet<ArticlesResponse>(`/articles/?${queryString}`),
+        const [archiveResponse, categoriesResponse] = await Promise.all([
+          apiGet<ArchiveResponse>(`/archive/?${queryString}`),
           apiGet<CategoriesResponse>("/categories/"),
         ]);
 
-        setData(articlesResponse);
+        setData(archiveResponse);
         setCategories(categoriesResponse);
       } catch (err) {
         setError(
           err instanceof Error
             ? err.message
-            : "Unable to load category articles."
+            : "Unable to load the publication archive."
         );
       } finally {
         refresh ? setRefreshing(false) : setLoading(false);
       }
     },
-    [slug, applied]
+    [applied]
   );
 
   useEffect(() => {
@@ -99,6 +88,7 @@ export default function CategoryScreen() {
   const applyFilters = () => {
     setApplied({
       query: query.trim(),
+      category: selectedCategory,
       start: startDate.trim(),
       end: endDate.trim(),
     });
@@ -106,23 +96,39 @@ export default function CategoryScreen() {
 
   const clearFilters = () => {
     setQuery("");
+    setSelectedCategory("");
     setStartDate("");
     setEndDate("");
     setApplied(emptyFilters);
   };
 
-  const articles = data?.articles ?? [];
-  const leadArticle = articles[0];
-  const remainingArticles = articles.slice(1);
-  const serverFilterError = data?.filters?.filter_error ?? "";
-  const filterActive = Boolean(applied.query || applied.start || applied.end);
+  const grouped = useMemo(() => {
+    const groups: { label: string; articles: ArticleSummary[] }[] = [];
+
+    for (const article of data?.articles ?? []) {
+      const label = formatMonthYear(article.published_at);
+      const last = groups[groups.length - 1];
+
+      if (last?.label === label) {
+        last.articles.push(article);
+      } else {
+        groups.push({ label, articles: [article] });
+      }
+    }
+
+    return groups;
+  }, [data]);
+
+  const filterActive = Boolean(
+    applied.query || applied.category || applied.start || applied.end
+  );
 
   return (
     <View style={styles.root}>
       <SiteHeader />
 
       {loading && !data ? (
-        <CategorySkeleton />
+        <ArchiveSkeleton />
       ) : error && !data ? (
         <ScreenState message={error} onRetry={() => load()} />
       ) : (
@@ -137,58 +143,72 @@ export default function CategoryScreen() {
             />
           }
         >
-          <View style={styles.header}>
-            <Text style={styles.kicker}>Article Category</Text>
-            <Text style={styles.heading}>{title}</Text>
-
+          <View style={styles.hero}>
+            <Text style={styles.kicker}>The publication record</Text>
+            <Text style={styles.title}>Archive</Text>
             <Text style={styles.description}>
-              {category?.description ||
-                `Published stories from The Equalizer under ${title}.`}
+              Revisit stories, campus moments, and student voices from previous publication periods of The Equalizer.
             </Text>
-
             <Text style={styles.count}>
-              {data?.count ?? articles.length} result
-              {(data?.count ?? articles.length) === 1 ? "" : "s"}
+              {data?.count ?? 0} archived {(data?.count ?? 0) === 1 ? "article" : "articles"}
             </Text>
           </View>
 
           <View style={styles.filterPanel}>
             <Text style={styles.filterKicker}>Find a story</Text>
-            <Text style={styles.filterTitle}>Search and filter by publication date</Text>
+            <Text style={styles.filterTitle}>Search the publication record</Text>
 
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder={`Search ${title}`}
+              placeholder="Search archived stories"
               placeholderTextColor={colors.muted}
               returnKeyType="search"
               onSubmitEditing={applyFilters}
               style={styles.searchInput}
             />
 
+            <Text style={styles.filterLabel}>Category</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoryChips}
+            >
+              <FilterChip
+                label="All"
+                active={!selectedCategory}
+                onPress={() => setSelectedCategory("")}
+              />
+              {(categories?.categories ?? []).map((category) => (
+                <FilterChip
+                  key={category.id}
+                  label={category.name}
+                  active={selectedCategory === category.slug}
+                  onPress={() => setSelectedCategory(category.slug)}
+                />
+              ))}
+            </ScrollView>
+
             <View style={styles.dateRow}>
               <View style={styles.dateField}>
-                <Text style={styles.dateLabel}>From</Text>
+                <Text style={styles.filterLabel}>From</Text>
                 <TextInput
                   value={startDate}
                   onChangeText={setStartDate}
                   placeholder="YYYY-MM-DD"
                   placeholderTextColor="#8a9690"
-                  autoCapitalize="none"
                   keyboardType="numbers-and-punctuation"
                   maxLength={10}
                   style={styles.dateInput}
                 />
               </View>
-
               <View style={styles.dateField}>
-                <Text style={styles.dateLabel}>To</Text>
+                <Text style={styles.filterLabel}>To</Text>
                 <TextInput
                   value={endDate}
                   onChangeText={setEndDate}
                   placeholder="YYYY-MM-DD"
                   placeholderTextColor="#8a9690"
-                  autoCapitalize="none"
                   keyboardType="numbers-and-punctuation"
                   maxLength={10}
                   style={styles.dateInput}
@@ -196,65 +216,49 @@ export default function CategoryScreen() {
               </View>
             </View>
 
-            <Text style={styles.dateHelp}>
-              Dates are inclusive. Example: 2026-09-01 through 2026-09-30.
-            </Text>
-
-            {serverFilterError ? (
-              <Text style={styles.filterError}>{serverFilterError}</Text>
+            {data?.filters.filter_error ? (
+              <Text style={styles.filterError}>{data.filters.filter_error}</Text>
             ) : null}
 
-            <View style={styles.filterActions}>
+            <View style={styles.actions}>
               <Pressable style={styles.applyButton} onPress={applyFilters}>
                 <Text style={styles.applyButtonText}>Apply filters</Text>
               </Pressable>
-
               {filterActive ? (
                 <Pressable style={styles.clearButton} onPress={clearFilters}>
                   <Text style={styles.clearButtonText}>Clear</Text>
                 </Pressable>
               ) : null}
             </View>
-
-            {filterActive ? (
-              <Text style={styles.filterSummary}>
-                {applied.query ? `Search: “${applied.query}”` : "All stories"}
-                {applied.start ? `  ·  From ${applied.start}` : ""}
-                {applied.end ? `  ·  To ${applied.end}` : ""}
-              </Text>
-            ) : null}
           </View>
 
-          {leadArticle ? (
-            <>
-              <CategoryFeaturedStory article={leadArticle} />
+          {error ? <Text style={styles.inlineError}>{error}</Text> : null}
 
-              {remainingArticles.length > 0 ? (
-                <View style={styles.moreSection}>
-                  <SectionHeading
-                    kicker={`More in ${title}`}
-                    title="Latest Articles"
-                  />
+          {grouped.length > 0 ? (
+            <View style={styles.results}>
+              {grouped.map((group) => (
+                <View key={group.label} style={styles.monthGroup}>
+                  <View style={styles.monthHeading}>
+                    <View style={styles.monthLine} />
+                    <View>
+                      <Text style={styles.monthKicker}>Publication month</Text>
+                      <Text style={styles.monthTitle}>{group.label}</Text>
+                    </View>
+                  </View>
 
                   <View style={styles.cards}>
-                    {remainingArticles.map((article) => (
-                      <StoryCard key={article.id} article={article} />
+                    {group.articles.map((article) => (
+                      <ArticleCard key={article.id} article={article} />
                     ))}
                   </View>
                 </View>
-              ) : null}
-            </>
+              ))}
+            </View>
           ) : (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>
-                {filterActive
-                  ? `No ${title} articles matched the active filters`
-                  : `No ${title} articles are published yet`}
-              </Text>
+              <Text style={styles.emptyTitle}>No matching archived stories</Text>
               <Text style={styles.emptyText}>
-                {filterActive
-                  ? "Try another search term or date range, or clear the filters to view all published articles in this category."
-                  : "Published stories will appear here once they are released by The Equalizer."}
+                Try another keyword, category, or publication date range.
               </Text>
             </View>
           )}
@@ -264,35 +268,55 @@ export default function CategoryScreen() {
   );
 }
 
+function FilterChip({
+  label,
+  active,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      style={[styles.chip, active && styles.chipActive]}
+      onPress={onPress}
+    >
+      <Text style={[styles.chipText, active && styles.chipTextActive]}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.white },
   scroll: { flex: 1, backgroundColor: colors.white },
-  content: { paddingHorizontal: 14, paddingTop: 28, paddingBottom: 50 },
-  header: {
-    paddingBottom: 16,
-    marginBottom: 16,
+  content: { paddingHorizontal: 14, paddingTop: 26, paddingBottom: 56 },
+  hero: {
+    paddingBottom: 20,
     borderBottomWidth: 3,
     borderBottomColor: colors.green,
   },
   kicker: {
     color: colors.gold,
     fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 1.3,
+    fontWeight: "900",
+    letterSpacing: 1.2,
     textTransform: "uppercase",
   },
-  heading: {
-    marginTop: 3,
+  title: {
+    marginTop: 4,
     color: colors.greenDeep,
     fontFamily: typography.serif,
-    fontSize: 40,
-    lineHeight: 43,
+    fontSize: 42,
+    lineHeight: 45,
     fontWeight: "700",
   },
-  description: { marginTop: 10, color: colors.muted, fontSize: 14, lineHeight: 22 },
-  count: { marginTop: 12, color: colors.muted, fontSize: 12 },
+  description: { marginTop: 9, color: colors.muted, fontSize: 14, lineHeight: 22 },
+  count: { marginTop: 11, color: colors.green, fontSize: 12, fontWeight: "800" },
   filterPanel: {
-    marginBottom: 22,
+    marginTop: 18,
     padding: 15,
     borderWidth: 1,
     borderColor: colors.line,
@@ -303,7 +327,7 @@ const styles = StyleSheet.create({
     color: colors.gold,
     fontSize: 10,
     fontWeight: "900",
-    letterSpacing: 1.1,
+    letterSpacing: 1.05,
     textTransform: "uppercase",
   },
   filterTitle: {
@@ -321,14 +345,31 @@ const styles = StyleSheet.create({
     borderColor: "#b9ccc3",
     borderRadius: 10,
     backgroundColor: colors.white,
-    color: colors.green,
-    fontSize: 13,
+    color: colors.greenDeep,
   },
-  dateRow: { flexDirection: "row", gap: 10, marginTop: 11 },
-  dateField: { flex: 1, gap: 5 },
-  dateLabel: { color: colors.greenDeep, fontSize: 11.5, fontWeight: "800" },
+  filterLabel: {
+    marginTop: 11,
+    color: colors.greenDeep,
+    fontSize: 11.5,
+    fontWeight: "800",
+  },
+  categoryChips: { gap: 7, paddingTop: 7, paddingRight: 8 },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 999,
+    backgroundColor: colors.white,
+  },
+  chipActive: { borderColor: colors.green, backgroundColor: colors.green },
+  chipText: { color: colors.green, fontSize: 11.5, fontWeight: "700" },
+  chipTextActive: { color: colors.white },
+  dateRow: { flexDirection: "row", gap: 10, marginTop: 2 },
+  dateField: { flex: 1 },
   dateInput: {
     minHeight: 43,
+    marginTop: 5,
     paddingHorizontal: 11,
     borderWidth: 1,
     borderColor: "#c8d5cf",
@@ -337,9 +378,8 @@ const styles = StyleSheet.create({
     color: colors.greenDeep,
     fontSize: 12.5,
   },
-  dateHelp: { marginTop: 8, color: colors.muted, fontSize: 10.5, lineHeight: 16 },
-  filterError: { marginTop: 8, color: "#b42318", fontSize: 12, lineHeight: 17 },
-  filterActions: { flexDirection: "row", gap: 8, marginTop: 12 },
+  filterError: { marginTop: 10, color: "#b42318", fontSize: 12, lineHeight: 17 },
+  actions: { flexDirection: "row", gap: 8, marginTop: 13 },
   applyButton: {
     minHeight: 41,
     justifyContent: "center",
@@ -358,12 +398,29 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   clearButtonText: { color: colors.greenDeep, fontSize: 12.5, fontWeight: "800" },
-  filterSummary: { marginTop: 10, color: colors.muted, fontSize: 11.5, lineHeight: 17 },
-  moreSection: { marginTop: 38 },
-  cards: { gap: 18 },
+  inlineError: { marginTop: 14, color: "#b42318", fontSize: 12.5, lineHeight: 18 },
+  results: { marginTop: 28, gap: 30 },
+  monthGroup: { gap: 14 },
+  monthHeading: { flexDirection: "row", alignItems: "center", gap: 12 },
+  monthLine: { width: 34, height: 2, backgroundColor: colors.gold },
+  monthKicker: {
+    color: colors.gold,
+    fontSize: 9.5,
+    fontWeight: "900",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  monthTitle: {
+    marginTop: 2,
+    color: colors.greenDeep,
+    fontFamily: typography.serif,
+    fontSize: 24,
+    fontWeight: "700",
+  },
+  cards: { gap: 15 },
   emptyState: {
-    paddingHorizontal: 22,
-    paddingVertical: 48,
+    marginTop: 28,
+    padding: 30,
     borderWidth: 1,
     borderColor: colors.line,
     borderRadius: 14,
@@ -373,14 +430,9 @@ const styles = StyleSheet.create({
   emptyTitle: {
     color: colors.greenDeep,
     fontFamily: typography.serif,
-    fontSize: 24,
+    fontSize: 23,
     fontWeight: "700",
     textAlign: "center",
   },
-  emptyText: {
-    marginTop: 9,
-    color: colors.muted,
-    lineHeight: 21,
-    textAlign: "center",
-  },
+  emptyText: { marginTop: 8, color: colors.muted, lineHeight: 20, textAlign: "center" },
 });

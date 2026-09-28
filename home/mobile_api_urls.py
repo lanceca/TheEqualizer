@@ -25,6 +25,11 @@ urlpatterns = [
         name="mobile_articles",
     ),
     path(
+        "archive/",
+        mobile_api.mobile_archive,
+        name="mobile_archive",
+    ),
+    path(
         "articles/<slug:slug>/",
         mobile_api.mobile_article_detail,
         name="mobile_article_detail",

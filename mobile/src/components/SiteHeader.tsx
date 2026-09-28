@@ -67,6 +67,7 @@ export function SiteHeader() {
           contentContainerStyle={styles.navigationInner}
         >
           <NavButton label="Home" onPress={() => go("/")} />
+          <NavButton label="Archive" onPress={() => go("/archive")} />
           <NavButton
             label="Digital Publications"
             onPress={() => go("/digital-publications")}

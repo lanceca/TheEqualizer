@@ -20,9 +20,11 @@ import {
   apiGet,
   apiPost,
   formatDate,
+  formatTime,
   stripHtml,
 } from "../../lib/api";
 import type {
+  ArticleContributor,
   ArticleDetailResponse,
   ArticleEngagementActionResponse,
 } from "../../lib/types";
@@ -56,11 +58,7 @@ export default function ArticleScreen() {
         )
       );
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to load article."
-      );
+      setError(err instanceof Error ? err.message : "Unable to load article.");
     } finally {
       setLoading(false);
     }
@@ -74,7 +72,6 @@ export default function ArticleScreen() {
 
   const reactArticle = async () => {
     if (!article || reacting) return;
-
     setReacting(true);
 
     try {
@@ -95,11 +92,7 @@ export default function ArticleScreen() {
           : current
       );
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to update like."
-      );
+      setError(err instanceof Error ? err.message : "Unable to update like.");
     } finally {
       setReacting(false);
     }
@@ -107,7 +100,6 @@ export default function ArticleScreen() {
 
   const shareArticle = async () => {
     if (!article || sharing) return;
-
     setSharing(true);
 
     try {
@@ -134,20 +126,22 @@ export default function ArticleScreen() {
         );
       }
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to share this article."
-      );
+      setError(err instanceof Error ? err.message : "Unable to share this article.");
     } finally {
       setSharing(false);
+    }
+  };
+
+  const openVersionHistory = () => {
+    if (article?.version_history_url) {
+      Linking.openURL(article.version_history_url);
     }
   };
 
   const downloadPdf = () => {
     if (!article) return;
     Linking.openURL(
-      `${SITE_ORIGIN}/articles/${article.slug}/download-pdf/`
+      article.pdf_url || `${SITE_ORIGIN}/articles/${article.slug}/download-pdf/`
     );
   };
 
@@ -162,10 +156,16 @@ export default function ArticleScreen() {
       ) : !article ? (
         <ScreenState message="Article not found." />
       ) : (
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.content}
-        >
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+          {article.is_archived ? (
+            <View style={styles.archiveNotice}>
+              <Text style={styles.archiveNoticeKicker}>Publication Archive</Text>
+              <Text style={styles.archiveNoticeText}>
+                This story is part of The Equalizer's public archive and is no longer in the active publication feed.
+              </Text>
+            </View>
+          ) : null}
+
           <View style={styles.header}>
             <Text style={styles.category}>{article.category.name}</Text>
             <Text style={styles.title}>{article.title}</Text>
@@ -174,32 +174,56 @@ export default function ArticleScreen() {
               <Text style={styles.subtitle}>{article.subtitle}</Text>
             ) : null}
 
-            <View style={styles.byline}>
-              <View style={styles.bylineCopy}>
-                <Text style={styles.bylineText}>
-                  By{" "}
-                  <Text style={styles.bylineStrong}>
-                    {article.author.display_name}
-                  </Text>
-                </Text>
+            <View style={styles.creditSection}>
+              <ProfileCredit
+                imageUrl={article.author.profile_picture_url}
+                name={article.author.display_name}
+                handle={`@${article.author.username}`}
+                label="Written by"
+              />
 
-                {article.contributors.length > 0 ? (
-                  <View style={styles.contributorList}>
+              {article.contributors.length > 0 ? (
+                <View style={styles.contributorsSection}>
+                  <Text style={styles.sectionLabel}>Contributors</Text>
+                  <View style={styles.contributorGrid}>
                     {article.contributors.map((contributor, index) => (
-                      <Text
+                      <ContributorCard
                         key={`${contributor.username}-${contributor.role}-${index}`}
-                        style={styles.contributor}
-                      >
-                        {contributor.display_name} — {contributor.role_display}
-                      </Text>
+                        contributor={contributor}
+                      />
                     ))}
                   </View>
-                ) : null}
-              </View>
+                </View>
+              ) : null}
+            </View>
 
-              <Text style={styles.date}>
+            <View style={styles.publicationCard}>
+              <Text style={styles.publicationKicker}>
+                {article.is_archived ? "Originally published" : "Published"}
+              </Text>
+              <Text style={styles.publicationDate}>
                 {formatDate(article.published_at)}
               </Text>
+              <Text style={styles.publicationTime}>
+                {formatTime(article.published_at)}
+              </Text>
+
+              <View style={styles.publicationDivider} />
+
+              <View style={styles.versionRow}>
+                <View style={styles.versionBadge}>
+                  <Text style={styles.versionBadgeText}>
+                    Version {article.version_number}
+                  </Text>
+                </View>
+
+                <Pressable
+                  style={styles.versionButton}
+                  onPress={openVersionHistory}
+                >
+                  <Text style={styles.versionButtonText}>Version history</Text>
+                </Pressable>
+              </View>
             </View>
           </View>
 
@@ -230,15 +254,14 @@ export default function ArticleScreen() {
                 </View>
               </Pressable>
 
-              {article.featured_image_caption ||
-              article.featured_image_credit ? (
+              {article.featured_image_caption || article.featured_image_credit ? (
                 <View style={styles.captionRow}>
-                  <Text style={styles.caption}>
-                    {article.featured_image_caption}
-                  </Text>
-                  <Text style={styles.credit}>
-                    {article.featured_image_credit}
-                  </Text>
+                  {article.featured_image_caption ? (
+                    <Text style={styles.caption}>{article.featured_image_caption}</Text>
+                  ) : null}
+                  {article.featured_image_credit ? (
+                    <Text style={styles.credit}>{article.featured_image_credit}</Text>
+                  ) : null}
                 </View>
               ) : null}
             </View>
@@ -289,12 +312,12 @@ export default function ArticleScreen() {
 
                     {attachment.caption || attachment.credit ? (
                       <View style={styles.captionRow}>
-                        <Text style={styles.caption}>
-                          {attachment.caption}
-                        </Text>
-                        <Text style={styles.credit}>
-                          {attachment.credit}
-                        </Text>
+                        {attachment.caption ? (
+                          <Text style={styles.caption}>{attachment.caption}</Text>
+                        ) : null}
+                        {attachment.credit ? (
+                          <Text style={styles.credit}>{attachment.credit}</Text>
+                        ) : null}
                       </View>
                     ) : null}
                   </View>
@@ -315,13 +338,12 @@ export default function ArticleScreen() {
                     style={styles.videoButton}
                     onPress={() => Linking.openURL(video.video_url)}
                   >
-                    <Text style={styles.videoButtonTitle}>
-                      Open video {index + 1}
-                    </Text>
+                    <Text style={styles.videoButtonTitle}>Open video {index + 1}</Text>
                     {video.caption ? (
-                      <Text style={styles.videoButtonCaption}>
-                        {video.caption}
-                      </Text>
+                      <Text style={styles.videoButtonCaption}>{video.caption}</Text>
+                    ) : null}
+                    {video.credit ? (
+                      <Text style={styles.videoButtonCredit}>{video.credit}</Text>
                     ) : null}
                   </Pressable>
                 ))}
@@ -332,39 +354,25 @@ export default function ArticleScreen() {
           {article.tags.length > 0 ? (
             <View style={styles.tags}>
               {article.tags.map((tag) => (
-                <Text key={tag.slug} style={styles.tag}>
-                  {tag.name}
-                </Text>
+                <Text key={tag.slug} style={styles.tag}>{tag.name}</Text>
               ))}
             </View>
           ) : null}
 
-          {error ? (
-            <Text style={styles.engagementError}>{error}</Text>
-          ) : null}
+          {error ? <Text style={styles.engagementError}>{error}</Text> : null}
 
           <View style={styles.engagement}>
             <View style={styles.stats}>
-              <Text style={styles.stat}>
-                <Text style={styles.statStrong}>{article.engagement.views}</Text>{" "}
-                views
-              </Text>
-              <Text style={styles.stat}>
-                <Text style={styles.statStrong}>
-                  {article.engagement.reactions}
-                </Text>{" "}
-                {article.engagement.reactions === 1 ? "like" : "likes"}
-              </Text>
-              <Text style={styles.stat}>
-                <Text style={styles.statStrong}>{article.engagement.shares}</Text>{" "}
-                shares
-              </Text>
-              <Text style={styles.stat}>
-                <Text style={styles.statStrong}>
-                  {article.engagement.downloads ?? 0}
-                </Text>{" "}
-                PDF {article.engagement.downloads === 1 ? "download" : "downloads"}
-              </Text>
+              <Metric value={article.engagement.views} label="views" />
+              <Metric
+                value={article.engagement.reactions}
+                label={article.engagement.reactions === 1 ? "like" : "likes"}
+              />
+              <Metric value={article.engagement.shares} label="shares" />
+              <Metric
+                value={article.engagement.downloads ?? 0}
+                label={(article.engagement.downloads ?? 0) === 1 ? "PDF download" : "PDF downloads"}
+              />
             </View>
 
             <View style={styles.actions}>
@@ -385,10 +393,7 @@ export default function ArticleScreen() {
               </Pressable>
 
               <Pressable
-                style={[
-                  styles.secondaryAction,
-                  data?.has_shared && styles.actionDisabled,
-                ]}
+                style={styles.secondaryAction}
                 onPress={shareArticle}
                 disabled={sharing}
               >
@@ -441,14 +446,10 @@ export default function ArticleScreen() {
                 {expandedImage.caption || expandedImage.credit ? (
                   <View style={styles.imageViewerCaptionPanel}>
                     {expandedImage.caption ? (
-                      <Text style={styles.imageViewerCaption}>
-                        {expandedImage.caption}
-                      </Text>
+                      <Text style={styles.imageViewerCaption}>{expandedImage.caption}</Text>
                     ) : null}
                     {expandedImage.credit ? (
-                      <Text style={styles.imageViewerCredit}>
-                        {expandedImage.credit}
-                      </Text>
+                      <Text style={styles.imageViewerCredit}>{expandedImage.credit}</Text>
                     ) : null}
                   </View>
                 ) : null}
@@ -461,25 +462,98 @@ export default function ArticleScreen() {
   );
 }
 
+function ProfileCredit({
+  imageUrl,
+  name,
+  handle,
+  label,
+}: {
+  imageUrl: string;
+  name: string;
+  handle: string;
+  label: string;
+}) {
+  return (
+    <View style={styles.profileCredit}>
+      <Avatar imageUrl={imageUrl} name={name} size={56} />
+      <View style={styles.profileCreditCopy}>
+        <Text style={styles.sectionLabel}>{label}</Text>
+        <Text style={styles.profileName}>{name}</Text>
+        <Text style={styles.profileHandle}>{handle}</Text>
+      </View>
+    </View>
+  );
+}
+
+function ContributorCard({ contributor }: { contributor: ArticleContributor }) {
+  return (
+    <View style={styles.contributorCard}>
+      <Avatar
+        imageUrl={contributor.profile_picture_url}
+        name={contributor.display_name}
+        size={40}
+      />
+      <View style={styles.contributorCopy}>
+        <Text style={styles.contributorRole}>{contributor.role_display}</Text>
+        <Text style={styles.contributorName}>{contributor.display_name}</Text>
+        <Text style={styles.contributorHandle}>@{contributor.username}</Text>
+      </View>
+    </View>
+  );
+}
+
+function Avatar({ imageUrl, name, size }: { imageUrl: string; name: string; size: number }) {
+  const initial = (name || "?").trim().charAt(0).toUpperCase() || "?";
+
+  return imageUrl ? (
+    <Image
+      source={{ uri: imageUrl }}
+      style={{ width: size, height: size, borderRadius: size / 2 }}
+      resizeMode="cover"
+    />
+  ) : (
+    <View
+      style={[
+        styles.avatarPlaceholder,
+        { width: size, height: size, borderRadius: size / 2 },
+      ]}
+    >
+      <Text style={[styles.avatarInitial, { fontSize: Math.max(14, size * 0.36) }]}>
+        {initial}
+      </Text>
+    </View>
+  );
+}
+
+function Metric({ value, label }: { value: number; label: string }) {
+  return (
+    <Text style={styles.stat}>
+      <Text style={styles.statStrong}>{value}</Text> {label}
+    </Text>
+  );
+}
+
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.white,
+  root: { flex: 1, backgroundColor: colors.white },
+  scroll: { flex: 1, backgroundColor: colors.white },
+  content: { paddingHorizontal: 16, paddingTop: 24, paddingBottom: 58 },
+  archiveNotice: {
+    marginBottom: 20,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#d9c36f",
+    borderRadius: 12,
+    backgroundColor: "#fffaf0",
   },
-  scroll: {
-    flex: 1,
-    backgroundColor: colors.white,
+  archiveNoticeKicker: {
+    color: "#6d5717",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
-  content: {
-    paddingHorizontal: 16,
-    paddingTop: 27,
-    paddingBottom: 58,
-  },
-  header: {
-    paddingBottom: 23,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.line,
-  },
+  archiveNoticeText: { marginTop: 5, color: "#5d532f", fontSize: 12.5, lineHeight: 19 },
+  header: { paddingBottom: 24, borderBottomWidth: 1, borderBottomColor: colors.line },
   category: {
     marginBottom: 10,
     color: colors.gold,
@@ -492,60 +566,126 @@ const styles = StyleSheet.create({
     color: colors.greenDeep,
     fontFamily: typography.serif,
     fontSize: 42,
-    lineHeight: 44,
+    lineHeight: 45,
     fontWeight: "700",
     letterSpacing: -0.6,
   },
   subtitle: {
-    marginTop: 16,
+    marginTop: 15,
     color: "#4b5651",
     fontFamily: typography.serif,
     fontSize: 21,
     lineHeight: 30,
   },
-  byline: {
-    marginTop: 22,
-    gap: 10,
+  creditSection: { marginTop: 23 },
+  profileCredit: { flexDirection: "row", alignItems: "center", gap: 13 },
+  profileCreditCopy: { flex: 1 },
+  sectionLabel: {
+    color: "#8b762e",
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
-  bylineCopy: {
-    gap: 6,
+  profileName: {
+    marginTop: 2,
+    color: colors.greenDeep,
+    fontFamily: typography.serif,
+    fontSize: 19,
+    fontWeight: "700",
   },
-  bylineText: {
-    color: colors.muted,
-    fontSize: 13,
+  profileHandle: { marginTop: 2, color: "#78847e", fontSize: 11 },
+  avatarPlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#d8e4dd",
+    backgroundColor: "#edf4f0",
   },
-  bylineStrong: {
-    fontWeight: "800",
-    color: colors.ink,
+  avatarInitial: { color: colors.greenDeep, fontFamily: typography.serif, fontWeight: "700" },
+  contributorsSection: {
+    marginTop: 17,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: "#edf1ee",
   },
-  contributorList: {
-    gap: 4,
+  contributorGrid: { gap: 8, marginTop: 8 },
+  contributorCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+    padding: 9,
+    borderWidth: 1,
+    borderColor: "#e0e7e3",
+    borderRadius: 10,
+    backgroundColor: "#fafcfb",
   },
-  contributor: {
-    color: colors.muted,
-    fontSize: 11.5,
+  contributorCopy: { flex: 1 },
+  contributorRole: {
+    color: "#8b762e",
+    fontSize: 8.5,
+    fontWeight: "900",
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
   },
-  date: {
-    color: colors.muted,
-    fontSize: 12.5,
+  contributorName: { marginTop: 2, color: colors.greenDeep, fontSize: 12.5, fontWeight: "800" },
+  contributorHandle: { marginTop: 1, color: "#7b8781", fontSize: 9.5 },
+  publicationCard: {
+    marginTop: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderLeftWidth: 4,
+    borderColor: "#d8e2dc",
+    borderLeftColor: colors.gold,
+    borderRadius: 12,
+    backgroundColor: "#fbfcfb",
   },
-  featuredFigure: {
-    marginTop: 28,
+  publicationKicker: {
+    color: "#8b762e",
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
+  publicationDate: {
+    marginTop: 4,
+    color: colors.greenDeep,
+    fontFamily: typography.serif,
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  publicationTime: { marginTop: 3, color: "#6e7b75", fontSize: 11, fontWeight: "600" },
+  publicationDivider: { height: 1, marginVertical: 12, backgroundColor: "#edf0ee" },
+  versionRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  versionBadge: {
+    minHeight: 32,
+    justifyContent: "center",
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: "#d9c36f",
+    borderRadius: 999,
+    backgroundColor: "#fffaf0",
+  },
+  versionBadgeText: { color: "#6d5717", fontSize: 10, fontWeight: "850" },
+  versionButton: {
+    minHeight: 32,
+    justifyContent: "center",
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: "#cfdad4",
+    borderRadius: 999,
+    backgroundColor: colors.white,
+  },
+  versionButtonText: { color: colors.green, fontSize: 10, fontWeight: "850" },
+  featuredFigure: { marginTop: 28 },
   featuredImage: {
     width: "100%",
     aspectRatio: 16 / 10,
     borderRadius: 8,
     backgroundColor: "#f1f3f2",
   },
-  expandableImageButton: {
-    position: "relative",
-    overflow: "hidden",
-    borderRadius: 8,
-  },
-  expandableImagePressed: {
-    opacity: 0.88,
-  },
+  expandableImageButton: { position: "relative", overflow: "hidden", borderRadius: 8 },
+  expandableImagePressed: { opacity: 0.88 },
   expandHint: {
     position: "absolute",
     right: 10,
@@ -555,26 +695,10 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: "rgba(15, 45, 36, 0.82)",
   },
-  expandHintText: {
-    color: colors.white,
-    fontSize: 10.5,
-    fontWeight: "800",
-  },
-  captionRow: {
-    marginTop: 8,
-    gap: 2,
-  },
-  caption: {
-    color: colors.muted,
-    fontSize: 11.5,
-    lineHeight: 17,
-  },
-  credit: {
-    color: colors.muted,
-    fontSize: 11.5,
-    lineHeight: 17,
-    fontStyle: "italic",
-  },
+  expandHintText: { color: colors.white, fontSize: 10.5, fontWeight: "800" },
+  captionRow: { marginTop: 8, gap: 2 },
+  caption: { color: colors.muted, fontSize: 11.5, lineHeight: 17 },
+  credit: { color: colors.muted, fontSize: 11.5, lineHeight: 17, fontStyle: "italic" },
   standfirst: {
     marginTop: 28,
     color: "#3c4842",
@@ -590,12 +714,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 33,
   },
-  mediaSection: {
-    marginTop: 42,
-    paddingTop: 22,
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-  },
+  mediaSection: { marginTop: 42, paddingTop: 22, borderTopWidth: 1, borderTopColor: colors.line },
   mediaKicker: {
     color: colors.gold,
     fontSize: 10.5,
@@ -611,35 +730,14 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "700",
   },
-  gallery: {
-    gap: 18,
-  },
-  galleryItem: {
-    gap: 2,
-  },
-  galleryImage: {
-    width: "100%",
-    aspectRatio: 4 / 3,
-    borderRadius: 8,
-    backgroundColor: colors.soft,
-  },
-  videoList: {
-    gap: 12,
-  },
-  videoButton: {
-    padding: 15,
-    borderRadius: 8,
-    backgroundColor: "#111815",
-  },
-  videoButtonTitle: {
-    color: colors.white,
-    fontWeight: "800",
-  },
-  videoButtonCaption: {
-    marginTop: 4,
-    color: "#dce4df",
-    fontSize: 12,
-  },
+  gallery: { gap: 18 },
+  galleryItem: { gap: 2 },
+  galleryImage: { width: "100%", aspectRatio: 4 / 3, borderRadius: 8, backgroundColor: colors.soft },
+  videoList: { gap: 12 },
+  videoButton: { padding: 15, borderRadius: 8, backgroundColor: "#111815" },
+  videoButtonTitle: { color: colors.white, fontWeight: "800" },
+  videoButtonCaption: { marginTop: 4, color: "#dce4df", fontSize: 12 },
+  videoButtonCredit: { marginTop: 3, color: "#b8c4be", fontSize: 11, fontStyle: "italic" },
   tags: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -666,23 +764,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: colors.line,
   },
-  stats: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 14,
-  },
-  stat: {
-    color: colors.muted,
-    fontSize: 12.5,
-  },
-  statStrong: {
-    color: colors.green,
-    fontWeight: "800",
-  },
-  actions: {
-    flexDirection: "row",
-    gap: 8,
-  },
+  stats: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
+  stat: { color: colors.muted, fontSize: 12.5 },
+  statStrong: { color: colors.green, fontWeight: "800" },
+  actions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   secondaryAction: {
     minHeight: 38,
     justifyContent: "center",
@@ -692,11 +777,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: colors.white,
   },
-  secondaryActionText: {
-    color: colors.green,
-    fontSize: 12.5,
-    fontWeight: "700",
-  },
+  secondaryActionText: { color: colors.green, fontSize: 12.5, fontWeight: "700" },
   primaryAction: {
     minHeight: 38,
     justifyContent: "center",
@@ -706,25 +787,9 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: colors.green,
   },
-  primaryActionText: {
-    color: colors.white,
-    fontSize: 12.5,
-    fontWeight: "700",
-  },
-
-  actionDisabled: {
-    opacity: 0.58,
-  },
-  engagementError: {
-    color: "#b42318",
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 14,
-  },
-  imageViewerBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(4, 9, 7, 0.96)",
-  },
+  primaryActionText: { color: colors.white, fontSize: 12.5, fontWeight: "700" },
+  engagementError: { color: "#b42318", fontSize: 13, lineHeight: 18, marginTop: 14 },
+  imageViewerBackdrop: { flex: 1, backgroundColor: "rgba(4, 9, 7, 0.96)" },
   imageViewerContent: {
     flex: 1,
     width: "100%",
@@ -746,34 +811,9 @@ const styles = StyleSheet.create({
     borderRadius: 21,
     backgroundColor: "rgba(255, 255, 255, 0.14)",
   },
-  imageViewerCloseText: {
-    color: colors.white,
-    fontSize: 30,
-    lineHeight: 32,
-    fontWeight: "400",
-  },
-  imageViewerImage: {
-    width: "100%",
-    height: "78%",
-  },
-  imageViewerCaptionPanel: {
-    width: "100%",
-    maxWidth: 720,
-    marginTop: 16,
-    paddingHorizontal: 4,
-    gap: 4,
-  },
-  imageViewerCaption: {
-    color: colors.white,
-    fontSize: 13,
-    lineHeight: 19,
-    textAlign: "center",
-  },
-  imageViewerCredit: {
-    color: "#c8d2cd",
-    fontSize: 12,
-    lineHeight: 18,
-    fontStyle: "italic",
-    textAlign: "center",
-  },
+  imageViewerCloseText: { color: colors.white, fontSize: 30, lineHeight: 32, fontWeight: "400" },
+  imageViewerImage: { width: "100%", height: "78%" },
+  imageViewerCaptionPanel: { width: "100%", maxWidth: 720, marginTop: 16, paddingHorizontal: 4, gap: 4 },
+  imageViewerCaption: { color: colors.white, fontSize: 13, lineHeight: 19, textAlign: "center" },
+  imageViewerCredit: { color: "#c8d2cd", fontSize: 12, lineHeight: 18, fontStyle: "italic", textAlign: "center" },
 });

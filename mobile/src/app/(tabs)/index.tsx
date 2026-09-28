@@ -81,6 +81,20 @@ export default function HomeScreen() {
         </Text>
       </View>
 
+      <Pressable
+        style={styles.archiveLinkCard}
+        onPress={() => router.push("/archive" as never)}
+      >
+        <View style={{ flex: 1 }}>
+          <Text style={styles.archiveLinkKicker}>PUBLICATION RECORD</Text>
+          <Text style={styles.archiveLinkTitle}>Explore the Archive</Text>
+          <Text style={styles.archiveLinkCopy}>
+            Revisit previously published stories by keyword, category, and publication date.
+          </Text>
+        </View>
+        <Text style={styles.archiveLinkArrow}>→</Text>
+      </Pressable>
+
       <SectionTitle eyebrow="Latest" title="Top stories" />
 
       {articles.length === 0 ? (
@@ -141,7 +155,7 @@ export default function HomeScreen() {
         </ScrollView>
       )}
 
-      <SectionTitle eyebrow="Archive" title="Digital publications" />
+      <SectionTitle eyebrow="Library" title="Digital publications" />
 
       {publications.length === 0 ? (
         <Text style={styles.empty}>No digital publications yet.</Text>
@@ -193,6 +207,20 @@ const styles = StyleSheet.create({
   eyebrowDark: { color: "#C9A227", fontWeight: "900", fontSize: 11, letterSpacing: 1 },
   brand: { color: "#FFFFFF", fontWeight: "900", fontSize: 30 },
   heroCopy: { color: "#E6ECE9", lineHeight: 20 },
+  archiveLinkCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#C8D5CF",
+    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+  },
+  archiveLinkKicker: { color: "#C9A227", fontWeight: "900", fontSize: 10, letterSpacing: 1 },
+  archiveLinkTitle: { marginTop: 3, color: "#0E2A22", fontWeight: "900", fontSize: 19 },
+  archiveLinkCopy: { marginTop: 4, color: "#65736D", fontSize: 12.5, lineHeight: 18 },
+  archiveLinkArrow: { color: "#173F32", fontSize: 26, fontWeight: "700" },
   sectionTitle: { color: "#0E2A22", fontWeight: "900", fontSize: 24 },
   articleCard: { backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#D7DFDB", borderRadius: 16, overflow: "hidden" },
   articleImage: { width: "100%", height: 200, backgroundColor: "#EAF0ED" },

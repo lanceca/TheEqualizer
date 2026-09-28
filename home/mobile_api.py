@@ -1,6 +1,7 @@
 from django.db import transaction
 from django.db.models import Count, F, Q, Sum
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.shortcuts import get_object_or_404
 
 from rest_framework.decorators import api_view, permission_classes
@@ -124,13 +125,12 @@ def _absolute_file_url(request, file_field):
     return request.build_absolute_uri(url)
 
 
-def _published_articles():
+def _article_queryset():
+    """Shared article relations used by mobile reader endpoints."""
     return (
         Article.objects
         .filter(
             draft_type=Article.DraftType.NORMAL,
-            is_published=True,
-            is_archived=False,
         )
         .select_related(
             "category",
@@ -143,6 +143,17 @@ def _published_articles():
             "contributors",
             "contributors__user",
         )
+    )
+
+
+def _published_articles():
+    """Active public articles used by Home and Category screens."""
+    return (
+        _article_queryset()
+        .filter(
+            is_published=True,
+            is_archived=False,
+        )
         .order_by(
             "-published_at",
             "-created_at",
@@ -150,11 +161,123 @@ def _published_articles():
     )
 
 
-def _author_payload(user):
+def _public_readable_articles():
+    """
+    Match the website reader rule.
+
+    A currently published article is readable, and a previously published
+    archived article remains readable from the public archive.
+    """
+    return (
+        _article_queryset()
+        .filter(
+            Q(
+                is_published=True,
+                is_archived=False,
+            )
+            | Q(
+                is_archived=True,
+                published_at__isnull=False,
+            )
+        )
+    )
+
+
+def _archived_articles():
+    return (
+        _article_queryset()
+        .filter(
+            is_archived=True,
+            published_at__isnull=False,
+        )
+        .order_by(
+            "-published_at",
+            "-id",
+        )
+    )
+
+
+def _author_payload(request, user):
     return {
         "username": user.username,
         "display_name": user.get_full_name().strip() or user.username,
+        "profile_picture_url": _absolute_file_url(
+            request,
+            getattr(user, "profile_picture", None),
+        ),
     }
+
+
+def _mobile_article_filters(request):
+    """Resolve keyword and inclusive publication-date filters."""
+    search_query = request.GET.get("q", "").strip()[:100]
+    start_value = request.GET.get("start", "").strip()[:10]
+    end_value = request.GET.get("end", "").strip()[:10]
+
+    start_date = parse_date(start_value) if start_value else None
+    end_date = parse_date(end_value) if end_value else None
+    filter_error = ""
+
+    if start_value and start_date is None:
+        filter_error = "Choose a valid From date."
+        start_value = ""
+
+    if end_value and end_date is None:
+        filter_error = filter_error or "Choose a valid To date."
+        end_value = ""
+
+    if (
+        start_date is not None
+        and end_date is not None
+        and start_date > end_date
+    ):
+        filter_error = "The From date cannot be later than the To date."
+        start_date = None
+        end_date = None
+        start_value = ""
+        end_value = ""
+
+    return {
+        "query": search_query,
+        "start_date": start_date,
+        "end_date": end_date,
+        "start_value": start_value,
+        "end_value": end_value,
+        "filter_error": filter_error,
+    }
+
+
+def _apply_mobile_article_filters(queryset, filters):
+    search_query = filters["query"]
+
+    if search_query:
+        for term in [
+            value
+            for value in search_query.split()
+            if value
+        ][:8]:
+            queryset = queryset.filter(
+                Q(title__icontains=term)
+                | Q(subtitle__icontains=term)
+                | Q(excerpt__icontains=term)
+                | Q(content__icontains=term)
+                | Q(author__username__icontains=term)
+                | Q(tags__name__icontains=term)
+            )
+
+        queryset = queryset.distinct()
+
+    if filters["start_date"] is not None:
+        queryset = queryset.filter(
+            published_at__date__gte=filters["start_date"]
+        )
+
+    if filters["end_date"] is not None:
+        queryset = queryset.filter(
+            published_at__date__lte=filters["end_date"]
+        )
+
+    return queryset
 
 
 def _article_hero_image_url(request, article):
@@ -183,13 +306,20 @@ def _article_summary_payload(request, article):
             "name": article.category.name,
             "slug": article.category.slug,
         },
-        "author": _author_payload(article.author),
+        "author": _author_payload(request, article.author),
         "published_at": (
             published_value.isoformat()
             if published_value
             else None
         ),
         "updated_at": article.updated_at.isoformat(),
+        "version_number": article.version_number,
+        "is_archived": article.is_archived,
+        "archived_at": (
+            article.archived_at.isoformat()
+            if article.archived_at
+            else None
+        ),
         "attachment_mode": article.attachment_mode,
         "hero_image_url": _article_hero_image_url(request, article),
         "featured_image_caption": article.featured_image_caption,
@@ -230,11 +360,21 @@ def _article_detail_payload(request, article):
                         contributor.user.get_full_name().strip()
                         or contributor.user.username
                     ),
+                    "profile_picture_url": _absolute_file_url(
+                        request,
+                        getattr(contributor.user, "profile_picture", None),
+                    ),
                     "role": contributor.role,
                     "role_display": contributor.get_role_display(),
                 }
                 for contributor in article.contributors.all()
             ],
+            "version_history_url": request.build_absolute_uri(
+                f"/articles/{article.slug}/history/"
+            ),
+            "pdf_url": request.build_absolute_uri(
+                f"/articles/{article.slug}/download-pdf/"
+            ),
             "image_attachments": [
                 {
                     "id": attachment.id,
@@ -406,24 +546,12 @@ def mobile_articles(request):
     articles = _published_articles()
 
     category_slug = request.GET.get("category", "").strip()
-    search_query = request.GET.get("q", "").strip()[:100]
+    filters = _mobile_article_filters(request)
 
     if category_slug:
         articles = articles.filter(category__slug=category_slug)
 
-    if search_query:
-        articles = (
-            articles
-            .filter(
-                Q(title__icontains=search_query)
-                | Q(subtitle__icontains=search_query)
-                | Q(excerpt__icontains=search_query)
-                | Q(content__icontains=search_query)
-                | Q(author__username__icontains=search_query)
-                | Q(tags__name__icontains=search_query)
-            )
-            .distinct()
-        )
+    articles = _apply_mobile_article_filters(articles, filters)
 
     try:
         limit = int(request.GET.get("limit", "50"))
@@ -431,15 +559,81 @@ def mobile_articles(request):
         limit = 50
 
     limit = max(1, min(limit, 100))
+    total_count = articles.count()
     articles = list(articles[:limit])
 
     return Response(
         {
-            "count": len(articles),
+            "count": total_count,
             "articles": [
                 _article_summary_payload(request, article)
                 for article in articles
             ],
+            "filters": {
+                "query": filters["query"],
+                "start": filters["start_value"],
+                "end": filters["end_value"],
+                "filter_error": filters["filter_error"],
+            },
+        }
+    )
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def mobile_archive(request):
+    articles = _archived_articles()
+    filters = _mobile_article_filters(request)
+
+    category_value = request.GET.get("category", "").strip()
+
+    if category_value:
+        if category_value.isascii() and category_value.isdigit():
+            articles = articles.filter(category_id=int(category_value))
+        else:
+            articles = articles.filter(category__slug=category_value)
+
+    month_value = request.GET.get("month", "").strip()[:7]
+    month_date = (
+        parse_date(f"{month_value}-01")
+        if len(month_value) == 7
+        else None
+    )
+
+    if month_date is not None:
+        articles = articles.filter(
+            published_at__year=month_date.year,
+            published_at__month=month_date.month,
+        )
+    else:
+        month_value = ""
+
+    articles = _apply_mobile_article_filters(articles, filters)
+
+    try:
+        limit = int(request.GET.get("limit", "100"))
+    except (TypeError, ValueError):
+        limit = 100
+
+    limit = max(1, min(limit, 200))
+    total_count = articles.count()
+    articles = list(articles[:limit])
+
+    return Response(
+        {
+            "count": total_count,
+            "articles": [
+                _article_summary_payload(request, article)
+                for article in articles
+            ],
+            "filters": {
+                "query": filters["query"],
+                "category": category_value,
+                "start": filters["start_value"],
+                "end": filters["end_value"],
+                "month": month_value,
+                "filter_error": filters["filter_error"],
+            },
         }
     )
 
@@ -448,7 +642,7 @@ def mobile_articles(request):
 @permission_classes([AllowAny])
 def mobile_article_detail(request, slug):
     article = get_object_or_404(
-        _published_articles(),
+        _public_readable_articles(),
         slug=slug,
     )
 
@@ -499,11 +693,8 @@ def mobile_article_detail(request, slug):
 @permission_classes([AllowAny])
 def mobile_article_react(request, slug):
     article = get_object_or_404(
-        Article,
+        _public_readable_articles(),
         slug=slug,
-        draft_type=Article.DraftType.NORMAL,
-        is_published=True,
-        is_archived=False,
     )
 
     reacted_articles = request.session.get(
@@ -574,11 +765,8 @@ def mobile_article_react(request, slug):
 @permission_classes([AllowAny])
 def mobile_article_share(request, slug):
     article = get_object_or_404(
-        Article,
+        _public_readable_articles(),
         slug=slug,
-        draft_type=Article.DraftType.NORMAL,
-        is_published=True,
-        is_archived=False,
     )
 
     shared_articles = request.session.get(
