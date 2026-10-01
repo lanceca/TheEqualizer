@@ -96,6 +96,14 @@
         </article>
 
         <article class="workspace-metric-card">
+            <span class="workspace-metric-label">Estimated App Installs</span>
+            <strong class="workspace-metric-value">
+                {{ mobile_app_install_count|default:0 }}
+            </strong>
+            <p>Repeat clicks from the same device/browser count once every 30 days.</p>
+        </article>
+
+        <article class="workspace-metric-card">
             <span class="workspace-metric-label">Homepage Update Notice</span>
             <strong class="workspace-metric-value workspace-metric-value--text">
                 {% if mobile_app_settings.notice_enabled %}Enabled{% else %}Disabled{% endif %}

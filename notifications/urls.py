@@ -13,6 +13,12 @@ urlpatterns = [
     path("updates/<int:update_id>/action/", update_views.update_action, name="system_update_action"),
     path("updates/<int:update_id>/acknowledge/", update_views.acknowledge_update, name="acknowledge_system_update"),
     path(
+        "status/",
+        views.notification_status,
+        name="notification_status",
+    ),
+
+    path(
         "",
         views.notification_list,
         name="notification_list",

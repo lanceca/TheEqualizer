@@ -334,18 +334,21 @@ body.staff-shell-body
                     <a
                         href="{% url 'pending_submissions' %}"
                         class="staff-attention-link"
+                        data-live-workflow-key="pending_submissions"
+                        data-live-workflow-label="pending submissions"
                     >
                         <span>Pending Submissions</span>
 
-                        {% if sidebar_pending_submissions_count > 0 %}
-                            <span
-                                class="staff-attention-badge"
-                                title="{{ sidebar_pending_submissions_count }} item(s) require attention"
-                                aria-label="{{ sidebar_pending_submissions_count }} pending submissions require attention"
-                            >
-                                !
-                            </span>
-                        {% endif %}
+                        <span
+                            class="staff-attention-badge"
+                            data-live-attention-badge
+                            data-live-count="{{ sidebar_pending_submissions_count }}"
+                            title="{{ sidebar_pending_submissions_count }} pending submissions require attention"
+                            aria-label="{{ sidebar_pending_submissions_count }} pending submissions require attention"
+                            {% if sidebar_pending_submissions_count <= 0 %}hidden{% endif %}
+                        >
+                            !
+                        </span>
                     </a>
 
                     <a href="{% url 'published_articles' %}">
@@ -364,52 +367,61 @@ body.staff-shell-body
                     <a
                         href="{% url 'eic_edit_requests' %}"
                         class="staff-attention-link"
+                        data-live-workflow-key="pending_edit_requests"
+                        data-live-workflow-label="edit requests"
                     >
                         <span>Edit Requests</span>
 
-                        {% if sidebar_pending_edit_requests_count > 0 %}
-                            <span
-                                class="staff-attention-badge"
-                                title="{{ sidebar_pending_edit_requests_count }} item(s) require attention"
-                                aria-label="{{ sidebar_pending_edit_requests_count }} edit requests require attention"
-                            >
-                                !
-                            </span>
-                        {% endif %}
+                        <span
+                            class="staff-attention-badge"
+                            data-live-attention-badge
+                            data-live-count="{{ sidebar_pending_edit_requests_count }}"
+                            title="{{ sidebar_pending_edit_requests_count }} edit requests require attention"
+                            aria-label="{{ sidebar_pending_edit_requests_count }} edit requests require attention"
+                            {% if sidebar_pending_edit_requests_count <= 0 %}hidden{% endif %}
+                        >
+                            !
+                        </span>
                     </a>
 
                     <a
                         href="{% url 'eic_deletion_requests' %}"
                         class="staff-attention-link"
+                        data-live-workflow-key="pending_deletion_requests"
+                        data-live-workflow-label="archive requests"
                     >
                         <span>Archive Requests</span>
 
-                        {% if sidebar_pending_deletion_requests_count > 0 %}
-                            <span
-                                class="staff-attention-badge"
-                                title="{{ sidebar_pending_deletion_requests_count }} item(s) require attention"
-                                aria-label="{{ sidebar_pending_deletion_requests_count }} archive requests require attention"
-                            >
-                                !
-                            </span>
-                        {% endif %}
+                        <span
+                            class="staff-attention-badge"
+                            data-live-attention-badge
+                            data-live-count="{{ sidebar_pending_deletion_requests_count }}"
+                            title="{{ sidebar_pending_deletion_requests_count }} archive requests require attention"
+                            aria-label="{{ sidebar_pending_deletion_requests_count }} archive requests require attention"
+                            {% if sidebar_pending_deletion_requests_count <= 0 %}hidden{% endif %}
+                        >
+                            !
+                        </span>
                     </a>
 
                     <a
                         href="{% url 'eic_content_reports' %}"
                         class="staff-attention-link"
+                        data-live-workflow-key="active_content_reports"
+                        data-live-workflow-label="staff reports"
                     >
                         <span>Staff Reports</span>
 
-                        {% if sidebar_active_content_reports_count > 0 %}
-                            <span
-                                class="staff-attention-badge"
-                                title="{{ sidebar_active_content_reports_count }} item(s) require attention"
-                                aria-label="{{ sidebar_active_content_reports_count }} staff reports require attention"
-                            >
-                                !
-                            </span>
-                        {% endif %}
+                        <span
+                            class="staff-attention-badge"
+                            data-live-attention-badge
+                            data-live-count="{{ sidebar_active_content_reports_count }}"
+                            title="{{ sidebar_active_content_reports_count }} staff reports require attention"
+                            aria-label="{{ sidebar_active_content_reports_count }} staff reports require attention"
+                            {% if sidebar_active_content_reports_count <= 0 %}hidden{% endif %}
+                        >
+                            !
+                        </span>
                     </a>
 
                 </div>
@@ -468,35 +480,41 @@ body.staff-shell-body
                     <a
                         href="{% url 'my_submissions' %}"
                         class="staff-attention-link"
+                        data-live-workflow-key="editor_current_submissions"
+                        data-live-workflow-label="current submissions"
                     >
                         <span>My Submissions</span>
 
-                        {% if sidebar_editor_current_submissions_count > 0 %}
-                            <span
-                                class="staff-attention-badge"
-                                title="{{ sidebar_editor_current_submissions_count }} item(s) require attention"
-                                aria-label="{{ sidebar_editor_current_submissions_count }} current submissions require attention"
-                            >
-                                !
-                            </span>
-                        {% endif %}
+                        <span
+                            class="staff-attention-badge"
+                            data-live-attention-badge
+                            data-live-count="{{ sidebar_editor_current_submissions_count }}"
+                            title="{{ sidebar_editor_current_submissions_count }} current submissions require attention"
+                            aria-label="{{ sidebar_editor_current_submissions_count }} current submissions require attention"
+                            {% if sidebar_editor_current_submissions_count <= 0 %}hidden{% endif %}
+                        >
+                            !
+                        </span>
                     </a>
 
                     <a
                         href="{% url 'resubmitted_submissions' %}"
                         class="staff-attention-link"
+                        data-live-workflow-key="editor_resubmissions"
+                        data-live-workflow-label="resubmitted submissions"
                     >
                         <span>Resubmitted Submissions</span>
 
-                        {% if sidebar_editor_resubmissions_count > 0 %}
-                            <span
-                                class="staff-attention-badge"
-                                title="{{ sidebar_editor_resubmissions_count }} item(s) require attention"
-                                aria-label="{{ sidebar_editor_resubmissions_count }} resubmitted submissions require attention"
-                            >
-                                !
-                            </span>
-                        {% endif %}
+                        <span
+                            class="staff-attention-badge"
+                            data-live-attention-badge
+                            data-live-count="{{ sidebar_editor_resubmissions_count }}"
+                            title="{{ sidebar_editor_resubmissions_count }} resubmitted submissions require attention"
+                            aria-label="{{ sidebar_editor_resubmissions_count }} resubmitted submissions require attention"
+                            {% if sidebar_editor_resubmissions_count <= 0 %}hidden{% endif %}
+                        >
+                            !
+                        </span>
                     </a>
 
                     <a href="{% url 'published_articles' %}">
@@ -515,35 +533,41 @@ body.staff-shell-body
                     <a
                         href="{% url 'my_edit_requests' %}"
                         class="staff-attention-link"
+                        data-live-workflow-key="editor_edit_requests"
+                        data-live-workflow-label="edit requests"
                     >
                         <span>Edit Requests</span>
 
-                        {% if sidebar_editor_edit_requests_count > 0 %}
-                            <span
-                                class="staff-attention-badge"
-                                title="{{ sidebar_editor_edit_requests_count }} item(s) require attention"
-                                aria-label="{{ sidebar_editor_edit_requests_count }} edit requests require attention"
-                            >
-                                !
-                            </span>
-                        {% endif %}
+                        <span
+                            class="staff-attention-badge"
+                            data-live-attention-badge
+                            data-live-count="{{ sidebar_editor_edit_requests_count }}"
+                            title="{{ sidebar_editor_edit_requests_count }} edit requests require attention"
+                            aria-label="{{ sidebar_editor_edit_requests_count }} edit requests require attention"
+                            {% if sidebar_editor_edit_requests_count <= 0 %}hidden{% endif %}
+                        >
+                            !
+                        </span>
                     </a>
 
                     <a
                         href="{% url 'my_deletion_requests' %}"
                         class="staff-attention-link"
+                        data-live-workflow-key="editor_deletion_requests"
+                        data-live-workflow-label="archive requests"
                     >
                         <span>Archive Requests</span>
 
-                        {% if sidebar_editor_deletion_requests_count > 0 %}
-                            <span
-                                class="staff-attention-badge"
-                                title="{{ sidebar_editor_deletion_requests_count }} item(s) require attention"
-                                aria-label="{{ sidebar_editor_deletion_requests_count }} archive requests require attention"
-                            >
-                                !
-                            </span>
-                        {% endif %}
+                        <span
+                            class="staff-attention-badge"
+                            data-live-attention-badge
+                            data-live-count="{{ sidebar_editor_deletion_requests_count }}"
+                            title="{{ sidebar_editor_deletion_requests_count }} archive requests require attention"
+                            aria-label="{{ sidebar_editor_deletion_requests_count }} archive requests require attention"
+                            {% if sidebar_editor_deletion_requests_count <= 0 %}hidden{% endif %}
+                        >
+                            !
+                        </span>
                     </a>
 
                 </div>
@@ -564,18 +588,21 @@ body.staff-shell-body
                     <a
                         href="{% url 'my_content_reports' %}"
                         class="staff-attention-link"
+                        data-live-workflow-key="staff_active_reports"
+                        data-live-workflow-label="reports"
                     >
                         <span>My Reports</span>
 
-                        {% if sidebar_staff_active_reports_count > 0 %}
-                            <span
-                                class="staff-attention-badge"
-                                title="{{ sidebar_staff_active_reports_count }} item(s) require attention"
-                                aria-label="{{ sidebar_staff_active_reports_count }} reports require attention"
-                            >
-                                !
-                            </span>
-                        {% endif %}
+                        <span
+                            class="staff-attention-badge"
+                            data-live-attention-badge
+                            data-live-count="{{ sidebar_staff_active_reports_count }}"
+                            title="{{ sidebar_staff_active_reports_count }} reports require attention"
+                            aria-label="{{ sidebar_staff_active_reports_count }} reports require attention"
+                            {% if sidebar_staff_active_reports_count <= 0 %}hidden{% endif %}
+                        >
+                            !
+                        </span>
                     </a>
 
                 </div>
@@ -612,8 +639,10 @@ body.staff-shell-body
             data-role="{{ request.user.get_role_display }}"
             data-home-url="{% url 'home' %}"
             data-notification-url="{% url 'notification_list' %}"
+            data-live-status-url="{% url 'notification_status' %}"
             data-profile-url="{% url 'profile' %}"
             data-notification-count="{{ global_unread_notification_count }}"
+            data-latest-notification-id="{{ global_latest_notification_id }}"
         ></div>
 
         <form

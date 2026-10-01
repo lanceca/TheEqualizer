@@ -45,7 +45,10 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from analytics.models import ArticleDailyAnalytics
+from analytics.models import (
+    ArticleDailyAnalytics,
+    MobileAppInstallEvent,
+)
 
 from publications.models import (
     Article,
@@ -199,6 +202,11 @@ def super_admin_dashboard(request):
     return render(
         request,
         "accounts/dashboards/super_admin.html",
+        {
+            "mobile_app_install_count": (
+                MobileAppInstallEvent.objects.count()
+            ),
+        },
     )
 
 
@@ -469,6 +477,16 @@ def get_adviser_analytics_data(request):
     analytics_end_date = period[
         "end_date"
     ]
+
+    mobile_app_install_count = (
+        filter_datetime_queryset_by_period(
+            MobileAppInstallEvent.objects.all(),
+            "recorded_at",
+            analytics_start_date,
+            analytics_end_date,
+        )
+        .count()
+    )
 
     # ======================================================
     # BASE QUERYSETS
@@ -1365,6 +1383,9 @@ def get_adviser_analytics_data(request):
         "total_shares": total_shares,
         "total_downloads": total_downloads,
         "total_engagement": total_engagement,
+        "mobile_app_install_count": (
+            mobile_app_install_count
+        ),
 
         "historical_engagement_labels": (
             historical_engagement_labels

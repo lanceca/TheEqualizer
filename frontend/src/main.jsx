@@ -88,12 +88,21 @@ function getComponentProps(
       notificationUrl:
         mountPoint.dataset.notificationUrl
         || '#',
+      liveStatusUrl:
+        mountPoint.dataset.liveStatusUrl
+        || '',
       profileUrl:
         mountPoint.dataset.profileUrl
         || '#',
       notificationCount:
         Number.parseInt(
           mountPoint.dataset.notificationCount
+          || '0',
+          10,
+        ) || 0,
+      latestNotificationId:
+        Number.parseInt(
+          mountPoint.dataset.latestNotificationId
           || '0',
           10,
         ) || 0,

@@ -1,9 +1,118 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_POST
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_GET, require_POST
 
+from .context_processors import get_workspace_activity
 from .models import Notification
+
+
+
+
+# ==========================================================
+# LIVE WORKSPACE STATUS
+# ==========================================================
+
+
+@login_required
+@never_cache
+@require_GET
+def notification_status(request):
+    """
+    Return the logged-in staff member's latest notification and the
+    workflow counts used by the staff sidebar.
+
+    The staff shell polls this endpoint while a tab is visible so the
+    receiver sees new editorial activity without navigating or manually
+    refreshing the page.
+    """
+
+    activity = get_workspace_activity(
+        request.user
+    )
+
+    latest_notification = (
+        Notification.objects
+        .filter(
+            recipient=request.user
+        )
+        .order_by(
+            "-created_at",
+            "-id",
+        )
+        .first()
+    )
+
+    latest_payload = None
+
+    if latest_notification is not None:
+        latest_payload = {
+            "id": latest_notification.id,
+            "notification_type": (
+                latest_notification.notification_type
+            ),
+            "type_label": (
+                latest_notification.get_notification_type_display()
+            ),
+            "message": latest_notification.message,
+            "related_url": latest_notification.related_url,
+            "is_read": latest_notification.is_read,
+            "created_at": (
+                latest_notification.created_at.isoformat()
+            ),
+        }
+
+    response = JsonResponse(
+        {
+            "unread_notification_count": activity[
+                "global_unread_notification_count"
+            ],
+            "latest_notification_id": activity[
+                "global_latest_notification_id"
+            ],
+            "latest_notification": latest_payload,
+            "workflow": {
+                "pending_submissions": activity[
+                    "sidebar_pending_submissions_count"
+                ],
+                "pending_edit_requests": activity[
+                    "sidebar_pending_edit_requests_count"
+                ],
+                "pending_deletion_requests": activity[
+                    "sidebar_pending_deletion_requests_count"
+                ],
+                "active_content_reports": activity[
+                    "sidebar_active_content_reports_count"
+                ],
+                "editor_current_submissions": activity[
+                    "sidebar_editor_current_submissions_count"
+                ],
+                "editor_resubmissions": activity[
+                    "sidebar_editor_resubmissions_count"
+                ],
+                "editor_edit_requests": activity[
+                    "sidebar_editor_edit_requests_count"
+                ],
+                "editor_deletion_requests": activity[
+                    "sidebar_editor_deletion_requests_count"
+                ],
+                "staff_active_reports": activity[
+                    "sidebar_staff_active_reports_count"
+                ],
+            },
+        }
+    )
+
+    # Explicit no-store headers keep browser/proxy caches from serving stale
+    # counts to an already-open staff page.
+    response["Cache-Control"] = (
+        "no-store, no-cache, must-revalidate, max-age=0"
+    )
+    response["Pragma"] = "no-cache"
+
+    return response
 
 
 # ==========================================================
