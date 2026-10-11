@@ -1302,6 +1302,39 @@ class DeletionRequest(models.Model):
         )
 
 
+class ArchiveRecommendation(models.Model):
+    article = models.ForeignKey(
+        Article,
+        on_delete=models.CASCADE,
+        related_name="archive_recommendations",
+    )
+
+    recommended_by = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.PROTECT,
+        related_name="archive_recommendations_sent",
+    )
+
+    recipient = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.PROTECT,
+        related_name="archive_recommendations_received",
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return (
+            f"{self.article.title} - "
+            f"recommended to {self.recipient.username}"
+        )
+
+
 class ContentReport(models.Model):
     class Status(models.TextChoices):
         OPEN = "OPEN", "Open"

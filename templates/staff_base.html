@@ -663,6 +663,7 @@ body.staff-shell-body
 
         <div class="page-container staff-workspace-page">
 
+            <div data-react-component="RegretActionGuard"></div>
             {% if request.resolver_match.url_name != 'system_update_detail' %}<div data-react-component="SystemUpdatePopup" data-api-url="{% url 'system_update_popup' %}"></div>{% endif %}
             {% block staff_content %}
             {% endblock %}
@@ -1744,6 +1745,28 @@ document.addEventListener(
     }
 
     function getConfirmationSource(form, submitter) {
+        /*
+         * React's RegretActionGuard progressively enhances selected
+         * workflow actions. Once React marks the source as ready, let
+         * that component own the confirmation/countdown interaction.
+         * If React never mounts, the existing confirmation remains the
+         * safe fallback.
+         */
+        if (
+            (
+                submitter
+                && submitter.dataset
+                && submitter.dataset.regretReady === "true"
+            )
+            || (
+                form
+                && form.dataset
+                && form.dataset.regretReady === "true"
+            )
+        ) {
+            return null;
+        }
+
         if (
             submitter
             && submitter.dataset
@@ -1761,6 +1784,58 @@ document.addEventListener(
         }
 
         return null;
+    }
+
+    function getRegretSource(form, submitter) {
+        if (
+            (
+                form
+                && form.dataset
+                && form.dataset.regretBypass === "true"
+            )
+            || (
+                submitter
+                && submitter.dataset
+                && submitter.dataset.regretBypass === "true"
+            )
+        ) {
+            return null;
+        }
+
+        if (
+            submitter
+            && submitter.dataset
+            && submitter.dataset.regretReady === "true"
+            && submitter.hasAttribute("data-regret-action")
+        ) {
+            return submitter;
+        }
+
+        if (
+            form
+            && form.dataset
+            && form.dataset.regretReady === "true"
+            && form.hasAttribute("data-regret-action")
+        ) {
+            return form;
+        }
+
+        return null;
+    }
+
+    function dispatchRegretAction(form, submitter, source) {
+        window.dispatchEvent(
+            new CustomEvent(
+                "equalizer:regret-action",
+                {
+                    detail: {
+                        form: form,
+                        submitter: submitter,
+                        source: source,
+                    },
+                }
+            )
+        );
     }
 
     function getSubmitterFromTarget(target) {
@@ -2090,6 +2165,29 @@ document.addEventListener(
 
             const form = submitter.form;
 
+            const regretSource =
+                getRegretSource(
+                    form,
+                    submitter
+                );
+
+            if (regretSource) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                dispatchRegretAction(
+                    form,
+                    submitter,
+                    regretSource
+                );
+                return;
+            }
+
             const source =
                 getConfirmationSource(
                     form,
@@ -2135,6 +2233,29 @@ document.addEventListener(
 
             const submitter =
                 event.submitter || null;
+
+            const regretSource =
+                getRegretSource(
+                    form,
+                    submitter
+                );
+
+            if (regretSource) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                dispatchRegretAction(
+                    form,
+                    submitter,
+                    regretSource
+                );
+                return;
+            }
 
             const source =
                 getConfirmationSource(

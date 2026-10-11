@@ -377,6 +377,74 @@ figcaption > span:first-child {
 
 
 /* ==========================================================
+   DESKTOP / TABLET INTEGRATION
+
+   Keep attachment cards visually nested inside the single editorial
+   paper surface without turning the media section into another panel.
+   ========================================================== */
+
+@media (min-width: 721px) {
+
+    .reader-article-page
+    .react-article-media-section {
+        width: min(820px, 100%);
+    }
+
+    .reader-article-page
+    .react-article-media-section
+    .reader-article-section-heading {
+        position: relative;
+
+        padding-left: 15px;
+    }
+
+    .reader-article-page
+    .react-article-media-section
+    .reader-article-section-heading::before {
+        content: "";
+
+        position: absolute;
+        top: 1px;
+        bottom: 1px;
+        left: 0;
+
+        width: 3px;
+
+        border-radius: 999px;
+
+        background:
+            linear-gradient(
+                180deg,
+                var(--react-media-gold),
+                var(--react-media-green)
+            );
+    }
+
+    .reader-article-page
+    .react-article-media-card {
+        border-color: #d9e1dc;
+        border-radius: 13px;
+
+        background: #fcfdfc;
+
+        box-shadow:
+            0 8px 22px
+            rgba(14, 42, 34, 0.06);
+    }
+
+    .reader-article-page
+    .react-article-media-card:hover {
+        transform: translateY(-2px);
+
+        box-shadow:
+            0 13px 28px
+            rgba(14, 42, 34, 0.09);
+    }
+
+}
+
+
+/* ==========================================================
    MOBILE
    ========================================================== */
 

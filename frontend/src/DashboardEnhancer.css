@@ -1296,3 +1296,722 @@
     }
 
 }
+
+/* ==========================================================
+   EDITORIAL CONTROL ROOM — DASHBOARD REVAMP
+   Adds role-aware color, stronger hierarchy, semantic card accents,
+   and richer editorial surfaces without changing the green hero.
+   ========================================================== */
+
+.workspace-dashboard--control-room {
+    --wd-role-accent: #2f7d61;
+    --wd-role-soft: #edf6f1;
+    --wd-role-ink: #245b46;
+
+    --wd-blue: #4f7895;
+    --wd-blue-soft: #eef4f8;
+    --wd-gold-v2: #c69424;
+    --wd-gold-v2-soft: #fbf4e2;
+    --wd-red: #b65b55;
+    --wd-red-soft: #fbefee;
+    --wd-purple: #746287;
+    --wd-purple-soft: #f3eff6;
+    --wd-teal: #4e8378;
+    --wd-teal-soft: #edf6f4;
+    --wd-slate: #708078;
+    --wd-slate-soft: #f0f3f1;
+
+    gap: 26px;
+}
+
+.workspace-dashboard--control-room.workspace-dashboard--super-admin {
+    --wd-role-accent: #746287;
+    --wd-role-soft: #f3eff6;
+    --wd-role-ink: #5b4b6b;
+}
+
+.workspace-dashboard--control-room.workspace-dashboard--admin {
+    --wd-role-accent: #4f7895;
+    --wd-role-soft: #eef4f8;
+    --wd-role-ink: #3d627d;
+}
+
+.workspace-dashboard--control-room.workspace-dashboard--adviser {
+    --wd-role-accent: #c69424;
+    --wd-role-soft: #fbf4e2;
+    --wd-role-ink: #876719;
+}
+
+.workspace-dashboard--control-room.workspace-dashboard--eic {
+    --wd-role-accent: #b9782f;
+    --wd-role-soft: #fbf1e6;
+    --wd-role-ink: #855520;
+}
+
+.workspace-dashboard--control-room.workspace-dashboard--editor {
+    --wd-role-accent: #607693;
+    --wd-role-soft: #eff3f8;
+    --wd-role-ink: #4c6079;
+}
+
+.workspace-dashboard--control-room.workspace-dashboard--staff {
+    --wd-role-accent: #4e8378;
+    --wd-role-soft: #edf6f4;
+    --wd-role-ink: #38685e;
+}
+
+/* Give dashboard pages a warmer editorial-paper canvas without affecting
+   article forms or other staff pages. */
+.staff-content:has(.workspace-dashboard--control-room) {
+    background:
+        radial-gradient(
+            circle at 93% 3%,
+            rgba(198, 148, 36, 0.055),
+            transparent 26%
+        ),
+        radial-gradient(
+            circle at 6% 94%,
+            rgba(47, 125, 97, 0.045),
+            transparent 30%
+        ),
+        #f4f6f3;
+}
+
+/* ------------------------------
+   Semantic tone system
+   ------------------------------ */
+
+.workspace-dashboard--control-room .workspace-metric-card,
+.workspace-dashboard--control-room .workspace-action-card,
+.workspace-dashboard--control-room .workspace-dashboard-section,
+.workspace-dashboard--control-room .workspace-account-panel,
+.workspace-dashboard--control-room .workspace-management-panel {
+    --card-accent: var(--wd-role-accent);
+    --card-soft: var(--wd-role-soft);
+    --card-ink: var(--wd-role-ink);
+}
+
+.workspace-dashboard--control-room [data-dashboard-tone="green"] {
+    --card-accent: #2f7d61;
+    --card-soft: #edf6f1;
+    --card-ink: #245f49;
+}
+
+.workspace-dashboard--control-room [data-dashboard-tone="gold"] {
+    --card-accent: var(--wd-gold-v2);
+    --card-soft: var(--wd-gold-v2-soft);
+    --card-ink: #806219;
+}
+
+.workspace-dashboard--control-room [data-dashboard-tone="blue"] {
+    --card-accent: var(--wd-blue);
+    --card-soft: var(--wd-blue-soft);
+    --card-ink: #3f647e;
+}
+
+.workspace-dashboard--control-room [data-dashboard-tone="red"] {
+    --card-accent: var(--wd-red);
+    --card-soft: var(--wd-red-soft);
+    --card-ink: #8f4540;
+}
+
+.workspace-dashboard--control-room [data-dashboard-tone="purple"] {
+    --card-accent: var(--wd-purple);
+    --card-soft: var(--wd-purple-soft);
+    --card-ink: #5d4d6d;
+}
+
+.workspace-dashboard--control-room [data-dashboard-tone="teal"] {
+    --card-accent: var(--wd-teal);
+    --card-soft: var(--wd-teal-soft);
+    --card-ink: #386a60;
+}
+
+.workspace-dashboard--control-room [data-dashboard-tone="slate"] {
+    --card-accent: var(--wd-slate);
+    --card-soft: var(--wd-slate-soft);
+    --card-ink: #52625b;
+}
+
+/* ------------------------------
+   KPI cards
+   ------------------------------ */
+
+.workspace-dashboard--control-room .workspace-metric-grid {
+    gap: 16px;
+}
+
+.workspace-dashboard--control-room .workspace-metric-card {
+    min-height: 160px;
+    padding: 21px 20px 20px;
+
+    border-color: #dde4df;
+    border-radius: 20px;
+
+    background:
+        radial-gradient(
+            circle at 100% 0%,
+            var(--card-soft),
+            transparent 44%
+        ),
+        #ffffff;
+
+    box-shadow:
+        0 1px 2px rgba(19, 46, 37, 0.025),
+        0 10px 26px rgba(19, 46, 37, 0.055);
+}
+
+.workspace-dashboard--control-room .workspace-metric-card::before {
+    left: 0;
+    right: 0;
+    width: auto;
+    height: 4px;
+
+    border-radius:
+        20px
+        20px
+        0
+        0;
+
+    background: var(--card-accent);
+    opacity: 0.95;
+}
+
+.workspace-dashboard--control-room .workspace-metric-card::after {
+    content: "";
+
+    position: absolute;
+    right: -30px;
+    bottom: -46px;
+
+    width: 110px;
+    height: 110px;
+
+    border: 1px solid var(--card-accent);
+    border-radius: 50%;
+
+    opacity: 0.07;
+    pointer-events: none;
+}
+
+.workspace-dashboard--control-room .workspace-metric-card--attention::before {
+    background: var(--card-accent);
+}
+
+.workspace-dashboard--control-room .workspace-metric-label {
+    max-width: calc(100% - 52px);
+
+    color: #68766f;
+    font-size: 9px;
+    letter-spacing: 0.105em;
+}
+
+.workspace-dashboard--control-room .workspace-metric-value {
+    margin-top: 17px;
+
+    color: var(--card-ink);
+
+    font-size:
+        clamp(31px, 3.2vw, 42px);
+    font-weight: 790;
+}
+
+.workspace-dashboard--control-room .workspace-metric-value--text {
+    font-size:
+        clamp(21px, 2.35vw, 30px);
+}
+
+.workspace-dashboard--control-room .workspace-metric-card p {
+    max-width: 88%;
+
+    margin-top: 13px;
+
+    color: #748078;
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+.workspace-dashboard--control-room .workspace-metric-card:hover {
+    transform: translateY(-3px);
+
+    border-color:
+        color-mix(
+            in srgb,
+            var(--card-accent) 32%,
+            #d8e0db
+        );
+
+    box-shadow:
+        0 2px 4px rgba(19, 46, 37, 0.025),
+        0 17px 34px rgba(19, 46, 37, 0.085);
+}
+
+/* ------------------------------
+   Generated dashboard icon chips
+   ------------------------------ */
+
+.workspace-dashboard--control-room .workspace-card-icon {
+    display: grid;
+    place-items: center;
+
+    width: 38px;
+    height: 38px;
+
+    border: 1px solid
+        color-mix(
+            in srgb,
+            var(--card-accent) 22%,
+            transparent
+        );
+    border-radius: 12px;
+
+    background: var(--card-soft);
+    color: var(--card-ink);
+}
+
+.workspace-dashboard--control-room .workspace-card-icon svg {
+    width: 19px;
+    height: 19px;
+
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.workspace-dashboard--control-room .workspace-card-icon--metric {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    z-index: 2;
+}
+
+.workspace-dashboard--control-room .workspace-card-icon--action {
+    margin-bottom: 14px;
+}
+
+/* ------------------------------
+   Shared content panels
+   ------------------------------ */
+
+.workspace-dashboard--control-room .workspace-dashboard-section,
+.workspace-dashboard--control-room .workspace-account-panel,
+.workspace-dashboard--control-room .workspace-management-panel {
+    position: relative;
+    overflow: hidden;
+
+    border-color: #dfe5e1;
+    border-radius: 23px;
+
+    background:
+        radial-gradient(
+            circle at 100% 0%,
+            color-mix(
+                in srgb,
+                var(--card-soft) 72%,
+                transparent
+            ),
+            transparent 28%
+        ),
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #fdfefd 100%
+        );
+
+    box-shadow:
+        0 1px 2px rgba(15, 45, 36, 0.025),
+        0 11px 30px rgba(15, 45, 36, 0.05);
+}
+
+.workspace-dashboard--control-room .workspace-dashboard-section::before,
+.workspace-dashboard--control-room .workspace-account-panel::before,
+.workspace-dashboard--control-room .workspace-management-panel::before {
+    content: "";
+
+    position: absolute;
+    top: 0;
+    left: 28px;
+
+    width: 58px;
+    height: 4px;
+
+    border-radius: 0 0 999px 999px;
+
+    background: var(--card-accent);
+}
+
+.workspace-dashboard--control-room .workspace-section-heading {
+    margin-bottom: 21px;
+    padding-bottom: 18px;
+}
+
+.workspace-dashboard--control-room .workspace-section-heading > div > span {
+    display: inline-flex;
+    align-items: center;
+
+    width: fit-content;
+    min-height: 23px;
+
+    margin-bottom: 8px;
+    padding: 4px 8px;
+
+    border: 1px solid
+        color-mix(
+            in srgb,
+            var(--card-accent) 18%,
+            transparent
+        );
+    border-radius: 999px;
+
+    background: var(--card-soft);
+    color: var(--card-ink);
+
+    letter-spacing: 0.11em;
+}
+
+.workspace-dashboard--control-room .workspace-section-heading h2 {
+    color: #173f32;
+    font-size:
+        clamp(21px, 2.1vw, 28px);
+}
+
+.workspace-dashboard--control-room .workspace-section-heading p {
+    margin-top: 8px;
+    color: #77827c;
+}
+
+/* ------------------------------
+   Interactive tool / action cards
+   ------------------------------ */
+
+.workspace-dashboard--control-room .workspace-action-grid {
+    gap: 15px;
+}
+
+.workspace-dashboard--control-room .workspace-action-card {
+    position: relative;
+    overflow: hidden;
+
+    min-height: 178px;
+    padding: 19px;
+
+    border-color: #dde5df;
+    border-radius: 18px;
+
+    background:
+        radial-gradient(
+            circle at 0% 100%,
+            var(--card-soft),
+            transparent 46%
+        ),
+        #ffffff;
+
+    box-shadow:
+        0 1px 2px rgba(20, 48, 39, 0.02),
+        0 6px 18px rgba(20, 48, 39, 0.035);
+}
+
+.workspace-dashboard--control-room .workspace-action-card::before {
+    content: "";
+
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    width: 4px;
+    height: 100%;
+
+    background: var(--card-accent);
+    opacity: 0.82;
+}
+
+.workspace-dashboard--control-room .workspace-action-card > div {
+    position: relative;
+    z-index: 1;
+}
+
+.workspace-dashboard--control-room .workspace-action-kicker {
+    margin-bottom: 7px;
+
+    color: var(--card-ink);
+    font-size: 8px;
+    letter-spacing: 0.105em;
+}
+
+.workspace-dashboard--control-room .workspace-action-card h3 {
+    color: #1a4637;
+    font-size: 17px;
+}
+
+.workspace-dashboard--control-room .workspace-action-card p {
+    max-width: 95%;
+
+    margin-top: 9px;
+
+    color: #747f79;
+    font-size: 11px;
+    line-height: 1.62;
+}
+
+.workspace-dashboard--control-room .workspace-action-arrow,
+.workspace-dashboard--control-room .workspace-action-count {
+    position: relative;
+    z-index: 2;
+
+    width: 36px;
+    height: 36px;
+
+    border-color:
+        color-mix(
+            in srgb,
+            var(--card-accent) 17%,
+            #dde5df
+        );
+
+    background: var(--card-soft);
+    color: var(--card-ink);
+}
+
+.workspace-dashboard--control-room .workspace-action-count {
+    font-size: 12px;
+}
+
+.workspace-dashboard--control-room .workspace-action-card:hover {
+    transform: translateY(-3px);
+
+    border-color:
+        color-mix(
+            in srgb,
+            var(--card-accent) 34%,
+            #d9e1dc
+        );
+
+    background:
+        radial-gradient(
+            circle at 0% 100%,
+            var(--card-soft),
+            transparent 52%
+        ),
+        #ffffff;
+
+    box-shadow:
+        0 2px 4px rgba(20, 48, 39, 0.025),
+        0 16px 32px rgba(20, 48, 39, 0.075);
+}
+
+.workspace-dashboard--control-room .workspace-action-card:hover
+.workspace-action-arrow {
+    transform: translateX(3px);
+
+    background: var(--card-accent);
+    border-color: var(--card-accent);
+    color: #ffffff;
+}
+
+.workspace-dashboard--control-room .workspace-action-card:hover
+.workspace-card-icon--action {
+    transform: translateY(-1px);
+
+    border-color:
+        color-mix(
+            in srgb,
+            var(--card-accent) 34%,
+            transparent
+        );
+}
+
+.workspace-dashboard--control-room .workspace-card-icon--action {
+    transition:
+        transform 0.17s ease,
+        border-color 0.17s ease;
+}
+
+/* ------------------------------
+   Quiet account / access snapshot
+   ------------------------------ */
+
+.workspace-dashboard--control-room .workspace-account-panel {
+    --card-accent: var(--wd-slate);
+    --card-soft: var(--wd-slate-soft);
+    --card-ink: #53635b;
+
+    background:
+        linear-gradient(
+            180deg,
+            #fbfcfb 0%,
+            #f7f9f7 100%
+        );
+}
+
+.workspace-dashboard--control-room .workspace-account-grid {
+    border-color: #dfe6e1;
+    border-radius: 16px;
+    background: #ffffff;
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.workspace-dashboard--control-room .workspace-account-grid > div {
+    padding: 18px;
+    border-color: #e5ebe7;
+}
+
+.workspace-dashboard--control-room .workspace-account-grid span {
+    color: #79857e;
+    letter-spacing: 0.1em;
+}
+
+.workspace-dashboard--control-room .workspace-account-grid strong {
+    color: #28473b;
+    font-size: 12px;
+}
+
+.workspace-dashboard--control-room .workspace-text-link {
+    display: inline-flex;
+    align-items: center;
+
+    min-height: 34px;
+    padding: 7px 10px;
+
+    border: 1px solid #dce5df;
+    border-radius: 10px;
+
+    background: #ffffff;
+    color: #315e4d;
+}
+
+.workspace-dashboard--control-room .workspace-text-link:hover {
+    border-color: #cbd9d1;
+    background: #f5f8f6;
+    color: #173f32;
+}
+
+/* Mobile release manager gets an informational blue identity. */
+.workspace-dashboard--control-room .workspace-mobile-release-panel {
+    --card-accent: var(--wd-blue);
+    --card-soft: var(--wd-blue-soft);
+    --card-ink: #3f647e;
+}
+
+.workspace-dashboard--control-room .workspace-status-pill {
+    border-color:
+        color-mix(
+            in srgb,
+            var(--card-accent) 23%,
+            #d4e0d8
+        );
+
+    background: var(--card-soft);
+    color: var(--card-ink);
+}
+
+/* ------------------------------
+   Live data acknowledgement
+   ------------------------------ */
+
+@keyframes workspaceMetricLivePulse {
+    0% {
+        box-shadow:
+            0 0 0 0
+            color-mix(
+                in srgb,
+                var(--card-accent) 28%,
+                transparent
+            ),
+            0 10px 26px rgba(19, 46, 37, 0.055);
+    }
+
+    45% {
+        box-shadow:
+            0 0 0 5px
+            color-mix(
+                in srgb,
+                var(--card-accent) 9%,
+                transparent
+            ),
+            0 14px 32px rgba(19, 46, 37, 0.075);
+    }
+
+    100% {
+        box-shadow:
+            0 0 0 0 transparent,
+            0 10px 26px rgba(19, 46, 37, 0.055);
+    }
+}
+
+.workspace-dashboard--control-room .workspace-metric-card.is-live-updated {
+    animation:
+        workspaceMetricLivePulse
+        1.15s
+        ease-out;
+}
+
+/* ------------------------------
+   Responsive refinements
+   ------------------------------ */
+
+@media (max-width: 1040px) {
+    .workspace-dashboard--control-room .workspace-metric-card {
+        min-height: 150px;
+    }
+
+    .workspace-dashboard--control-room .workspace-action-card {
+        min-height: 164px;
+    }
+}
+
+@media (max-width: 780px) {
+    .workspace-dashboard {
+        gap: 20px;
+    }
+
+    .workspace-dashboard--control-room .workspace-metric-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .workspace-dashboard--control-room .workspace-dashboard-section,
+    .workspace-dashboard--control-room .workspace-account-panel,
+    .workspace-dashboard--control-room .workspace-management-panel {
+        border-radius: 19px;
+    }
+}
+
+@media (max-width: 560px) {
+    .workspace-dashboard--control-room .workspace-metric-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .workspace-dashboard--control-room .workspace-metric-card {
+        min-height: 142px;
+    }
+
+    .workspace-dashboard--control-room .workspace-action-card {
+        min-height: 0;
+    }
+
+    .workspace-dashboard--control-room .workspace-card-icon--metric {
+        top: 16px;
+        right: 16px;
+    }
+
+    .workspace-dashboard--control-room .workspace-section-heading--compact {
+        align-items: flex-start;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .workspace-dashboard--control-room .workspace-metric-card,
+    .workspace-dashboard--control-room .workspace-action-card,
+    .workspace-dashboard--control-room .workspace-card-icon,
+    .workspace-dashboard--control-room .workspace-action-arrow {
+        transition: none !important;
+    }
+
+    .workspace-dashboard--control-room .workspace-metric-card.is-live-updated {
+        animation: none;
+    }
+}

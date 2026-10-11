@@ -752,24 +752,57 @@
 }
 
 .reader-back-link {
-    display: block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
-    width: min(720px, 100%);
+    gap: 10px;
 
-    margin: 24px auto 0;
+    width: fit-content;
+    max-width: 100%;
+    min-height: 42px;
 
+    margin: 28px auto 0;
+    padding: 10px 24px;
+
+    border: 1px solid #cfdad4;
+    border-radius: 999px;
+
+    background: #f7faf8;
     color: var(--article-green);
 
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 12px;
+    font-weight: 850;
 
     text-decoration: none;
+
+    transition:
+        transform 0.18s ease,
+        border-color 0.18s ease,
+        background-color 0.18s ease,
+        color 0.18s ease,
+        box-shadow 0.18s ease;
 }
 
-.reader-back-link:hover {
-    color: var(--article-gold);
+.reader-back-link:hover,
+.reader-back-link:focus-visible {
+    transform: translateX(-2px);
+
+    border-color: var(--article-green);
+
+    background: #eef5f1;
+    color: var(--article-green-dark);
+
+    box-shadow:
+        0 5px 14px
+        rgba(14, 42, 34, 0.07);
 }
 
+.reader-back-link span {
+    flex-shrink: 0;
+    font-size: 15px;
+    line-height: 1;
+}
 
 /* ------------------------------
    IMAGE LIGHTBOX
@@ -876,6 +909,203 @@
 
 body.reader-lightbox-open {
     overflow: hidden;
+}
+
+
+/* ------------------------------
+   DESKTOP / TABLET EDITORIAL PAPER
+
+   The public article is presented as one complete publication surface
+   against a warm neutral canvas. Mobile keeps the existing continuous
+   reader treatment below 721px.
+   ------------------------------ */
+
+@media (min-width: 721px) {
+
+    .reader-article-page {
+        padding:
+            54px
+            clamp(24px, 4vw, 52px)
+            84px;
+
+        background:
+            linear-gradient(
+                180deg,
+                #f4f3ee 0%,
+                #f1f3ef 58%,
+                #f5f4f0 100%
+            );
+    }
+
+    .reader-article {
+        position: relative;
+
+        box-sizing: border-box;
+
+        width: min(1040px, 100%);
+
+        padding:
+            clamp(40px, 5vw, 58px)
+            clamp(38px, 5.4vw, 64px)
+            46px;
+
+        overflow: hidden;
+
+        border:
+            1px solid
+            #d8dfda;
+        border-radius: 22px;
+
+        background: #ffffff;
+
+        box-shadow:
+            0 22px 60px
+            rgba(14, 42, 34, 0.10),
+            0 3px 10px
+            rgba(14, 42, 34, 0.045);
+    }
+
+    .reader-article::before {
+        content: "";
+
+        position: absolute;
+        inset: 0 0 auto;
+
+        height: 5px;
+
+        background:
+            linear-gradient(
+                90deg,
+                var(--article-green) 0%,
+                var(--article-green) 72%,
+                var(--article-gold) 72%,
+                var(--article-gold) 100%
+            );
+    }
+
+    .reader-article-header {
+        padding-bottom: 32px;
+
+        border-bottom-color: #dfe5e1;
+    }
+
+    .reader-article-category {
+        display: inline-flex;
+        align-items: center;
+
+        width: fit-content;
+
+        margin-bottom: 16px;
+        padding: 6px 10px;
+
+        border:
+            1px solid
+            #e7dcae;
+        border-radius: 999px;
+
+        background: #fffaf0;
+        color: #856b1f;
+
+        font-size: 11px;
+        letter-spacing: 1.25px;
+    }
+
+    .reader-article-byline {
+        margin-top: 29px;
+    }
+
+    .reader-featured-figure {
+        margin-top: 36px;
+    }
+
+    .reader-featured-image {
+        border-color: #d6ded9;
+        border-radius: 13px;
+
+        box-shadow:
+            0 10px 28px
+            rgba(14, 42, 34, 0.065);
+    }
+
+    .reader-article-standfirst {
+        box-sizing: border-box;
+
+        margin-top: 36px;
+        padding: 18px 20px;
+
+        border:
+            1px solid
+            #e9e0bd;
+        border-left:
+            4px solid
+            var(--article-gold);
+        border-radius: 0 12px 12px 0;
+
+        background:
+            linear-gradient(
+                90deg,
+                #fffaf0 0%,
+                #fdfbf5 100%
+            );
+
+        color: #33433b;
+    }
+
+    .reader-article-body {
+        margin-top: 34px;
+    }
+
+    .reader-article-media-section {
+        margin-top: 56px;
+        padding-top: 30px;
+
+        border-top-color: #dce3df;
+    }
+
+    .reader-article-tags {
+        margin-top: 44px;
+        padding-top: 24px;
+
+        border-top-color: #dce3df;
+    }
+
+    .reader-article-tags span {
+        border:
+            1px solid
+            #dde7e1;
+
+        background: #f5f8f6;
+    }
+
+    .reader-engagement-panel {
+        box-sizing: border-box;
+
+        margin-top: 30px;
+        padding: 16px 18px;
+
+        border:
+            1px solid
+            #dbe4df;
+        border-radius: 14px;
+
+        background:
+            linear-gradient(
+                180deg,
+                #fafcfb 0%,
+                #f5f8f6 100%
+            );
+    }
+
+    .reader-back-link {
+        display: inline-flex;
+        align-items: center;
+
+        width: auto;
+
+        margin-top: 24px;
+        padding: 8px 0;
+    }
+
 }
 
 
@@ -1488,7 +1718,8 @@ body.reader-lightbox-open {
             href="{% url 'home' %}"
             class="reader-back-link"
         >
-            &larr; Back to homepage
+            <span aria-hidden="true">&larr;</span>
+            Back to Homepage
         </a>
 
         {% endif %}

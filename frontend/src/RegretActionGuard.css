@@ -1,0 +1,147 @@
+body.regret-action-open { overflow: hidden; }
+
+.regret-action-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 16000;
+  display: grid;
+  place-items: end center;
+  padding: 24px;
+  background: rgba(7, 20, 15, .24);
+  backdrop-filter: blur(3px);
+  animation: regretBackdropIn .18s ease both;
+}
+
+.regret-action-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  width: min(760px, 100%);
+  padding: 18px 20px;
+  border: 1px solid rgba(18, 72, 54, .18);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .98);
+  box-shadow: 0 22px 60px rgba(8, 37, 28, .22);
+  animation: regretCardIn .24s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.regret-action-overlay--danger .regret-action-card {
+  border-color: rgba(166, 61, 61, .28);
+}
+
+.regret-action-meter {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  flex: 0 0 auto;
+}
+
+.regret-action-meter svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.regret-action-meter circle { fill: none; stroke-width: 5; }
+.regret-action-meter-track { stroke: #e6ece8; }
+.regret-action-meter-progress {
+  stroke: var(--eq-green, #4fae69);
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  transition: stroke-dashoffset .08s linear;
+}
+.regret-action-overlay--danger .regret-action-meter-progress { stroke: var(--eq-danger, #a63d3d); }
+
+.regret-action-meter strong {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--eq-green-dark, #184536);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.regret-action-copy { min-width: 0; }
+.regret-action-kicker {
+  margin: 0 0 3px;
+  color: var(--eq-gold, #d6ad32);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.regret-action-copy h2 {
+  margin: 0;
+  color: var(--eq-green-deep, #0f2d24);
+  font-size: 19px;
+  line-height: 1.2;
+}
+.regret-action-copy > p:not(.regret-action-kicker) {
+  margin: 6px 0 0;
+  color: var(--eq-muted, #6f7a74);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.regret-action-auto-copy {
+  display: inline-block;
+  margin-top: 7px;
+  color: #64726b;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.regret-action-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.regret-action-actions button {
+  min-height: 40px;
+  padding: 9px 15px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 850;
+  cursor: pointer;
+}
+.regret-action-cancel {
+  border: 1px solid #cfd9d3;
+  background: #fff;
+  color: var(--eq-green-dark, #184536);
+}
+.regret-action-send {
+  border: 1px solid var(--eq-green-dark, #184536);
+  background: var(--eq-green-dark, #184536);
+  color: #fff;
+}
+.regret-action-overlay--danger .regret-action-send {
+  border-color: var(--eq-danger, #a63d3d);
+  background: var(--eq-danger, #a63d3d);
+}
+.regret-action-actions button:disabled { opacity: .58; cursor: wait; }
+.regret-action-actions button:focus-visible {
+  outline: 3px solid rgba(214, 173, 50, .32);
+  outline-offset: 2px;
+}
+
+@keyframes regretBackdropIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes regretCardIn {
+  from { opacity: 0; transform: translateY(16px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 720px) {
+  .regret-action-overlay { padding: 12px; }
+  .regret-action-card {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 14px;
+    padding: 16px;
+  }
+  .regret-action-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .regret-action-overlay,
+  .regret-action-card { animation: none; }
+  .regret-action-meter-progress { transition: none; }
+}

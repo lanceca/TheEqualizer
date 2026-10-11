@@ -100,6 +100,12 @@ urlpatterns = [
         name="published_articles",
     ),
 
+    path(
+        "articles/<int:article_id>/recommend-archive/",
+        views.recommend_article_archive,
+        name="recommend_article_archive",
+    ),
+
     # Article version history
     # EIC, Editor, and Staff only for now.
 
@@ -344,6 +350,12 @@ urlpatterns = [
         "people/<slug:section_slug>/create/",
         views.create_people_profile,
         name="create_people_profile",
+    ),
+
+    path(
+        "people/<slug:section_slug>/reorder/",
+        views.reorder_people_profiles,
+        name="reorder_people_profiles",
     ),
 
     path(

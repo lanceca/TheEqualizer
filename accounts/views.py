@@ -213,9 +213,35 @@ def super_admin_dashboard(request):
 @role_required(User.Role.ADMIN)
 def admin_dashboard(request):
 
+    publication_staff = (
+        User.objects
+        .filter(
+            role__in=[
+                User.Role.ADVISER,
+                User.Role.EIC,
+                User.Role.EDITOR,
+                User.Role.STAFF,
+            ],
+        )
+    )
+
+    context = {
+        "active_staff_accounts": (
+            publication_staff
+            .filter(is_active=True)
+            .count()
+        ),
+        "deactivated_staff_accounts": (
+            publication_staff
+            .filter(is_active=False)
+            .count()
+        ),
+    }
+
     return render(
         request,
         "accounts/dashboards/admin.html",
+        context,
     )
 
 
@@ -2574,9 +2600,34 @@ def editor_dashboard(request):
 @role_required(User.Role.STAFF)
 def staff_dashboard(request):
 
+    staff_reports = (
+        ContentReport.objects
+        .filter(
+            reported_by=request.user,
+        )
+    )
+
+    context = {
+        "approved_reports": (
+            staff_reports
+            .filter(
+                status=ContentReport.Status.RESOLVED,
+            )
+            .count()
+        ),
+        "rejected_reports": (
+            staff_reports
+            .filter(
+                status=ContentReport.Status.CANCELLED,
+            )
+            .count()
+        ),
+    }
+
     return render(
         request,
         "accounts/dashboards/staff.html",
+        context,
     )
 
 

@@ -6,7 +6,7 @@
 <style>
 .people-group-layout {
     display: grid;
-    grid-template-columns: minmax(360px, .72fr) minmax(0, 1.28fr);
+    grid-template-columns: minmax(360px, .9fr) minmax(0, 1.1fr);
     gap: 22px;
     align-items: start;
 }
@@ -81,6 +81,18 @@
     height: 84px;
     object-fit: cover;
     border-radius: 9px;
+}
+
+.people-order-avatar-placeholder {
+    display: grid;
+    place-items: center;
+    width: 84px;
+    height: 84px;
+    border-radius: 9px;
+    background: #e8f0eb;
+    color: var(--eq-green-dark);
+    font-weight: 900;
+    font-size: 24px;
 }
 
 .people-row > div:nth-child(2) {
@@ -222,6 +234,71 @@
     color: #8a2d2d;
 }
 
+.people-order-panel-shell {
+    margin-bottom: 22px;
+    padding: 22px;
+    border: 1px solid #cddbd3;
+    border-top: 4px solid var(--eq-green-dark);
+    border-radius: 14px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbf9 100%);
+    box-shadow: var(--eq-shadow);
+}
+
+.people-order-panel-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--eq-border);
+}
+
+.people-order-panel-heading h2 {
+    margin: 2px 0 5px;
+    color: var(--eq-green-dark);
+}
+
+.people-order-panel-heading p {
+    margin: 0;
+    max-width: 760px;
+    color: var(--eq-muted);
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.people-order-help-badge {
+    flex: 0 0 auto;
+    padding: 7px 11px;
+    border: 1px solid #e0d5a5;
+    border-radius: 999px;
+    background: #fffaf0;
+    color: #7d6417;
+    font-size: 11px;
+    font-weight: 850;
+}
+
+.people-order-fallback[hidden] {
+    display: none !important;
+}
+
+.people-order-fallback-note {
+    margin: 0 0 12px;
+    color: var(--eq-muted);
+    font-size: 12px;
+}
+
+.people-visibility-note {
+    margin: 0 0 12px;
+    padding: 11px 12px;
+    border: 1px solid #dce5e0;
+    border-radius: 9px;
+    background: #f6f9f7;
+    color: var(--eq-muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
 @media(max-width: 1100px) {
     .people-group-layout {
         grid-template-columns: 1fr;
@@ -265,6 +342,93 @@
         </div>
         <a href="{% url 'people_management' %}" class="secondary-button">Back</a>
     </div>
+
+    <section class="people-order-panel-shell">
+        <div class="people-order-panel-heading">
+            <div>
+                <p class="workflow-eyebrow">Public sequence</p>
+                <h2>Arrange Team Order</h2>
+                <p>
+                    Drag profiles into the order they should appear on the public People &amp; Teams page.
+                    Changes save automatically; keyboard move controls remain available for accessibility.
+                </p>
+            </div>
+            <span class="people-order-help-badge">Drag &amp; drop enabled</span>
+        </div>
+
+        <div
+            class="people-order-react-mount"
+            data-react-component="PeopleOrderManager"
+            data-api-url="{% url 'reorder_people_profiles' section_slug %}"
+            data-source-id="people-order-fallback"
+        ></div>
+
+        <div class="people-order-fallback people-list" id="people-order-fallback">
+            <p class="people-order-fallback-note">
+                Interactive ordering requires JavaScript. Profile actions remain available in this fallback list.
+            </p>
+            {% for profile in profiles %}
+                <article
+                    class="people-row"
+                    data-people-order-item
+                    data-profile-id="{{ profile.id }}"
+                    data-name="{{ profile.name|escape }}"
+                    data-role="{{ profile.role_title|escape }}"
+                    data-position="{{ profile.school_position|escape }}"
+                    data-image-url="{% if profile.image %}{{ profile.image.url }}{% endif %}"
+                    data-active="{{ profile.is_active|yesno:'true,false' }}"
+                    data-edit-url="{% url 'edit_people_profile' section_slug profile.id %}"
+                    data-status-url="{% url 'set_people_profile_status' section_slug profile.id %}"
+                    data-delete-url="{% url 'delete_people_profile' section_slug profile.id %}"
+                >
+                    {% if profile.image %}
+                        <img src="{{ profile.image.url }}" alt="{{ profile.name }}">
+                    {% else %}
+                        <div class="people-order-avatar-placeholder">{{ profile.name|slice:":1"|upper }}</div>
+                    {% endif %}
+
+                    <div>
+                        <h3>{{ profile.name }}</h3>
+                        {% if profile.role_title %}<p>{{ profile.role_title }}</p>{% endif %}
+                        {% if profile.school_position %}<p>{{ profile.school_position }}</p>{% endif %}
+                        <p>{% if profile.is_active %}Visible{% else %}Hidden{% endif %}</p>
+                    </div>
+
+                    <div class="people-actions">
+                        <a href="{% url 'edit_people_profile' section_slug profile.id %}">Edit</a>
+                        <form
+                            method="POST"
+                            action="{% url 'set_people_profile_status' section_slug profile.id %}"
+                            data-confirm-title="{% if profile.is_active %}Hide Profile{% else %}Show Profile{% endif %}"
+                            data-confirm="{% if profile.is_active %}Hide '{{ profile.name }}' from the public People & Teams page?{% else %}Show '{{ profile.name }}' on the public People & Teams page?{% endif %}"
+                        >
+                            {% csrf_token %}
+                            <input type="hidden" name="is_active" value="{% if profile.is_active %}0{% else %}1{% endif %}">
+                            <button type="submit" class="people-status-button">
+                                {% if profile.is_active %}Hide{% else %}Show{% endif %}
+                            </button>
+                        </form>
+                        <form method="POST" action="{% url 'delete_people_profile' section_slug profile.id %}">
+                            {% csrf_token %}
+                            <button
+                                type="submit"
+                                class="people-delete-button"
+                                data-confirm-title="Delete Profile"
+                                data-confirm="Permanently delete '{{ profile.name }}'? This cannot be undone."
+                                data-regret-action
+                                data-regret-tone="danger"
+                                data-regret-title="Delete Profile?"
+                                data-regret-message="'{{ profile.name|escape }}' will be permanently deleted. You have 10 seconds to change your mind."
+                                data-regret-button="Delete Now"
+                            >Delete</button>
+                        </form>
+                    </div>
+                </article>
+            {% empty %}
+                <p>No profiles have been added yet.</p>
+            {% endfor %}
+        </div>
+    </section>
 
     <div class="people-group-layout">
         <section class="people-panel">
@@ -435,20 +599,13 @@
                 <section class="people-form-section">
                     <div class="people-form-section-heading">
                         <span>Publishing</span>
-                        <h3>Visibility and ordering</h3>
+                        <h3>Visibility</h3>
                     </div>
 
-                    <div class="people-field">
-                        <label for="people-display-order">Display order</label>
-                        <input
-                            id="people-display-order"
-                            type="number"
-                            name="display_order"
-                            min="0"
-                            max="9999"
-                            value="{% if request.method == 'POST' %}{{ request.POST.display_order|default:'0' }}{% else %}0{% endif %}"
-                        >
-                    </div>
+                    <p class="people-visibility-note">
+                        New profiles are added to the end of the team automatically.
+                        Use the drag-and-drop ordering workspace above to change their public position.
+                    </p>
 
                     <label style="display:flex;gap:8px;align-items:center;margin:16px 0">
                         <input
@@ -480,70 +637,7 @@
                 {% include "publications/_people_profile_live_preview.html" %}
             </section>
 
-            <section class="people-panel">
-                <h2>Current Profiles</h2>
 
-                <div class="people-list">
-                    {% for profile in profiles %}
-                        <article class="people-row">
-                            <img src="{{ profile.image.url }}" alt="{{ profile.name }}">
-
-                            <div>
-                                <h3>{{ profile.name }}</h3>
-                                {% if profile.role_title %}<p>{{ profile.role_title }}</p>{% endif %}
-                                {% if profile.school_position %}<p>{{ profile.school_position }}</p>{% endif %}
-                                <p>
-                                    Order: {{ profile.display_order }} ·
-                                    {% if profile.is_active %}Visible{% else %}Hidden{% endif %}
-                                </p>
-                            </div>
-
-                            <div class="people-actions">
-                                <a href="{% url 'edit_people_profile' section_slug profile.id %}">
-                                    Edit
-                                </a>
-
-                                <form
-                                    method="POST"
-                                    action="{% url 'set_people_profile_status' section_slug profile.id %}"
-                                    data-confirm-title="{% if profile.is_active %}Hide Profile{% else %}Show Profile{% endif %}"
-                                    data-confirm="{% if profile.is_active %}Hide '{{ profile.name }}' from the public People & Teams page?{% else %}Show '{{ profile.name }}' on the public People & Teams page?{% endif %}"
-                                >
-                                    {% csrf_token %}
-                                    <input
-                                        type="hidden"
-                                        name="is_active"
-                                        value="{% if profile.is_active %}0{% else %}1{% endif %}"
-                                    >
-                                    <button
-                                        type="submit"
-                                        class="people-status-button"
-                                    >
-                                        {% if profile.is_active %}Hide{% else %}Show{% endif %}
-                                    </button>
-                                </form>
-
-                                <form
-                                    method="POST"
-                                    action="{% url 'delete_people_profile' section_slug profile.id %}"
-                                    data-confirm-title="Delete Profile"
-                                    data-confirm="Permanently delete '{{ profile.name }}'? This cannot be undone."
-                                >
-                                    {% csrf_token %}
-                                    <button
-                                        type="submit"
-                                        class="people-delete-button"
-                                    >
-                                        Delete
-                                    </button>
-                                </form>
-                            </div>
-                        </article>
-                    {% empty %}
-                        <p>No profiles have been added yet.</p>
-                    {% endfor %}
-                </div>
-            </section>
         </div>
     </div>
 </div>

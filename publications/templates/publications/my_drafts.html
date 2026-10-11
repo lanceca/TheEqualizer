@@ -246,6 +246,11 @@
                                     class="danger-button"
                                     data-confirm-title="Delete Draft"
                                     data-confirm="Are you sure you want to permanently delete the draft '{{ article.title }}'? This action cannot be undone."
+                                    data-regret-action
+                                    data-regret-tone="danger"
+                                    data-regret-title="Delete Draft?"
+                                    data-regret-message="'{{ article.title|escape }}' will be permanently deleted. You have 10 seconds to change your mind."
+                                    data-regret-button="Delete Now"
                                 >
                                     Delete Draft
                                 </button>

@@ -192,6 +192,17 @@
         position: static;
     }
 }
+.people-edit-order-note {
+    margin: 0 0 14px;
+    padding: 11px 12px;
+    border: 1px solid var(--eq-border);
+    border-radius: 9px;
+    background: var(--eq-offwhite);
+    color: var(--eq-muted);
+    font-size: 12px;
+    line-height: 1.55;
+}
+
 </style>
 
 <div class="management-suite-page management-suite-page--people">
@@ -428,20 +439,12 @@
                 <section class="people-form-section">
                     <div class="people-form-section-heading">
                         <span>Publishing</span>
-                        <h3>Visibility and ordering</h3>
+                        <h3>Visibility</h3>
                     </div>
 
-                    <div class="people-edit-field">
-                        <label for="people-display-order">Display order</label>
-                        <input
-                            id="people-display-order"
-                            type="number"
-                            name="display_order"
-                            min="0"
-                            max="9999"
-                            value="{% if request.method == 'POST' %}{{ request.POST.display_order }}{% else %}{{ profile.display_order }}{% endif %}"
-                        >
-                    </div>
+                    <p class="people-edit-order-note">
+                        Public order is managed from the drag-and-drop Arrange Team Order workspace on the {{ section_title }} page.
+                    </p>
 
                     <label style="display:flex;gap:8px;align-items:center;margin:16px 0">
                         <input

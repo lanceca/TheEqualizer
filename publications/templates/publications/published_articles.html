@@ -110,6 +110,12 @@
                                 Version {{ article.version_number }}
                             </span>
 
+                            {% if filters.older == '30' %}
+                                <span class="editorial-meta-chip editorial-meta-chip--age">
+                                    30+ Days Old
+                                </span>
+                            {% endif %}
+
                             {% if article.author_id == request.user.id %}
 
                                 <span class="editorial-meta-chip is-special">
@@ -225,11 +231,66 @@
                                         class="eq-action-button eq-action-button--archive eq-action-button--compact"
                                         data-confirm-title="Archive Published Article"
                                         data-confirm="Are you sure you want to remove '{{ article.title }}' from publication? The article will be moved to the archive."
+                                        data-regret-action
+                                        data-regret-tone="danger"
+                                        data-regret-title="Archive Published Article?"
+                                        data-regret-message="'{{ article.title|escape }}' will be removed from the live publication and moved to the archive. You have 10 seconds to change your mind."
+                                        data-regret-button="Archive Now"
                                     >
                                         Archive Article
                                     </button>
 
                                 </form>
+
+                            {% elif filters.older == '30' %}
+
+                                {% if article.pending_archive_request %}
+                                    <button
+                                        type="button"
+                                        class="eq-action-button eq-action-button--recommend-sent eq-action-button--compact"
+                                        disabled
+                                        title="This article already has a pending archive request."
+                                    >
+                                        Archive Request Pending
+                                    </button>
+                                {% elif article.archive_recommendation_recent %}
+                                    <button
+                                        type="button"
+                                        class="eq-action-button eq-action-button--recommend-sent eq-action-button--compact"
+                                        disabled
+                                        title="A recommendation was already sent within the last 7 days."
+                                    >
+                                        ✓ Recommendation Sent
+                                    </button>
+                                {% elif not article.author.is_active %}
+                                    <button
+                                        type="button"
+                                        class="eq-action-button eq-action-button--recommend-sent eq-action-button--compact"
+                                        disabled
+                                        title="The author account is inactive."
+                                    >
+                                        Author Inactive
+                                    </button>
+                                {% else %}
+                                    <form
+                                        method="POST"
+                                        action="{% url 'recommend_article_archive' article.id %}?{{ request.GET.urlencode }}"
+                                    >
+                                        {% csrf_token %}
+                                        <button
+                                            type="submit"
+                                            class="eq-action-button eq-action-button--recommend eq-action-button--compact"
+                                            data-confirm-title="Recommend Archive Request"
+                                            data-confirm="Notify {{ article.author.username }} that '{{ article.title }}' is 30+ days old and recommended for an archive request?"
+                                            data-regret-action
+                                            data-regret-title="Recommend Archive Request?"
+                                            data-regret-message="{{ article.author.username }} will be notified that '{{ article.title|escape }}' is 30+ days old and recommended for an archive request. The article will stay published unless the author submits one."
+                                            data-regret-button="Notify Author Now"
+                                        >
+                                            Recommend Archive Request
+                                        </button>
+                                    </form>
+                                {% endif %}
 
                             {% endif %}
 
@@ -494,6 +555,35 @@
     {% endif %}
 
 </div>
+
+<style>
+.editorial-meta-chip--age {
+    border-color: #e7d8a0;
+    background: #fff8e6;
+    color: #7d6111;
+}
+
+.eq-action-button--recommend {
+    border-color: #d2ad35 !important;
+    background: #fff8e6 !important;
+    color: #72570d !important;
+}
+
+.eq-action-button--recommend:hover,
+.eq-action-button--recommend:focus-visible {
+    border-color: #b88d18 !important;
+    background: #f8edc7 !important;
+    color: #5f480c !important;
+}
+
+.eq-action-button--recommend-sent {
+    border-color: #ced9d3 !important;
+    background: #f2f6f4 !important;
+    color: #68756f !important;
+    cursor: default !important;
+    opacity: .92;
+}
+</style>
 
 {% include "publications/_preserve_post_form.html" %}
 
