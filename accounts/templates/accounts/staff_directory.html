@@ -99,7 +99,7 @@
 
             <a
                 href="{% url 'staff_directory' %}"
-                class="text-action-link"
+                class="secondary-button directory-clear-button"
             >
                 Clear
             </a>
@@ -167,7 +167,7 @@
 
                         <div>
                             <dt>Email</dt>
-                            <dd>
+                            <dd class="staff-directory-email">
                                 {% if can_view_staff_emails %}
                                     {% if account.email %}
                                         <span

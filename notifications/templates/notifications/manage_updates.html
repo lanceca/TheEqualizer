@@ -27,7 +27,7 @@
         <div class="system-updates-hero-summary">
             <span>Release storage</span>
             <strong>{{ updates|length }}</strong>
-            <small>draft{{ updates|length|pluralize }} and published release{{ updates|length|pluralize }}</small>
+            <small>{{ draft_count }} draft{{ draft_count|pluralize }} · {{ published_count }} published release{{ published_count|pluralize }}</small>
         </div>
     </section>
 
@@ -110,6 +110,13 @@
 
                     <footer class="system-update-card-footer system-update-card-footer--management">
                         {% if not update.is_published %}
+                            <a
+                                class="system-update-secondary-button"
+                                href="{% url 'preview_system_update' update.pk %}"
+                            >
+                                Preview Draft
+                            </a>
+
                             <a
                                 class="system-update-secondary-button"
                                 href="{% url 'edit_system_update' update.pk %}"

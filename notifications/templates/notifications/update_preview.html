@@ -1,0 +1,155 @@
+{% extends "staff_base.html" %}
+
+{% block staff_content %}
+<div class="system-updates-shell system-updates-shell--detail system-update-preview-shell" data-system-updates-root>
+    <section class="system-updates-hero system-updates-hero--compact">
+        <div class="system-updates-hero-copy">
+            <span class="system-updates-kicker">Super Admin controls</span>
+            <h1>Update Preview</h1>
+            <p>
+                Review the release exactly as a staff-facing update before it is
+                published. This preview is visible only to the Super Admin.
+            </p>
+        </div>
+
+        {% if saved_draft %}
+            <a class="system-update-hero-back" href="{% url 'manage_system_updates' %}">
+                <span aria-hidden="true">←</span> Back to System Updates
+            </a>
+        {% endif %}
+    </section>
+
+    <article class="system-update-detail-card system-update-detail-card--{{ preview_update.update_type|lower }} system-update-preview-card">
+        <div class="system-update-preview-banner">
+            <strong>Draft Preview</strong>
+            <span>Nothing on this page has been published.</span>
+        </div>
+
+        <header class="system-update-detail-header">
+            <div class="system-update-card-badges">
+                <span class="system-update-version">
+                    {% if preview_update.version %}{{ preview_update.version }}{% else %}Unversioned{% endif %}
+                </span>
+                <span class="system-update-type system-update-type--{{ preview_update.update_type|lower }}">
+                    {{ preview_update.get_update_type_display }}
+                </span>
+                <span class="system-update-status system-update-status--draft">Draft</span>
+            </div>
+            <span class="system-update-draft-date">Preview only</span>
+        </header>
+
+        <div class="system-update-detail-copy">
+            <span class="system-updates-kicker">The Equalizer · What's New</span>
+            <h1>{{ preview_update.title }}</h1>
+            <p class="system-update-detail-summary">{{ preview_update.summary }}</p>
+
+            <div class="system-update-preview-meta">
+                <span>
+                    <small>Audience</small>
+                    <strong>
+                        {% if preview_target_roles %}
+                            {{ preview_target_roles|join:", " }}
+                        {% else %}
+                            All Staff
+                        {% endif %}
+                    </strong>
+                </span>
+                <span>
+                    <small>Popup</small>
+                    <strong>{% if preview_update.show_popup %}Enabled{% else %}Hidden{% endif %}</strong>
+                </span>
+                <span>
+                    <small>Acknowledgement</small>
+                    <strong>{% if preview_update.require_acknowledgement %}Required{% else %}Optional{% endif %}</strong>
+                </span>
+            </div>
+
+            <div class="system-update-detail-divider" aria-hidden="true"></div>
+
+            <div class="system-update-preview-notes" aria-label="Categorized release notes">
+                {% for item in preview_change_items %}
+                    <div class="system-update-preview-note">
+                        <span class="system-update-preview-note-label system-update-preview-note-label--{{ item.category_slug }}">
+                            {{ item.category }}
+                        </span>
+                        <p>{{ item.text }}</p>
+                    </div>
+                {% empty %}
+                    <p class="system-update-preview-empty">No release-note lines were added.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <footer class="system-update-detail-footer system-update-preview-actions">
+            {% if saved_draft %}
+                <a class="system-update-secondary-button" href="{% url 'edit_system_update' preview_update.pk %}">
+                    Edit Draft
+                </a>
+                <form method="post" action="{% url 'system_update_action' preview_update.pk %}" data-update-action-form>
+                    {% csrf_token %}
+                    <button name="action" value="publish" type="submit" class="system-update-primary-button">
+                        Publish Update
+                    </button>
+                </form>
+            {% else %}
+                <form method="post" class="system-update-preview-preserve-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="title" value="{{ preview_form.cleaned_data.title }}">
+                    <input type="hidden" name="version" value="{{ preview_form.cleaned_data.version }}">
+                    <textarea name="summary" hidden>{{ preview_form.cleaned_data.summary }}</textarea>
+                    <textarea name="change_notes" hidden>{{ preview_form.cleaned_data.change_notes }}</textarea>
+                    <input type="hidden" name="update_type" value="{{ preview_form.cleaned_data.update_type }}">
+                    {% for role in preview_form.cleaned_data.target_roles %}
+                        <input type="hidden" name="target_roles" value="{{ role }}">
+                    {% endfor %}
+                    {% if preview_form.cleaned_data.show_popup %}
+                        <input type="hidden" name="show_popup" value="on">
+                    {% endif %}
+                    {% if preview_form.cleaned_data.require_acknowledgement %}
+                        <input type="hidden" name="require_acknowledgement" value="on">
+                    {% endif %}
+
+                    <button type="submit" name="action" value="edit" class="system-update-secondary-button">
+                        Back to Edit
+                    </button>
+                    <button type="submit" name="action" value="save" class="system-update-primary-button">
+                        Save Draft
+                    </button>
+                </form>
+            {% endif %}
+        </footer>
+    </article>
+</div>
+
+<style>
+.system-update-preview-shell { max-width: 980px; margin-inline: auto; }
+.system-update-preview-card { overflow: hidden; }
+.system-update-preview-banner { display:flex; justify-content:space-between; gap:16px; align-items:center; padding:11px 18px; border-bottom:1px solid #ead99e; background:#fff8dc; color:#6e5814; }
+.system-update-preview-banner strong { font-size:12px; letter-spacing:.08em; text-transform:uppercase; }
+.system-update-preview-banner span { font-size:11px; }
+.system-update-preview-meta { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:20px; }
+.system-update-preview-meta > span { display:flex; flex-direction:column; gap:4px; padding:12px; border:1px solid #e0e8e3; border-radius:11px; background:#f8faf8; }
+.system-update-preview-meta small { color:#7a877f; font-size:9px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+.system-update-preview-meta strong { color:#29473a; font-size:11px; }
+.system-update-preview-notes { display:grid; gap:10px; }
+.system-update-preview-note { display:grid; grid-template-columns:90px minmax(0,1fr); gap:12px; align-items:start; padding:12px 14px; border:1px solid #e1e8e3; border-radius:12px; background:#f8faf8; }
+.system-update-preview-note p { margin:1px 0 0; color:#495c52; line-height:1.55; }
+.system-update-preview-note-label { display:inline-flex; justify-content:center; padding:5px 8px; border-radius:7px; background:#fff6dc; color:#7d6112; font-size:9px; font-weight:900; letter-spacing:.07em; text-transform:uppercase; }
+.system-update-preview-note-label--new { background:#e7f4eb; color:#286047; }
+.system-update-preview-note-label--fixed { background:#edf2f8; color:#4c6488; }
+.system-update-preview-note-label--updated { background:#fff6dc; color:#7d6112; }
+.system-update-preview-note-label--removed { background:#fff0ef; color:#963b36; }
+.system-update-preview-note-label--disabled { background:#f0f1f1; color:#5d6662; }
+.system-update-preview-empty { margin:0; color:#738078; }
+.system-update-preview-actions { display:flex; justify-content:flex-end; gap:10px; align-items:center; }
+.system-update-preview-preserve-form { display:flex; justify-content:flex-end; gap:10px; width:100%; }
+@media (max-width:700px) {
+    .system-update-preview-banner { align-items:flex-start; flex-direction:column; }
+    .system-update-preview-meta { grid-template-columns:1fr; }
+    .system-update-preview-note { grid-template-columns:1fr; }
+    .system-update-preview-note-label { width:fit-content; }
+    .system-update-preview-actions, .system-update-preview-preserve-form { align-items:stretch; flex-direction:column; }
+    .system-update-preview-actions form, .system-update-preview-actions a, .system-update-preview-actions button { width:100%; }
+}
+</style>
+{% endblock %}

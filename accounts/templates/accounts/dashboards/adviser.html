@@ -162,27 +162,6 @@
     </section>
 
 
-    <section
-        class="workspace-metric-grid"
-        aria-label="Mobile application analytics"
-    >
-        <article class="workspace-metric-card">
-            <span class="workspace-metric-label">
-                Estimated App Installs
-            </span>
-
-            <strong class="workspace-metric-value">
-                {{ mobile_app_install_count|default:0 }}
-            </strong>
-
-            <p>
-                {{ analytics_period_label }}. Repeat clicks from the same
-                device/browser count once every 30 days.
-            </p>
-        </article>
-    </section>
-
-
     <div
         id="adviser-analytics-react-root"
         data-period-label="{{ analytics_period_label }}"
@@ -190,6 +169,7 @@
         data-end-date="{{ analytics_end_date|date:'Y-m-d' }}"
         data-timezone="Asia/Manila"
         data-period-published-count="{{ period_published_articles|default:0 }}"
+        data-mobile-app-download-count="{{ mobile_app_install_count|default:0 }}"
     ></div>
 
 

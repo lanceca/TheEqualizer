@@ -555,25 +555,27 @@ function StaffSidebarToggle({
       'staff-workspace-native-logout-form',
     )
 
-    if (!form) {
+    if (!form) return
+
+    setUserMenuOpen(false)
+
+    if (form.dataset.regretReady === 'true') {
+      window.dispatchEvent(
+        new CustomEvent('equalizer:regret-action', {
+          detail: { form, submitter: null, source: form },
+        }),
+      )
       return
     }
 
-    setLoggingOut(true)
-    setUserMenuOpen(false)
-
-    /*
-     * This form is rendered by Django and already contains the
-     * correct CSRF token. Native prototype submission intentionally
-     * bypasses generic submit listeners that show the global loader.
-     */
-    window.requestAnimationFrame(() => {
+    // Safe fallback if the React regret guard did not mount.
+    if (window.confirm('Log out of The Equalizer?')) {
       try {
         HTMLFormElement.prototype.submit.call(form)
       } catch {
         setLoggingOut(false)
       }
-    })
+    }
   }
 
   const initial = (

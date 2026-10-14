@@ -4329,7 +4329,7 @@ def published_articles(request):
 
     if (
         request.user.role == User.Role.EIC
-        and request.GET.get("older") == "30"
+        and request.GET.get("older") == "10"
     ):
         recommendation_cutoff = (
             timezone.now()
@@ -4406,7 +4406,7 @@ def recommend_article_archive(
     if return_query:
         return_url = f"{return_url}?{return_query}"
     else:
-        return_url = f"{return_url}?older=30"
+        return_url = f"{return_url}?older=10"
 
     if article.author_id == request.user.id:
         messages.warning(
@@ -4422,11 +4422,11 @@ def recommend_article_archive(
     if (
         not published_at
         or published_at.date()
-        > timezone.localdate() - timedelta(days=30)
+        > timezone.localdate() - timedelta(days=10)
     ):
         messages.warning(
             request,
-            "Archive recommendations are only available for articles published 30 or more days ago.",
+            "Archive recommendations are only available for articles published 10 or more days ago.",
         )
         return redirect(return_url)
 
@@ -4508,7 +4508,7 @@ def recommend_article_archive(
             )
         else:
             related_url = (
-                f'{reverse("published_articles")}?older=30'
+                f'{reverse("published_articles")}?older=10'
             )
 
         notify_user(
@@ -4517,7 +4517,7 @@ def recommend_article_archive(
             (
                 "The Editor in Chief recommends that you consider submitting "
                 f'an archive request for "{locked_article.title}", which has been '
-                "published for 30 or more days. The article remains published "
+                "published for 10 or more days. The article remains published "
                 "unless you choose to submit the request."
             ),
             related_url,

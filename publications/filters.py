@@ -28,9 +28,13 @@ def filter_article_library(queryset, params, *, date_field="published_at", candi
             f"{date_field}__year": month_date.year,
             f"{date_field}__month": month_date.month,
         })
-    if candidates and params.get("older") == "30":
-        queryset = queryset.filter(published_at__date__lte=timezone.localdate() - timedelta(days=30))
+
+    # Archive recommendation candidate threshold: 10+ days old.
+    if candidates and params.get("older") == "10":
+        queryset = queryset.filter(published_at__date__lte=timezone.localdate() - timedelta(days=10))
     return queryset
+
+
 
 
 def library_filter_context(request):

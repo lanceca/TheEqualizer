@@ -15860,3 +15860,31 @@ a {
         transform: none !important;
     }
 }
+
+
+/* ==========================================================
+   DEFENSE UPDATE WAVE - SEMANTIC ACTION COLORS
+   Green = approval/positive, orange = revision/middle-ground,
+   red = rejection/archive/destructive actions.
+   ========================================================== */
+.staff-shell-body [data-eq-action-tone="approval"] { border-color:#1f6a50 !important; background:#1f6a50 !important; color:#fff !important; }
+.staff-shell-body [data-eq-action-tone="approval"]:hover { border-color:#154b39 !important; background:#154b39 !important; }
+.staff-shell-body [data-eq-action-tone="warning"] { border-color:#cf861c !important; background:#df9324 !important; color:#fff !important; }
+.staff-shell-body [data-eq-action-tone="warning"]:hover { border-color:#ad6d10 !important; background:#bd7512 !important; }
+.staff-shell-body [data-eq-action-tone="danger"] { border-color:var(--eq-danger) !important; background:var(--eq-danger) !important; color:#fff !important; }
+.staff-shell-body [data-eq-action-tone="danger"]:hover { border-color:var(--eq-danger-dark) !important; background:var(--eq-danger-dark) !important; }
+
+/* Adviser Staff Directory alignment fixes. */
+.directory-toolbar .account-filter-form { align-items:flex-end; }
+.directory-toolbar .account-filter-form > button, .directory-toolbar .directory-clear-button { display:inline-flex; align-items:center; justify-content:center; min-height:40px; margin:0; padding:8px 14px; line-height:1.2; }
+.staff-directory-details .staff-directory-email { min-width:0; }
+.staff-directory-details [data-react-component="AccountEmailToggle"] { display:block; min-width:0; max-width:100%; }
+.staff-directory-details .account-email-toggle { display:flex; align-items:center; gap:6px; min-width:0; max-width:100%; }
+.staff-directory-details .account-email-toggle-value { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.staff-directory-details .account-email-toggle button { flex:0 0 auto; }
+
+@media (max-width:620px) {
+  .directory-toolbar .account-filter-form { display:grid; grid-template-columns:1fr; align-items:stretch; }
+  .directory-toolbar .account-filter-form > * { width:100%; min-width:0; }
+  .staff-directory-details div { grid-template-columns:1fr; gap:3px; }
+}

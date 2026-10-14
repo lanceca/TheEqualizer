@@ -110,9 +110,9 @@
                                 Version {{ article.version_number }}
                             </span>
 
-                            {% if filters.older == '30' %}
+                            {% if filters.older == '10' %}
                                 <span class="editorial-meta-chip editorial-meta-chip--age">
-                                    30+ Days Old
+                                    10+ Days Old
                                 </span>
                             {% endif %}
 
@@ -242,7 +242,7 @@
 
                                 </form>
 
-                            {% elif filters.older == '30' %}
+                            {% elif filters.older == '10' %}
 
                                 {% if article.pending_archive_request %}
                                     <button
@@ -281,10 +281,10 @@
                                             type="submit"
                                             class="eq-action-button eq-action-button--recommend eq-action-button--compact"
                                             data-confirm-title="Recommend Archive Request"
-                                            data-confirm="Notify {{ article.author.username }} that '{{ article.title }}' is 30+ days old and recommended for an archive request?"
+                                            data-confirm="Notify {{ article.author.username }} that '{{ article.title }}' is 10+ days old and recommended for an archive request?"
                                             data-regret-action
                                             data-regret-title="Recommend Archive Request?"
-                                            data-regret-message="{{ article.author.username }} will be notified that '{{ article.title|escape }}' is 30+ days old and recommended for an archive request. The article will stay published unless the author submits one."
+                                            data-regret-message="{{ article.author.username }} will be notified that '{{ article.title|escape }}' is 10+ days old and recommended for an archive request. The article will stay published unless the author submits one."
                                             data-regret-button="Notify Author Now"
                                         >
                                             Recommend Archive Request

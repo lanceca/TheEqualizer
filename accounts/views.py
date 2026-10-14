@@ -1515,6 +1515,7 @@ def adviser_overview(request):
             .filter(
                 is_active=True,
                 role__in=[
+                    User.Role.ADVISER,
                     User.Role.EIC,
                     User.Role.EDITOR,
                     User.Role.STAFF,

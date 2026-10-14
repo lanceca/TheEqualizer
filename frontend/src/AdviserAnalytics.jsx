@@ -150,12 +150,22 @@ function MetricCard({
   eyebrow,
   value,
   description,
+  help,
+  className = '',
 }) {
   return (
-    <article className="aa-metric-card">
-      <span className="aa-metric-eyebrow">
-        {eyebrow}
-      </span>
+    <article className={`aa-metric-card ${className}`.trim()}>
+      <div className="aa-metric-card-heading">
+        <span className="aa-metric-eyebrow">
+          {eyebrow}
+        </span>
+        <span className="aa-metric-info" tabIndex="0" aria-label={`About ${eyebrow}`}>
+          i
+          <span className="aa-metric-tooltip" role="tooltip">
+            {help || description}
+          </span>
+        </span>
+      </div>
 
       <strong className="aa-metric-value">
         {formatNumber(value)}
@@ -1008,6 +1018,11 @@ function AdviserDashboard({
       mountPoint.dataset.periodPublishedCount,
     )
 
+  const mobileAppDownloads =
+    numberValue(
+      mountPoint.dataset.mobileAppDownloadCount,
+    )
+
   const totalViews =
     valueFor(engagement, 'Views')
 
@@ -1071,36 +1086,42 @@ function AdviserDashboard({
           eyebrow="Articles Published"
           value={periodPublishedCount}
           description="Published during this period"
+          help="Number of articles whose publication date falls inside the selected reporting period."
         />
 
         <MetricCard
           eyebrow="Period Views"
           value={totalViews}
           description="Tracked article views"
+          help="Total recorded article views during the selected reporting period."
         />
 
         <MetricCard
           eyebrow="Period Reactions"
           value={totalReactions}
           description="Reader reactions recorded"
+          help="Total anonymous reader reactions recorded during the selected reporting period."
         />
 
         <MetricCard
           eyebrow="Period Shares"
           value={totalShares}
           description="Tracked article shares"
+          help="Total tracked article-share actions during the selected reporting period."
         />
 
         <MetricCard
           eyebrow="PDF Downloads"
           value={totalDownloads}
           description="Article PDF downloads"
+          help="Total article PDF downloads recorded during the selected reporting period."
         />
 
         <MetricCard
           eyebrow="Submissions"
           value={sumValues(submissions)}
           description="Submitted during this period"
+          help="Total editorial submissions created during the selected reporting period."
         />
       </div>
 
@@ -1201,17 +1222,27 @@ function AdviserDashboard({
         </article>
       </div>
 
-      <article className="aa-panel aa-panel--full">
-        <SectionHeading
-          kicker="Exact Range Content"
-          title="Articles Published in Period"
-          copy={`Every published article whose publication date falls within ${periodLabel}.`}
-        />
+      <div className="aa-period-summary-grid">
+        <article className="aa-panel aa-panel--period-articles">
+          <SectionHeading
+            kicker="Exact Range Content"
+            title="Articles Published in Period"
+            copy={`Published articles whose publication date falls within ${periodLabel}.`}
+          />
 
-        <PeriodArticles
-          items={periodArticles}
+          <PeriodArticles
+            items={periodArticles}
+          />
+        </article>
+
+        <MetricCard
+          className="aa-metric-card--mobile-downloads"
+          eyebrow="Mobile App Downloads"
+          value={mobileAppDownloads}
+          description="Tracked mobile app download/install actions"
+          help="Estimated mobile app downloads or installs recorded for the selected period; repeat activity from the same device/browser is limited by the analytics tracker."
         />
-      </article>
+      </div>
 
       <article className="aa-panel aa-panel--full">
         <SectionHeading

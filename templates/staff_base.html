@@ -582,7 +582,7 @@ body.staff-shell-body
                     </p>
 
                     <a href="{% url 'published_articles' %}">
-                        Content Reports
+                        Published Content
                     </a>
 
                     <a
@@ -650,6 +650,10 @@ body.staff-shell-body
             method="POST"
             action="{% url 'logout' %}"
             data-no-loading
+            data-regret-action
+            data-regret-title="Log out of The Equalizer?"
+            data-regret-message="Your session will end after the decision window unless you cancel."
+            data-regret-button="Logout"
             hidden
         >
             {% csrf_token %}
@@ -2650,6 +2654,22 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 
-
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const controls = document.querySelectorAll(
+        '.staff-shell-body button, .staff-shell-body a.primary-button, .staff-shell-body a.secondary-button, .staff-shell-body a.danger-button, .staff-shell-body a.danger-link, .staff-shell-body a.approve-button, .staff-shell-body a.eq-action-button'
+    );
+    controls.forEach(function (control) {
+        if (control.dataset.eqActionTone) return;
+        const label = String(control.textContent || control.value || "").replace(/\s+/g, " ").trim().toLowerCase();
+        if (!label) return;
+        let tone = "";
+        if (/(return for revision|return without revision|request revision|send back|revision required|recommend archive|recommendation)/.test(label)) tone = "warning";
+        else if (/(reject|archive|delete|deactivate|remove permanently|permanent delete)/.test(label)) tone = "danger";
+        else if (/^(approve|approve and publish|publish|create|save|submit|resolve|reactivate|confirm)/.test(label)) tone = "approval";
+        if (tone) control.dataset.eqActionTone = tone;
+    });
+});
+</script>
 
 {% endblock %}

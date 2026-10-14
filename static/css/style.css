@@ -4032,3 +4032,32 @@ h1 {
         margin-top: 24px;
     }
 }
+
+
+/* ==========================================================
+   DEFENSE UPDATE WAVE - MOBILE FILTER / SEARCH CONTAINMENT
+   Prevent expanded search/filter cards from overflowing the viewport.
+   ========================================================== */
+.category-date-filter-panel, .category-date-filter-form, .category-date-filter-form label,
+.public-archive.archive-experience .archive-filter-panel,
+.public-archive.archive-experience .library-filters,
+.public-archive.archive-experience .library-filters > label { min-width:0; max-width:100%; box-sizing:border-box; }
+.category-date-filter-form input, .category-date-filter-form select,
+.public-archive.archive-experience .library-filters input:not([type="checkbox"]),
+.public-archive.archive-experience .library-filters select { max-width:100%; min-width:0; box-sizing:border-box; }
+@media (max-width:760px) {
+  .category-date-filter-panel { width:100%; overflow:visible; gap:14px; }
+  .category-date-filter-form { width:100%; }
+  .category-date-filter-actions { display:grid; grid-template-columns:1fr; }
+  .category-date-filter-apply, .category-date-filter-clear { width:100%; }
+  .public-category-search-field { width:100%; min-width:0; }
+  .public-category-search-suggestions { left:0; right:auto; width:min(430px,calc(100vw - 32px)); max-width:calc(100vw - 32px); }
+  .public-archive.archive-experience .archive-filter-panel { padding:16px; overflow:visible; }
+  .public-archive.archive-experience .library-filters { display:grid; grid-template-columns:1fr; width:100%; gap:10px; }
+  .public-archive.archive-experience .library-filters > label,
+  .public-archive.archive-experience .library-filter-actions { width:100%; }
+}
+@media (max-width:420px) {
+  .category-date-filter-panel, .public-archive.archive-experience .archive-filter-panel { padding:12px; border-radius:12px; }
+  .public-category-search-suggestions { width:calc(100vw - 24px); max-width:calc(100vw - 24px); }
+}
