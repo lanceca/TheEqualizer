@@ -18,6 +18,7 @@ const categories = [
   ["News", "news"],
   ["Editorials", "editorials"],
   ["Features", "features"],
+  ["Literary", "literary"],
   ["Cartoonings", "cartoonings"],
   ["Videos", "videos"],
   ["Special Showcase", "special-showcase"],
