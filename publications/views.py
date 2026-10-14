@@ -7494,6 +7494,16 @@ def review_deletion_request(
                 ]
             )
 
+            # The recommendation has completed its lifecycle once the
+            # resulting archive request is resolved. Removing it prevents
+            # the EIC library from continuing to show "Recommendation Sent"
+            # after an approval or rejection. The notification remains as
+            # the historical record for the recipient.
+            ArchiveRecommendation.objects.filter(
+                article=article,
+                recipient=deletion_request.requested_by,
+            ).delete()
+
             notify_user(
                 deletion_request.requested_by,
                 Notification.Type.DELETION_REQUEST,
@@ -7543,6 +7553,16 @@ def review_deletion_request(
                     "reviewed_at",
                 ]
             )
+
+            # The recommendation has completed its lifecycle once the
+            # resulting archive request is resolved. Removing it prevents
+            # the EIC library from continuing to show "Recommendation Sent"
+            # after an approval or rejection. The notification remains as
+            # the historical record for the recipient.
+            ArchiveRecommendation.objects.filter(
+                article=article,
+                recipient=deletion_request.requested_by,
+            ).delete()
 
             notify_user(
                 deletion_request.requested_by,
@@ -8648,6 +8668,14 @@ def restore_archived_article(
                 "updated_at",
             ]
         )
+
+        # Restoring an article starts a fresh archive-recommendation cycle.
+        # Any recommendation created before the archive belongs to the
+        # previous publication lifecycle and must not keep the restored
+        # article stuck in the "Recommendation Sent" state.
+        ArchiveRecommendation.objects.filter(
+            article=article,
+        ).delete()
 
         if (
             article.author.role
