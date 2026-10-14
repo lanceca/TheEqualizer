@@ -1,3 +1,5 @@
+import re
+
 from django.contrib import messages
 from django.db import transaction
 from django.http import HttpResponseBadRequest, JsonResponse
@@ -14,6 +16,51 @@ from .updates import pending_updates, visible_updates
 
 staff_required = publication_role_required(*User.Role.values)
 manager_required = publication_role_required(User.Role.SUPER_ADMIN)
+
+
+_CHANGE_NOTE_PATTERN = re.compile(
+    r"^\[(New|Fixed|Updated|Removed|Disabled)\]\s*(.*)$",
+    re.IGNORECASE,
+)
+
+
+def _change_note_items(change_notes):
+    """Return release-note lines in the same categories used by the popup."""
+    items = []
+
+    for raw_line in (change_notes or "").splitlines():
+        line = raw_line.strip().lstrip("-•").strip()
+        if not line:
+            continue
+
+        match = _CHANGE_NOTE_PATTERN.match(line)
+        if match:
+            category = match.group(1).title()
+            note = match.group(2).strip()
+        else:
+            category = "Updated"
+            note = line
+
+        if note:
+            items.append(
+                {
+                    "category": category,
+                    "category_slug": category.lower(),
+                    "text": note,
+                }
+            )
+
+    return items
+
+
+def _preview_context(update, target_roles, *, form=None, saved_draft=False):
+    return {
+        "preview_update": update,
+        "preview_target_roles": target_roles,
+        "preview_change_items": _change_note_items(update.change_notes),
+        "preview_form": form,
+        "saved_draft": saved_draft,
+    }
 
 
 @staff_required
@@ -58,14 +105,56 @@ def acknowledge_update(request, update_id):
 
 @manager_required
 def manage_updates(request):
-    return render(request, "notifications/manage_updates.html", {"updates": SystemUpdate.objects.all()})
+    # Keep unpublished work at the top so the newest draft is always the first
+    # item a Super Admin sees. Published releases then follow newest-first.
+    drafts = list(
+        SystemUpdate.objects
+        .filter(is_published=False)
+        .order_by("-created_at")
+    )
+    published = list(
+        SystemUpdate.objects
+        .filter(is_published=True)
+        .order_by("-published_at", "-created_at")
+    )
+
+    return render(
+        request,
+        "notifications/manage_updates.html",
+        {
+            "updates": drafts + published,
+            "draft_count": len(drafts),
+            "published_count": len(published),
+        },
+    )
 
 
 @manager_required
 def update_form(request, update_id=None):
     update = get_object_or_404(SystemUpdate, pk=update_id, is_published=False) if update_id else None
     form = SystemUpdateForm(request.POST or None, instance=update)
+
     if request.method == "POST" and form.is_valid():
+        action = request.POST.get("action", "save")
+
+        if action in {"preview", "edit"}:
+            preview_update = form.save(commit=False)
+            return render(
+                request,
+                "notifications/update_preview.html" if action == "preview" else "notifications/update_form.html",
+                _preview_context(
+                    preview_update,
+                    form.cleaned_data.get("target_roles", []),
+                    form=form,
+                    saved_draft=False,
+                )
+                if action == "preview"
+                else {"form": form, "update": update},
+            )
+
+        if action != "save":
+            return HttpResponseBadRequest("Invalid system update form action.")
+
         # A published release is immutable; re-check under a lock to prevent stale draft edits.
         with transaction.atomic():
             if update:
@@ -74,9 +163,26 @@ def update_form(request, update_id=None):
             if not saved.created_by_id:
                 saved.created_by = request.user
             saved.save()
+            form.save_m2m()
+
         messages.success(request, "System update draft saved.")
         return redirect("manage_system_updates")
+
     return render(request, "notifications/update_form.html", {"form": form, "update": update})
+
+
+@manager_required
+def update_preview(request, update_id):
+    update = get_object_or_404(SystemUpdate, pk=update_id, is_published=False)
+    return render(
+        request,
+        "notifications/update_preview.html",
+        _preview_context(
+            update,
+            update.target_roles,
+            saved_draft=True,
+        ),
+    )
 
 
 @manager_required

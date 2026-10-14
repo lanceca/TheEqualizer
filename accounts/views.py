@@ -45,7 +45,10 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from analytics.models import ArticleDailyAnalytics
+from analytics.models import (
+    ArticleDailyAnalytics,
+    MobileAppInstallEvent,
+)
 
 from publications.models import (
     Article,
@@ -199,15 +202,46 @@ def super_admin_dashboard(request):
     return render(
         request,
         "accounts/dashboards/super_admin.html",
+        {
+            "mobile_app_install_count": (
+                MobileAppInstallEvent.objects.count()
+            ),
+        },
     )
 
 
 @role_required(User.Role.ADMIN)
 def admin_dashboard(request):
 
+    publication_staff = (
+        User.objects
+        .filter(
+            role__in=[
+                User.Role.ADVISER,
+                User.Role.EIC,
+                User.Role.EDITOR,
+                User.Role.STAFF,
+            ],
+        )
+    )
+
+    context = {
+        "active_staff_accounts": (
+            publication_staff
+            .filter(is_active=True)
+            .count()
+        ),
+        "deactivated_staff_accounts": (
+            publication_staff
+            .filter(is_active=False)
+            .count()
+        ),
+    }
+
     return render(
         request,
         "accounts/dashboards/admin.html",
+        context,
     )
 
 
@@ -469,6 +503,16 @@ def get_adviser_analytics_data(request):
     analytics_end_date = period[
         "end_date"
     ]
+
+    mobile_app_install_count = (
+        filter_datetime_queryset_by_period(
+            MobileAppInstallEvent.objects.all(),
+            "recorded_at",
+            analytics_start_date,
+            analytics_end_date,
+        )
+        .count()
+    )
 
     # ======================================================
     # BASE QUERYSETS
@@ -1365,6 +1409,9 @@ def get_adviser_analytics_data(request):
         "total_shares": total_shares,
         "total_downloads": total_downloads,
         "total_engagement": total_engagement,
+        "mobile_app_install_count": (
+            mobile_app_install_count
+        ),
 
         "historical_engagement_labels": (
             historical_engagement_labels
@@ -1468,6 +1515,7 @@ def adviser_overview(request):
             .filter(
                 is_active=True,
                 role__in=[
+                    User.Role.ADVISER,
                     User.Role.EIC,
                     User.Role.EDITOR,
                     User.Role.STAFF,
@@ -2553,9 +2601,34 @@ def editor_dashboard(request):
 @role_required(User.Role.STAFF)
 def staff_dashboard(request):
 
+    staff_reports = (
+        ContentReport.objects
+        .filter(
+            reported_by=request.user,
+        )
+    )
+
+    context = {
+        "approved_reports": (
+            staff_reports
+            .filter(
+                status=ContentReport.Status.RESOLVED,
+            )
+            .count()
+        ),
+        "rejected_reports": (
+            staff_reports
+            .filter(
+                status=ContentReport.Status.CANCELLED,
+            )
+            .count()
+        ),
+    }
+
     return render(
         request,
         "accounts/dashboards/staff.html",
+        context,
     )
 
 

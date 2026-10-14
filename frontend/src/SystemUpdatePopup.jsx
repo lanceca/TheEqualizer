@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './SystemUpdatePopup.css'
 
-const TYPE_LABELS = new Set(['NEW', 'IMPROVED', 'FIXED', 'IMPORTANT', 'MAINTENANCE'])
+const TYPE_LABELS = new Set(['NEW', 'FIXED', 'UPDATED', 'REMOVED', 'DISABLED', 'IMPROVED', 'IMPORTANT', 'MAINTENANCE'])
 
 function csrfToken() {
   const input = document.querySelector('input[name="csrfmiddlewaretoken"]')
@@ -18,7 +18,9 @@ function parseNotes(value) {
     .filter(Boolean)
     .map((line) => {
       const cleaned = line.replace(/^[-•]\s*/, '')
-      const match = cleaned.match(/^(NEW|IMPROVED|FIXED|IMPORTANT|MAINTENANCE)\s*:?\s*(.*)$/i)
+      const bracketMatch = cleaned.match(/^\[(NEW|FIXED|UPDATED|REMOVED|DISABLED)\]\s*(.*)$/i)
+      const legacyMatch = cleaned.match(/^(NEW|IMPROVED|FIXED|IMPORTANT|MAINTENANCE)\s*:?\s*(.*)$/i)
+      const match = bracketMatch || legacyMatch
       if (!match) return { label: '', text: cleaned }
       const label = match[1].toUpperCase()
       return {

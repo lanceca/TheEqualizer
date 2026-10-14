@@ -29,8 +29,8 @@
                 <span>Release composer</span>
                 <h2>Update information</h2>
                 <p>
-                    Change notes are plain text. Keep each change concise and
-                    easy to scan in the popup and permanent history.
+                    Add one change per line and classify it so staff can scan
+                    what is new, fixed, updated, removed, or disabled.
                 </p>
             </header>
 
@@ -93,12 +93,26 @@
                 </div>
 
                 <div class="system-update-field system-update-field--notes">
-                    <label for="{{ form.change_notes.id_for_label }}">{{ form.change_notes.label }}</label>
-                    {{ form.change_notes }}
+                    <label for="{{ form.change_notes.id_for_label }}">Categorized changes</label>
+
+                    <div class="system-update-change-builder" data-update-change-builder hidden>
+                        <div class="system-update-change-builder-heading">
+                            <div>
+                                <strong>Release-note lines</strong>
+                                <small>Choose a label for every line, then describe the change.</small>
+                            </div>
+                            <button type="button" class="system-update-secondary-button" data-add-update-change>+ Add change</button>
+                        </div>
+                        <div class="system-update-change-rows" data-update-change-rows></div>
+                    </div>
+
+                    <div class="system-update-change-notes-source" data-update-change-notes-source>
+                        {{ form.change_notes }}
+                    </div>
                     {{ form.change_notes.errors }}
                     <small>
-                        Suggested format: one change per line. Prefix lines with
-                        NEW:, IMPROVED:, FIXED:, IMPORTANT:, or MAINTENANCE: when useful.
+                        Saved lines use [New], [Fixed], [Updated], [Removed], or [Disabled]
+                        so the What's New popup can display a clear label for each change.
                     </small>
                 </div>
 
@@ -133,6 +147,17 @@
                     </a>
                     <button
                         type="submit"
+                        name="action"
+                        value="preview"
+                        class="system-update-secondary-button"
+                        data-loading-label="Opening preview…"
+                    >
+                        Preview Draft
+                    </button>
+                    <button
+                        type="submit"
+                        name="action"
+                        value="save"
                         class="system-update-primary-button"
                         data-loading-label="Saving draft…"
                     >
@@ -157,4 +182,85 @@
         </aside>
     </div>
 </div>
+
+
+<style>
+.system-update-change-builder { display:grid; gap:12px; padding:14px; border:1px solid #dce6e0; border-radius:14px; background:#f8fbf9; }
+.system-update-change-builder-heading { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.system-update-change-builder-heading strong, .system-update-change-builder-heading small { display:block; }
+.system-update-change-builder-heading small { margin-top:3px; color:#6f7b75; }
+.system-update-change-rows { display:grid; gap:9px; }
+.system-update-change-row { display:grid; grid-template-columns:minmax(120px,.35fr) minmax(0,1fr) auto; gap:8px; align-items:center; }
+.system-update-change-row select, .system-update-change-row input { width:100%; min-width:0; min-height:42px; border:1px solid #becdc5; border-radius:9px; background:#fff; padding:8px 10px; font:inherit; }
+.system-update-change-remove { min-width:42px; min-height:42px; border:1px solid #e2c7c5; border-radius:9px; background:#fff4f3; color:#8e3935; font-weight:900; cursor:pointer; }
+.system-update-change-notes-source.is-enhanced { position:absolute !important; width:1px !important; height:1px !important; overflow:hidden !important; clip:rect(0 0 0 0) !important; clip-path:inset(50%) !important; white-space:nowrap !important; }
+@media (max-width:700px) { .system-update-change-builder-heading { align-items:stretch; flex-direction:column; } .system-update-change-row { grid-template-columns:1fr; } .system-update-change-remove { width:100%; } }
+</style>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector("[data-system-update-form]");
+    const builder = document.querySelector("[data-update-change-builder]");
+    const rows = document.querySelector("[data-update-change-rows]");
+    const addButton = document.querySelector("[data-add-update-change]");
+    const sourceWrap = document.querySelector("[data-update-change-notes-source]");
+    const source = sourceWrap ? sourceWrap.querySelector("textarea") : null;
+    if (!form || !builder || !rows || !addButton || !source) return;
+
+    const categories = ["New", "Fixed", "Updated", "Removed", "Disabled"];
+
+    function parseLine(line) {
+        const cleaned = String(line || "").trim().replace(/^[-•]\s*/, "");
+        const bracket = cleaned.match(/^\[(New|Fixed|Updated|Removed|Disabled)\]\s*(.*)$/i);
+        if (bracket) return { category: bracket[1], text: bracket[2] || "" };
+        const legacy = cleaned.match(/^(NEW|FIXED|IMPROVED|IMPORTANT|MAINTENANCE)\s*:?\s*(.*)$/i);
+        if (legacy) {
+            const mapped = legacy[1].toUpperCase() === "FIXED" ? "Fixed" : legacy[1].toUpperCase() === "NEW" ? "New" : "Updated";
+            return { category: mapped, text: legacy[2] || "" };
+        }
+        return { category: "Updated", text: cleaned };
+    }
+
+    function sync() {
+        source.value = Array.from(rows.querySelectorAll("[data-update-change-row]"))
+            .map(function (row) {
+                const category = row.querySelector("select").value;
+                const text = row.querySelector("input").value.trim();
+                return text ? `[${category}] ${text}` : "";
+            })
+            .filter(Boolean)
+            .join("\n");
+    }
+
+    function addRow(item) {
+        const row = document.createElement("div");
+        row.className = "system-update-change-row";
+        row.dataset.updateChangeRow = "true";
+        const select = document.createElement("select");
+        select.setAttribute("aria-label", "Change category");
+        categories.forEach(function (category) {
+            const option = document.createElement("option");
+            option.value = category; option.textContent = `[${category}]`;
+            if ((item.category || "Updated").toLowerCase() === category.toLowerCase()) option.selected = true;
+            select.appendChild(option);
+        });
+        const input = document.createElement("input");
+        input.type = "text"; input.placeholder = "Describe this change"; input.value = item.text || ""; input.maxLength = 300;
+        const remove = document.createElement("button");
+        remove.type = "button"; remove.className = "system-update-change-remove"; remove.textContent = "Remove";
+        remove.setAttribute("aria-label", "Remove change line");
+        remove.addEventListener("click", function () { row.remove(); if (!rows.children.length) addRow({category:"New",text:""}); sync(); });
+        select.addEventListener("change", sync); input.addEventListener("input", sync);
+        row.append(select, input, remove); rows.appendChild(row);
+    }
+
+    String(source.value || "").split(/\r?\n/).map(parseLine).filter(function (item) { return item.text; }).forEach(addRow);
+    if (!rows.children.length) addRow({ category: "New", text: "" });
+    addButton.addEventListener("click", function () { addRow({ category: "New", text: "" }); rows.lastElementChild.querySelector("input").focus(); });
+    form.addEventListener("submit", sync);
+    sourceWrap.classList.add("is-enhanced");
+    builder.hidden = false;
+    sync();
+});
+</script>
+
 {% endblock %}

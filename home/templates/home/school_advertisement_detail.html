@@ -9,15 +9,22 @@
 <main class="school-update-detail-page">
 
     <header class="school-updates-detail-header">
-        <p class="reader-section-kicker">
-            School Updates
-        </p>
-        <h1>
-            {{ advertisement.title }}
-        </h1>
-        <p>
-            School-related information selected by The Equalizer.
-        </p>
+
+        <div class="school-update-header-copy">
+
+        </div>
+
+        <div class="school-update-header-mark" aria-hidden="true">
+            <div class="school-update-header-icon">
+                <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                    <path d="M6.75 3.75h10.5A2.25 2.25 0 0 1 19.5 6v12A2.25 2.25 0 0 1 17.25 20.25H6.75A2.25 2.25 0 0 1 4.5 18V6a2.25 2.25 0 0 1 2.25-2.25Z"/>
+                    <path d="M8 8h8M8 11.75h8M8 15.5h5"/>
+                </svg>
+            </div>
+            <span>Campus bulletin</span>
+            <strong>{{ advertisement.title }}</strong>
+        </div>
+
     </header>
 
     <article class="school-update-detail-card">
@@ -30,26 +37,68 @@
                 tabindex="0"
                 role="button"
                 data-reader-lightbox-image
-                aria-label="Enlarge advertisement image"
+                aria-label="Open {{ advertisement.title }} image in full screen"
             >
+
+            <span
+                class="school-update-image-action"
+                aria-hidden="true"
+            >
+                <span class="school-update-image-action-icon">⌕</span>
+                View full image
+            </span>
         </figure>
 
         <div class="school-update-detail-body">
 
-            <p class="school-update-summary">
-                {{ advertisement.summary }}
-            </p>
-
-            <div class="school-update-details">
-                {{ advertisement.details }}
-            </div>
-
-            <a
-                href="{% url 'school_updates' %}"
-                class="school-update-back-link"
+            <section
+                class="school-update-summary-panel"
+                aria-labelledby="school-update-summary-heading"
             >
-                &larr; Back to School Updates
-            </a>
+                <p
+                    class="school-update-content-kicker"
+                    id="school-update-summary-heading"
+                >
+                    Update overview
+                </p>
+
+                <p class="school-update-summary">
+                    {{ advertisement.summary }}
+                </p>
+            </section>
+
+            <section
+                class="school-update-content-section"
+                aria-labelledby="school-update-details-heading"
+            >
+                <div class="school-update-content-heading">
+                    <p class="school-update-content-kicker">
+                        School bulletin
+                    </p>
+
+                    <h2 id="school-update-details-heading">
+                        Update details
+                    </h2>
+                </div>
+
+                <div class="school-update-details">
+                    {{ advertisement.details }}
+                </div>
+            </section>
+
+            <div class="school-update-detail-footer">
+                <a
+                    href="{% url 'school_updates' %}"
+                    class="school-update-back-link"
+                >
+                    <span aria-hidden="true">&larr;</span>
+                    Back to School Updates
+                </a>
+
+                <span class="school-update-footer-note">
+                    Published through The Equalizer school bulletin
+                </span>
+            </div>
 
         </div>
 

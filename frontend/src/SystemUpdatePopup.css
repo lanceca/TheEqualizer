@@ -149,3 +149,9 @@
   .system-update-popup-primary,
   .system-update-popup-secondary { animation: none; transition: none; }
 }
+
+/* Defense update wave: per-line release-note categories. */
+.system-update-note-label--new { background:#e7f4eb; color:#286047; }
+.system-update-note-label--updated, .system-update-note-label--improved { background:#fff6dc; color:#7d6112; }
+.system-update-note-label--removed { background:#fff0ef; color:#963b36; }
+.system-update-note-label--disabled { background:#f0f1f1; color:#5d6662; }

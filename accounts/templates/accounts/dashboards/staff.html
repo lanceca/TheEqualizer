@@ -1,8 +1,7 @@
 {% extends "staff_base.html" %}
-
 {% block staff_content %}
 
-<div class="workspace-dashboard workspace-dashboard--staff">
+<div class="workspace-dashboard workspace-dashboard--control-room workspace-dashboard--staff">
 
     <section class="workspace-dashboard-hero">
 
@@ -89,11 +88,27 @@
         </article>
 
         <article class="workspace-metric-card">
-            <span class="workspace-metric-label">Account Status</span>
-            <strong class="workspace-metric-value workspace-metric-value--text">
-                {% if request.user.is_active %}Active{% else %}Inactive{% endif %}
+            <span class="workspace-metric-label">Approved Reports</span>
+            <strong
+                class="workspace-metric-value"
+                data-dashboard-metric-value
+                data-value="{{ approved_reports|default:0 }}"
+            >
+                {{ approved_reports|default:0 }}
             </strong>
-            <p>Publication Staff access</p>
+            <p>Your content reports that have been resolved</p>
+        </article>
+
+        <article class="workspace-metric-card">
+            <span class="workspace-metric-label">Rejected Reports</span>
+            <strong
+                class="workspace-metric-value"
+                data-dashboard-metric-value
+                data-value="{{ rejected_reports|default:0 }}"
+            >
+                {{ rejected_reports|default:0 }}
+            </strong>
+            <p>Your content reports that were returned without revisions required</p>
         </article>
 
     </section>
@@ -117,7 +132,7 @@
             <a href="{% url 'published_articles' %}" class="workspace-action-card">
                 <div>
                     <span class="workspace-action-kicker">Review</span>
-                    <h3>Content Reports</h3>
+                    <h3>Published Content</h3>
                     <p>
                         Open published articles and report content that needs
                         editorial attention.

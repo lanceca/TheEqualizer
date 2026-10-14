@@ -334,18 +334,21 @@ body.staff-shell-body
                     <a
                         href="{% url 'pending_submissions' %}"
                         class="staff-attention-link"
+                        data-live-workflow-key="pending_submissions"
+                        data-live-workflow-label="pending submissions"
                     >
                         <span>Pending Submissions</span>
 
-                        {% if sidebar_pending_submissions_count > 0 %}
-                            <span
-                                class="staff-attention-badge"
-                                title="{{ sidebar_pending_submissions_count }} item(s) require attention"
-                                aria-label="{{ sidebar_pending_submissions_count }} pending submissions require attention"
-                            >
-                                !
-                            </span>
-                        {% endif %}
+                        <span
+                            class="staff-attention-badge"
+                            data-live-attention-badge
+                            data-live-count="{{ sidebar_pending_submissions_count }}"
+                            title="{{ sidebar_pending_submissions_count }} pending submissions require attention"
+                            aria-label="{{ sidebar_pending_submissions_count }} pending submissions require attention"
+                            {% if sidebar_pending_submissions_count <= 0 %}hidden{% endif %}
+                        >
+                            !
+                        </span>
                     </a>
 
                     <a href="{% url 'published_articles' %}">
@@ -364,52 +367,61 @@ body.staff-shell-body
                     <a
                         href="{% url 'eic_edit_requests' %}"
                         class="staff-attention-link"
+                        data-live-workflow-key="pending_edit_requests"
+                        data-live-workflow-label="edit requests"
                     >
                         <span>Edit Requests</span>
 
-                        {% if sidebar_pending_edit_requests_count > 0 %}
-                            <span
-                                class="staff-attention-badge"
-                                title="{{ sidebar_pending_edit_requests_count }} item(s) require attention"
-                                aria-label="{{ sidebar_pending_edit_requests_count }} edit requests require attention"
-                            >
-                                !
-                            </span>
-                        {% endif %}
+                        <span
+                            class="staff-attention-badge"
+                            data-live-attention-badge
+                            data-live-count="{{ sidebar_pending_edit_requests_count }}"
+                            title="{{ sidebar_pending_edit_requests_count }} edit requests require attention"
+                            aria-label="{{ sidebar_pending_edit_requests_count }} edit requests require attention"
+                            {% if sidebar_pending_edit_requests_count <= 0 %}hidden{% endif %}
+                        >
+                            !
+                        </span>
                     </a>
 
                     <a
                         href="{% url 'eic_deletion_requests' %}"
                         class="staff-attention-link"
+                        data-live-workflow-key="pending_deletion_requests"
+                        data-live-workflow-label="archive requests"
                     >
                         <span>Archive Requests</span>
 
-                        {% if sidebar_pending_deletion_requests_count > 0 %}
-                            <span
-                                class="staff-attention-badge"
-                                title="{{ sidebar_pending_deletion_requests_count }} item(s) require attention"
-                                aria-label="{{ sidebar_pending_deletion_requests_count }} archive requests require attention"
-                            >
-                                !
-                            </span>
-                        {% endif %}
+                        <span
+                            class="staff-attention-badge"
+                            data-live-attention-badge
+                            data-live-count="{{ sidebar_pending_deletion_requests_count }}"
+                            title="{{ sidebar_pending_deletion_requests_count }} archive requests require attention"
+                            aria-label="{{ sidebar_pending_deletion_requests_count }} archive requests require attention"
+                            {% if sidebar_pending_deletion_requests_count <= 0 %}hidden{% endif %}
+                        >
+                            !
+                        </span>
                     </a>
 
                     <a
                         href="{% url 'eic_content_reports' %}"
                         class="staff-attention-link"
+                        data-live-workflow-key="active_content_reports"
+                        data-live-workflow-label="staff reports"
                     >
                         <span>Staff Reports</span>
 
-                        {% if sidebar_active_content_reports_count > 0 %}
-                            <span
-                                class="staff-attention-badge"
-                                title="{{ sidebar_active_content_reports_count }} item(s) require attention"
-                                aria-label="{{ sidebar_active_content_reports_count }} staff reports require attention"
-                            >
-                                !
-                            </span>
-                        {% endif %}
+                        <span
+                            class="staff-attention-badge"
+                            data-live-attention-badge
+                            data-live-count="{{ sidebar_active_content_reports_count }}"
+                            title="{{ sidebar_active_content_reports_count }} staff reports require attention"
+                            aria-label="{{ sidebar_active_content_reports_count }} staff reports require attention"
+                            {% if sidebar_active_content_reports_count <= 0 %}hidden{% endif %}
+                        >
+                            !
+                        </span>
                     </a>
 
                 </div>
@@ -468,35 +480,41 @@ body.staff-shell-body
                     <a
                         href="{% url 'my_submissions' %}"
                         class="staff-attention-link"
+                        data-live-workflow-key="editor_current_submissions"
+                        data-live-workflow-label="current submissions"
                     >
                         <span>My Submissions</span>
 
-                        {% if sidebar_editor_current_submissions_count > 0 %}
-                            <span
-                                class="staff-attention-badge"
-                                title="{{ sidebar_editor_current_submissions_count }} item(s) require attention"
-                                aria-label="{{ sidebar_editor_current_submissions_count }} current submissions require attention"
-                            >
-                                !
-                            </span>
-                        {% endif %}
+                        <span
+                            class="staff-attention-badge"
+                            data-live-attention-badge
+                            data-live-count="{{ sidebar_editor_current_submissions_count }}"
+                            title="{{ sidebar_editor_current_submissions_count }} current submissions require attention"
+                            aria-label="{{ sidebar_editor_current_submissions_count }} current submissions require attention"
+                            {% if sidebar_editor_current_submissions_count <= 0 %}hidden{% endif %}
+                        >
+                            !
+                        </span>
                     </a>
 
                     <a
                         href="{% url 'resubmitted_submissions' %}"
                         class="staff-attention-link"
+                        data-live-workflow-key="editor_resubmissions"
+                        data-live-workflow-label="resubmitted submissions"
                     >
                         <span>Resubmitted Submissions</span>
 
-                        {% if sidebar_editor_resubmissions_count > 0 %}
-                            <span
-                                class="staff-attention-badge"
-                                title="{{ sidebar_editor_resubmissions_count }} item(s) require attention"
-                                aria-label="{{ sidebar_editor_resubmissions_count }} resubmitted submissions require attention"
-                            >
-                                !
-                            </span>
-                        {% endif %}
+                        <span
+                            class="staff-attention-badge"
+                            data-live-attention-badge
+                            data-live-count="{{ sidebar_editor_resubmissions_count }}"
+                            title="{{ sidebar_editor_resubmissions_count }} resubmitted submissions require attention"
+                            aria-label="{{ sidebar_editor_resubmissions_count }} resubmitted submissions require attention"
+                            {% if sidebar_editor_resubmissions_count <= 0 %}hidden{% endif %}
+                        >
+                            !
+                        </span>
                     </a>
 
                     <a href="{% url 'published_articles' %}">
@@ -515,35 +533,41 @@ body.staff-shell-body
                     <a
                         href="{% url 'my_edit_requests' %}"
                         class="staff-attention-link"
+                        data-live-workflow-key="editor_edit_requests"
+                        data-live-workflow-label="edit requests"
                     >
                         <span>Edit Requests</span>
 
-                        {% if sidebar_editor_edit_requests_count > 0 %}
-                            <span
-                                class="staff-attention-badge"
-                                title="{{ sidebar_editor_edit_requests_count }} item(s) require attention"
-                                aria-label="{{ sidebar_editor_edit_requests_count }} edit requests require attention"
-                            >
-                                !
-                            </span>
-                        {% endif %}
+                        <span
+                            class="staff-attention-badge"
+                            data-live-attention-badge
+                            data-live-count="{{ sidebar_editor_edit_requests_count }}"
+                            title="{{ sidebar_editor_edit_requests_count }} edit requests require attention"
+                            aria-label="{{ sidebar_editor_edit_requests_count }} edit requests require attention"
+                            {% if sidebar_editor_edit_requests_count <= 0 %}hidden{% endif %}
+                        >
+                            !
+                        </span>
                     </a>
 
                     <a
                         href="{% url 'my_deletion_requests' %}"
                         class="staff-attention-link"
+                        data-live-workflow-key="editor_deletion_requests"
+                        data-live-workflow-label="archive requests"
                     >
                         <span>Archive Requests</span>
 
-                        {% if sidebar_editor_deletion_requests_count > 0 %}
-                            <span
-                                class="staff-attention-badge"
-                                title="{{ sidebar_editor_deletion_requests_count }} item(s) require attention"
-                                aria-label="{{ sidebar_editor_deletion_requests_count }} archive requests require attention"
-                            >
-                                !
-                            </span>
-                        {% endif %}
+                        <span
+                            class="staff-attention-badge"
+                            data-live-attention-badge
+                            data-live-count="{{ sidebar_editor_deletion_requests_count }}"
+                            title="{{ sidebar_editor_deletion_requests_count }} archive requests require attention"
+                            aria-label="{{ sidebar_editor_deletion_requests_count }} archive requests require attention"
+                            {% if sidebar_editor_deletion_requests_count <= 0 %}hidden{% endif %}
+                        >
+                            !
+                        </span>
                     </a>
 
                 </div>
@@ -558,24 +582,27 @@ body.staff-shell-body
                     </p>
 
                     <a href="{% url 'published_articles' %}">
-                        Content Reports
+                        Published Content
                     </a>
 
                     <a
                         href="{% url 'my_content_reports' %}"
                         class="staff-attention-link"
+                        data-live-workflow-key="staff_active_reports"
+                        data-live-workflow-label="reports"
                     >
                         <span>My Reports</span>
 
-                        {% if sidebar_staff_active_reports_count > 0 %}
-                            <span
-                                class="staff-attention-badge"
-                                title="{{ sidebar_staff_active_reports_count }} item(s) require attention"
-                                aria-label="{{ sidebar_staff_active_reports_count }} reports require attention"
-                            >
-                                !
-                            </span>
-                        {% endif %}
+                        <span
+                            class="staff-attention-badge"
+                            data-live-attention-badge
+                            data-live-count="{{ sidebar_staff_active_reports_count }}"
+                            title="{{ sidebar_staff_active_reports_count }} reports require attention"
+                            aria-label="{{ sidebar_staff_active_reports_count }} reports require attention"
+                            {% if sidebar_staff_active_reports_count <= 0 %}hidden{% endif %}
+                        >
+                            !
+                        </span>
                     </a>
 
                 </div>
@@ -612,8 +639,10 @@ body.staff-shell-body
             data-role="{{ request.user.get_role_display }}"
             data-home-url="{% url 'home' %}"
             data-notification-url="{% url 'notification_list' %}"
+            data-live-status-url="{% url 'notification_status' %}"
             data-profile-url="{% url 'profile' %}"
             data-notification-count="{{ global_unread_notification_count }}"
+            data-latest-notification-id="{{ global_latest_notification_id }}"
         ></div>
 
         <form
@@ -621,6 +650,10 @@ body.staff-shell-body
             method="POST"
             action="{% url 'logout' %}"
             data-no-loading
+            data-regret-action
+            data-regret-title="Log out of The Equalizer?"
+            data-regret-message="Your session will end after the decision window unless you cancel."
+            data-regret-button="Logout"
             hidden
         >
             {% csrf_token %}
@@ -634,6 +667,7 @@ body.staff-shell-body
 
         <div class="page-container staff-workspace-page">
 
+            <div data-react-component="RegretActionGuard"></div>
             {% if request.resolver_match.url_name != 'system_update_detail' %}<div data-react-component="SystemUpdatePopup" data-api-url="{% url 'system_update_popup' %}"></div>{% endif %}
             {% block staff_content %}
             {% endblock %}
@@ -1715,6 +1749,28 @@ document.addEventListener(
     }
 
     function getConfirmationSource(form, submitter) {
+        /*
+         * React's RegretActionGuard progressively enhances selected
+         * workflow actions. Once React marks the source as ready, let
+         * that component own the confirmation/countdown interaction.
+         * If React never mounts, the existing confirmation remains the
+         * safe fallback.
+         */
+        if (
+            (
+                submitter
+                && submitter.dataset
+                && submitter.dataset.regretReady === "true"
+            )
+            || (
+                form
+                && form.dataset
+                && form.dataset.regretReady === "true"
+            )
+        ) {
+            return null;
+        }
+
         if (
             submitter
             && submitter.dataset
@@ -1732,6 +1788,58 @@ document.addEventListener(
         }
 
         return null;
+    }
+
+    function getRegretSource(form, submitter) {
+        if (
+            (
+                form
+                && form.dataset
+                && form.dataset.regretBypass === "true"
+            )
+            || (
+                submitter
+                && submitter.dataset
+                && submitter.dataset.regretBypass === "true"
+            )
+        ) {
+            return null;
+        }
+
+        if (
+            submitter
+            && submitter.dataset
+            && submitter.dataset.regretReady === "true"
+            && submitter.hasAttribute("data-regret-action")
+        ) {
+            return submitter;
+        }
+
+        if (
+            form
+            && form.dataset
+            && form.dataset.regretReady === "true"
+            && form.hasAttribute("data-regret-action")
+        ) {
+            return form;
+        }
+
+        return null;
+    }
+
+    function dispatchRegretAction(form, submitter, source) {
+        window.dispatchEvent(
+            new CustomEvent(
+                "equalizer:regret-action",
+                {
+                    detail: {
+                        form: form,
+                        submitter: submitter,
+                        source: source,
+                    },
+                }
+            )
+        );
     }
 
     function getSubmitterFromTarget(target) {
@@ -2061,6 +2169,29 @@ document.addEventListener(
 
             const form = submitter.form;
 
+            const regretSource =
+                getRegretSource(
+                    form,
+                    submitter
+                );
+
+            if (regretSource) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                dispatchRegretAction(
+                    form,
+                    submitter,
+                    regretSource
+                );
+                return;
+            }
+
             const source =
                 getConfirmationSource(
                     form,
@@ -2106,6 +2237,29 @@ document.addEventListener(
 
             const submitter =
                 event.submitter || null;
+
+            const regretSource =
+                getRegretSource(
+                    form,
+                    submitter
+                );
+
+            if (regretSource) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                dispatchRegretAction(
+                    form,
+                    submitter,
+                    regretSource
+                );
+                return;
+            }
 
             const source =
                 getConfirmationSource(
@@ -2500,6 +2654,22 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 
-
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const controls = document.querySelectorAll(
+        '.staff-shell-body button, .staff-shell-body a.primary-button, .staff-shell-body a.secondary-button, .staff-shell-body a.danger-button, .staff-shell-body a.danger-link, .staff-shell-body a.approve-button, .staff-shell-body a.eq-action-button'
+    );
+    controls.forEach(function (control) {
+        if (control.dataset.eqActionTone) return;
+        const label = String(control.textContent || control.value || "").replace(/\s+/g, " ").trim().toLowerCase();
+        if (!label) return;
+        let tone = "";
+        if (/(return for revision|return without revision|request revision|send back|revision required|recommend archive|recommendation)/.test(label)) tone = "warning";
+        else if (/(reject|archive|delete|deactivate|remove permanently|permanent delete)/.test(label)) tone = "danger";
+        else if (/^(approve|approve and publish|publish|create|save|submit|resolve|reactivate|confirm)/.test(label)) tone = "approval";
+        if (tone) control.dataset.eqActionTone = tone;
+    });
+});
+</script>
 
 {% endblock %}

@@ -54,6 +54,7 @@ class Notification(models.Model):
         SUBMISSION = "SUBMISSION", "Submission"
         EDIT_REQUEST = "EDIT_REQUEST", "Edit Request"
         DELETION_REQUEST = "DELETION_REQUEST", "Deletion Request"
+        ARCHIVE_RECOMMENDATION = "ARCHIVE_RECOMMENDATION", "Archive Recommendation"
         CONTENT_REPORT = "CONTENT_REPORT", "Content Report"
         REVISION = "REVISION", "Revision"
         GENERAL = "GENERAL", "General"

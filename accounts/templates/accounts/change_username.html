@@ -2,7 +2,7 @@
 
 {% block staff_content %}
 
-<div class="credential-page management-suite-page management-suite-page--settings">
+<div class="credential-page management-suite-page management-suite-page--settings credential-page--revamped credential-page--username">
 
     <div class="account-workspace-header management-suite-hero">
 
@@ -26,9 +26,13 @@
     </div>
 
 
-    <div class="credential-layout">
+    <div class="credential-layout credential-layout--revamped">
 
-        <aside class="credential-summary">
+        <aside class="credential-summary credential-summary--username">
+
+            <div class="credential-summary-icon" aria-hidden="true">
+                U
+            </div>
 
             <span>
                 Current Username
@@ -43,10 +47,25 @@
                 Your current session will remain active.
             </p>
 
+            <div class="credential-current-value">
+                <span>Account role</span>
+                <strong>{{ request.user.get_role_display }}</strong>
+            </div>
+
+            <div class="account-guide-note">
+                Choose a username you can easily remember and keep private.
+            </div>
+
         </aside>
 
 
-        <section class="account-form-card">
+        <section class="account-form-card credential-form-card">
+
+            <div class="credential-form-heading">
+                <span>Login Identity</span>
+                <h2>Update your username</h2>
+                <p>Your password is required to protect this sign-in credential change.</p>
+            </div>
 
             <form
                 method="POST"
@@ -62,9 +81,17 @@
 
                     <div class="account-form-field">
 
-                        <label for="{{ field.id_for_label }}">
-                            {{ field.label }}
-                        </label>
+                        <div class="account-field-label-row">
+                            <label for="{{ field.id_for_label }}">
+                                {{ field.label }}
+                            </label>
+
+                            {% if field.field.required %}
+                                <span class="field-required-badge">
+                                    Required
+                                </span>
+                            {% endif %}
+                        </div>
 
                         {{ field }}
 
@@ -91,7 +118,7 @@
                 {% endfor %}
 
 
-                <div class="account-form-actions">
+                <div class="account-form-actions credential-form-actions">
 
                     <a
                         href="{% url 'profile' %}"

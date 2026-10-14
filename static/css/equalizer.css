@@ -14841,3 +14841,1050 @@ a {
         transform: none !important;
     }
 }
+
+
+/* ==========================================================
+   PROFILE SETTINGS REVAMP
+   Editorial account workspace - shared by all staff roles
+   ========================================================== */
+
+.management-suite-page--settings.profile-settings-revamp,
+.management-suite-page--settings.credential-page--revamped {
+    --ps-green: #1f6a50;
+    --ps-green-soft: #e8f4ee;
+    --ps-gold: #c89a2b;
+    --ps-gold-soft: #fbf4df;
+    --ps-blue: #4d7895;
+    --ps-blue-soft: #edf4f8;
+    --ps-purple: #756486;
+    --ps-purple-soft: #f3eef7;
+    --ps-red: #ad5956;
+    --ps-red-soft: #fbefee;
+    --ps-slate: #65736d;
+    --ps-slate-soft: #f1f4f2;
+    --ps-border: #dce5df;
+    --ps-ink: #20352d;
+    --ps-muted: #6c7a73;
+}
+
+.management-suite-page--settings.profile-settings-revamp {
+    width: min(1180px, 100%);
+}
+
+.management-suite-page--settings.profile-settings-revamp .profile-layout--revamped {
+    grid-template-columns: minmax(255px, 0.72fr) minmax(0, 1.65fr);
+    gap: 20px;
+    align-items: start;
+}
+
+.management-suite-page--settings .profile-identity-card,
+.management-suite-page--settings .profile-editor-card,
+.management-suite-page--settings .credential-summary,
+.management-suite-page--settings .credential-form-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--ps-border);
+    border-radius: 20px;
+    background: #ffffff;
+    box-shadow: 0 12px 34px rgba(15, 45, 36, 0.07);
+}
+
+.management-suite-page--settings .profile-identity-card {
+    position: sticky;
+    top: 18px;
+    padding: 28px 24px 24px;
+    text-align: left;
+    background:
+        radial-gradient(circle at 100% 0%, rgba(200, 154, 43, 0.14), transparent 38%),
+        linear-gradient(180deg, #ffffff 0%, #fbfcfb 100%);
+}
+
+.management-suite-page--settings .profile-identity-card::after,
+.management-suite-page--settings .credential-summary::after {
+    content: "";
+    position: absolute;
+    right: -56px;
+    bottom: -72px;
+    width: 190px;
+    height: 190px;
+    border: 1px solid rgba(31, 106, 80, 0.08);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.management-suite-page--settings .profile-identity-accent {
+    position: absolute;
+    top: 0;
+    left: 22px;
+    width: 72px;
+    height: 4px;
+    border-radius: 0 0 999px 999px;
+    background: linear-gradient(90deg, var(--ps-green), var(--ps-gold));
+}
+
+.management-suite-page--settings .profile-photo-large {
+    width: 136px;
+    height: 136px;
+    margin: 8px 0 18px;
+    border: 4px solid #ffffff;
+    border-radius: 26px;
+    background:
+        linear-gradient(145deg, #24674f, #153c2f);
+    color: #ffffff;
+    box-shadow:
+        0 0 0 2px rgba(200, 154, 43, 0.65),
+        0 14px 30px rgba(20, 57, 45, 0.16);
+    font-size: 48px;
+}
+
+.management-suite-page--settings .profile-identity-copy {
+    position: relative;
+    z-index: 1;
+}
+
+.management-suite-page--settings .profile-identity-kicker,
+.management-suite-page--settings .profile-section-kicker,
+.management-suite-page--settings .credential-form-heading > span {
+    color: #8b6a1d;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+}
+
+.management-suite-page--settings .profile-identity-copy h2 {
+    margin: 5px 0 0;
+    padding: 0;
+    border: 0;
+    color: var(--ps-ink);
+    font-size: 25px;
+    line-height: 1.15;
+}
+
+.management-suite-page--settings .profile-role-label {
+    display: inline-flex;
+    width: fit-content;
+    margin: 9px 0 0;
+    padding: 5px 9px;
+    border: 1px solid #d7e6dd;
+    border-radius: 999px;
+    background: var(--ps-green-soft);
+    color: #28604b;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.management-suite-page--settings .profile-identity-statuses {
+    display: grid;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.management-suite-page--settings .profile-status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    min-height: 29px;
+    padding: 5px 9px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 780;
+}
+
+.management-suite-page--settings .profile-status-dot {
+    width: 7px;
+    height: 7px;
+    flex: 0 0 7px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.management-suite-page--settings .profile-status-chip.is-success {
+    border-color: #cfe4d7;
+    background: #edf7f1;
+    color: #2d7658;
+}
+
+.management-suite-page--settings .profile-status-chip.is-info {
+    border-color: #cfdfe9;
+    background: var(--ps-blue-soft);
+    color: #466f88;
+}
+
+.management-suite-page--settings .profile-status-chip.is-warning {
+    border-color: #eadcae;
+    background: var(--ps-gold-soft);
+    color: #7a601a;
+}
+
+.management-suite-page--settings .profile-status-chip.is-danger {
+    border-color: #ebd1cf;
+    background: var(--ps-red-soft);
+    color: #944b48;
+}
+
+.management-suite-page--settings .profile-photo-help {
+    position: relative;
+    z-index: 1;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #e9eeeb;
+    color: var(--ps-muted);
+    font-size: 10.5px;
+    line-height: 1.55;
+}
+
+.management-suite-page--settings .profile-editor-card {
+    padding: 0;
+}
+
+.management-suite-page--settings .profile-edit-form {
+    display: block;
+}
+
+.management-suite-page--settings .profile-form-section,
+.management-suite-page--settings .profile-account-snapshot,
+.management-suite-page--settings .profile-security-center {
+    margin: 0;
+    padding: 26px;
+    border: 0;
+    border-bottom: 1px solid #e9eeeb;
+}
+
+.management-suite-page--settings .profile-form-section + .profile-form-section {
+    margin: 0;
+    padding-top: 26px;
+    border-top: 0;
+}
+
+.management-suite-page--settings .profile-form-section--picture {
+    background:
+        linear-gradient(135deg, rgba(251, 244, 223, 0.5), rgba(255, 255, 255, 0) 58%);
+}
+
+.management-suite-page--settings .profile-form-section--personal {
+    background:
+        linear-gradient(135deg, rgba(237, 244, 248, 0.55), rgba(255, 255, 255, 0) 58%);
+}
+
+.management-suite-page--settings .profile-account-snapshot {
+    background:
+        linear-gradient(135deg, rgba(243, 238, 247, 0.50), rgba(255, 255, 255, 0) 62%);
+}
+
+.management-suite-page--settings .profile-security-center {
+    background:
+        linear-gradient(135deg, rgba(232, 244, 238, 0.48), rgba(255, 255, 255, 0) 62%);
+}
+
+.management-suite-page--settings .profile-section-heading-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 19px;
+}
+
+.management-suite-page--settings .profile-section-heading-row--compact {
+    margin-bottom: 16px;
+}
+
+.management-suite-page--settings .profile-section-heading-row > div {
+    min-width: 0;
+}
+
+.management-suite-page--settings .profile-section-heading-row h2 {
+    margin: 4px 0 0;
+    padding: 0;
+    border: 0;
+    color: var(--ps-ink);
+    font-size: 20px;
+    line-height: 1.2;
+}
+
+.management-suite-page--settings .profile-section-heading-row p {
+    max-width: 650px;
+    margin: 7px 0 0;
+    color: var(--ps-muted);
+    font-size: 11.5px;
+    line-height: 1.55;
+}
+
+.management-suite-page--settings .profile-section-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+    border: 1px solid;
+    border-radius: 13px;
+}
+
+.management-suite-page--settings .profile-section-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.management-suite-page--settings .profile-section-icon--gold {
+    border-color: #eadcae;
+    background: var(--ps-gold-soft);
+    color: #84651c;
+}
+
+.management-suite-page--settings .profile-section-icon--blue {
+    border-color: #cedfe9;
+    background: var(--ps-blue-soft);
+    color: #4d7895;
+}
+
+.management-suite-page--settings .profile-section-icon--purple {
+    border-color: #ddd2e5;
+    background: var(--ps-purple-soft);
+    color: #756486;
+}
+
+.management-suite-page--settings .profile-upload-field {
+    padding: 16px;
+    border: 1px dashed #c8b36e;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.74);
+}
+
+.management-suite-page--settings .profile-upload-field > label {
+    display: block;
+    margin-bottom: 8px;
+    color: #5e5129;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.management-suite-page--settings .profile-edit-form input[type="file"] {
+    min-height: 48px;
+    padding: 8px;
+    border: 1px solid #d8dfdb;
+    border-radius: 10px;
+    background: #ffffff;
+    color: var(--ps-ink);
+}
+
+.management-suite-page--settings .profile-edit-form input[type="file"]::file-selector-button {
+    min-height: 32px;
+    margin-right: 10px;
+    padding: 7px 11px;
+    border: 0;
+    border-radius: 8px;
+    background: #173f32;
+    color: #ffffff;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 750;
+    cursor: pointer;
+}
+
+.management-suite-page--settings .profile-upload-note {
+    display: block;
+    margin-top: 8px;
+    color: var(--ps-muted);
+    font-size: 10.5px;
+    line-height: 1.45;
+}
+
+.management-suite-page--settings .profile-remove-picture {
+    margin-top: 11px;
+    padding: 9px 11px;
+    border: 1px solid #ead0cf;
+    border-radius: 10px;
+    background: var(--ps-red-soft);
+    color: #8f4946;
+}
+
+.management-suite-page--settings .profile-form-generated {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 15px;
+}
+
+.management-suite-page--settings .profile-form-generated p {
+    margin: 0;
+}
+
+.management-suite-page--settings .profile-form-generated label {
+    margin-bottom: 7px;
+    color: #344f44;
+    font-size: 11.5px;
+    font-weight: 800;
+}
+
+.management-suite-page--settings .profile-form-generated input,
+.management-suite-page--settings .profile-form-generated select,
+.management-suite-page--settings .profile-form-generated textarea {
+    min-height: 46px;
+    padding: 10px 12px;
+    border: 1px solid #c9d5ce;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.92);
+    transition:
+        border-color 0.16s ease,
+        box-shadow 0.16s ease,
+        background 0.16s ease;
+}
+
+.management-suite-page--settings .profile-form-generated input:focus,
+.management-suite-page--settings .profile-form-generated select:focus,
+.management-suite-page--settings .profile-form-generated textarea:focus {
+    outline: none;
+    border-color: var(--ps-blue);
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(77, 120, 149, 0.13);
+}
+
+.management-suite-page--settings .profile-readonly-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 11px;
+    margin-top: 0;
+}
+
+.management-suite-page--settings .profile-readonly-grid > div {
+    position: relative;
+    overflow: hidden;
+    min-height: 82px;
+    padding: 15px 14px 13px;
+    border: 1px solid #e0e7e2;
+    border-radius: 13px;
+    background: #ffffff;
+}
+
+.management-suite-page--settings .profile-readonly-grid > div::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #718078;
+}
+
+.management-suite-page--settings .profile-readonly-grid > div[data-tone="green"]::before {
+    background: var(--ps-green);
+}
+
+.management-suite-page--settings .profile-readonly-grid > div[data-tone="gold"]::before {
+    background: var(--ps-gold);
+}
+
+.management-suite-page--settings .profile-readonly-grid > div[data-tone="blue"]::before {
+    background: var(--ps-blue);
+}
+
+.management-suite-page--settings .profile-readonly-grid > div[data-tone="purple"]::before {
+    background: var(--ps-purple);
+}
+
+.management-suite-page--settings .profile-readonly-grid > div[data-tone="red"]::before {
+    background: var(--ps-red);
+}
+
+.management-suite-page--settings .profile-readonly-grid span {
+    color: var(--ps-muted);
+    font-size: 8.5px;
+    letter-spacing: 0.08em;
+}
+
+.management-suite-page--settings .profile-readonly-grid strong {
+    margin-top: 7px;
+    color: var(--ps-ink);
+    font-size: 12.5px;
+    line-height: 1.4;
+}
+
+.management-suite-page--settings .profile-security-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 11px;
+}
+
+.management-suite-page--settings .profile-security-action {
+    position: relative;
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    min-height: 88px;
+    padding: 13px;
+    overflow: hidden;
+    border: 1px solid #dce5df;
+    border-radius: 13px;
+    background: #ffffff;
+    color: var(--ps-ink);
+    text-decoration: none;
+    transition:
+        transform 0.17s ease,
+        border-color 0.17s ease,
+        box-shadow 0.17s ease;
+}
+
+.management-suite-page--settings .profile-security-action:hover {
+    transform: translateY(-2px);
+    color: var(--ps-ink);
+    box-shadow: 0 11px 24px rgba(16, 49, 38, 0.08);
+}
+
+.management-suite-page--settings .profile-security-action.is-purple:hover {
+    border-color: #cdbdd8;
+}
+
+.management-suite-page--settings .profile-security-action.is-blue:hover {
+    border-color: #bdd3e0;
+}
+
+.management-suite-page--settings .profile-security-action.is-gold:hover {
+    border-color: #dec66f;
+}
+
+.management-suite-page--settings .profile-security-action-icon {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.management-suite-page--settings .profile-security-action.is-purple .profile-security-action-icon {
+    background: var(--ps-purple-soft);
+    color: var(--ps-purple);
+}
+
+.management-suite-page--settings .profile-security-action.is-blue .profile-security-action-icon {
+    background: var(--ps-blue-soft);
+    color: var(--ps-blue);
+}
+
+.management-suite-page--settings .profile-security-action.is-gold .profile-security-action-icon {
+    background: var(--ps-gold-soft);
+    color: #88691e;
+}
+
+.management-suite-page--settings .profile-security-action > span:nth-child(2) {
+    min-width: 0;
+}
+
+.management-suite-page--settings .profile-security-action strong,
+.management-suite-page--settings .profile-security-action small {
+    display: block;
+}
+
+.management-suite-page--settings .profile-security-action strong {
+    color: var(--ps-ink);
+    font-size: 11.5px;
+}
+
+.management-suite-page--settings .profile-security-action small {
+    margin-top: 3px;
+    color: var(--ps-muted);
+    font-size: 9.5px;
+    line-height: 1.35;
+}
+
+.management-suite-page--settings .profile-security-action em {
+    color: #60756a;
+    font-size: 16px;
+    font-style: normal;
+    transition: transform 0.17s ease;
+}
+
+.management-suite-page--settings .profile-security-action:hover em {
+    transform: translateX(2px);
+}
+
+.management-suite-page--settings .profile-form-actions--revamped {
+    margin: 0;
+    padding: 20px 26px;
+    border: 0;
+    background: #fbfcfb;
+}
+
+.management-suite-page--settings .profile-form-actions--revamped > * {
+    min-width: 150px;
+    min-height: 42px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+/* Credential pages */
+
+.management-suite-page--settings.credential-page--revamped {
+    width: min(1100px, 100%);
+}
+
+.management-suite-page--settings .credential-layout--revamped {
+    grid-template-columns: minmax(250px, 0.72fr) minmax(0, 1.55fr);
+    gap: 20px;
+    margin-top: 0;
+}
+
+.management-suite-page--settings .credential-summary {
+    min-height: 100%;
+    padding: 28px 24px;
+    border-top: 0;
+    background: #ffffff;
+}
+
+.management-suite-page--settings .credential-summary--email {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(117, 100, 134, 0.15), transparent 38%),
+        linear-gradient(180deg, #ffffff 0%, #fcfafc 100%);
+}
+
+.management-suite-page--settings .credential-summary--username {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(77, 120, 149, 0.15), transparent 38%),
+        linear-gradient(180deg, #ffffff 0%, #fafcfd 100%);
+}
+
+.management-suite-page--settings .credential-summary--password {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(200, 154, 43, 0.16), transparent 38%),
+        linear-gradient(180deg, #ffffff 0%, #fffdf8 100%);
+}
+
+.management-suite-page--settings .credential-summary-icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 20px;
+    border: 1px solid;
+    border-radius: 15px;
+    font-size: 19px;
+    font-weight: 900;
+}
+
+.management-suite-page--settings .credential-summary--email .credential-summary-icon {
+    border-color: #d9cde2;
+    background: var(--ps-purple-soft);
+    color: var(--ps-purple);
+}
+
+.management-suite-page--settings .credential-summary--username .credential-summary-icon {
+    border-color: #c8dce7;
+    background: var(--ps-blue-soft);
+    color: var(--ps-blue);
+}
+
+.management-suite-page--settings .credential-summary--password .credential-summary-icon {
+    border-color: #eadcae;
+    background: var(--ps-gold-soft);
+    color: #87691f;
+}
+
+.management-suite-page--settings .credential-summary > span {
+    font-size: 8.5px;
+    letter-spacing: 0.1em;
+}
+
+.management-suite-page--settings .credential-summary > strong {
+    margin-top: 7px;
+    color: var(--ps-ink);
+    font-size: 24px;
+    line-height: 1.15;
+}
+
+.management-suite-page--settings .credential-summary > p {
+    margin: 12px 0 0;
+    color: var(--ps-muted);
+    font-size: 11.5px;
+    line-height: 1.6;
+}
+
+.management-suite-page--settings .credential-current-value {
+    position: relative;
+    z-index: 1;
+    margin-top: 21px;
+    padding: 13px 14px;
+    border: 1px solid #e0e7e2;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.78);
+}
+
+.management-suite-page--settings .credential-current-value span,
+.management-suite-page--settings .credential-current-value strong {
+    display: block;
+}
+
+.management-suite-page--settings .credential-current-value span {
+    color: var(--ps-muted);
+    font-size: 8px;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.management-suite-page--settings .credential-current-value strong {
+    margin-top: 5px;
+    color: #304c40;
+    font-size: 11.5px;
+    overflow-wrap: anywhere;
+}
+
+.management-suite-page--settings .credential-summary .account-guide-note {
+    position: relative;
+    z-index: 1;
+    margin-top: 13px;
+    border-left-width: 3px;
+    border-radius: 10px;
+    background: rgba(251, 248, 233, 0.82);
+}
+
+.management-suite-page--settings .credential-form-card {
+    padding: 0;
+}
+
+.management-suite-page--settings .credential-form-heading {
+    padding: 25px 26px 20px;
+    border-bottom: 1px solid #e9eeeb;
+    background:
+        linear-gradient(135deg, #fbfcfb, #ffffff);
+}
+
+.management-suite-page--settings .credential-form-heading h2 {
+    margin: 5px 0 0;
+    padding: 0;
+    border: 0;
+    color: var(--ps-ink);
+    font-size: 21px;
+    line-height: 1.2;
+}
+
+.management-suite-page--settings .credential-form-heading p {
+    max-width: 640px;
+    margin: 7px 0 0;
+    color: var(--ps-muted);
+    font-size: 11.5px;
+    line-height: 1.55;
+}
+
+.management-suite-page--settings .credential-form-card .account-editor-form {
+    gap: 0;
+    padding: 24px 26px 0;
+}
+
+.management-suite-page--settings .credential-form-card .account-form-field {
+    margin: 0;
+    padding: 0 0 18px;
+    border-bottom: 0;
+}
+
+.management-suite-page--settings .credential-form-card .account-field-label-row,
+.management-suite-page--settings .credential-form-card .account-form-field > label {
+    margin-bottom: 7px;
+    color: #334e43;
+    font-size: 11.5px;
+}
+
+.management-suite-page--settings .credential-form-card .field-required-badge {
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: var(--ps-gold-soft);
+    color: #7f621b;
+    font-size: 8px;
+    font-weight: 850;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.management-suite-page--settings .credential-form-card .account-editor-form input:not([type="checkbox"]),
+.management-suite-page--settings .credential-form-card .account-editor-form select,
+.management-suite-page--settings .credential-form-card .account-editor-form textarea {
+    min-height: 47px;
+    padding: 10px 12px;
+    border: 1px solid #c8d4cd;
+    border-radius: 10px;
+    background: #fbfcfb;
+    transition:
+        border-color 0.16s ease,
+        box-shadow 0.16s ease,
+        background 0.16s ease;
+}
+
+.management-suite-page--settings .credential-page--email .account-editor-form input:focus,
+.management-suite-page--settings.credential-page--email .account-editor-form input:focus {
+    border-color: var(--ps-purple);
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(117, 100, 134, 0.12);
+}
+
+.management-suite-page--settings.credential-page--username .account-editor-form input:focus {
+    border-color: var(--ps-blue);
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(77, 120, 149, 0.12);
+}
+
+.management-suite-page--settings.credential-page--password .account-editor-form input:focus {
+    border-color: var(--ps-gold);
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(200, 154, 43, 0.13);
+}
+
+.management-suite-page--settings .credential-form-actions {
+    margin: 6px -26px 0;
+    padding: 20px 26px;
+    border-top: 1px solid #e9eeeb;
+    background: #fbfcfb;
+}
+
+.management-suite-page--settings .credential-form-actions > * {
+    min-width: 145px;
+    min-height: 42px;
+    border-radius: 10px;
+}
+
+.management-suite-page--settings .password-requirements--revamped {
+    margin: 2px 0 20px;
+    padding: 16px;
+    border: 1px solid #e5d7a6;
+    border-radius: 13px;
+    background:
+        linear-gradient(135deg, #fffdf7, #fbf7e9);
+}
+
+.management-suite-page--settings .password-requirements-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.management-suite-page--settings .password-requirements-heading > span {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    border-radius: 10px;
+    background: #f3e4ac;
+    color: #725816;
+    font-weight: 900;
+}
+
+.management-suite-page--settings .password-requirements-title {
+    margin: 0;
+    color: #554821;
+    font-size: 11.5px;
+    font-weight: 850;
+}
+
+.management-suite-page--settings .password-requirements-heading p:last-child {
+    margin: 2px 0 0;
+    color: #83764f;
+    font-size: 9.5px;
+}
+
+.management-suite-page--settings .password-requirements-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.management-suite-page--settings .password-requirement {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    padding: 8px 9px;
+    border: 1px solid #eadfbd;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.70);
+    color: #7b745f;
+    font-size: 10px;
+    line-height: 1.3;
+    transition:
+        color 0.18s ease,
+        border-color 0.18s ease,
+        background 0.18s ease;
+}
+
+.management-suite-page--settings .password-requirement::before {
+    content: "○";
+    width: 16px;
+    flex: 0 0 16px;
+    color: #a79d7f;
+    font-weight: 900;
+    text-align: center;
+}
+
+.management-suite-page--settings .password-requirement.is-valid {
+    border-color: #c9e1d2;
+    background: #edf7f1;
+    color: #27684d;
+    font-weight: 760;
+}
+
+.management-suite-page--settings .password-requirement.is-valid::before {
+    content: "✓";
+    color: #2d7658;
+}
+
+.management-suite-page--settings .password-requirements-note {
+    margin: 11px 0 0;
+    color: #817657;
+    font-size: 9.5px;
+    line-height: 1.45;
+}
+
+/* Shared settings-page form/error polish */
+
+.management-suite-page--settings .account-field-help,
+.management-suite-page--settings .form-help,
+.management-suite-page--settings .profile-form-generated .helptext {
+    margin-top: 6px;
+    color: var(--ps-muted);
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.management-suite-page--settings .form-errors,
+.management-suite-page--settings .profile-form-generated ul.errorlist {
+    margin-top: 7px;
+    padding: 9px 11px;
+    border: 1px solid #ebcfcd;
+    border-radius: 9px;
+    background: var(--ps-red-soft);
+    color: #8e4744;
+    font-size: 10.5px;
+}
+
+.management-suite-page--settings .form-errors p {
+    margin: 0;
+}
+
+.management-suite-page--settings .form-errors p + p {
+    margin-top: 4px;
+}
+
+@media (max-width: 900px) {
+    .management-suite-page--settings.profile-settings-revamp .profile-layout--revamped,
+    .management-suite-page--settings .credential-layout--revamped {
+        grid-template-columns: 1fr;
+    }
+
+    .management-suite-page--settings .profile-identity-card {
+        position: relative;
+        top: auto;
+    }
+
+    .management-suite-page--settings .profile-readonly-grid,
+    .management-suite-page--settings .profile-security-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 620px) {
+    .management-suite-page--settings .profile-form-section,
+    .management-suite-page--settings .profile-account-snapshot,
+    .management-suite-page--settings .profile-security-center {
+        padding: 20px;
+    }
+
+    .management-suite-page--settings .profile-form-generated,
+    .management-suite-page--settings .profile-readonly-grid,
+    .management-suite-page--settings .profile-security-actions,
+    .management-suite-page--settings .password-requirements-list {
+        grid-template-columns: 1fr;
+    }
+
+    .management-suite-page--settings .profile-section-heading-row {
+        gap: 12px;
+    }
+
+    .management-suite-page--settings .profile-section-icon {
+        flex-basis: 38px;
+        width: 38px;
+        height: 38px;
+    }
+
+    .management-suite-page--settings .profile-form-actions--revamped,
+    .management-suite-page--settings .credential-form-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .management-suite-page--settings .profile-form-actions--revamped > *,
+    .management-suite-page--settings .credential-form-actions > * {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .management-suite-page--settings .credential-form-heading,
+    .management-suite-page--settings .credential-form-card .account-editor-form,
+    .management-suite-page--settings .credential-summary {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .management-suite-page--settings .credential-form-actions {
+        margin-left: -20px;
+        margin-right: -20px;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .management-suite-page--settings .profile-security-action,
+    .management-suite-page--settings .profile-security-action em,
+    .management-suite-page--settings .profile-form-generated input,
+    .management-suite-page--settings .profile-form-generated select,
+    .management-suite-page--settings .profile-form-generated textarea,
+    .management-suite-page--settings .credential-form-card .account-editor-form input,
+    .management-suite-page--settings .credential-form-card .account-editor-form select,
+    .management-suite-page--settings .credential-form-card .account-editor-form textarea,
+    .management-suite-page--settings .password-requirement {
+        transition: none !important;
+    }
+
+    .management-suite-page--settings .profile-security-action:hover,
+    .management-suite-page--settings .profile-security-action:hover em {
+        transform: none !important;
+    }
+}
+
+
+/* ==========================================================
+   DEFENSE UPDATE WAVE - SEMANTIC ACTION COLORS
+   Green = approval/positive, orange = revision/middle-ground,
+   red = rejection/archive/destructive actions.
+   ========================================================== */
+.staff-shell-body [data-eq-action-tone="approval"] { border-color:#1f6a50 !important; background:#1f6a50 !important; color:#fff !important; }
+.staff-shell-body [data-eq-action-tone="approval"]:hover { border-color:#154b39 !important; background:#154b39 !important; }
+.staff-shell-body [data-eq-action-tone="warning"] { border-color:#cf861c !important; background:#df9324 !important; color:#fff !important; }
+.staff-shell-body [data-eq-action-tone="warning"]:hover { border-color:#ad6d10 !important; background:#bd7512 !important; }
+.staff-shell-body [data-eq-action-tone="danger"] { border-color:var(--eq-danger) !important; background:var(--eq-danger) !important; color:#fff !important; }
+.staff-shell-body [data-eq-action-tone="danger"]:hover { border-color:var(--eq-danger-dark) !important; background:var(--eq-danger-dark) !important; }
+
+/* Adviser Staff Directory alignment fixes. */
+.directory-toolbar .account-filter-form { align-items:flex-end; }
+.directory-toolbar .account-filter-form > button, .directory-toolbar .directory-clear-button { display:inline-flex; align-items:center; justify-content:center; min-height:40px; margin:0; padding:8px 14px; line-height:1.2; }
+.staff-directory-details .staff-directory-email { min-width:0; }
+.staff-directory-details [data-react-component="AccountEmailToggle"] { display:block; min-width:0; max-width:100%; }
+.staff-directory-details .account-email-toggle { display:flex; align-items:center; gap:6px; min-width:0; max-width:100%; }
+.staff-directory-details .account-email-toggle-value { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.staff-directory-details .account-email-toggle button { flex:0 0 auto; }
+
+@media (max-width:620px) {
+  .directory-toolbar .account-filter-form { display:grid; grid-template-columns:1fr; align-items:stretch; }
+  .directory-toolbar .account-filter-form > * { width:100%; min-width:0; }
+  .staff-directory-details div { grid-template-columns:1fr; gap:3px; }
+}

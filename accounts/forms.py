@@ -6,6 +6,8 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 
 User = get_user_model()
 
+ACCOUNT_CREATION_USERNAME_MAX_LENGTH = 29
+
 
 # ==========================================================
 # PROFILE FORM
@@ -56,6 +58,18 @@ class AdminAccountCreationForm(forms.ModelForm):
         widget=forms.PasswordInput(),
     )
 
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        username_field = self.fields.get("username")
+        if username_field:
+            username_field.widget.attrs["maxlength"] = (
+                ACCOUNT_CREATION_USERNAME_MAX_LENGTH
+            )
+            username_field.help_text = (
+                "Use fewer than 30 characters."
+            )
+
     class Meta:
         model = User
 
@@ -71,6 +85,11 @@ class AdminAccountCreationForm(forms.ModelForm):
         username = self.cleaned_data[
             "username"
         ].strip()
+
+        if len(username) > ACCOUNT_CREATION_USERNAME_MAX_LENGTH:
+            raise forms.ValidationError(
+                "Username must be fewer than 30 characters."
+            )
 
         if User.objects.filter(
             username__iexact=username
@@ -226,6 +245,18 @@ class StaffAccountCreationForm(forms.ModelForm):
         widget=forms.PasswordInput(),
     )
 
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        username_field = self.fields.get("username")
+        if username_field:
+            username_field.widget.attrs["maxlength"] = (
+                ACCOUNT_CREATION_USERNAME_MAX_LENGTH
+            )
+            username_field.help_text = (
+                "Use fewer than 30 characters."
+            )
+
     class Meta:
         model = User
 
@@ -242,6 +273,11 @@ class StaffAccountCreationForm(forms.ModelForm):
         username = self.cleaned_data[
             "username"
         ].strip()
+
+        if len(username) > ACCOUNT_CREATION_USERNAME_MAX_LENGTH:
+            raise forms.ValidationError(
+                "Username must be fewer than 30 characters."
+            )
 
         if User.objects.filter(
             username__iexact=username

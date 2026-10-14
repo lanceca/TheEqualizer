@@ -1,7 +1,9 @@
+from datetime import timedelta
 from difflib import SequenceMatcher
 from functools import wraps
 from types import SimpleNamespace
 import base64
+import json
 import logging
 import re
 
@@ -12,8 +14,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.db import transaction
-from django.db.models import Exists, OuterRef, Q
-from django.http import HttpResponseForbidden
+from django.db.models import Exists, Max, OuterRef, Q
+from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -37,6 +39,7 @@ from .models import (
     ArticleVersionImageAttachment,
     ArticleVersionVideoAttachment,
     ArticleVideoAttachment,
+    ArchiveRecommendation,
     Category,
     ContentReport,
     DeletionRequest,
@@ -4324,6 +4327,41 @@ def published_articles(request):
 
     articles = filter_article_library(articles, request.GET, date_field="published_at", candidates=True)
 
+    if (
+        request.user.role == User.Role.EIC
+        and request.GET.get("older") == "10"
+    ):
+        recommendation_cutoff = (
+            timezone.now()
+            - timedelta(days=7)
+        )
+
+        recent_recommendations = (
+            ArchiveRecommendation.objects
+            .filter(
+                article_id=OuterRef("pk"),
+                recipient_id=OuterRef("author_id"),
+                created_at__gte=recommendation_cutoff,
+            )
+        )
+
+        pending_archive_requests = (
+            DeletionRequest.objects
+            .filter(
+                article_id=OuterRef("pk"),
+                status=DeletionRequest.Status.PENDING,
+            )
+        )
+
+        articles = articles.annotate(
+            archive_recommendation_recent=Exists(
+                recent_recommendations
+            ),
+            pending_archive_request=Exists(
+                pending_archive_requests
+            ),
+        )
+
     articles = (
         articles
         .order_by(
@@ -4342,6 +4380,158 @@ def published_articles(request):
         },
     )
 
+
+
+@publication_role_required(
+    User.Role.EIC
+)
+@require_POST
+def recommend_article_archive(
+    request,
+    article_id,
+):
+    article = get_object_or_404(
+        Article.objects.select_related(
+            "author",
+            "category",
+        ),
+        id=article_id,
+        is_published=True,
+        is_archived=False,
+        draft_type=Article.DraftType.NORMAL,
+    )
+
+    return_query = request.GET.urlencode()
+    return_url = reverse("published_articles")
+    if return_query:
+        return_url = f"{return_url}?{return_query}"
+    else:
+        return_url = f"{return_url}?older=10"
+
+    if article.author_id == request.user.id:
+        messages.warning(
+            request,
+            "Use the direct Archive Article action for your own published article.",
+        )
+        return redirect(return_url)
+
+    published_at = article.published_at
+    if published_at and timezone.is_aware(published_at):
+        published_at = timezone.localtime(published_at)
+
+    if (
+        not published_at
+        or published_at.date()
+        > timezone.localdate() - timedelta(days=10)
+    ):
+        messages.warning(
+            request,
+            "Archive recommendations are only available for articles published 10 or more days ago.",
+        )
+        return redirect(return_url)
+
+    if not article.author.is_active:
+        messages.warning(
+            request,
+            "The article author account is inactive, so a recommendation could not be sent.",
+        )
+        return redirect(return_url)
+
+    if DeletionRequest.objects.filter(
+        article=article,
+        status=DeletionRequest.Status.PENDING,
+    ).exists():
+        messages.info(
+            request,
+            "This article already has a pending archive request for EIC review.",
+        )
+        return redirect(return_url)
+
+    cooldown_cutoff = (
+        timezone.now()
+        - timedelta(days=7)
+    )
+
+    with transaction.atomic():
+        locked_article = get_object_or_404(
+            Article.objects
+            .select_for_update()
+            .select_related("author"),
+            id=article.id,
+            is_published=True,
+            is_archived=False,
+        )
+
+        pending_request_exists = (
+            DeletionRequest.objects
+            .filter(
+                article=locked_article,
+                status=DeletionRequest.Status.PENDING,
+            )
+            .exists()
+        )
+
+        if pending_request_exists:
+            messages.info(
+                request,
+                "This article already has a pending archive request for EIC review.",
+            )
+            return redirect(return_url)
+
+        recently_sent = (
+            ArchiveRecommendation.objects
+            .filter(
+                article=locked_article,
+                recipient=locked_article.author,
+                created_at__gte=cooldown_cutoff,
+            )
+            .exists()
+        )
+
+        if recently_sent:
+            messages.info(
+                request,
+                "An archive recommendation for this article was already sent within the last 7 days.",
+            )
+            return redirect(return_url)
+
+        ArchiveRecommendation.objects.create(
+            article=locked_article,
+            recommended_by=request.user,
+            recipient=locked_article.author,
+        )
+
+        if locked_article.author.role == User.Role.EDITOR:
+            related_url = reverse(
+                "request_article_deletion",
+                args=[locked_article.id],
+            )
+        else:
+            related_url = (
+                f'{reverse("published_articles")}?older=10'
+            )
+
+        notify_user(
+            locked_article.author,
+            Notification.Type.ARCHIVE_RECOMMENDATION,
+            (
+                "The Editor in Chief recommends that you consider submitting "
+                f'an archive request for "{locked_article.title}", which has been '
+                "published for 10 or more days. The article remains published "
+                "unless you choose to submit the request."
+            ),
+            related_url,
+        )
+
+    messages.success(
+        request,
+        (
+            f'Archive recommendation sent to {article.author.username} '
+            f'for "{article.title}".'
+        ),
+    )
+
+    return redirect(return_url)
 
 
 # ==========================================================
@@ -6968,7 +7158,7 @@ def request_article_deletion(
                     Notification.Type.DELETION_REQUEST,
                     (
                         f'{request.user.username} requested '
-                        f'deletion of '
+                        f'archive of '
                         f'"{locked_article.title}".'
                     ),
                     reverse(
@@ -7304,6 +7494,16 @@ def review_deletion_request(
                 ]
             )
 
+            # The recommendation has completed its lifecycle once the
+            # resulting archive request is resolved. Removing it prevents
+            # the EIC library from continuing to show "Recommendation Sent"
+            # after an approval or rejection. The notification remains as
+            # the historical record for the recipient.
+            ArchiveRecommendation.objects.filter(
+                article=article,
+                recipient=deletion_request.requested_by,
+            ).delete()
+
             notify_user(
                 deletion_request.requested_by,
                 Notification.Type.DELETION_REQUEST,
@@ -7353,6 +7553,16 @@ def review_deletion_request(
                     "reviewed_at",
                 ]
             )
+
+            # The recommendation has completed its lifecycle once the
+            # resulting archive request is resolved. Removing it prevents
+            # the EIC library from continuing to show "Recommendation Sent"
+            # after an approval or rejection. The notification remains as
+            # the historical record for the recipient.
+            ArchiveRecommendation.objects.filter(
+                article=article,
+                recipient=deletion_request.requested_by,
+            ).delete()
 
             notify_user(
                 deletion_request.requested_by,
@@ -8458,6 +8668,14 @@ def restore_archived_article(
                 "updated_at",
             ]
         )
+
+        # Restoring an article starts a fresh archive-recommendation cycle.
+        # Any recommendation created before the archive belongs to the
+        # previous publication lifecycle and must not keep the restored
+        # article stuck in the "Recommendation Sent" state.
+        ArchiveRecommendation.objects.filter(
+            article=article,
+        ).delete()
 
         if (
             article.author.role
@@ -9768,16 +9986,6 @@ def read_people_form(request):
     if not name:
         raise ValidationError("Please provide the person's name.")
 
-    try:
-        display_order = int(request.POST.get("display_order", "0").strip() or 0)
-    except ValueError as error:
-        raise ValidationError("Display order must be a whole number.") from error
-
-    if display_order < 0:
-        raise ValidationError("Display order cannot be negative.")
-    if display_order > 9999:
-        raise ValidationError("Display order cannot exceed 9999.")
-
     return {
         "name": name,
         "role_title": role_title,
@@ -9786,7 +9994,6 @@ def read_people_form(request):
         "institute_department": institute_department,
         "achievements": achievements,
         "additional_information": additional_information,
-        "display_order": display_order,
         "is_active": request.POST.get("is_active", "") == "1",
     }
 
@@ -9860,9 +10067,16 @@ def create_people_profile(request, section_slug):
 
         validate_article_image(image)
 
+        maximum_order = (
+            PeopleProfile.objects
+            .filter(section=config["section"])
+            .aggregate(max_order=Max("display_order"))["max_order"]
+        )
+
         profile = PeopleProfile(
             section=config["section"],
             image=image,
+            display_order=(maximum_order + 1) if maximum_order is not None else 0,
             created_by=request.user,
             updated_by=request.user,
             **data,
@@ -9899,6 +10113,84 @@ def create_people_profile(request, section_slug):
         "people_group_management",
         section_slug=section_slug,
     )
+
+
+@publication_role_required(User.Role.ADMIN, User.Role.EIC)
+@require_POST
+def reorder_people_profiles(request, section_slug):
+    config = get_people_section(section_slug)
+
+    if not can_manage_people_section(request.user, config):
+        return JsonResponse(
+            {"ok": False, "error": "You do not have permission to reorder this section."},
+            status=403,
+        )
+
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return JsonResponse(
+            {"ok": False, "error": "Invalid reorder request."},
+            status=400,
+        )
+
+    raw_order = payload.get("order")
+
+    if not isinstance(raw_order, list):
+        return JsonResponse(
+            {"ok": False, "error": "Profile order must be a list."},
+            status=400,
+        )
+
+    try:
+        ordered_ids = [int(profile_id) for profile_id in raw_order]
+    except (TypeError, ValueError):
+        return JsonResponse(
+            {"ok": False, "error": "Profile order contains an invalid profile."},
+            status=400,
+        )
+
+    if len(ordered_ids) != len(set(ordered_ids)):
+        return JsonResponse(
+            {"ok": False, "error": "Profile order contains duplicates."},
+            status=400,
+        )
+
+    with transaction.atomic():
+        profiles = list(
+            PeopleProfile.objects
+            .select_for_update()
+            .filter(section=config["section"])
+        )
+
+        profile_map = {profile.id: profile for profile in profiles}
+
+        if set(ordered_ids) != set(profile_map):
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "error": (
+                        "The team changed while you were ordering it. "
+                        "Refresh the page and try again."
+                    ),
+                },
+                status=409,
+            )
+
+        now = timezone.now()
+
+        for display_order, profile_id in enumerate(ordered_ids):
+            profile = profile_map[profile_id]
+            profile.display_order = display_order
+            profile.updated_by = request.user
+            profile.updated_at = now
+
+        PeopleProfile.objects.bulk_update(
+            profiles,
+            ["display_order", "updated_by", "updated_at"],
+        )
+
+    return JsonResponse({"ok": True, "order": ordered_ids})
 
 
 @publication_role_required(User.Role.ADMIN, User.Role.EIC)

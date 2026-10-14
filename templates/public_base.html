@@ -94,6 +94,15 @@
                             </a>
 
                             <a
+                                href="{% url 'category_articles' 'literary' %}"
+                                role="menuitem"
+                                class="{% if category and category.slug == 'literary' %}is-active{% endif %}"
+                                {% if category and category.slug == 'literary' %}aria-current="page"{% endif %}
+                            >
+                                Literary
+                            </a>
+
+                            <a
                                 href="{% url 'category_articles' 'cartoonings' %}"
                                 role="menuitem"
                                 class="{% if category and category.slug == 'cartoonings' %}is-active{% endif %}"

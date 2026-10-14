@@ -1,8 +1,7 @@
 {% extends "staff_base.html" %}
-
 {% block staff_content %}
 
-<div class="workspace-dashboard workspace-dashboard--admin">
+<div class="workspace-dashboard workspace-dashboard--control-room workspace-dashboard--admin">
 
     <section class="workspace-dashboard-hero">
 
@@ -80,29 +79,27 @@
         </article>
 
         <article class="workspace-metric-card">
-            <span class="workspace-metric-label">Role Scope</span>
-            <strong class="workspace-metric-value workspace-metric-value--text">
-                Staff Admin
+            <span class="workspace-metric-label">Active Publication Accounts</span>
+            <strong
+                class="workspace-metric-value"
+                data-dashboard-metric-value
+                data-value="{{ active_staff_accounts|default:0 }}"
+            >
+                {{ active_staff_accounts|default:0 }}
             </strong>
-            <p>Adviser, EIC, Editor, and Staff accounts</p>
+            <p>Active Adviser, EIC, Editor, and Staff accounts</p>
         </article>
 
         <article class="workspace-metric-card">
-            <span class="workspace-metric-label">Last Login</span>
-            <strong class="workspace-metric-value workspace-metric-value--compact">
-                {% if request.user.last_login %}
-                    {{ request.user.last_login|date:"M. d" }}
-                {% else %}
-                    First session
-                {% endif %}
+            <span class="workspace-metric-label">Number of Deactivated Accounts</span>
+            <strong
+                class="workspace-metric-value"
+                data-dashboard-metric-value
+                data-value="{{ deactivated_staff_accounts|default:0 }}"
+            >
+                {{ deactivated_staff_accounts|default:0 }}
             </strong>
-            <p>
-                {% if request.user.last_login %}
-                    {{ request.user.last_login|date:"Y - g:i A" }}
-                {% else %}
-                    No previous login recorded
-                {% endif %}
-            </p>
+            <p>Publication staff accounts currently deactivated</p>
         </article>
 
     </section>

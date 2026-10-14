@@ -17,6 +17,8 @@ import HeaderActions from './HeaderActions.jsx'
 import PeopleAndTeams from './PeopleAndTeams.jsx'
 import PageLoadingSkeleton from './PageLoadingSkeleton.jsx'
 import StaffSidebarToggle from './StaffSidebarToggle.jsx'
+import RegretActionGuard from './RegretActionGuard.jsx'
+import PeopleOrderManager from './PeopleOrderManager.jsx'
 
 import './index.css'
 
@@ -37,6 +39,8 @@ const componentRegistry = {
   PeopleAndTeams,
   PageLoadingSkeleton,
   StaffSidebarToggle,
+  RegretActionGuard,
+  PeopleOrderManager,
 }
 
 function getComponentProps(
@@ -48,6 +52,13 @@ function getComponentProps(
   if (componentName === 'InlineDownloadButton') return { url: mountPoint.dataset.url, filename: mountPoint.dataset.filename }
   if (componentName === 'SystemUpdatePopup') return { apiUrl: mountPoint.dataset.apiUrl }
   if (componentName === 'SystemUpdatesEnhancer') return { mode: mountPoint.dataset.mode || '' }
+  if (componentName === 'RegretActionGuard') return {}
+  if (componentName === 'PeopleOrderManager') {
+    return {
+      apiUrl: mountPoint.dataset.apiUrl || '',
+      sourceId: mountPoint.dataset.sourceId || '',
+    }
+  }
   if (componentName === 'PublicArchiveEnhancer') return {}
   if (
     componentName === 'DigitalPublicationViewer'
@@ -88,12 +99,21 @@ function getComponentProps(
       notificationUrl:
         mountPoint.dataset.notificationUrl
         || '#',
+      liveStatusUrl:
+        mountPoint.dataset.liveStatusUrl
+        || '',
       profileUrl:
         mountPoint.dataset.profileUrl
         || '#',
       notificationCount:
         Number.parseInt(
           mountPoint.dataset.notificationCount
+          || '0',
+          10,
+        ) || 0,
+      latestNotificationId:
+        Number.parseInt(
+          mountPoint.dataset.latestNotificationId
           || '0',
           10,
         ) || 0,

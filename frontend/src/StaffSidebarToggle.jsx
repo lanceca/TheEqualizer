@@ -167,13 +167,49 @@ function enhanceNavigation(sidebar) {
 
 }
 
+function updateLiveWorkflowBadges(workflow = {}) {
+  Object.entries(workflow).forEach(([key, rawCount]) => {
+    const link = document.querySelector(
+      `[data-live-workflow-key="${key}"]`,
+    )
+
+    if (!link) return
+
+    const badge = link.querySelector(
+      '[data-live-attention-badge]',
+    )
+
+    if (!badge) return
+
+    const count = Number.parseInt(rawCount, 10) || 0
+    const label = (
+      link.dataset.liveWorkflowLabel
+      || 'items'
+    )
+
+    badge.dataset.liveCount = String(count)
+    badge.hidden = count <= 0
+
+    if (count > 0) {
+      const message = `${count} ${label} require attention`
+      badge.title = message
+      badge.setAttribute('aria-label', message)
+    } else {
+      badge.removeAttribute('title')
+      badge.removeAttribute('aria-label')
+    }
+  })
+}
+
 function StaffSidebarToggle({
   username,
   role,
   homeUrl,
   notificationUrl,
+  liveStatusUrl,
   profileUrl,
   notificationCount = 0,
+  latestNotificationId = 0,
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -189,8 +225,17 @@ function StaffSidebarToggle({
   const [pageTitle, setPageTitle] = useState('Workspace')
   const [avatarUrl, setAvatarUrl] = useState('')
   const [loggingOut, setLoggingOut] = useState(false)
+  const [liveNotificationCount, setLiveNotificationCount] = useState(
+    notificationCount,
+  )
+  const [liveToast, setLiveToast] = useState(null)
 
   const userMenuRef = useRef(null)
+  const latestNotificationIdRef = useRef(
+    Number.parseInt(latestNotificationId, 10) || 0,
+  )
+  const pollInFlightRef = useRef(false)
+  const toastTimerRef = useRef(null)
 
   useEffect(() => {
     const sidebar = document.getElementById('staff-sidebar')
@@ -326,6 +371,141 @@ function StaffSidebarToggle({
     }
   }, [])
 
+  useEffect(() => {
+    if (!liveStatusUrl) return undefined
+
+    let isActive = true
+
+    function clearToastTimer() {
+      if (toastTimerRef.current) {
+        window.clearTimeout(
+          toastTimerRef.current,
+        )
+        toastTimerRef.current = null
+      }
+    }
+
+    function showLiveToast(notification) {
+      if (!notification) return
+
+      clearToastTimer()
+      setLiveToast(notification)
+
+      toastTimerRef.current = window.setTimeout(
+        () => {
+          setLiveToast(null)
+          toastTimerRef.current = null
+        },
+        8000,
+      )
+    }
+
+    async function refreshLiveStatus() {
+      if (
+        !isActive
+        || document.visibilityState === 'hidden'
+        || pollInFlightRef.current
+      ) {
+        return
+      }
+
+      pollInFlightRef.current = true
+
+      try {
+        const response = await fetch(
+          liveStatusUrl,
+          {
+            method: 'GET',
+            credentials: 'same-origin',
+            cache: 'no-store',
+            headers: {
+              Accept: 'application/json',
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+          },
+        )
+
+        if (!response.ok) return
+
+        const payload = await response.json()
+
+        if (!isActive) return
+
+        setLiveNotificationCount(
+          Number.parseInt(
+            payload.unread_notification_count,
+            10,
+          ) || 0,
+        )
+
+        updateLiveWorkflowBadges(
+          payload.workflow || {},
+        )
+
+        const newestId = Number.parseInt(
+          payload.latest_notification_id,
+          10,
+        ) || 0
+
+        if (newestId > latestNotificationIdRef.current) {
+          latestNotificationIdRef.current = newestId
+
+          if (payload.latest_notification) {
+            showLiveToast(
+              payload.latest_notification,
+            )
+          }
+        }
+      } catch {
+        // A temporary network failure should not disturb the workspace.
+      } finally {
+        pollInFlightRef.current = false
+      }
+    }
+
+    const pollTimer = window.setInterval(
+      refreshLiveStatus,
+      5000,
+    )
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        refreshLiveStatus()
+      }
+    }
+
+    function handleWindowFocus() {
+      refreshLiveStatus()
+    }
+
+    document.addEventListener(
+      'visibilitychange',
+      handleVisibilityChange,
+    )
+    window.addEventListener(
+      'focus',
+      handleWindowFocus,
+    )
+
+    // Check once immediately. The server-rendered latest ID is the baseline,
+    // so only activity that arrived after the page response can trigger a toast.
+    refreshLiveStatus()
+
+    return () => {
+      isActive = false
+      window.clearInterval(pollTimer)
+      clearToastTimer()
+      document.removeEventListener(
+        'visibilitychange',
+        handleVisibilityChange,
+      )
+      window.removeEventListener(
+        'focus',
+        handleWindowFocus,
+      )
+    }
+  }, [liveStatusUrl])
+
   function toggleCollapsed() {
     setIsCollapsed((current) => {
       const next = !current
@@ -375,25 +555,27 @@ function StaffSidebarToggle({
       'staff-workspace-native-logout-form',
     )
 
-    if (!form) {
+    if (!form) return
+
+    setUserMenuOpen(false)
+
+    if (form.dataset.regretReady === 'true') {
+      window.dispatchEvent(
+        new CustomEvent('equalizer:regret-action', {
+          detail: { form, submitter: null, source: form },
+        }),
+      )
       return
     }
 
-    setLoggingOut(true)
-    setUserMenuOpen(false)
-
-    /*
-     * This form is rendered by Django and already contains the
-     * correct CSRF token. Native prototype submission intentionally
-     * bypasses generic submit listeners that show the global loader.
-     */
-    window.requestAnimationFrame(() => {
+    // Safe fallback if the React regret guard did not mount.
+    if (window.confirm('Log out of The Equalizer?')) {
       try {
         HTMLFormElement.prototype.submit.call(form)
       } catch {
         setLoggingOut(false)
       }
-    })
+    }
   }
 
   const initial = (
@@ -454,16 +636,18 @@ function StaffSidebarToggle({
             href={notificationUrl || '#'}
             className="staff-workspace-action is-icon-only"
             aria-label={
-              notificationCount > 0
-                ? `${notificationCount} unread notifications`
+              liveNotificationCount > 0
+                ? `${liveNotificationCount} unread notifications`
                 : 'Notifications'
             }
             title="Notifications"
           >
             <BellIcon />
-            {notificationCount > 0 && (
+            {liveNotificationCount > 0 && (
               <span className="staff-workspace-notification-count">
-                {notificationCount > 99 ? '99+' : notificationCount}
+                {liveNotificationCount > 99
+                  ? '99+'
+                  : liveNotificationCount}
               </span>
             )}
           </a>
@@ -535,6 +719,50 @@ function StaffSidebarToggle({
           </div>
         </div>
       </header>
+
+      {liveToast && (
+        <aside
+          className="staff-live-activity-toast"
+          role="status"
+          aria-live="polite"
+        >
+          <button
+            type="button"
+            className="staff-live-activity-toast-close"
+            aria-label="Dismiss notification"
+            onClick={() => {
+              if (toastTimerRef.current) {
+                window.clearTimeout(toastTimerRef.current)
+                toastTimerRef.current = null
+              }
+              setLiveToast(null)
+            }}
+          >
+            ×
+          </button>
+
+          <span className="staff-live-activity-toast-kicker">
+            New editorial activity
+          </span>
+
+          <strong>
+            {liveToast.type_label || 'Notification'}
+          </strong>
+
+          <p>{liveToast.message}</p>
+
+          <a
+            href={
+              liveToast.related_url
+              || notificationUrl
+              || '#'
+            }
+            onClick={() => setLiveToast(null)}
+          >
+            View activity →
+          </a>
+        </aside>
+      )}
 
       {loggingOut && (
         <div

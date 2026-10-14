@@ -2,7 +2,7 @@
 
 {% block staff_content %}
 
-<div class="profile-page management-suite-page management-suite-page--settings">
+<div class="profile-page management-suite-page management-suite-page--settings profile-settings-revamp">
 
     <div class="profile-page-header management-suite-hero">
 
@@ -23,9 +23,11 @@
     </div>
 
 
-    <div class="profile-layout">
+    <div class="profile-layout profile-layout--revamped">
 
-        <aside class="profile-photo-panel">
+        <aside class="profile-photo-panel profile-identity-card">
+
+            <div class="profile-identity-accent" aria-hidden="true"></div>
 
             <div class="profile-photo-large">
 
@@ -47,13 +49,32 @@
             </div>
 
 
-            <h2>
-                {{ request.user.username }}
-            </h2>
+            <div class="profile-identity-copy">
+                <span class="profile-identity-kicker">
+                    Staff Identity
+                </span>
 
-            <p class="profile-role-label">
-                {{ request.user.get_role_display }}
-            </p>
+                <h2>
+                    {{ request.user.username }}
+                </h2>
+
+                <p class="profile-role-label">
+                    {{ request.user.get_role_display }}
+                </p>
+            </div>
+
+
+            <div class="profile-identity-statuses">
+                <span class="profile-status-chip {% if request.user.is_active %}is-success{% else %}is-danger{% endif %}">
+                    <span class="profile-status-dot" aria-hidden="true"></span>
+                    {% if request.user.is_active %}Active Account{% else %}Inactive Account{% endif %}
+                </span>
+
+                <span class="profile-status-chip {% if request.user.email_verified %}is-info{% else %}is-warning{% endif %}">
+                    <span class="profile-status-dot" aria-hidden="true"></span>
+                    {% if request.user.email_verified %}Email Verified{% else %}Email Unverified{% endif %}
+                </span>
+            </div>
 
             <p class="profile-photo-help">
                 JPG, JPEG, PNG, or WEBP. Maximum 5 MB.
@@ -62,7 +83,7 @@
         </aside>
 
 
-        <section class="profile-form-panel">
+        <section class="profile-form-panel profile-editor-card">
 
             <form
                 method="POST"
@@ -73,13 +94,30 @@
                 {% csrf_token %}
 
 
-                <div class="profile-form-section">
+                <div class="profile-form-section profile-form-section--picture">
 
-                    <h2>
-                        Profile Picture
-                    </h2>
+                    <div class="profile-section-heading-row">
+                        <div>
+                            <span class="profile-section-kicker">
+                                Appearance
+                            </span>
+                            <h2>
+                                Profile Picture
+                            </h2>
+                            <p>
+                                Use a clear portrait that helps other publication staff recognize you.
+                            </p>
+                        </div>
 
-                    <div class="form-group">
+                        <span class="profile-section-icon profile-section-icon--gold" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" focusable="false">
+                                <circle cx="12" cy="8" r="4"></circle>
+                                <path d="M4.5 20c.8-4 3.3-6 7.5-6s6.7 2 7.5 6"></path>
+                            </svg>
+                        </span>
+                    </div>
+
+                    <div class="form-group profile-upload-field">
 
                         <label for="profile_picture">
                             Upload New Picture
@@ -91,6 +129,10 @@
                             name="profile_picture"
                             accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                         >
+
+                        <span class="profile-upload-note">
+                            Choosing a file will replace the current picture after you save.
+                        </span>
 
                     </div>
 
@@ -116,11 +158,28 @@
                 </div>
 
 
-                <div class="profile-form-section">
+                <div class="profile-form-section profile-form-section--personal">
 
-                    <h2>
-                        Personal Information
-                    </h2>
+                    <div class="profile-section-heading-row">
+                        <div>
+                            <span class="profile-section-kicker">
+                                Personal Details
+                            </span>
+                            <h2>
+                                Personal Information
+                            </h2>
+                            <p>
+                                Keep the name information shown across the staff workspace up to date.
+                            </p>
+                        </div>
+
+                        <span class="profile-section-icon profile-section-icon--blue" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" focusable="false">
+                                <path d="M4 19.5V6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v13"></path>
+                                <path d="M8 9h8M8 13h6"></path>
+                            </svg>
+                        </span>
+                    </div>
 
                     <div class="profile-form-generated">
                         {{ form.as_p }}
@@ -129,107 +188,159 @@
                 </div>
 
 
-                <div class="profile-readonly-grid">
+                <div class="profile-account-snapshot">
 
-                    <div>
-                        <span>
-                            Username
+                    <div class="profile-section-heading-row profile-section-heading-row--compact">
+                        <div>
+                            <span class="profile-section-kicker">
+                                Account Snapshot
+                            </span>
+                            <h2>
+                                Workspace Details
+                            </h2>
+                            <p>
+                                These system-managed details identify your Equalizer account.
+                            </p>
+                        </div>
+
+                        <span class="profile-section-icon profile-section-icon--purple" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" focusable="false">
+                                <path d="M12 3 4.5 6v5.2c0 4.7 3 7.7 7.5 9.8 4.5-2.1 7.5-5.1 7.5-9.8V6Z"></path>
+                                <path d="m9 12 2 2 4-4"></path>
+                            </svg>
                         </span>
-
-                        <strong>
-                            {{ request.user.username }}
-                        </strong>
                     </div>
 
-                    <div>
-                        <span>
-                            Email
-                        </span>
+                    <div class="profile-readonly-grid">
 
-                        <strong>
-                            {{ request.user.email|default:"No email set" }}
-                        </strong>
-                    </div>
+                        <div data-tone="blue">
+                            <span>
+                                Username
+                            </span>
 
-                    <div>
-                        <span>
-                            Email Status
-                        </span>
+                            <strong>
+                                {{ request.user.username }}
+                            </strong>
+                        </div>
 
-                        <strong>
-                            {% if request.user.email_verified %}
-                                Verified
-                            {% else %}
-                                Unverified
-                            {% endif %}
-                        </strong>
-                    </div>
+                        <div data-tone="purple">
+                            <span>
+                                Email
+                            </span>
 
-                    <div>
-                        <span>
-                            Role
-                        </span>
+                            <strong>
+                                {{ request.user.email|default:"No email set" }}
+                            </strong>
+                        </div>
 
-                        <strong>
-                            {{ request.user.get_role_display }}
-                        </strong>
-                    </div>
+                        <div data-tone="{% if request.user.email_verified %}green{% else %}gold{% endif %}">
+                            <span>
+                                Email Status
+                            </span>
 
-                    <div>
-                        <span>
-                            Account Status
-                        </span>
+                            <strong>
+                                {% if request.user.email_verified %}
+                                    Verified
+                                {% else %}
+                                    Unverified
+                                {% endif %}
+                            </strong>
+                        </div>
 
-                        <strong>
-                            {% if request.user.is_active %}
-                                Active
-                            {% else %}
-                                Inactive
-                            {% endif %}
-                        </strong>
-                    </div>
+                        <div data-tone="gold">
+                            <span>
+                                Role
+                            </span>
 
-                    <div>
-                        <span>
-                            Date Joined
-                        </span>
+                            <strong>
+                                {{ request.user.get_role_display }}
+                            </strong>
+                        </div>
 
-                        <strong>
-                            {{ request.user.date_joined|date:"M. d, Y" }}
-                        </strong>
+                        <div data-tone="{% if request.user.is_active %}green{% else %}red{% endif %}">
+                            <span>
+                                Account Status
+                            </span>
+
+                            <strong>
+                                {% if request.user.is_active %}
+                                    Active
+                                {% else %}
+                                    Inactive
+                                {% endif %}
+                            </strong>
+                        </div>
+
+                        <div data-tone="slate">
+                            <span>
+                                Date Joined
+                            </span>
+
+                            <strong>
+                                {{ request.user.date_joined|date:"M. d, Y" }}
+                            </strong>
+                        </div>
+
                     </div>
 
                 </div>
 
 
-                <div class="profile-form-actions">
+                <div class="profile-security-center">
+
+                    <div class="profile-section-heading-row profile-section-heading-row--compact">
+                        <div>
+                            <span class="profile-section-kicker">
+                                Sign-in & Security
+                            </span>
+                            <h2>
+                                Account Security
+                            </h2>
+                            <p>
+                                Manage the credentials used to access your workspace.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="profile-security-actions">
+                        <a href="{% url 'change_email' %}" class="profile-security-action is-purple">
+                            <span class="profile-security-action-icon" aria-hidden="true">@</span>
+                            <span>
+                                <strong>Change Email</strong>
+                                <small>Update and re-verify your account email.</small>
+                            </span>
+                            <em aria-hidden="true">→</em>
+                        </a>
+
+                        <a href="{% url 'change_username' %}" class="profile-security-action is-blue">
+                            <span class="profile-security-action-icon" aria-hidden="true">U</span>
+                            <span>
+                                <strong>Change Username</strong>
+                                <small>Update the username used to sign in.</small>
+                            </span>
+                            <em aria-hidden="true">→</em>
+                        </a>
+
+                        <a href="{% url 'change_password' %}" class="profile-security-action is-gold">
+                            <span class="profile-security-action-icon" aria-hidden="true">*</span>
+                            <span>
+                                <strong>Change Password</strong>
+                                <small>Replace your current workspace password.</small>
+                            </span>
+                            <em aria-hidden="true">→</em>
+                        </a>
+                    </div>
+
+                </div>
+
+
+                <div class="profile-form-actions profile-form-actions--revamped">
 
                     <a
                         href="{% url 'dashboard' %}"
                         class="secondary-button"
                     >
                         Back to Dashboard
-                    </a>
-
-                    <a
-                        href="{% url 'change_email' %}"
-                        class="secondary-button"
-                    >
-                        Change Email
-                    </a>
-
-                    <a
-                        href="{% url 'change_username' %}"
-                        class="secondary-button"
-                    >
-                        Change Username
-                    </a>
-
-                    <a
-                        href="{% url 'change_password' %}"
-                        class="secondary-button"
-                    >
-                        Change Password
                     </a>
 
                     <button

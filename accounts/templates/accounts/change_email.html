@@ -2,7 +2,7 @@
 
 {% block staff_content %}
 
-<div class="credential-page management-suite-page management-suite-page--settings">
+<div class="credential-page management-suite-page management-suite-page--settings credential-page--revamped credential-page--email">
 
     <div class="account-workspace-header management-suite-hero">
 
@@ -25,9 +25,13 @@
     </div>
 
 
-    <div class="credential-layout">
+    <div class="credential-layout credential-layout--revamped">
 
-        <aside class="credential-summary credential-summary--security">
+        <aside class="credential-summary credential-summary--security credential-summary--email">
+
+            <div class="credential-summary-icon" aria-hidden="true">
+                @
+            </div>
 
             <span>
                 Verification required
@@ -43,6 +47,11 @@
                 link has been completed.
             </p>
 
+            <div class="credential-current-value">
+                <span>Current email</span>
+                <strong>{{ request.user.email|default:"No email set" }}</strong>
+            </div>
+
             <div class="account-guide-note">
                 Make sure you can access the new inbox before continuing.
             </div>
@@ -50,7 +59,13 @@
         </aside>
 
 
-        <section class="account-form-card">
+        <section class="account-form-card credential-form-card">
+
+            <div class="credential-form-heading">
+                <span>Secure Change</span>
+                <h2>Update your email address</h2>
+                <p>Enter the new address and confirm the change using your current password.</p>
+            </div>
 
             <form
                 method="POST"
@@ -99,7 +114,7 @@
                 {% endfor %}
 
 
-                <div class="account-form-actions">
+                <div class="account-form-actions credential-form-actions">
 
                     <a
                         class="secondary-button"
