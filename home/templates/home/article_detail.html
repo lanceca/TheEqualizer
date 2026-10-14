@@ -498,20 +498,28 @@
    ------------------------------ */
 
 .reader-article-standfirst {
-    width: min(720px, 100%);
+    box-sizing: border-box;
 
-    margin: 32px auto 0;
+    width: min(760px, 100%);
 
-    color: #394640;
+    margin: 38px auto 0;
+    padding: 0;
+
+    border: 0;
+    border-radius: 0;
+
+    background: transparent;
+    color: #263a31;
 
     font-family:
         Georgia,
         "Times New Roman",
         serif;
 
-    font-size: 21px;
-    font-weight: 700;
-    line-height: 1.55;
+    font-size: clamp(24px, 2.3vw, 31px);
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: -0.25px;
 }
 
 .reader-article-body {
@@ -1028,27 +1036,19 @@ body.reader-lightbox-open {
     }
 
     .reader-article-standfirst {
-        box-sizing: border-box;
+        margin-top: 40px;
+        padding: 0;
 
-        margin-top: 36px;
-        padding: 18px 20px;
+        border: 0;
+        border-radius: 0;
 
-        border:
-            1px solid
-            #e9e0bd;
-        border-left:
-            4px solid
-            var(--article-gold);
-        border-radius: 0 12px 12px 0;
+        background: transparent;
+        color: #263a31;
 
-        background:
-            linear-gradient(
-                90deg,
-                #fffaf0 0%,
-                #fdfbf5 100%
-            );
-
-        color: #33433b;
+        font-size: clamp(26px, 2.4vw, 32px);
+        font-weight: 600;
+        line-height: 1.34;
+        letter-spacing: -0.3px;
     }
 
     .reader-article-body {

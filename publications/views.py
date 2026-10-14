@@ -7158,7 +7158,7 @@ def request_article_deletion(
                     Notification.Type.DELETION_REQUEST,
                     (
                         f'{request.user.username} requested '
-                        f'deletion of '
+                        f'archive of '
                         f'"{locked_article.title}".'
                     ),
                     reverse(
