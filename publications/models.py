@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.core.files.storage import default_storage
 from django.db import models
 from django.db.models import Q
@@ -1849,6 +1850,21 @@ class PeopleProfile(models.Model):
         upload_to="people_profiles/",
         blank=True,
         validators=[validate_article_image],
+    )
+    image_position_x = models.PositiveSmallIntegerField(
+        default=50,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="Horizontal focal position of the profile image (0–100%).",
+    )
+    image_position_y = models.PositiveSmallIntegerField(
+        default=50,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="Vertical focal position of the profile image (0–100%).",
+    )
+    image_scale = models.PositiveSmallIntegerField(
+        default=100,
+        validators=[MinValueValidator(100), MaxValueValidator(250)],
+        help_text="Profile image zoom percentage (100–250%).",
     )
     role_title = models.CharField(max_length=180, blank=True)
     courses_handled = models.TextField(blank=True)

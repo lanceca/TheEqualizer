@@ -1847,6 +1847,9 @@ def people_and_teams_api(request):
                         if profile.image
                         else ""
                     ),
+                    "image_position_x": profile.image_position_x,
+                    "image_position_y": profile.image_position_y,
+                    "image_scale": profile.image_scale,
                     "role_title": profile.role_title,
                     "school_position": profile.school_position,
                     "institute_department": profile.institute_department,

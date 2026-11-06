@@ -2,7 +2,7 @@
 
 <link
     rel="stylesheet"
-    href="{% static 'react-dist/assets/equalizer-react.css' %}?v=20260924-people-profile-alignment-2"
+    href="{% static 'react-dist/assets/equalizer-react.css' %}?v=20261106-people-image-framing-scale-2"
 >
 
 <style>
@@ -149,6 +149,31 @@
     min-width: 0;
 }
 
+.people-reader-preview .pt-modal-portrait-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 24px;
+}
+
+.people-reader-preview .pt-modal-portrait-label {
+    width: min(84%, 300px);
+}
+
+.people-reader-preview .pt-modal-portrait-frame {
+    width: min(84%, 300px);
+    aspect-ratio: 4 / 3;
+    border: 1px solid rgba(13, 81, 59, .16);
+    border-radius: 14px;
+}
+
+.people-reader-preview .pt-modal-portrait {
+    object-fit: cover;
+    padding: 0;
+}
+
 @media (max-width: 1180px) {
     .people-reader-preview .people-reader-preview-modal {
         grid-template-columns: 1fr;
@@ -158,6 +183,210 @@
     .people-reader-preview .pt-modal-portrait-wrap {
         min-height: 280px;
     }
+}
+
+
+/* ----------------------------------------------------------
+   PEOPLE PROFILE IMAGE POSITIONING
+   ---------------------------------------------------------- */
+.people-image-cropper {
+    margin-top: 12px;
+    padding: 14px;
+    border: 1px solid var(--eq-border);
+    border-radius: 12px;
+    background: #f8faf9;
+}
+
+.people-image-cropper-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.people-image-cropper-heading strong {
+    display: block;
+    color: var(--eq-green-dark);
+    font-size: 13px;
+}
+
+.people-image-cropper-heading span {
+    display: block;
+    margin-top: 3px;
+    color: var(--eq-muted);
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.people-image-crop-viewport {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    aspect-ratio: 4 / 3;
+    margin: 0 auto;
+    overflow: hidden;
+    border: 1px solid rgba(15, 61, 45, .2);
+    border-radius: 10px;
+    background: linear-gradient(135deg, #e9f0ec, #d8e5dd);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    outline-offset: 3px;
+}
+
+.people-image-crop-viewport.is-dragging {
+    cursor: grabbing;
+}
+
+.people-image-crop-viewport:focus-visible {
+    outline: 3px solid var(--eq-gold);
+}
+
+.people-image-crop-viewport > img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 50%;
+    pointer-events: none;
+    -webkit-user-drag: none;
+}
+
+.people-image-crop-viewport > [hidden] {
+    display: none !important;
+}
+
+.people-image-crop-empty {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    gap: 5px;
+    padding: 20px;
+    color: var(--eq-green-dark);
+    text-align: center;
+}
+
+.people-image-crop-empty strong {
+    font-size: 13px;
+}
+
+.people-image-crop-empty span {
+    color: var(--eq-muted);
+    font-size: 11px;
+}
+
+.people-image-crop-guides {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: linear-gradient(to right, transparent 33.15%, rgba(255,255,255,.66) 33.33%, transparent 33.6%, transparent 66.4%, rgba(255,255,255,.66) 66.67%, transparent 66.85%), linear-gradient(to bottom, transparent 33.15%, rgba(255,255,255,.66) 33.33%, transparent 33.6%, transparent 66.4%, rgba(255,255,255,.66) 66.67%, transparent 66.85%);
+    opacity: .7;
+}
+
+.people-image-crop-hint {
+    margin: 8px 0 0;
+    color: var(--eq-muted);
+    font-size: 11px;
+    line-height: 1.45;
+    text-align: center;
+}
+
+.people-image-crop-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+    gap: 12px 16px;
+    margin-top: 12px;
+}
+
+.people-image-crop-control {
+    display: grid;
+    grid-template-rows: 2.7em 20px;
+    gap: 5px;
+    min-width: 0;
+}
+
+.people-image-crop-control label {
+    display: flex;
+    align-items: flex-end;
+    min-height: 2.7em;
+    margin: 0;
+    color: var(--eq-muted);
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.3;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.people-image-crop-control input[type=range] {
+    display: block;
+    width: 100%;
+    height: 20px;
+    margin: 0;
+    align-self: end;
+    accent-color: var(--eq-green-dark);
+}
+
+.people-image-crop-control--scale {
+    grid-column: 1 / -1;
+    grid-template-rows: auto 20px;
+}
+
+.people-image-crop-control--scale label {
+    min-height: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.people-image-crop-control--scale output {
+    flex: 0 0 auto;
+    color: var(--eq-green-dark);
+    font-size: 11px;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+}
+
+.people-image-crop-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.people-image-crop-actions button {
+    min-height: 34px;
+    padding: 7px 11px;
+    border: 1px solid var(--eq-border);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--eq-green-dark);
+    font: inherit;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.people-image-crop-actions button:hover {
+    border-color: var(--eq-green-dark);
+    background: #f0f6f2;
+}
+
+.people-image-crop-position {
+    color: var(--eq-muted);
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 620px) {
+    .people-image-cropper { padding: 11px; }
+    .people-image-crop-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 620px) {
@@ -362,12 +591,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function initializePeopleLivePreview() {
-        const form = document.querySelector(
-            "[data-people-profile-form]"
-        );
-        const preview = document.querySelector(
-            "[data-people-live-preview]"
-        );
+        const form = document.querySelector("[data-people-profile-form]");
+        const preview = document.querySelector("[data-people-live-preview]");
 
         if (!form || !preview) {
             return;
@@ -375,118 +600,277 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const imageInput = form.elements.namedItem("image");
         const removeImageInput = form.elements.namedItem("remove_image");
-        const previewImage = preview.querySelector(
-            "[data-people-preview-image]"
-        );
-        const previewPlaceholder = preview.querySelector(
-            "[data-people-preview-placeholder]"
-        );
+        const previewImage = preview.querySelector("[data-people-preview-image]");
+        const previewPlaceholder = preview.querySelector("[data-people-preview-placeholder]");
+        const cropper = form.querySelector("[data-people-image-cropper]");
+        const cropViewport = cropper && cropper.querySelector("[data-people-crop-viewport]");
+        const cropImage = cropper && cropper.querySelector("[data-people-crop-image]");
+        const cropEmpty = cropper && cropper.querySelector("[data-people-crop-empty]");
+        const xField = form.elements.namedItem("image_position_x");
+        const yField = form.elements.namedItem("image_position_y");
+        const scaleField = form.elements.namedItem("image_scale");
+        const xRange = cropper && cropper.querySelector("[data-people-crop-x]");
+        const yRange = cropper && cropper.querySelector("[data-people-crop-y]");
+        const scaleRange = cropper && cropper.querySelector("[data-people-crop-scale]");
+        const scaleValue = cropper && cropper.querySelector("[data-people-crop-scale-value]");
+        const resetButton = cropper && cropper.querySelector("[data-people-crop-reset]");
+        const positionLabel = cropper && cropper.querySelector("[data-people-crop-position]");
 
-        function showPeopleImagePlaceholder() {
-            if (!previewImage || !previewPlaceholder) {
-                return;
-            }
+        let currentX = clampPosition(xField && xField.value, 50);
+        let currentY = clampPosition(yField && yField.value, 50);
+        let currentScale = clampScale(scaleField && scaleField.value, 100);
+        let initialX = currentX;
+        let initialY = currentY;
+        let initialScale = currentScale;
+        let currentObjectUrl = "";
+        let activeDrag = null;
 
-            previewImage.hidden = true;
-            previewPlaceholder.hidden = false;
+        function clampPosition(value, fallback) {
+            const parsed = Number.parseFloat(value);
+            return Number.isFinite(parsed)
+                ? Math.round(Math.min(100, Math.max(0, parsed)))
+                : fallback;
         }
 
-        function restoreOriginalPeopleImage() {
-            if (!previewImage || !previewPlaceholder) {
-                return;
+        function clampScale(value, fallback) {
+            const parsed = Number.parseFloat(value);
+            return Number.isFinite(parsed)
+                ? Math.round(Math.min(250, Math.max(100, parsed)))
+                : fallback;
+        }
+
+        function showPeopleImagePlaceholder() {
+            if (previewImage) previewImage.hidden = true;
+            if (previewPlaceholder) previewPlaceholder.hidden = false;
+        }
+
+        function applyPosition() {
+            currentX = clampPosition(currentX, 50);
+            currentY = clampPosition(currentY, 50);
+            currentScale = clampScale(currentScale, 100);
+            const objectPosition = currentX + "% " + currentY + "%";
+            const transform = "scale(" + (currentScale / 100) + ")";
+            const transformOrigin = currentX + "% " + currentY + "%";
+
+            if (xField) xField.value = String(currentX);
+            if (yField) yField.value = String(currentY);
+            if (scaleField) scaleField.value = String(currentScale);
+            if (xRange) xRange.value = String(currentX);
+            if (yRange) yRange.value = String(currentY);
+            if (scaleRange) scaleRange.value = String(currentScale);
+            if (scaleValue) scaleValue.textContent = currentScale + "%";
+            if (positionLabel) {
+                positionLabel.textContent = "Horizontal " + currentX + "% · Vertical " + currentY + "% · Scale " + currentScale + "%";
             }
+            [cropImage, previewImage].forEach(function (image) {
+                if (!image) return;
+                image.style.objectPosition = objectPosition;
+                image.style.transform = transform;
+                image.style.transformOrigin = transformOrigin;
+            });
+        }
 
-            const originalSource = (
-                previewImage.getAttribute("data-original-src")
-                || ""
-            );
+        function showCropImage(source) {
+            if (!cropImage || !cropEmpty) return;
+            if (source) {
+                cropImage.onload = function () {
+                    cropImage.hidden = false;
+                    cropEmpty.hidden = true;
+                    applyPosition();
+                };
+                cropImage.onerror = function () {
+                    cropImage.hidden = true;
+                    cropEmpty.hidden = false;
+                };
+                cropImage.src = source;
+                if (cropImage.complete && cropImage.naturalWidth > 0) {
+                    cropImage.hidden = false;
+                    cropEmpty.hidden = true;
+                    applyPosition();
+                }
+            } else {
+                cropImage.hidden = true;
+                cropEmpty.hidden = false;
+            }
+        }
 
-            if (originalSource) {
-                previewImage.src = originalSource;
+        function showPreviewImage(source) {
+            if (!previewImage || !previewPlaceholder) return;
+            if (source) {
+                previewImage.src = source;
+                previewImage.alt = getFormValue(form, "name") || "Profile image preview";
                 previewImage.hidden = false;
                 previewPlaceholder.hidden = true;
+                applyPosition();
             } else {
                 showPeopleImagePlaceholder();
             }
         }
 
-        function syncPeoplePreviewImage() {
-            if (!previewImage || !previewPlaceholder) {
-                return;
-            }
+        function restoreOriginalImage() {
+            const source = cropImage && (
+                cropImage.getAttribute("data-original-src") || ""
+            );
+            currentX = initialX;
+            currentY = initialY;
+            currentScale = initialScale;
+            applyPosition();
+            showCropImage(source);
+            showPreviewImage(source);
+        }
 
+        function syncSelectedImage() {
             if (removeImageInput && removeImageInput.checked) {
-                if (imageInput) {
-                    imageInput.value = "";
-                }
-
-                showPeopleImagePlaceholder();
+                if (imageInput) imageInput.value = "";
+                showCropImage("");
+                showPreviewImage("");
                 return;
             }
 
-            const file = (
-                imageInput
-                && imageInput.files
-                && imageInput.files.length
-            ) ? imageInput.files[0] : null;
+            const file = imageInput && imageInput.files && imageInput.files.length
+                ? imageInput.files[0]
+                : null;
 
             if (!file) {
-                restoreOriginalPeopleImage();
+                restoreOriginalImage();
                 return;
             }
 
-            const reader = new FileReader();
+            if (!file.type || !file.type.startsWith("image/")) {
+                if (imageInput) imageInput.value = "";
+                restoreOriginalImage();
+                return;
+            }
 
-            reader.onload = function () {
-                previewImage.src = reader.result;
-                previewImage.hidden = false;
-                previewPlaceholder.hidden = true;
-            };
+            if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+            currentObjectUrl = URL.createObjectURL(file);
+            currentX = 50;
+            currentY = 50;
+            currentScale = 100;
+            applyPosition();
+            showCropImage(currentObjectUrl);
+            showPreviewImage(currentObjectUrl);
+        }
 
-            reader.readAsDataURL(file);
+        function updatePositionFromPointer(event) {
+            if (!activeDrag || !cropImage || !cropViewport) return;
+            const rect = cropViewport.getBoundingClientRect();
+            const naturalWidth = cropImage.naturalWidth;
+            const naturalHeight = cropImage.naturalHeight;
+            if (!naturalWidth || !naturalHeight) return;
+
+            const scale = Math.max(rect.width / naturalWidth, rect.height / naturalHeight);
+            const zoom = currentScale / 100;
+            const overflowX = Math.max(0, naturalWidth * scale * zoom - rect.width);
+            const overflowY = Math.max(0, naturalHeight * scale * zoom - rect.height);
+            const deltaX = event.clientX - activeDrag.pointerX;
+            const deltaY = event.clientY - activeDrag.pointerY;
+
+            currentX = overflowX > 0
+                ? activeDrag.positionX - (deltaX / overflowX) * 100
+                : activeDrag.positionX;
+            currentY = overflowY > 0
+                ? activeDrag.positionY - (deltaY / overflowY) * 100
+                : activeDrag.positionY;
+            applyPosition();
+        }
+
+        if (cropViewport && cropImage) {
+            cropViewport.addEventListener("pointerdown", function (event) {
+                if (cropImage.hidden || !cropImage.naturalWidth) return;
+                activeDrag = {
+                    pointerId: event.pointerId,
+                    pointerX: event.clientX,
+                    pointerY: event.clientY,
+                    positionX: currentX,
+                    positionY: currentY,
+                };
+                cropViewport.setPointerCapture(event.pointerId);
+                cropViewport.classList.add("is-dragging");
+                event.preventDefault();
+            });
+
+            cropViewport.addEventListener("pointermove", updatePositionFromPointer);
+            function endCropDrag(event) {
+                if (!activeDrag || activeDrag.pointerId !== event.pointerId) return;
+                activeDrag = null;
+                cropViewport.classList.remove("is-dragging");
+            }
+            cropViewport.addEventListener("pointerup", endCropDrag);
+            cropViewport.addEventListener("pointercancel", endCropDrag);
+            cropViewport.addEventListener("lostpointercapture", function () {
+                activeDrag = null;
+                cropViewport.classList.remove("is-dragging");
+            });
+            cropViewport.addEventListener("keydown", function (event) {
+                const step = event.shiftKey ? 10 : 2;
+                if (event.key === "ArrowLeft") currentX -= step;
+                else if (event.key === "ArrowRight") currentX += step;
+                else if (event.key === "ArrowUp") currentY -= step;
+                else if (event.key === "ArrowDown") currentY += step;
+                else return;
+                event.preventDefault();
+                applyPosition();
+            });
+        }
+
+        if (xRange) {
+            xRange.addEventListener("input", function () {
+                currentX = clampPosition(xRange.value, 50);
+                applyPosition();
+            });
+        }
+        if (yRange) {
+            yRange.addEventListener("input", function () {
+                currentY = clampPosition(yRange.value, 50);
+                applyPosition();
+            });
+        }
+        if (scaleRange) {
+            scaleRange.addEventListener("input", function () {
+                currentScale = clampScale(scaleRange.value, 100);
+                applyPosition();
+            });
+        }
+        if (resetButton) {
+            resetButton.addEventListener("click", function () {
+                currentX = 50;
+                currentY = 50;
+                currentScale = 100;
+                applyPosition();
+            });
+        }
+
+        if (imageInput) {
+            imageInput.addEventListener("change", function () {
+                const hasReplacement = imageInput.files && imageInput.files.length;
+                if (hasReplacement && removeImageInput) removeImageInput.checked = false;
+                syncSelectedImage();
+            });
+        }
+        if (removeImageInput) {
+            removeImageInput.addEventListener("change", syncSelectedImage);
         }
 
         form.addEventListener("input", function () {
             updatePeoplePreview(form, preview);
         });
-
         form.addEventListener("change", function () {
             updatePeoplePreview(form, preview);
         });
 
-        if (imageInput) {
-            imageInput.addEventListener("change", function () {
-                const hasReplacement = (
-                    imageInput.files
-                    && imageInput.files.length
-                );
-
-                if (
-                    hasReplacement
-                    && removeImageInput
-                ) {
-                    removeImageInput.checked = false;
-                }
-
-                syncPeoplePreviewImage();
-            });
-        }
-
-        if (removeImageInput) {
-            removeImageInput.addEventListener("change", function () {
-                if (
-                    removeImageInput.checked
-                    && imageInput
-                ) {
-                    imageInput.value = "";
-                }
-
-                syncPeoplePreviewImage();
-            });
-        }
-
         updatePeoplePreview(form, preview);
-        syncPeoplePreviewImage();
+        applyPosition();
+        restoreOriginalImage();
+
+        form.addEventListener("submit", function () {
+            // Keep the final hidden values synchronized with the last drag/slider position.
+            applyPosition();
+        });
+
+        window.addEventListener("pagehide", function () {
+            if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+        }, { once: true });
     }
 
     initializePeopleCharacterCounters();

@@ -9962,6 +9962,34 @@ def normalize_people_entry_list(value):
     return ", ".join(entries)
 
 
+def read_people_image_position(request, profile=None):
+    """Read safe focal-point percentages and zoom for a PeopleProfile image."""
+    defaults = {
+        "image_position_x": getattr(profile, "image_position_x", 50),
+        "image_position_y": getattr(profile, "image_position_y", 50),
+        "image_scale": getattr(profile, "image_scale", 100),
+    }
+    limits = {
+        "image_position_x": (0, 100),
+        "image_position_y": (0, 100),
+        "image_scale": (100, 250),
+    }
+    framing = {}
+
+    for field_name, default_value in defaults.items():
+        raw_value = request.POST.get(field_name, default_value)
+
+        try:
+            value = int(raw_value)
+        except (TypeError, ValueError):
+            value = int(default_value or 50)
+
+        minimum, maximum = limits[field_name]
+        framing[field_name] = max(minimum, min(maximum, value))
+
+    return framing
+
+
 def read_people_form(request):
     name = request.POST.get("name", "").strip()
     role_title = request.POST.get("role_title", "").strip()
@@ -10060,6 +10088,7 @@ def create_people_profile(request, section_slug):
 
     try:
         data = read_people_form(request)
+        image_position = read_people_image_position(request)
         image = request.FILES.get("image")
 
         if not image:
@@ -10079,6 +10108,7 @@ def create_people_profile(request, section_slug):
             display_order=(maximum_order + 1) if maximum_order is not None else 0,
             created_by=request.user,
             updated_by=request.user,
+            **image_position,
             **data,
         )
         profile.full_clean()
@@ -10215,6 +10245,7 @@ def edit_people_profile(request, section_slug, profile_id):
 
         try:
             data = read_people_form(request)
+            image_position = read_people_image_position(request, profile)
 
             if replacement_image and remove_image:
                 raise ValidationError(
@@ -10225,6 +10256,9 @@ def edit_people_profile(request, section_slug, profile_id):
                 validate_article_image(replacement_image)
 
             for field, value in data.items():
+                setattr(profile, field, value)
+
+            for field, value in image_position.items():
                 setattr(profile, field, value)
 
             profile.updated_by = request.user

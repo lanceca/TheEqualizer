@@ -448,7 +448,6 @@
 
 .pt-profile-card:hover .pt-profile-image-wrap img,
 .pt-profile-card:hover .pt-image-placeholder {
-  transform: scale(1.055);
   filter: saturate(1.06) contrast(1.02);
 }
 
@@ -998,4 +997,90 @@
 .pt-profile-details dt,
 .pt-profile-details dd {
   text-align: left;
+}
+
+
+/* ----------------------------------------------------------
+   PROFILE SPOTLIGHT — ESTABLISHED PORTRAIT AREA
+   ---------------------------------------------------------- */
+.pt-modal {
+  grid-template-columns: minmax(320px, .9fr) minmax(0, 1.1fr);
+}
+
+.pt-modal-portrait-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: clamp(24px, 3.5vw, 42px);
+  border-right: 1px solid rgba(13, 81, 59, .12);
+  background:
+    radial-gradient(circle at 50% 35%, rgba(255,255,255,.98) 0%, rgba(235,243,238,.98) 48%, rgba(211,226,217,.98) 100%);
+}
+
+.pt-modal-portrait-label {
+  width: min(100%, 420px);
+  margin: 0;
+  color: rgba(16, 57, 43, .62);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .18em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.pt-modal-portrait-frame {
+  width: min(100%, 420px);
+  aspect-ratio: 4 / 3;
+  border: 1px solid rgba(13, 81, 59, .16);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 22px 48px rgba(10, 58, 43, .14), 0 3px 10px rgba(10, 58, 43, .05);
+}
+
+.pt-modal-portrait {
+  object-fit: cover;
+  object-position: center center;
+  padding: 0;
+}
+
+.pt-profile-image-wrap img {
+  object-fit: cover;
+  object-position: center center;
+}
+
+@media (max-width: 820px) {
+  .pt-modal-portrait-wrap {
+    gap: 8px;
+    padding: 18px 22px 12px;
+    border-right: 0;
+    border-bottom: 1px solid rgba(13, 81, 59, .12);
+  }
+
+  .pt-modal-portrait-label {
+    width: min(74%, 320px);
+    font-size: 9px;
+  }
+
+  .pt-modal-portrait-frame {
+    width: min(74%, 320px);
+    max-height: 100%;
+    aspect-ratio: 4 / 3;
+  }
+}
+
+@media (max-width: 620px) {
+  .pt-modal-portrait-wrap {
+    gap: 6px;
+    padding: 14px 12px 8px;
+  }
+
+  .pt-modal-portrait-label {
+    width: min(76%, 260px);
+  }
+
+  .pt-modal-portrait-frame {
+    width: min(76%, 200px);
+  }
 }

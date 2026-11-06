@@ -261,6 +261,7 @@
                                         src="{{ profile.image.url }}"
                                         alt="Current photo for {{ profile.name }}"
                                         data-people-current-image
+                                        style="object-position: {{ profile.image_position_x|default_if_none:50 }}% {{ profile.image_position_y|default_if_none:50 }}%;"
                                     >
                                 {% else %}
                                     <span
@@ -296,6 +297,64 @@
                             name="image"
                             accept="image/*"
                         >
+
+                        <div class="people-image-cropper" data-people-image-cropper>
+                            <div class="people-image-cropper-heading">
+                                <div>
+                                    <strong>Adjust photo framing</strong>
+                                    <span>Drag the existing photo or choose a replacement, then position the face and head inside the frame.</span>
+                                </div>
+                            </div>
+                            <div
+                                class="people-image-crop-viewport"
+                                data-people-crop-viewport
+                                tabindex="0"
+                                role="img"
+                                aria-label="Drag or use the arrow keys to reposition the profile image"
+                            >
+                                {% if profile.image %}
+                                    <img
+                                        data-people-crop-image
+                                        src="{{ profile.image.url }}"
+                                        data-original-src="{{ profile.image.url }}"
+                                        alt=""
+                                        style="object-position: {{ profile.image_position_x|default_if_none:50 }}% {{ profile.image_position_y|default_if_none:50 }}%;"
+                                    >
+                                {% else %}
+                                    <img data-people-crop-image src="" alt="" hidden>
+                                {% endif %}
+                                <div class="people-image-crop-empty" data-people-crop-empty {% if profile.image %}hidden{% endif %}>
+                                    <strong>Upload a profile image</strong>
+                                    <span>Your framing preview will appear here.</span>
+                                </div>
+                                <div class="people-image-crop-guides" aria-hidden="true"></div>
+                            </div>
+                            <p class="people-image-crop-hint">Drag to reposition. The frame matches the public profile tiles.</p>
+                            <div class="people-image-crop-controls">
+                                <div class="people-image-crop-control">
+                                    <label for="people-image-position-x">Horizontal position</label>
+                                    <input id="people-image-position-x" type="range" min="0" max="100" step="1" value="{% if request.method == 'POST' and request.POST.image_position_x != '' %}{{ request.POST.image_position_x }}{% else %}{{ profile.image_position_x|default_if_none:50 }}{% endif %}" data-people-crop-x>
+                                </div>
+                                <div class="people-image-crop-control">
+                                    <label for="people-image-position-y">Vertical position</label>
+                                    <input id="people-image-position-y" type="range" min="0" max="100" step="1" value="{% if request.method == 'POST' and request.POST.image_position_y != '' %}{{ request.POST.image_position_y }}{% else %}{{ profile.image_position_y|default_if_none:50 }}{% endif %}" data-people-crop-y>
+                                </div>
+                                <div class="people-image-crop-control people-image-crop-control--scale">
+                                    <label for="people-image-scale">
+                                        <span>Image scale / zoom</span>
+                                        <output data-people-crop-scale-value>{% if request.method == 'POST' and request.POST.image_scale != '' %}{{ request.POST.image_scale }}{% else %}{{ profile.image_scale|default_if_none:100 }}{% endif %}%</output>
+                                    </label>
+                                    <input id="people-image-scale" type="range" min="100" max="250" step="5" value="{% if request.method == 'POST' and request.POST.image_scale != '' %}{{ request.POST.image_scale }}{% else %}{{ profile.image_scale|default_if_none:100 }}{% endif %}" data-people-crop-scale>
+                                </div>
+                            </div>
+                            <div class="people-image-crop-actions">
+                                <button type="button" data-people-crop-reset>Reset framing</button>
+                                <span class="people-image-crop-position" data-people-crop-position>Horizontal {{ profile.image_position_x|default_if_none:50 }}% · Vertical {{ profile.image_position_y|default_if_none:50 }}% · Scale {{ profile.image_scale|default_if_none:100 }}%</span>
+                            </div>
+                            <input type="hidden" name="image_position_x" value="{% if request.method == 'POST' and request.POST.image_position_x != '' %}{{ request.POST.image_position_x }}{% else %}{{ profile.image_position_x|default_if_none:50 }}{% endif %}">
+                            <input type="hidden" name="image_position_y" value="{% if request.method == 'POST' and request.POST.image_position_y != '' %}{{ request.POST.image_position_y }}{% else %}{{ profile.image_position_y|default_if_none:50 }}{% endif %}">
+                            <input type="hidden" name="image_scale" value="{% if request.method == 'POST' and request.POST.image_scale != '' %}{{ request.POST.image_scale }}{% else %}{{ profile.image_scale|default_if_none:100 }}{% endif %}">
+                        </div>
 
                         <label class="people-remove-image-option" for="people-remove-image">
                             <input

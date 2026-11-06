@@ -16,6 +16,22 @@ function splitEntries(value) {
     .filter(Boolean)
 }
 
+function profileImageStyle(profile) {
+  const x = Number(profile.image_position_x)
+  const y = Number(profile.image_position_y)
+  const scale = Number(profile.image_scale)
+
+  const safeX = Number.isFinite(x) ? Math.min(100, Math.max(0, x)) : 50
+  const safeY = Number.isFinite(y) ? Math.min(100, Math.max(0, y)) : 50
+  const safeScale = Number.isFinite(scale) ? Math.min(250, Math.max(100, scale)) : 100
+
+  return {
+    objectPosition: `${safeX}% ${safeY}%`,
+    transform: `scale(${safeScale / 100})`,
+    transformOrigin: `${safeX}% ${safeY}%`,
+  }
+}
+
 function ProfileChipList({ value, wide = false }) {
   const entries = splitEntries(value)
 
@@ -176,12 +192,14 @@ function ProfileModal({ profile, onClose }) {
         </button>
 
         <div className="pt-modal-portrait-wrap">
+          <p className="pt-modal-portrait-label">Profile portrait</p>
           <div className="pt-modal-portrait-frame">
             {profile.image_url ? (
               <img
                 src={profile.image_url}
                 alt={profile.name}
                 className="pt-modal-portrait"
+                style={profileImageStyle(profile)}
               />
             ) : (
               <div className="pt-modal-portrait pt-image-placeholder" aria-hidden="true">
@@ -275,7 +293,11 @@ function ProfileCard({ profile, index, onOpen }) {
     >
       <span className="pt-profile-image-wrap">
         {profile.image_url ? (
-          <img src={profile.image_url} alt={profile.name} />
+          <img
+            src={profile.image_url}
+            alt={profile.name}
+            style={profileImageStyle(profile)}
+          />
         ) : (
           <span className="pt-image-placeholder" aria-hidden="true">
             {profile.name?.slice(0, 1) || '?'}
